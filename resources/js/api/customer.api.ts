@@ -1,31 +1,50 @@
 import { apiClient } from './client'
+import {
+  login, register, logout, me, updateProfile, changePassword,
+} from '@/actions/App/Http/Controllers/Customer/AuthController'
+// search/show/seats map a controller method bound to BOTH /public and /customer,
+// so Wayfinder generates a URL-keyed object (not a callable). Indexing the key
+// lets us pick the exact binding — e.g. keep getTripSeats on the /customer route.
+import {
+  search as tripSearch, show as tripShowMap, seats as tripSeatsMap,
+} from '@/actions/App/Http/Controllers/Customer/TripSearchController'
+import {
+  lockSeats as lockSeatsRoute, index as bookingsIndex, store as bookingStore,
+  show as bookingShow, cancel as bookingCancel,
+} from '@/actions/App/Http/Controllers/Customer/BookingController'
+import { trackByBooking } from '@/actions/App/Http/Controllers/Customer/TrackingController'
+import { initiate as paymentInitiate, wallet as walletGet } from '@/actions/App/Http/Controllers/Customer/PaymentController'
+import { apply as voucherApply } from '@/actions/App/Http/Controllers/Customer/VoucherController'
+import { store as reviewStore } from '@/actions/App/Http/Controllers/Customer/ReviewController'
+import { transactions as walletTransactions, topup as walletTopup } from '@/actions/App/Http/Controllers/Customer/WalletController'
+import {
+  index as notificationsIndex, markRead as notificationMarkRead, markAllRead as notificationMarkAllRead,
+} from '@/actions/App/Http/Controllers/Customer/NotificationController'
+import { store as partnerAppStore } from '@/actions/App/Http/Controllers/Public/PartnerApplicationController'
 
 export const customerApi = {
   // ─── Auth ─────────────────────────────────────────────────────────────
-  login:    (data: { phone: string; password: string }) =>
-    apiClient.post('/customer/auth/login', data),
+  login:    (data: { phone: string; password: string }) => apiClient.send(login(), data),
   register: (data: { full_name: string; phone: string; email?: string; password: string; password_confirmation: string }) =>
-    apiClient.post('/customer/auth/register', data),
-  logout:   () => apiClient.post('/customer/auth/logout'),
-  me:       () => apiClient.get('/customer/auth/me'),
-  updateProfile: (data: { full_name?: string; email?: string }) =>
-    apiClient.put('/customer/auth/profile', data),
+    apiClient.send(register(), data),
+  logout:   () => apiClient.send(logout()),
+  me:       () => apiClient.send(me()),
+  updateProfile: (data: { full_name?: string; email?: string }) => apiClient.send(updateProfile(), data),
   changePassword: (data: { old_password: string; new_password: string; new_password_confirmation: string }) =>
-    apiClient.post('/customer/auth/change-password', data),
+    apiClient.send(changePassword(), data),
 
   // ─── Public trip search ────────────────────────────────────────────────
   searchTrips: (params: { from_city: string; to_city: string; date: string; passengers?: number }) =>
-    apiClient.get('/public/trips', { params }),
+    apiClient.send(tripSearch['/api/public/trips']({ query: params })),
   getPublicTrip: (id: string) =>
-    apiClient.get(`/public/trips/${id}`),
+    apiClient.send(tripShowMap['/api/public/trips/{id}'](id)),
   // Điểm đón/trả lấy từ chi tiết chuyến (getPublicTrip → pickup_stops/dropoff_stops).
-  // Không có endpoint /trips/{id}/stops riêng.
 
   // ─── Seat map ──────────────────────────────────────────────────────────
   getTripSeats: (tripId: string) =>
-    apiClient.get(`/customer/trips/${tripId}/seats`),
+    apiClient.send(tripSeatsMap['/api/customer/trips/{id}/seats'](tripId)),
   lockSeats: (data: { trip_id: string; seat_ids: string[] }) =>
-    apiClient.post('/customer/bookings/lock-seats', data),
+    apiClient.send(lockSeatsRoute(), data),
 
   // ─── Bookings ──────────────────────────────────────────────────────────
   createBooking: (data: {
@@ -42,19 +61,19 @@ export const customerApi = {
     contact_phone: string
     payment_method: 'momo' | 'vnpay' | 'zalopay' | 'wallet' | 'cash'
     passengers: { full_name: string; phone?: string }[]
-  }) => apiClient.post('/customer/bookings', data),
+  }) => apiClient.send(bookingStore(), data),
   getBookings:   (params?: { status?: string; page?: number }) =>
-    apiClient.get('/customer/bookings', { params }),
-  getBooking:    (id: string) => apiClient.get(`/customer/bookings/${id}`),
+    apiClient.send(bookingsIndex({ query: params })),
+  getBooking:    (id: string) => apiClient.send(bookingShow(id)),
   cancelBooking: (id: string, reason?: string) =>
-    apiClient.post(`/customer/bookings/${id}/cancel`, { reason }),
-  trackBooking:  (id: string) => apiClient.get(`/customer/bookings/${id}/track`),
+    apiClient.send(bookingCancel(id), { reason }),
+  trackBooking:  (id: string) => apiClient.send(trackByBooking(id)),
 
   // ─── Payment ───────────────────────────────────────────────────────────
   initiatePayment: (data: { booking_id: string; method: string }) =>
-    apiClient.post('/customer/payments/initiate', data),
+    apiClient.send(paymentInitiate(), data),
   applyVoucher: (data: { code: string; trip_id: string; amount: number }) =>
-    apiClient.post('/customer/vouchers/apply', data),
+    apiClient.send(voucherApply(), data),
 
   // ─── Reviews ───────────────────────────────────────────────────────────
   submitReview: (data: {
@@ -64,24 +83,24 @@ export const customerApi = {
     service_rating: number
     comment?: string
     tags?: string[]
-  }) => apiClient.post('/customer/reviews', data),
+  }) => apiClient.send(reviewStore(), data),
 
   // ─── Wallet ────────────────────────────────────────────────────────────
-  getWallet:         () => apiClient.get('/customer/wallet'),
+  getWallet:         () => apiClient.send(walletGet()),
   getWalletHistory:  (params?: { page?: number }) =>
-    apiClient.get('/customer/wallet/transactions', { params }),
+    apiClient.send(walletTransactions({ query: params })),
   topUpWallet: (data: { amount: number; method: string }) =>
-    apiClient.post('/customer/wallet/topup', data),
+    apiClient.send(walletTopup(), data),
 
   // ─── Đăng ký đối tác nhà xe (public) ───────────────────────────────────
   submitPartnerApplication: (formData: FormData) =>
-    apiClient.postForm('/public/partner-applications', formData),
+    apiClient.sendForm(partnerAppStore(), formData),
 
   // ─── Notifications ─────────────────────────────────────────────────────
   getNotifications:  (params?: { page?: number; unread_only?: boolean }) =>
-    apiClient.get('/customer/notifications', { params }),
+    apiClient.send(notificationsIndex({ query: params })),
   markNotificationRead: (id: string) =>
-    apiClient.put(`/customer/notifications/${id}/read`),
+    apiClient.send(notificationMarkRead(id)),
   markAllRead: () =>
-    apiClient.put('/customer/notifications/read-all'),
+    apiClient.send(notificationMarkAllRead()),
 }
