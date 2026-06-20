@@ -46,10 +46,10 @@ test.describe('Driver portal', () => {
   })
 
   test('shows the server error and stays on login when rejected', async ({ page }) => {
-    // 403 (not 401) — a pending driver is gated server-side; a 401 would trip
-    // the global interceptor and hard-redirect, which is a different path.
+    // Wrong credentials return 401; the page must stay and show the error,
+    // not get hard-redirected by the global interceptor (regression guard).
     await stubApi(page, {
-      '/driver/auth/login': { status: 403, body: { success: false, message: 'Tài khoản chưa được duyệt' } },
+      '/driver/auth/login': { status: 401, body: { success: false, message: 'Số điện thoại hoặc mật khẩu không đúng' } },
     })
     await page.goto('/driver/login')
 
@@ -57,7 +57,7 @@ test.describe('Driver portal', () => {
     await page.locator('input[type="password"]').fill('secret123')
     await page.getByRole('button', { name: 'Đăng nhập' }).click()
 
-    await expect(page.getByText('Tài khoản chưa được duyệt')).toBeVisible()
+    await expect(page.getByText('Số điện thoại hoặc mật khẩu không đúng')).toBeVisible()
     await expect(page).toHaveURL(/\/driver\/login/)
   })
 

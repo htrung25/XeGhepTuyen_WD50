@@ -37,7 +37,7 @@ test.describe('Operator portal', () => {
 
   test('shows the server error and stays on login when rejected', async ({ page }) => {
     await stubApi(page, {
-      '/operator/auth/login': { status: 422, body: { success: false, message: 'Sai số điện thoại hoặc mật khẩu' } },
+      '/operator/auth/login': { status: 401, body: { success: false, message: 'Sai số điện thoại hoặc mật khẩu' } },
     })
     await page.goto('/operator/login')
 

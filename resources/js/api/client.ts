@@ -22,14 +22,21 @@ http.interceptors.request.use(config => {
   return config
 })
 
-// Global 401 handler — redirect to the right portal login
+// Global 401 handler — redirect to the right portal login ONLY when an
+// authenticated session expires. A 401 from a login/register attempt is bad
+// credentials, not an expired session, so it must bubble to the page (which
+// shows the error) instead of triggering a full-page reload.
 http.interceptors.response.use(
   res => res,
   err => {
     if (err.response?.status === 401) {
       const portal = currentPortal()
-      localStorage.removeItem(`${portal}_token`)
-      window.location.href = `/${portal}/login`
+      const url = err.config?.url ?? ''
+      const isAuthAttempt = url.includes('/auth/login') || url.includes('/auth/register')
+      if (!isAuthAttempt && localStorage.getItem(`${portal}_token`)) {
+        localStorage.removeItem(`${portal}_token`)
+        window.location.href = `/${portal}/login`
+      }
     }
     return Promise.reject(err)
   },

@@ -95,15 +95,35 @@ describe('apiClient interceptors', () => {
     expect(config.headers.Authorization).toBeUndefined()
   })
 
-  it('clears the token and redirects to the portal login on 401', async () => {
+  it('clears the token and redirects to the portal login on an expired-session 401', async () => {
     stubLocation('/driver/dashboard')
     localStorage.setItem('driver_token', 'd-tok')
 
     await expect(
-      responseErrorHandlers[0]({ response: { status: 401 } }),
+      responseErrorHandlers[0]({ response: { status: 401 }, config: { url: '/api/driver/trips' } }),
     ).rejects.toBeDefined()
 
     expect(localStorage.getItem('driver_token')).toBeNull()
     expect(window.location.href).toBe('/driver/login')
+  })
+
+  it('does NOT redirect on a 401 from a login attempt (bad credentials)', async () => {
+    stubLocation('/admin/login') // no token on the login page
+
+    await expect(
+      responseErrorHandlers[0]({ response: { status: 401 }, config: { url: '/api/admin/auth/login' } }),
+    ).rejects.toBeDefined()
+
+    expect(window.location.href).toBe('') // page must NOT reload
+  })
+
+  it('does NOT redirect on a 401 when there is no active session token', async () => {
+    stubLocation('/driver/dashboard') // token absent → not an expired session
+
+    await expect(
+      responseErrorHandlers[0]({ response: { status: 401 }, config: { url: '/api/driver/trips' } }),
+    ).rejects.toBeDefined()
+
+    expect(window.location.href).toBe('')
   })
 })

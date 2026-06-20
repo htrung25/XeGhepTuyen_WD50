@@ -36,7 +36,7 @@ test.describe('Admin portal', () => {
 
   test('shows the server error and stays on login when rejected', async ({ page }) => {
     await stubApi(page, {
-      '/admin/auth/login': { status: 422, body: { success: false, message: 'Email hoặc mật khẩu không đúng' } },
+      '/admin/auth/login': { status: 401, body: { success: false, message: 'Email hoặc mật khẩu không đúng' } },
     })
     await page.goto('/admin/login')
 
