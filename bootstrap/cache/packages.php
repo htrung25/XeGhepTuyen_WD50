@@ -6,13 +6,6 @@
       0 => 'Inertia\\ServiceProvider',
     ),
   ),
-  'laravel/dusk' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'Laravel\\Dusk\\DuskServiceProvider',
-    ),
-  ),
   'laravel/fortify' => 
   array (
     'providers' => 
