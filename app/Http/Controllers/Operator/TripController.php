@@ -12,6 +12,7 @@ use App\Services\TripService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TripController extends Controller
 {
@@ -194,5 +195,44 @@ class TripController extends Controller
                 'passengers' => $passengers,
             ],
         ]);
+    }
+
+    /**
+     * Xuất danh sách hành khách ra CSV (mở được bằng Excel, có BOM UTF-8 cho tiếng Việt).
+     */
+    public function exportManifest(string $id): StreamedResponse
+    {
+        $trip = $this->tripRepo->findById($id);
+        $operator = auth('operator')->user()->operator;
+
+        if (! $trip || $trip->vehicle->operator_id !== $operator->id) {
+            abort(404, 'Chuyến đi không tồn tại');
+        }
+
+        $rows = $trip->bookings()
+            ->whereIn('booking_status', ['confirmed', 'checked_in', 'completed', 'no_show'])
+            ->with(['passengers.seatMap', 'pickupStop', 'dropoffStop'])
+            ->get()
+            ->flatMap(fn ($booking) => $booking->passengers->map(fn ($p) => [
+                $booking->booking_code,
+                $p->full_name ?? $booking->contact_name,
+                $booking->contact_phone,
+                $p->seatMap?->seat_code,
+                $booking->pickupStop?->stop_name,
+                $booking->dropoffStop?->stop_name,
+                $booking->booking_status->label(),
+            ]));
+
+        $filename = "manifest-{$trip->tracking_code}.csv";
+
+        return response()->streamDownload(function () use ($rows) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF"); // BOM UTF-8 để Excel đọc đúng tiếng Việt
+            fputcsv($out, ['Mã vé', 'Hành khách', 'SĐT', 'Ghế', 'Điểm đón', 'Điểm trả', 'Trạng thái']);
+            foreach ($rows as $row) {
+                fputcsv($out, $row);
+            }
+            fclose($out);
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 }

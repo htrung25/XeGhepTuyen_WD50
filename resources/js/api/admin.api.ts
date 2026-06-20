@@ -1,74 +1,93 @@
 import { apiClient } from './client'
+import { login, me, logout } from '@/actions/App/Http/Controllers/Admin/AuthController'
+import { index as dashboard } from '@/actions/App/Http/Controllers/Admin/DashboardController'
+import {
+  index as operatorsIndex, show as operatorShow, approve as operatorApprove,
+  reject as operatorReject, suspend as operatorSuspend, resetPassword as operatorResetPassword,
+} from '@/actions/App/Http/Controllers/Admin/OperatorController'
+import {
+  index as partnerAppsIndex, approve as partnerAppApprove, reject as partnerAppReject,
+} from '@/actions/App/Http/Controllers/Admin/PartnerApplicationController'
+import {
+  index as driversIndex, show as driverShow, approve as driverApprove,
+  reject as driverReject, suspend as driverSuspend, resetPassword as driverResetPassword,
+} from '@/actions/App/Http/Controllers/Admin/DriverController'
+import { index as usersIndex, ban as userBan } from '@/actions/App/Http/Controllers/Admin/UserController'
+import { index as bookingsIndex } from '@/actions/App/Http/Controllers/Admin/BookingController'
+import {
+  index as tripsIndex, monitor, autoResolve, show as tripShow, cancel as tripCancel,
+} from '@/actions/App/Http/Controllers/Admin/TripController'
+import {
+  summary, transactions, refunds, commissions, payout,
+} from '@/actions/App/Http/Controllers/Admin/FinanceController'
+import {
+  index as vouchersIndex, store as voucherStore, update as voucherUpdate,
+  toggle as voucherToggle, destroy as voucherDestroy,
+} from '@/actions/App/Http/Controllers/Admin/VoucherController'
+
+import type { QueryParams } from '@/wayfinder'
+
+// Callers pass loose filter records; cast to Wayfinder's QueryParams at the boundary.
+type Params = Record<string, unknown>
 
 export const adminApi = {
   // Auth
-  login:  (data: { email: string; password: string }) => apiClient.post('/admin/auth/login', data),
-  logout: ()                                           => apiClient.post('/admin/auth/logout'),
-  me:     ()                                           => apiClient.get('/admin/auth/me'),
+  login:  (data: { email: string; password: string }) => apiClient.send(login(), data),
+  logout: ()                                           => apiClient.send(logout()),
+  me:     ()                                           => apiClient.send(me()),
 
   // Dashboard
-  getDashboard:    ()                                  => apiClient.get('/admin/dashboard'),
-  getDashboardMap: ()                                  => apiClient.get('/admin/dashboard/map'),
+  getDashboard:    ()           => apiClient.send(dashboard()),
+  // TODO: route BE `/admin/dashboard/map` chưa tồn tại — chưa có action Wayfinder. Giữ tạm.
+  getDashboardMap: ()           => apiClient.get('/admin/dashboard/map'),
 
   // Operators
-  getOperators:    (params?: Record<string, unknown>)  => apiClient.get('/admin/operators', { params }),
-  getOperator:     (id: string)                        => apiClient.get(`/admin/operators/${id}`),
-  verifyOperator:  (id: string, data: { commission_rate: number }) =>
-    apiClient.post(`/admin/operators/${id}/approve`, data),
-  rejectOperator:  (id: string, data: { reason: string }) =>
-    apiClient.post(`/admin/operators/${id}/reject`, data),
-  suspendOperator: (id: string, data: { reason: string }) =>
-    apiClient.post(`/admin/operators/${id}/suspend`, data),
+  getOperators:    (params?: Params) => apiClient.send(operatorsIndex({ query: params as QueryParams })),
+  getOperator:     (id: string)      => apiClient.send(operatorShow(id)),
+  verifyOperator:  (id: string, data: { commission_rate: number }) => apiClient.send(operatorApprove(id), data),
+  rejectOperator:  (id: string, data: { reason: string })          => apiClient.send(operatorReject(id), data),
+  suspendOperator: (id: string, data: { reason: string })          => apiClient.send(operatorSuspend(id), data),
   resetOperatorPassword: (id: string) =>
-    apiClient.post<{ phone: string; temp_password: string }>(`/admin/operators/${id}/reset-password`),
+    apiClient.send<{ phone: string; temp_password: string }>(operatorResetPassword(id)),
 
-  // Partner applications (đơn đăng ký đối tác chờ duyệt)
-  getPartnerApplications:    (params?: Record<string, unknown>) =>
-    apiClient.get('/admin/partner-applications', { params }),
-  approvePartnerApplication: (id: string, data: { commission_rate: number }) =>
-    apiClient.post(`/admin/partner-applications/${id}/approve`, data),
-  rejectPartnerApplication:  (id: string, data: { reason: string }) =>
-    apiClient.post(`/admin/partner-applications/${id}/reject`, data),
+  // Partner applications
+  getPartnerApplications:    (params?: Params) => apiClient.send(partnerAppsIndex({ query: params as QueryParams })),
+  approvePartnerApplication: (id: string, data: { commission_rate: number }) => apiClient.send(partnerAppApprove(id), data),
+  rejectPartnerApplication:  (id: string, data: { reason: string })          => apiClient.send(partnerAppReject(id), data),
 
   // Drivers
-  getDrivers:      (params?: Record<string, unknown>)  => apiClient.get('/admin/drivers', { params }),
-  getDriver:       (id: string)                        => apiClient.get(`/admin/drivers/${id}`),
-  verifyDriver:    (id: string) =>
-    apiClient.post<{ phone: string; temp_password: string }>(`/admin/drivers/${id}/approve`),
-  resetDriverPassword: (id: string) =>
-    apiClient.post<{ phone: string; temp_password: string }>(`/admin/drivers/${id}/reset-password`),
-  rejectDriver:    (id: string, data: { reason: string }) =>
-    apiClient.post(`/admin/drivers/${id}/reject`, data),
-  suspendDriver:   (id: string, data: { reason: string }) =>
-    apiClient.post(`/admin/drivers/${id}/suspend`, data),
+  getDrivers:    (params?: Params) => apiClient.send(driversIndex({ query: params as QueryParams })),
+  getDriver:     (id: string)      => apiClient.send(driverShow(id)),
+  verifyDriver:  (id: string) => apiClient.send<{ phone: string; temp_password: string }>(driverApprove(id)),
+  resetDriverPassword: (id: string) => apiClient.send<{ phone: string; temp_password: string }>(driverResetPassword(id)),
+  rejectDriver:  (id: string, data: { reason: string }) => apiClient.send(driverReject(id), data),
+  suspendDriver: (id: string, data: { reason: string }) => apiClient.send(driverSuspend(id), data),
 
   // Users
-  getUsers:        (params?: Record<string, unknown>)  => apiClient.get('/admin/users', { params }),
-  banUser:         (id: string, data: { reason: string }) =>
-    apiClient.post(`/admin/users/${id}/ban`, data),
+  getUsers: (params?: Params) => apiClient.send(usersIndex({ query: params as QueryParams })),
+  banUser:  (id: string, data: { reason: string }) => apiClient.send(userBan(id), data),
 
   // Bookings
-  getBookings:     (params?: Record<string, unknown>)  => apiClient.get('/admin/bookings', { params }),
+  getBookings: (params?: Params) => apiClient.send(bookingsIndex({ query: params as QueryParams })),
 
   // Trips
-  getTrips:        (params?: Record<string, unknown>)  => apiClient.get('/admin/trips', { params }),
-  getLiveTrips:    ()                                  => apiClient.get('/admin/trips/monitor'),
-  runAutoResolveTrips: ()                              => apiClient.post<{ output: string }>('/admin/trips/auto-resolve'),
-  getTrip:         (id: string)                        => apiClient.get(`/admin/trips/${id}`),
-  cancelTrip:      (id: string, data: { reason: string }) =>
-    apiClient.post(`/admin/trips/${id}/cancel`, data),
+  getTrips:        (params?: Params) => apiClient.send(tripsIndex({ query: params as QueryParams })),
+  getLiveTrips:    ()                => apiClient.send(monitor()),
+  runAutoResolveTrips: ()            => apiClient.send<{ output: string }>(autoResolve()),
+  getTrip:         (id: string)      => apiClient.send(tripShow(id)),
+  cancelTrip:      (id: string, data: { reason: string }) => apiClient.send(tripCancel(id), data),
 
   // Finance
-  getFinanceOverview:   (params?: Record<string, unknown>) => apiClient.get('/admin/finance/summary', { params }),
-  getFinanceTransactions: (params?: Record<string, unknown>) => apiClient.get('/admin/finance/transactions', { params }),
-  getFinanceRefunds:    (params?: Record<string, unknown>) => apiClient.get('/admin/finance/refunds', { params }),
-  getCommissions:       (params?: Record<string, unknown>) => apiClient.get('/admin/finance/commissions', { params }),
-  createPayout:         (data: unknown)               => apiClient.post('/admin/finance/payouts', data),
+  getFinanceOverview:     (params?: Params) => apiClient.send(summary({ query: params as QueryParams })),
+  getFinanceTransactions: (params?: Params) => apiClient.send(transactions({ query: params as QueryParams })),
+  getFinanceRefunds:      (params?: Params) => apiClient.send(refunds({ query: params as QueryParams })),
+  getCommissions:         (params?: Params) => apiClient.send(commissions({ query: params as QueryParams })),
+  createPayout:           (data: unknown)   => apiClient.send(payout(), data),
 
   // Vouchers
-  getVouchers:     (params?: Record<string, unknown>)  => apiClient.get('/admin/vouchers', { params }),
-  createVoucher:   (data: unknown)                     => apiClient.post('/admin/vouchers', data),
-  updateVoucher:   (id: string, data: unknown)         => apiClient.put(`/admin/vouchers/${id}`, data),
-  deleteVoucher:   (id: string)                        => apiClient.delete(`/admin/vouchers/${id}`),
-  toggleVoucher:   (id: string)                        => apiClient.post(`/admin/vouchers/${id}/toggle`),
+  getVouchers:   (params?: Params)            => apiClient.send(vouchersIndex({ query: params as QueryParams })),
+  createVoucher: (data: unknown)              => apiClient.send(voucherStore(), data),
+  updateVoucher: (id: string, data: unknown)  => apiClient.send(voucherUpdate(id), data),
+  deleteVoucher: (id: string)                 => apiClient.send(voucherDestroy(id)),
+  toggleVoucher: (id: string)                 => apiClient.send(voucherToggle(id)),
 }

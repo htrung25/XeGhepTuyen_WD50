@@ -96,4 +96,37 @@ class CheckinController extends Controller
             return response()->json(['success' => false, 'message' => 'Có lỗi xảy ra'], 500);
         }
     }
+
+    /**
+     * Tài xế đánh dấu khách vắng mặt (no-show) sau khi đợi tại điểm đón.
+     */
+    public function absent(Request $request): JsonResponse
+    {
+        $request->validate([
+            'trip_id'    => ['required', 'uuid'],
+            'booking_id' => ['required', 'uuid'],
+        ]);
+
+        $driver  = auth('driver')->user()->driver;
+        $booking = Booking::with('trip')->find($request->booking_id);
+
+        if (! $booking || $booking->trip_id !== $request->trip_id) {
+            return response()->json(['success' => false, 'message' => 'Không tìm thấy vé trong chuyến này'], 404);
+        }
+
+        if ($booking->trip->driver_id !== $driver->id) {
+            return response()->json(['success' => false, 'message' => 'Vé không thuộc chuyến của bạn'], 403);
+        }
+
+        if ($booking->booking_status !== BookingStatus::Confirmed) {
+            return response()->json([
+                'success' => false,
+                'message' => "Chỉ đánh vắng vé đã xác nhận (hiện: {$booking->booking_status->label()})",
+            ], 422);
+        }
+
+        $booking->update(['booking_status' => BookingStatus::NoShow]);
+
+        return response()->json(['success' => true, 'message' => "Đã đánh vắng khách: {$booking->contact_name}"]);
+    }
 }

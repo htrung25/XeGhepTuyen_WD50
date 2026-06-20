@@ -32,6 +32,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('routes',        [RouteController::class, 'store']);
     Route::get('routes/{id}',    [RouteController::class, 'show']);
     Route::put('routes/{id}',    [RouteController::class, 'update']);
+    Route::delete('routes/{id}', [RouteController::class, 'destroy']);
 
     // Vehicles
     Route::get('vehicles',       [VehicleController::class, 'index']);
@@ -55,6 +56,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('trips/{id}/cancel',         [TripController::class, 'cancel']);
     Route::post('trips/{id}/complete',       [TripController::class, 'complete']);
     Route::get('trips/{id}/manifest',        [TripController::class, 'manifest']);
+    Route::post('trips/{id}/manifest/export',[TripController::class, 'exportManifest']);
 
     // Bookings
     Route::get('bookings',       [BookingController::class, 'index']);

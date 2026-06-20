@@ -83,4 +83,24 @@ class RouteController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Cập nhật thành công', 'data' => $route]);
     }
+
+    public function destroy(string $id): JsonResponse
+    {
+        $route = Route::find($id);
+
+        if (!$route) {
+            return response()->json(['success' => false, 'message' => 'Tuyến đường không tồn tại'], 404);
+        }
+
+        if (!$route->canBeDeleted()) {
+            return response()->json(['success' => false, 'message' => 'Không thể xoá tuyến đang có chuyến lịch'], 422);
+        }
+
+        DB::transaction(function () use ($route) {
+            $route->stops()->delete();
+            $route->delete();
+        });
+
+        return response()->json(['success' => true, 'message' => 'Đã xoá tuyến đường']);
+    }
 }

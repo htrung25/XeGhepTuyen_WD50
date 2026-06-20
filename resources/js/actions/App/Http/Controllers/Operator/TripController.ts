@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Operator\TripController::index
-* @see app/Http/Controllers/Operator/TripController.php:23
+* @see app/Http/Controllers/Operator/TripController.php:24
 * @route '/api/operator/trips'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::index
-* @see app/Http/Controllers/Operator/TripController.php:23
+* @see app/Http/Controllers/Operator/TripController.php:24
 * @route '/api/operator/trips'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::index
-* @see app/Http/Controllers/Operator/TripController.php:23
+* @see app/Http/Controllers/Operator/TripController.php:24
 * @route '/api/operator/trips'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::index
-* @see app/Http/Controllers/Operator/TripController.php:23
+* @see app/Http/Controllers/Operator/TripController.php:24
 * @route '/api/operator/trips'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::index
-* @see app/Http/Controllers/Operator/TripController.php:23
+* @see app/Http/Controllers/Operator/TripController.php:24
 * @route '/api/operator/trips'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::index
-* @see app/Http/Controllers/Operator/TripController.php:23
+* @see app/Http/Controllers/Operator/TripController.php:24
 * @route '/api/operator/trips'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::index
-* @see app/Http/Controllers/Operator/TripController.php:23
+* @see app/Http/Controllers/Operator/TripController.php:24
 * @route '/api/operator/trips'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::store
-* @see app/Http/Controllers/Operator/TripController.php:37
+* @see app/Http/Controllers/Operator/TripController.php:38
 * @route '/api/operator/trips'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -97,7 +97,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::store
-* @see app/Http/Controllers/Operator/TripController.php:37
+* @see app/Http/Controllers/Operator/TripController.php:38
 * @route '/api/operator/trips'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::store
-* @see app/Http/Controllers/Operator/TripController.php:37
+* @see app/Http/Controllers/Operator/TripController.php:38
 * @route '/api/operator/trips'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -116,7 +116,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::store
-* @see app/Http/Controllers/Operator/TripController.php:37
+* @see app/Http/Controllers/Operator/TripController.php:38
 * @route '/api/operator/trips'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -126,7 +126,7 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::store
-* @see app/Http/Controllers/Operator/TripController.php:37
+* @see app/Http/Controllers/Operator/TripController.php:38
 * @route '/api/operator/trips'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -138,7 +138,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::bulkStore
-* @see app/Http/Controllers/Operator/TripController.php:58
+* @see app/Http/Controllers/Operator/TripController.php:59
 * @route '/api/operator/trips/bulk'
 */
 export const bulkStore = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -153,7 +153,7 @@ bulkStore.definition = {
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::bulkStore
-* @see app/Http/Controllers/Operator/TripController.php:58
+* @see app/Http/Controllers/Operator/TripController.php:59
 * @route '/api/operator/trips/bulk'
 */
 bulkStore.url = (options?: RouteQueryOptions) => {
@@ -162,7 +162,7 @@ bulkStore.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::bulkStore
-* @see app/Http/Controllers/Operator/TripController.php:58
+* @see app/Http/Controllers/Operator/TripController.php:59
 * @route '/api/operator/trips/bulk'
 */
 bulkStore.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -172,7 +172,7 @@ bulkStore.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::bulkStore
-* @see app/Http/Controllers/Operator/TripController.php:58
+* @see app/Http/Controllers/Operator/TripController.php:59
 * @route '/api/operator/trips/bulk'
 */
 const bulkStoreForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -182,7 +182,7 @@ const bulkStoreForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'>
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::bulkStore
-* @see app/Http/Controllers/Operator/TripController.php:58
+* @see app/Http/Controllers/Operator/TripController.php:59
 * @route '/api/operator/trips/bulk'
 */
 bulkStoreForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -194,7 +194,7 @@ bulkStore.form = bulkStoreForm
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::show
-* @see app/Http/Controllers/Operator/TripController.php:92
+* @see app/Http/Controllers/Operator/TripController.php:93
 * @route '/api/operator/trips/{id}'
 */
 export const show = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -209,7 +209,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::show
-* @see app/Http/Controllers/Operator/TripController.php:92
+* @see app/Http/Controllers/Operator/TripController.php:93
 * @route '/api/operator/trips/{id}'
 */
 show.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -236,7 +236,7 @@ show.url = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::show
-* @see app/Http/Controllers/Operator/TripController.php:92
+* @see app/Http/Controllers/Operator/TripController.php:93
 * @route '/api/operator/trips/{id}'
 */
 show.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -246,7 +246,7 @@ show.get = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::show
-* @see app/Http/Controllers/Operator/TripController.php:92
+* @see app/Http/Controllers/Operator/TripController.php:93
 * @route '/api/operator/trips/{id}'
 */
 show.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -256,7 +256,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::show
-* @see app/Http/Controllers/Operator/TripController.php:92
+* @see app/Http/Controllers/Operator/TripController.php:93
 * @route '/api/operator/trips/{id}'
 */
 const showForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -266,7 +266,7 @@ const showForm = (args: { id: string | number } | [id: string | number ] | strin
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::show
-* @see app/Http/Controllers/Operator/TripController.php:92
+* @see app/Http/Controllers/Operator/TripController.php:93
 * @route '/api/operator/trips/{id}'
 */
 showForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -276,7 +276,7 @@ showForm.get = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::show
-* @see app/Http/Controllers/Operator/TripController.php:92
+* @see app/Http/Controllers/Operator/TripController.php:93
 * @route '/api/operator/trips/{id}'
 */
 showForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -293,7 +293,7 @@ show.form = showForm
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::cancel
-* @see app/Http/Controllers/Operator/TripController.php:104
+* @see app/Http/Controllers/Operator/TripController.php:105
 * @route '/api/operator/trips/{id}/cancel'
 */
 export const cancel = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -308,7 +308,7 @@ cancel.definition = {
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::cancel
-* @see app/Http/Controllers/Operator/TripController.php:104
+* @see app/Http/Controllers/Operator/TripController.php:105
 * @route '/api/operator/trips/{id}/cancel'
 */
 cancel.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -335,7 +335,7 @@ cancel.url = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::cancel
-* @see app/Http/Controllers/Operator/TripController.php:104
+* @see app/Http/Controllers/Operator/TripController.php:105
 * @route '/api/operator/trips/{id}/cancel'
 */
 cancel.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -345,7 +345,7 @@ cancel.post = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::cancel
-* @see app/Http/Controllers/Operator/TripController.php:104
+* @see app/Http/Controllers/Operator/TripController.php:105
 * @route '/api/operator/trips/{id}/cancel'
 */
 const cancelForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -355,7 +355,7 @@ const cancelForm = (args: { id: string | number } | [id: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::cancel
-* @see app/Http/Controllers/Operator/TripController.php:104
+* @see app/Http/Controllers/Operator/TripController.php:105
 * @route '/api/operator/trips/{id}/cancel'
 */
 cancelForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -367,7 +367,7 @@ cancel.form = cancelForm
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::complete
-* @see app/Http/Controllers/Operator/TripController.php:129
+* @see app/Http/Controllers/Operator/TripController.php:130
 * @route '/api/operator/trips/{id}/complete'
 */
 export const complete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -382,7 +382,7 @@ complete.definition = {
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::complete
-* @see app/Http/Controllers/Operator/TripController.php:129
+* @see app/Http/Controllers/Operator/TripController.php:130
 * @route '/api/operator/trips/{id}/complete'
 */
 complete.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -409,7 +409,7 @@ complete.url = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::complete
-* @see app/Http/Controllers/Operator/TripController.php:129
+* @see app/Http/Controllers/Operator/TripController.php:130
 * @route '/api/operator/trips/{id}/complete'
 */
 complete.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -419,7 +419,7 @@ complete.post = (args: { id: string | number } | [id: string | number ] | string
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::complete
-* @see app/Http/Controllers/Operator/TripController.php:129
+* @see app/Http/Controllers/Operator/TripController.php:130
 * @route '/api/operator/trips/{id}/complete'
 */
 const completeForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -429,7 +429,7 @@ const completeForm = (args: { id: string | number } | [id: string | number ] | s
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::complete
-* @see app/Http/Controllers/Operator/TripController.php:129
+* @see app/Http/Controllers/Operator/TripController.php:130
 * @route '/api/operator/trips/{id}/complete'
 */
 completeForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -441,7 +441,7 @@ complete.form = completeForm
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::manifest
-* @see app/Http/Controllers/Operator/TripController.php:157
+* @see app/Http/Controllers/Operator/TripController.php:158
 * @route '/api/operator/trips/{id}/manifest'
 */
 export const manifest = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -456,7 +456,7 @@ manifest.definition = {
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::manifest
-* @see app/Http/Controllers/Operator/TripController.php:157
+* @see app/Http/Controllers/Operator/TripController.php:158
 * @route '/api/operator/trips/{id}/manifest'
 */
 manifest.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -483,7 +483,7 @@ manifest.url = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::manifest
-* @see app/Http/Controllers/Operator/TripController.php:157
+* @see app/Http/Controllers/Operator/TripController.php:158
 * @route '/api/operator/trips/{id}/manifest'
 */
 manifest.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -493,7 +493,7 @@ manifest.get = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::manifest
-* @see app/Http/Controllers/Operator/TripController.php:157
+* @see app/Http/Controllers/Operator/TripController.php:158
 * @route '/api/operator/trips/{id}/manifest'
 */
 manifest.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -503,7 +503,7 @@ manifest.head = (args: { id: string | number } | [id: string | number ] | string
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::manifest
-* @see app/Http/Controllers/Operator/TripController.php:157
+* @see app/Http/Controllers/Operator/TripController.php:158
 * @route '/api/operator/trips/{id}/manifest'
 */
 const manifestForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -513,7 +513,7 @@ const manifestForm = (args: { id: string | number } | [id: string | number ] | s
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::manifest
-* @see app/Http/Controllers/Operator/TripController.php:157
+* @see app/Http/Controllers/Operator/TripController.php:158
 * @route '/api/operator/trips/{id}/manifest'
 */
 manifestForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -523,7 +523,7 @@ manifestForm.get = (args: { id: string | number } | [id: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\Operator\TripController::manifest
-* @see app/Http/Controllers/Operator/TripController.php:157
+* @see app/Http/Controllers/Operator/TripController.php:158
 * @route '/api/operator/trips/{id}/manifest'
 */
 manifestForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -538,6 +538,80 @@ manifestForm.head = (args: { id: string | number } | [id: string | number ] | st
 
 manifest.form = manifestForm
 
-const TripController = { index, store, bulkStore, show, cancel, complete, manifest }
+/**
+* @see \App\Http\Controllers\Operator\TripController::exportManifest
+* @see app/Http/Controllers/Operator/TripController.php:203
+* @route '/api/operator/trips/{id}/manifest/export'
+*/
+export const exportManifest = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: exportManifest.url(args, options),
+    method: 'post',
+})
+
+exportManifest.definition = {
+    methods: ["post"],
+    url: '/api/operator/trips/{id}/manifest/export',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Operator\TripController::exportManifest
+* @see app/Http/Controllers/Operator/TripController.php:203
+* @route '/api/operator/trips/{id}/manifest/export'
+*/
+exportManifest.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { id: args }
+    }
+
+    if (Array.isArray(args)) {
+        args = {
+            id: args[0],
+        }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+        id: args.id,
+    }
+
+    return exportManifest.definition.url
+            .replace('{id}', parsedArgs.id.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Operator\TripController::exportManifest
+* @see app/Http/Controllers/Operator/TripController.php:203
+* @route '/api/operator/trips/{id}/manifest/export'
+*/
+exportManifest.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: exportManifest.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Operator\TripController::exportManifest
+* @see app/Http/Controllers/Operator/TripController.php:203
+* @route '/api/operator/trips/{id}/manifest/export'
+*/
+const exportManifestForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: exportManifest.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Operator\TripController::exportManifest
+* @see app/Http/Controllers/Operator/TripController.php:203
+* @route '/api/operator/trips/{id}/manifest/export'
+*/
+exportManifestForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: exportManifest.url(args, options),
+    method: 'post',
+})
+
+exportManifest.form = exportManifestForm
+
+const TripController = { index, store, bulkStore, show, cancel, complete, manifest, exportManifest }
 
 export default TripController

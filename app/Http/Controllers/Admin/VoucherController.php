@@ -42,6 +42,30 @@ class VoucherController extends Controller
         return response()->json(['success' => true, 'data' => $voucher]);
     }
 
+    public function update(Request $request, string $id): JsonResponse
+    {
+        $voucher = Voucher::find($id);
+
+        if (!$voucher) {
+            return response()->json(['success' => false, 'message' => 'Voucher không tồn tại'], 404);
+        }
+
+        $validated = $request->validate([
+            'discount_type'  => ['sometimes', 'in:percent,fixed'],
+            'discount_value' => ['sometimes', 'numeric', 'min:0'],
+            'min_order'      => ['sometimes', 'integer', 'min:0'],
+            'max_discount'   => ['sometimes', 'nullable', 'integer', 'min:0'],
+            'usage_limit'    => ['sometimes', 'integer', 'min:1'],
+            'valid_from'     => ['sometimes', 'date'],
+            'valid_until'    => ['sometimes', 'date', 'after:valid_from'],
+            'is_active'      => ['sometimes', 'boolean'],
+        ]);
+
+        $voucher->update($validated);
+
+        return response()->json(['success' => true, 'message' => 'Cập nhật voucher thành công', 'data' => $voucher]);
+    }
+
     public function toggle(string $id): JsonResponse
     {
         $voucher = Voucher::find($id);

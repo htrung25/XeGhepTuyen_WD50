@@ -55,6 +55,62 @@ checkinForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> =>
 
 checkin.form = checkinForm
 
-const CheckinController = { checkin }
+/**
+* @see \App\Http\Controllers\Driver\CheckinController::absent
+* @see app/Http/Controllers/Driver/CheckinController.php:103
+* @route '/api/driver/checkin/absent'
+*/
+export const absent = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: absent.url(options),
+    method: 'post',
+})
+
+absent.definition = {
+    methods: ["post"],
+    url: '/api/driver/checkin/absent',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Driver\CheckinController::absent
+* @see app/Http/Controllers/Driver/CheckinController.php:103
+* @route '/api/driver/checkin/absent'
+*/
+absent.url = (options?: RouteQueryOptions) => {
+    return absent.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Driver\CheckinController::absent
+* @see app/Http/Controllers/Driver/CheckinController.php:103
+* @route '/api/driver/checkin/absent'
+*/
+absent.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: absent.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Driver\CheckinController::absent
+* @see app/Http/Controllers/Driver/CheckinController.php:103
+* @route '/api/driver/checkin/absent'
+*/
+const absentForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: absent.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Driver\CheckinController::absent
+* @see app/Http/Controllers/Driver/CheckinController.php:103
+* @route '/api/driver/checkin/absent'
+*/
+absentForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: absent.url(options),
+    method: 'post',
+})
+
+absent.form = absentForm
+
+const CheckinController = { checkin, absent }
 
 export default CheckinController

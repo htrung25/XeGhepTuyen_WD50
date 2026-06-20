@@ -43,5 +43,8 @@ export function setupDriverGuard(router: Router) {
     if (to.meta.requiresAuth && !auth.isAuthenticated) {
       return { path: '/driver/login', query: { redirect: to.fullPath } }
     }
+    if (to.path === '/driver/login' && auth.isAuthenticated) {
+      return { path: '/driver/dashboard' }
+    }
   })
 }

@@ -236,8 +236,92 @@ showForm.head = (args: { id: string | number } | [id: string | number ] | string
 show.form = showForm
 
 /**
-* @see \App\Http\Controllers\Admin\VoucherController::toggle
+* @see \App\Http\Controllers\Admin\VoucherController::update
 * @see app/Http/Controllers/Admin/VoucherController.php:45
+* @route '/api/admin/vouchers/{id}'
+*/
+export const update = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+    url: update.url(args, options),
+    method: 'put',
+})
+
+update.definition = {
+    methods: ["put"],
+    url: '/api/admin/vouchers/{id}',
+} satisfies RouteDefinition<["put"]>
+
+/**
+* @see \App\Http\Controllers\Admin\VoucherController::update
+* @see app/Http/Controllers/Admin/VoucherController.php:45
+* @route '/api/admin/vouchers/{id}'
+*/
+update.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { id: args }
+    }
+
+    if (Array.isArray(args)) {
+        args = {
+            id: args[0],
+        }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+        id: args.id,
+    }
+
+    return update.definition.url
+            .replace('{id}', parsedArgs.id.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Admin\VoucherController::update
+* @see app/Http/Controllers/Admin/VoucherController.php:45
+* @route '/api/admin/vouchers/{id}'
+*/
+update.put = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+    url: update.url(args, options),
+    method: 'put',
+})
+
+/**
+* @see \App\Http\Controllers\Admin\VoucherController::update
+* @see app/Http/Controllers/Admin/VoucherController.php:45
+* @route '/api/admin/vouchers/{id}'
+*/
+const updateForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: update.url(args, {
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'PUT',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Admin\VoucherController::update
+* @see app/Http/Controllers/Admin/VoucherController.php:45
+* @route '/api/admin/vouchers/{id}'
+*/
+updateForm.put = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: update.url(args, {
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'PUT',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'post',
+})
+
+update.form = updateForm
+
+/**
+* @see \App\Http\Controllers\Admin\VoucherController::toggle
+* @see app/Http/Controllers/Admin/VoucherController.php:69
 * @route '/api/admin/vouchers/{id}/toggle'
 */
 export const toggle = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -252,7 +336,7 @@ toggle.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\VoucherController::toggle
-* @see app/Http/Controllers/Admin/VoucherController.php:45
+* @see app/Http/Controllers/Admin/VoucherController.php:69
 * @route '/api/admin/vouchers/{id}/toggle'
 */
 toggle.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -279,7 +363,7 @@ toggle.url = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Http\Controllers\Admin\VoucherController::toggle
-* @see app/Http/Controllers/Admin/VoucherController.php:45
+* @see app/Http/Controllers/Admin/VoucherController.php:69
 * @route '/api/admin/vouchers/{id}/toggle'
 */
 toggle.put = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -289,7 +373,7 @@ toggle.put = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Http\Controllers\Admin\VoucherController::toggle
-* @see app/Http/Controllers/Admin/VoucherController.php:45
+* @see app/Http/Controllers/Admin/VoucherController.php:69
 * @route '/api/admin/vouchers/{id}/toggle'
 */
 const toggleForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -304,7 +388,7 @@ const toggleForm = (args: { id: string | number } | [id: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\Admin\VoucherController::toggle
-* @see app/Http/Controllers/Admin/VoucherController.php:45
+* @see app/Http/Controllers/Admin/VoucherController.php:69
 * @route '/api/admin/vouchers/{id}/toggle'
 */
 toggleForm.put = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -321,7 +405,7 @@ toggle.form = toggleForm
 
 /**
 * @see \App\Http\Controllers\Admin\VoucherController::destroy
-* @see app/Http/Controllers/Admin/VoucherController.php:60
+* @see app/Http/Controllers/Admin/VoucherController.php:84
 * @route '/api/admin/vouchers/{id}'
 */
 export const destroy = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -336,7 +420,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\VoucherController::destroy
-* @see app/Http/Controllers/Admin/VoucherController.php:60
+* @see app/Http/Controllers/Admin/VoucherController.php:84
 * @route '/api/admin/vouchers/{id}'
 */
 destroy.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -363,7 +447,7 @@ destroy.url = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Http\Controllers\Admin\VoucherController::destroy
-* @see app/Http/Controllers/Admin/VoucherController.php:60
+* @see app/Http/Controllers/Admin/VoucherController.php:84
 * @route '/api/admin/vouchers/{id}'
 */
 destroy.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -373,7 +457,7 @@ destroy.delete = (args: { id: string | number } | [id: string | number ] | strin
 
 /**
 * @see \App\Http\Controllers\Admin\VoucherController::destroy
-* @see app/Http/Controllers/Admin/VoucherController.php:60
+* @see app/Http/Controllers/Admin/VoucherController.php:84
 * @route '/api/admin/vouchers/{id}'
 */
 const destroyForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -388,7 +472,7 @@ const destroyForm = (args: { id: string | number } | [id: string | number ] | st
 
 /**
 * @see \App\Http\Controllers\Admin\VoucherController::destroy
-* @see app/Http/Controllers/Admin/VoucherController.php:60
+* @see app/Http/Controllers/Admin/VoucherController.php:84
 * @route '/api/admin/vouchers/{id}'
 */
 destroyForm.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -403,6 +487,6 @@ destroyForm.delete = (args: { id: string | number } | [id: string | number ] | s
 
 destroy.form = destroyForm
 
-const VoucherController = { index, store, show, toggle, destroy }
+const VoucherController = { index, store, show, update, toggle, destroy }
 
 export default VoucherController

@@ -53,7 +53,7 @@ async function fetchData() {
     operatorApi.getDrivers(),
   ])
   loading.value = false
-  if (vRes.error || dRes.error) { error.value = vRes.error ?? dRes.error; return }
+  if (vRes.error || dRes.error) { error.value = vRes.error ?? dRes.error ?? ''; return }
   vehicles.value = (vRes.data as any)?.data ?? vRes.data ?? []
   drivers.value  = (dRes.data as any)?.data ?? dRes.data ?? []
 }

@@ -33,6 +33,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Check-in
     Route::post('checkin',            [CheckinController::class, 'checkin']);
+    Route::post('checkin/absent',     [CheckinController::class, 'absent']);
 
     // Location
     Route::post('location',           [LocationController::class, 'update']);
