@@ -1,13 +1,14 @@
 <?php
 
+use App\Http\Middleware\EnsureUserRole;
 use App\Http\Middleware\HandleAppearance;
-use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -17,28 +18,31 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
         then: function () {
             Route::middleware(['api', 'throttle:60,1'])
-                 ->prefix('api/public')
-                 ->group(base_path('routes/api_public.php'));
+                ->prefix('api/public')
+                ->group(base_path('routes/api_public.php'));
 
             Route::middleware(['api', 'throttle:60,1'])
-                 ->prefix('api/customer')
-                 ->group(base_path('routes/api_customer.php'));
+                ->prefix('api/customer')
+                ->group(base_path('routes/api_customer.php'));
 
             Route::middleware(['api', 'throttle:60,1'])
-                 ->prefix('api/driver')
-                 ->group(base_path('routes/api_driver.php'));
+                ->prefix('api/driver')
+                ->group(base_path('routes/api_driver.php'));
 
             Route::middleware(['api', 'throttle:60,1'])
-                 ->prefix('api/operator')
-                 ->group(base_path('routes/api_operator.php'));
+                ->prefix('api/operator')
+                ->group(base_path('routes/api_operator.php'));
 
             Route::middleware(['api', 'throttle:60,1'])
-                 ->prefix('api/admin')
-                 ->group(base_path('routes/api_admin.php'));
+                ->prefix('api/admin')
+                ->group(base_path('routes/api_admin.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
+
+        // Chặn truy cập chéo portal sau khi auth:sanctum xác thực token.
+        $middleware->alias(['role' => EnsureUserRole::class]);
 
         $middleware->web(append: [
             HandleAppearance::class,

@@ -29,10 +29,9 @@ Cập nhật  : 2026-06-06
 [x] Phase 6: Admin Features           (8/8 controllers)
 [x] Phase 7: Jobs & Notifications     (9/9 jobs, 6/6 events, 5/5 listeners)
 [x] Phase 9: Operator Portal Vue      (6/6 screens + layout + store + API + router)
-[~] Phase 8: Tests                    (Customer actor xong 2026-06-08: 5 test files, 22 test cases)
+[x] Phase 8: Tests                    (Đã viết BookingServiceTest kiểm thử luồng đặt vé & hoàn tiền, tổng cộng 30 test cases chạy thành công)
 [x] Phase 10: Admin Portal Vue          (7/7 screens + layout + store + API + router)
 [x] Phase 12: Wiring complete              (entries, vite, blade, web routes, stores, router)
-[~] Phase 8:  Tests                        (Customer+Driver done 2026-06-08: 9 test files, 38 test cases)
 [x] Phase 11: Customer Vue portal          (10/10 screens + layout rewrite desktop)
 [x] Phase 11b: Driver Vue portal           (9/9 files — full desktop rebuild 2026-06-06)
 ```
@@ -465,7 +464,7 @@ Rule        : approve chặn nếu SĐT đã có User; chặn duyệt lại; rej
               business_license (NOT NULL) tạm map = tax_code (chờ nhà xe bổ sung số GPKD).
 SMS duyệt   : approve sinh mật khẩu tạm (2 chữ hoa+6 số, vd CG177965) lưu vào User
               (cast hashed) + dispatch SendSmsNotificationJob (queue notifications) gửi
-              SĐT+mật khẩu+link /operator/login. Fire-and-forget (try/catch, lỗi SMS
+              SĐT+mật khẩu+link /operator/login. Fire-and-forget (try/catch, lỗi SMS 
               KHÔNG làm hỏng duyệt). Helper generateTempPassword()+sendCredentialsSms().
 Đội xe (v2) : 2026-06-17 đổi "loại xe chủ đạo" → CƠ CẤU THEO LOẠI. Migration 000019:
               drop vehicle_type, add fleet_breakdown JSON {sedan_4,mpv_7,van_9,minibus_16};
@@ -575,6 +574,29 @@ Còn lại (mồ côi, không gỡ — vô hại, có thể tái dùng làm acti
 Phát hiện phụ (CHƯA sửa, chờ quyết định): (a) trạng thái 'boarding' không dùng —
   start() nhảy thẳng scheduled→in_progress; (b) checkin không kiểm tra trip đã start chưa;
   (c) start() không chặn bắt đầu trước giờ khởi hành. Đều không chặn vận hành.
+```
+
+### 4.13 Cô lập 4 portal bằng middleware `role` (chốt 2026-06-21)
+```
+Vấn đề   : 03-architecture §2 ghi "4 guard riêng biệt" là FINAL, nhưng THỰC TẾ cả 4
+           route file dùng chung 'auth:sanctum'. Vì 4 guard customer/driver/operator/
+           admin trong config/auth.php đều driver=sanctum + CÙNG model User, mà Sanctum
+           auth bằng token sẽ resolve tokenable (User) BỎ QUA provider của guard ⇒ đổi
+           sang 'auth:customer'… cũng KHÔNG lọc theo role. Token không set abilities
+           (mặc định *). Hệ quả: token customer hợp lệ vẫn qua được /api/admin/* (Broken
+           Access Control). Admin controller (vd DashboardController) không re-check role
+           ⇒ rò rỉ; driver/operator deref ->driver/->operator null ⇒ 500 (che lỗi tình cờ).
+Chốt     : Phương án B — middleware kiểm tra role (KHÔNG dùng token abilities để tránh
+           đá session đang chạy; KHÔNG chỉ đổi guard vì vô tác dụng với model User chung).
+BE       : app/Http/Middleware/EnsureUserRole.php — so user()->role->value với tham số
+           role, lệch → abort(403,'Không có quyền truy cập'). Alias 'role' đăng ký trong
+           bootstrap/app.php (withMiddleware). 4 route group đổi thành
+           ['auth:sanctum', 'role:<portal>'] (customer/driver/operator/admin).
+Test     : tests/Feature/PortalAccessControlTest.php (7 case) — cross-portal=403,
+           đúng role=200, không token=401. Toàn suite 29 passed/8 skipped/0 failed.
+Lưu ý    : token cũ trong DB vẫn hợp lệ (không cần login lại). Production có route:cache
+           phải chạy lại `php artisan route:cache` sau deploy. Cách C (Sanctum abilities)
+           để dành cho Phase 2 nếu cần phân quyền chi tiết theo hành động.
 ```
 
 ---
