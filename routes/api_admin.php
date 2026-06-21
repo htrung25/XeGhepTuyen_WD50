@@ -28,6 +28,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
     // Dashboard
     Route::get('dashboard', [DashboardController::class, 'index']);
+    Route::get('dashboard/map', [DashboardController::class, 'map']);
 
     // Operators
     Route::get('operators', [OperatorController::class, 'index']);

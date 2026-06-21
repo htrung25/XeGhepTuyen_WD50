@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 vi.mock('@/api/client', () => ({
   apiClient: {
     send: vi.fn(() => Promise.resolve({ data: null, message: null, error: null })),
+    sendForm: vi.fn(() => Promise.resolve({ data: null, message: null, error: null })),
     get: vi.fn(() => Promise.resolve({ data: null, error: null })),
     put: vi.fn(() => Promise.resolve({ data: null, error: null })),
     post: vi.fn(() => Promise.resolve({ data: null, message: null, error: null })),
@@ -65,8 +66,41 @@ describe('driverApi → Wayfinder route contract', () => {
     )
   })
 
-  it('getNotifications stays on the legacy client (route BE not yet implemented)', () => {
+  it('getNotifications resolves to GET /api/driver/notifications with query', () => {
     driverApi.getNotifications({ page: 1 })
-    expect(apiClient.get).toHaveBeenCalledWith('/driver/notifications', { params: { page: 1 } })
+    expect(apiClient.send).toHaveBeenCalledWith({
+      url: '/api/driver/notifications?page=1',
+      method: 'get',
+    })
+  })
+
+  it('markNotificationRead resolves to PUT /api/driver/notifications/{id}/read', () => {
+    driverApi.markNotificationRead('n-1')
+    expect(apiClient.send).toHaveBeenCalledWith({ url: '/api/driver/notifications/n-1/read', method: 'put' })
+  })
+
+  it('updateProfile resolves to PUT /api/driver/auth/profile', () => {
+    driverApi.updateProfile({ full_name: 'Tài Mới' })
+    expect(apiClient.send).toHaveBeenCalledWith(
+      { url: '/api/driver/auth/profile', method: 'put' },
+      { full_name: 'Tài Mới' },
+    )
+  })
+
+  it('changePassword resolves to PUT /api/driver/auth/password', () => {
+    driverApi.changePassword({ old_password: 'a', new_password: 'b', new_password_confirmation: 'b' })
+    expect(apiClient.send).toHaveBeenCalledWith(
+      { url: '/api/driver/auth/password', method: 'put' },
+      { old_password: 'a', new_password: 'b', new_password_confirmation: 'b' },
+    )
+  })
+
+  it('uploadDocument sends multipart via sendForm to POST /api/driver/documents', () => {
+    const file = new File(['x'], 'cmnd.jpg', { type: 'image/jpeg' })
+    driverApi.uploadDocument('id_card_front', file)
+    expect(apiClient.sendForm).toHaveBeenCalledWith(
+      { url: '/api/driver/documents', method: 'post' },
+      expect.any(FormData),
+    )
   })
 })

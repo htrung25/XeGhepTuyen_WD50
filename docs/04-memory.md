@@ -599,6 +599,26 @@ Lưu ý    : token cũ trong DB vẫn hợp lệ (không cần login lại). Pro
            để dành cho Phase 2 nếu cần phân quyền chi tiết theo hành động.
 ```
 
+### 4.14 Hoàn tất Group A Wayfinder + 6 endpoint BE còn thiếu (chốt 2026-06-21)
+```
+Bối cảnh : [[project_wayfinder_migration]] còn "6 method Group A giữ TODO" — FE gọi
+           nhưng BE chưa có route (fail im lặng), kèm bug FE.
+Đã thêm BE:
+  - PUT  /driver/auth/profile   → Driver/AuthController::updateProfile (full_name/email/avatar)
+  - PUT  /driver/auth/password  → Driver/AuthController::changePassword (sai MK cũ → 422 INVALID_CURRENT_PASSWORD)
+  - POST /driver/documents      → Driver/AuthController::uploadDocument (type→cột id_card_front/back_url|license_front_url, ảnh ≤10MB)
+  - GET  /driver/notifications + PUT /driver/notifications/{id}/read → Driver/NotificationController (mirror Customer)
+  - GET  /admin/dashboard/map   → Admin/DashboardController::map (tái dùng TripRepository::findInProgress + LiveTripResource, chung nguồn /admin/trips/monitor)
+Fix #3   : driver.api uploadDocument build FormData nhưng gọi apiClient.post (ép JSON) →
+           đổi apiClient.sendForm(uploadDocument(), form) (multipart đúng).
+FE       : driver.api.ts + admin.api.ts gỡ hết TODO, dùng apiClient.send/sendForm với
+           Wayfinder action. Chạy `php artisan wayfinder:generate` sinh lại actions.
+Test     : tests/Feature/DriverSelfServiceTest.php (8 case BE) + viết lại 2 FE spec
+           (driver/admin) từ "legacy client" → assert Wayfinder. BE 44/36 passed/8 skip,
+           FE 22/22. TS lỗi 'form' ở starter-kit (DeleteUser/auth/settings) là CŨ, không liên quan.
+Lưu ý    : routes driver/admin đã gắn role middleware [[4.13]] nên endpoint mới tự kế thừa.
+```
+
 ---
 
 ## 5. VẤN ĐỀ ĐÃ GẶP VÀ CÁCH GIẢI QUYẾT

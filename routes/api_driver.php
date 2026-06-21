@@ -4,6 +4,7 @@ use App\Http\Controllers\Driver\AuthController;
 use App\Http\Controllers\Driver\CheckinController;
 use App\Http\Controllers\Driver\EarningController;
 use App\Http\Controllers\Driver\LocationController;
+use App\Http\Controllers\Driver\NotificationController;
 use App\Http\Controllers\Driver\TripController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +23,13 @@ Route::middleware(['auth:sanctum', 'role:driver'])->group(function () {
     Route::get('auth/me', [AuthController::class, 'me']);
     Route::post('auth/logout', [AuthController::class, 'logout']);
     Route::put('auth/status', [AuthController::class, 'updateStatus']);
+    Route::put('auth/profile', [AuthController::class, 'updateProfile']);
+    Route::put('auth/password', [AuthController::class, 'changePassword']);
+    Route::post('documents', [AuthController::class, 'uploadDocument']);
+
+    // Notifications
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::put('notifications/{id}/read', [NotificationController::class, 'markRead']);
 
     // Trips
     Route::get('trips', [TripController::class, 'index']);

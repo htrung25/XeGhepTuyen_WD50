@@ -69,8 +69,8 @@ describe('adminApi → Wayfinder route contract', () => {
     expect(apiClient.send).toHaveBeenCalledWith({ url: '/api/admin/vouchers/v-3', method: 'delete' })
   })
 
-  it('getDashboardMap stays on the legacy client (route BE not yet implemented)', () => {
+  it('getDashboardMap resolves to GET /api/admin/dashboard/map', () => {
     adminApi.getDashboardMap()
-    expect(apiClient.get).toHaveBeenCalledWith('/admin/dashboard/map')
+    expect(apiClient.send).toHaveBeenCalledWith({ url: '/api/admin/dashboard/map', method: 'get' })
   })
 })

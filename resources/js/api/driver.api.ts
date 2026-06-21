@@ -1,11 +1,16 @@
 import { apiClient } from './client'
-import { login, me, logout, updateStatus } from '@/actions/App/Http/Controllers/Driver/AuthController'
+import {
+  login, me, logout, updateStatus, updateProfile, changePassword, uploadDocument,
+} from '@/actions/App/Http/Controllers/Driver/AuthController'
 import {
   index as tripsIndex, show as tripShow, passengers, start, complete, history,
 } from '@/actions/App/Http/Controllers/Driver/TripController'
 import { checkin, absent } from '@/actions/App/Http/Controllers/Driver/CheckinController'
 import { update as locationUpdate } from '@/actions/App/Http/Controllers/Driver/LocationController'
 import { index as earningsIndex, transactions as earningsTransactions } from '@/actions/App/Http/Controllers/Driver/EarningController'
+import {
+  index as notificationsIndex, markRead as notificationMarkRead,
+} from '@/actions/App/Http/Controllers/Driver/NotificationController'
 
 export const driverApi = {
   // ─── Auth ─────────────────────────────────────────────────────────────
@@ -13,18 +18,15 @@ export const driverApi = {
   logout: () => apiClient.send(logout()),
   me:     () => apiClient.send(me()),
 
-  // TODO: route BE `/driver/auth/profile` chưa tồn tại — giữ tạm (xem chú thích migration Wayfinder).
   updateProfile: (data: { full_name?: string; email?: string }) =>
-    apiClient.put('/driver/auth/profile', data),
-  // TODO: route BE `/driver/auth/password` chưa tồn tại — giữ tạm.
+    apiClient.send(updateProfile(), data),
   changePassword: (data: { old_password: string; new_password: string; new_password_confirmation: string }) =>
-    apiClient.put('/driver/auth/password', data),
-  // TODO: route BE `/driver/documents` chưa tồn tại — giữ tạm.
+    apiClient.send(changePassword(), data),
   uploadDocument: (type: string, file: File) => {
     const form = new FormData()
     form.append('type', type)
     form.append('file', file)
-    return apiClient.post('/driver/documents', form)
+    return apiClient.sendForm(uploadDocument(), form)
   },
 
   // ─── Status ────────────────────────────────────────────────────────────
@@ -54,10 +56,8 @@ export const driverApi = {
     apiClient.send(earningsTransactions({ query: params })),
 
   // ─── Notifications ─────────────────────────────────────────────────────
-  // TODO: route BE `/driver/notifications` chưa tồn tại — giữ tạm.
   getNotifications: (params?: { page?: number; unread_only?: boolean }) =>
-    apiClient.get('/driver/notifications', { params }),
-  // TODO: route BE `/driver/notifications/{id}/read` chưa tồn tại — giữ tạm.
+    apiClient.send(notificationsIndex({ query: params })),
   markNotificationRead: (id: string) =>
-    apiClient.put(`/driver/notifications/${id}/read`),
+    apiClient.send(notificationMarkRead(id)),
 }

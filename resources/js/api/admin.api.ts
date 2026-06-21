@@ -1,6 +1,6 @@
 import { apiClient } from './client'
 import { login, me, logout } from '@/actions/App/Http/Controllers/Admin/AuthController'
-import { index as dashboard } from '@/actions/App/Http/Controllers/Admin/DashboardController'
+import { index as dashboard, map as dashboardMap } from '@/actions/App/Http/Controllers/Admin/DashboardController'
 import {
   index as operatorsIndex, show as operatorShow, approve as operatorApprove,
   reject as operatorReject, suspend as operatorSuspend, resetPassword as operatorResetPassword,
@@ -38,8 +38,7 @@ export const adminApi = {
 
   // Dashboard
   getDashboard:    ()           => apiClient.send(dashboard()),
-  // TODO: route BE `/admin/dashboard/map` chưa tồn tại — chưa có action Wayfinder. Giữ tạm.
-  getDashboardMap: ()           => apiClient.get('/admin/dashboard/map'),
+  getDashboardMap: ()           => apiClient.send(dashboardMap()),
 
   // Operators
   getOperators:    (params?: Params) => apiClient.send(operatorsIndex({ query: params as QueryParams })),
