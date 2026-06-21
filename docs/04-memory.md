@@ -645,6 +645,29 @@ Note     : LUÔN đối chiếu shape FE đọc (`res.data.X.Y`) với BE trả 
            Khi sửa/làm trang mới: kiểm tra mọi method trong *.api.ts đã có route tương ứng
            trong routes/api_*.php (FE fail im lặng nếu không check `res.error`).
 
+### 2026-06-21 — Lỗi: Bộ test BE không thực sự chạy (CI tests đỏ tiềm ẩn)
+File     : tests/Pest.php, database/factories/UserFactory.php
+Vấn đề   : 2 lỗi cộng hưởng khiến mọi Feature test chỉ "pass" nhờ config cache cũ trỏ
+           DB sang schema lệch — không phải chạy thật:
+           1. tests/Pest.php DÒNG `->use(RefreshDatabase::class)` BỊ COMMENT → Feature
+              test KHÔNG migrate. Trên sqlite :memory: (đúng phpunit.xml + CI) = DB rỗng
+              → "no such table: users".
+           2. UserFactory vẫn là factory STARTER (name/email/email_verified_at/remember_token)
+              trong khi bảng users dự án là full_name/phone/role/is_verified → MySQL báo
+              "Unknown column 'name'".
+Giải pháp: (a) Bỏ comment RefreshDatabase trong Pest.php. (b) Viết lại UserFactory theo
+           schema dự án + state admin()/driver()/operator()/unverified(). (c) Gỡ 3 file test
+           STARTER VESTIGIAL test hành vi đã bị thay bằng API/SPA: Auth/PasswordResetTest
+           (reset email-token — dự án dùng OTP SMS, không có bảng password_reset_tokens),
+           DashboardTest (/dashboard giờ trả SPA public, bỏ redirect), Settings/ProfileUpdateTest
+           (ProfileController còn tham chiếu cột email_verified_at không tồn tại).
+           → Suite chạy thật trên sqlite :memory: = 23 passed/3 skipped/0 failed.
+Note     : Còn AuthenticationTest + SecurityTest (settings/password) là starter nhưng đang
+           XANH — để lại, dọn sau nếu muốn. Nếu thấy test "pass" mà nghi ngờ, kiểm tra
+           RefreshDatabase có bật + factory khớp schema TRƯỚC. KHÔNG bao giờ cache config khi
+           chạy test (che mất :memory:). 4 lỗi TS có sẵn ở LiveMap.vue/TripDetail.vue không
+           chặn vite build (build không type-check).
+
 **Template để AI Agent ghi lỗi:**
 ```
 

@@ -2,10 +2,10 @@
 
 namespace Database\Factories;
 
+use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 /**
  * @extends Factory<User>
@@ -18,33 +18,46 @@ class UserFactory extends Factory
     protected static ?string $password;
 
     /**
-     * Define the model's default state.
+     * Define the model's default state — khớp schema bảng `users` của dự án
+     * (full_name/phone/role), KHÔNG dùng cột starter name/email_verified_at.
      *
      * @return array<string, mixed>
      */
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
+            'full_name' => fake()->name(),
+            'phone' => fake()->unique()->numerify('09########'),
             'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
+            'role' => UserRole::Customer,
+            'is_verified' => true,
+            'is_active' => true,
         ];
     }
 
     /**
-     * Indicate that the model's email address should be unverified.
+     * Tài khoản chưa xác thực SĐT (OTP).
      */
     public function unverified(): static
     {
         return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
+            'is_verified' => false,
         ]);
     }
 
-    /**
-     * Indicate that the model has two-factor authentication configured.
-     */
-    public function withTwoFactor(): static {}
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => ['role' => UserRole::Admin]);
+    }
+
+    public function driver(): static
+    {
+        return $this->state(fn (array $attributes) => ['role' => UserRole::Driver]);
+    }
+
+    public function operator(): static
+    {
+        return $this->state(fn (array $attributes) => ['role' => UserRole::Operator]);
+    }
 }
