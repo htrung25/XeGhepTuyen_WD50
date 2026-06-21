@@ -57,7 +57,7 @@ register.form = registerForm
 
 /**
 * @see \App\Http\Controllers\Driver\AuthController::login
-* @see app/Http/Controllers/Driver/AuthController.php:58
+* @see app/Http/Controllers/Driver/AuthController.php:59
 * @route '/api/driver/auth/login'
 */
 export const login = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -72,7 +72,7 @@ login.definition = {
 
 /**
 * @see \App\Http\Controllers\Driver\AuthController::login
-* @see app/Http/Controllers/Driver/AuthController.php:58
+* @see app/Http/Controllers/Driver/AuthController.php:59
 * @route '/api/driver/auth/login'
 */
 login.url = (options?: RouteQueryOptions) => {
@@ -81,7 +81,7 @@ login.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Driver\AuthController::login
-* @see app/Http/Controllers/Driver/AuthController.php:58
+* @see app/Http/Controllers/Driver/AuthController.php:59
 * @route '/api/driver/auth/login'
 */
 login.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -91,7 +91,7 @@ login.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Driver\AuthController::login
-* @see app/Http/Controllers/Driver/AuthController.php:58
+* @see app/Http/Controllers/Driver/AuthController.php:59
 * @route '/api/driver/auth/login'
 */
 const loginForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -101,7 +101,7 @@ const loginForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\Driver\AuthController::login
-* @see app/Http/Controllers/Driver/AuthController.php:58
+* @see app/Http/Controllers/Driver/AuthController.php:59
 * @route '/api/driver/auth/login'
 */
 loginForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -113,7 +113,7 @@ login.form = loginForm
 
 /**
 * @see \App\Http\Controllers\Driver\AuthController::me
-* @see app/Http/Controllers/Driver/AuthController.php:93
+* @see app/Http/Controllers/Driver/AuthController.php:95
 * @route '/api/driver/auth/me'
 */
 export const me = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -128,7 +128,7 @@ me.definition = {
 
 /**
 * @see \App\Http\Controllers\Driver\AuthController::me
-* @see app/Http/Controllers/Driver/AuthController.php:93
+* @see app/Http/Controllers/Driver/AuthController.php:95
 * @route '/api/driver/auth/me'
 */
 me.url = (options?: RouteQueryOptions) => {
@@ -137,7 +137,7 @@ me.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Driver\AuthController::me
-* @see app/Http/Controllers/Driver/AuthController.php:93
+* @see app/Http/Controllers/Driver/AuthController.php:95
 * @route '/api/driver/auth/me'
 */
 me.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -147,7 +147,7 @@ me.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Driver\AuthController::me
-* @see app/Http/Controllers/Driver/AuthController.php:93
+* @see app/Http/Controllers/Driver/AuthController.php:95
 * @route '/api/driver/auth/me'
 */
 me.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -157,7 +157,7 @@ me.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Driver\AuthController::me
-* @see app/Http/Controllers/Driver/AuthController.php:93
+* @see app/Http/Controllers/Driver/AuthController.php:95
 * @route '/api/driver/auth/me'
 */
 const meForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -167,7 +167,7 @@ const meForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Driver\AuthController::me
-* @see app/Http/Controllers/Driver/AuthController.php:93
+* @see app/Http/Controllers/Driver/AuthController.php:95
 * @route '/api/driver/auth/me'
 */
 meForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -177,7 +177,7 @@ meForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Driver\AuthController::me
-* @see app/Http/Controllers/Driver/AuthController.php:93
+* @see app/Http/Controllers/Driver/AuthController.php:95
 * @route '/api/driver/auth/me'
 */
 meForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -194,7 +194,7 @@ me.form = meForm
 
 /**
 * @see \App\Http\Controllers\Driver\AuthController::logout
-* @see app/Http/Controllers/Driver/AuthController.php:87
+* @see app/Http/Controllers/Driver/AuthController.php:88
 * @route '/api/driver/auth/logout'
 */
 export const logout = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -209,7 +209,7 @@ logout.definition = {
 
 /**
 * @see \App\Http\Controllers\Driver\AuthController::logout
-* @see app/Http/Controllers/Driver/AuthController.php:87
+* @see app/Http/Controllers/Driver/AuthController.php:88
 * @route '/api/driver/auth/logout'
 */
 logout.url = (options?: RouteQueryOptions) => {
@@ -218,7 +218,7 @@ logout.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Driver\AuthController::logout
-* @see app/Http/Controllers/Driver/AuthController.php:87
+* @see app/Http/Controllers/Driver/AuthController.php:88
 * @route '/api/driver/auth/logout'
 */
 logout.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -228,7 +228,7 @@ logout.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Driver\AuthController::logout
-* @see app/Http/Controllers/Driver/AuthController.php:87
+* @see app/Http/Controllers/Driver/AuthController.php:88
 * @route '/api/driver/auth/logout'
 */
 const logoutForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -238,7 +238,7 @@ const logoutForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> =>
 
 /**
 * @see \App\Http\Controllers\Driver\AuthController::logout
-* @see app/Http/Controllers/Driver/AuthController.php:87
+* @see app/Http/Controllers/Driver/AuthController.php:88
 * @route '/api/driver/auth/logout'
 */
 logoutForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -250,7 +250,7 @@ logout.form = logoutForm
 
 /**
 * @see \App\Http\Controllers\Driver\AuthController::updateStatus
-* @see app/Http/Controllers/Driver/AuthController.php:128
+* @see app/Http/Controllers/Driver/AuthController.php:130
 * @route '/api/driver/auth/status'
 */
 export const updateStatus = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -265,7 +265,7 @@ updateStatus.definition = {
 
 /**
 * @see \App\Http\Controllers\Driver\AuthController::updateStatus
-* @see app/Http/Controllers/Driver/AuthController.php:128
+* @see app/Http/Controllers/Driver/AuthController.php:130
 * @route '/api/driver/auth/status'
 */
 updateStatus.url = (options?: RouteQueryOptions) => {
@@ -274,7 +274,7 @@ updateStatus.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Driver\AuthController::updateStatus
-* @see app/Http/Controllers/Driver/AuthController.php:128
+* @see app/Http/Controllers/Driver/AuthController.php:130
 * @route '/api/driver/auth/status'
 */
 updateStatus.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -284,7 +284,7 @@ updateStatus.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
 
 /**
 * @see \App\Http\Controllers\Driver\AuthController::updateStatus
-* @see app/Http/Controllers/Driver/AuthController.php:128
+* @see app/Http/Controllers/Driver/AuthController.php:130
 * @route '/api/driver/auth/status'
 */
 const updateStatusForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -299,7 +299,7 @@ const updateStatusForm = (options?: RouteQueryOptions): RouteFormDefinition<'pos
 
 /**
 * @see \App\Http\Controllers\Driver\AuthController::updateStatus
-* @see app/Http/Controllers/Driver/AuthController.php:128
+* @see app/Http/Controllers/Driver/AuthController.php:130
 * @route '/api/driver/auth/status'
 */
 updateStatusForm.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -314,6 +314,194 @@ updateStatusForm.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'
 
 updateStatus.form = updateStatusForm
 
-const AuthController = { register, login, me, logout, updateStatus }
+/**
+* @see \App\Http\Controllers\Driver\AuthController::updateProfile
+* @see app/Http/Controllers/Driver/AuthController.php:142
+* @route '/api/driver/auth/profile'
+*/
+export const updateProfile = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+    url: updateProfile.url(options),
+    method: 'put',
+})
+
+updateProfile.definition = {
+    methods: ["put"],
+    url: '/api/driver/auth/profile',
+} satisfies RouteDefinition<["put"]>
+
+/**
+* @see \App\Http\Controllers\Driver\AuthController::updateProfile
+* @see app/Http/Controllers/Driver/AuthController.php:142
+* @route '/api/driver/auth/profile'
+*/
+updateProfile.url = (options?: RouteQueryOptions) => {
+    return updateProfile.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Driver\AuthController::updateProfile
+* @see app/Http/Controllers/Driver/AuthController.php:142
+* @route '/api/driver/auth/profile'
+*/
+updateProfile.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+    url: updateProfile.url(options),
+    method: 'put',
+})
+
+/**
+* @see \App\Http\Controllers\Driver\AuthController::updateProfile
+* @see app/Http/Controllers/Driver/AuthController.php:142
+* @route '/api/driver/auth/profile'
+*/
+const updateProfileForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: updateProfile.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'PUT',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Driver\AuthController::updateProfile
+* @see app/Http/Controllers/Driver/AuthController.php:142
+* @route '/api/driver/auth/profile'
+*/
+updateProfileForm.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: updateProfile.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'PUT',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'post',
+})
+
+updateProfile.form = updateProfileForm
+
+/**
+* @see \App\Http\Controllers\Driver\AuthController::changePassword
+* @see app/Http/Controllers/Driver/AuthController.php:168
+* @route '/api/driver/auth/password'
+*/
+export const changePassword = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+    url: changePassword.url(options),
+    method: 'put',
+})
+
+changePassword.definition = {
+    methods: ["put"],
+    url: '/api/driver/auth/password',
+} satisfies RouteDefinition<["put"]>
+
+/**
+* @see \App\Http\Controllers\Driver\AuthController::changePassword
+* @see app/Http/Controllers/Driver/AuthController.php:168
+* @route '/api/driver/auth/password'
+*/
+changePassword.url = (options?: RouteQueryOptions) => {
+    return changePassword.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Driver\AuthController::changePassword
+* @see app/Http/Controllers/Driver/AuthController.php:168
+* @route '/api/driver/auth/password'
+*/
+changePassword.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+    url: changePassword.url(options),
+    method: 'put',
+})
+
+/**
+* @see \App\Http\Controllers\Driver\AuthController::changePassword
+* @see app/Http/Controllers/Driver/AuthController.php:168
+* @route '/api/driver/auth/password'
+*/
+const changePasswordForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: changePassword.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'PUT',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Driver\AuthController::changePassword
+* @see app/Http/Controllers/Driver/AuthController.php:168
+* @route '/api/driver/auth/password'
+*/
+changePasswordForm.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: changePassword.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'PUT',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'post',
+})
+
+changePassword.form = changePasswordForm
+
+/**
+* @see \App\Http\Controllers\Driver\AuthController::uploadDocument
+* @see app/Http/Controllers/Driver/AuthController.php:202
+* @route '/api/driver/documents'
+*/
+export const uploadDocument = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: uploadDocument.url(options),
+    method: 'post',
+})
+
+uploadDocument.definition = {
+    methods: ["post"],
+    url: '/api/driver/documents',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Driver\AuthController::uploadDocument
+* @see app/Http/Controllers/Driver/AuthController.php:202
+* @route '/api/driver/documents'
+*/
+uploadDocument.url = (options?: RouteQueryOptions) => {
+    return uploadDocument.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Driver\AuthController::uploadDocument
+* @see app/Http/Controllers/Driver/AuthController.php:202
+* @route '/api/driver/documents'
+*/
+uploadDocument.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: uploadDocument.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Driver\AuthController::uploadDocument
+* @see app/Http/Controllers/Driver/AuthController.php:202
+* @route '/api/driver/documents'
+*/
+const uploadDocumentForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: uploadDocument.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Driver\AuthController::uploadDocument
+* @see app/Http/Controllers/Driver/AuthController.php:202
+* @route '/api/driver/documents'
+*/
+uploadDocumentForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: uploadDocument.url(options),
+    method: 'post',
+})
+
+uploadDocument.form = uploadDocumentForm
+
+const AuthController = { register, login, me, logout, updateStatus, updateProfile, changePassword, uploadDocument }
 
 export default AuthController

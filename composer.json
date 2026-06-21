@@ -58,6 +58,9 @@
         "lint": [
             "pint --parallel"
         ],
+        "wayfinder": [
+            "@php artisan wayfinder:generate --with-form"
+        ],
         "lint:check": [
             "pint --parallel --test"
         ],
