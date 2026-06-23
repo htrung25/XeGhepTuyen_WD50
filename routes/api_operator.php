@@ -23,6 +23,8 @@ Route::post('auth/login', [AuthController::class, 'login']);
 Route::middleware(['auth:sanctum', 'role:operator'])->group(function () {
     Route::get('auth/me', [AuthController::class, 'me']);
     Route::post('auth/logout', [AuthController::class, 'logout']);
+    Route::put('auth/profile', [AuthController::class, 'updateProfile']);
+    Route::put('auth/password', [AuthController::class, 'changePassword']);
 
     // Onboarding — tiến độ thêm xe so với cơ cấu đã khai lúc đăng ký
     Route::get('onboarding/fleet', [OnboardingController::class, 'fleet']);

@@ -625,6 +625,22 @@ Lưu ý    : routes driver/admin đã gắn role middleware [[4.13]] nên endpoi
 
 > AI Agent ghi vào đây khi gặp lỗi để tránh lặp lại.
 
+### 2026-06-22 — Lỗi: Operator me() trả tax_number/license_number (luôn null) + thiếu sửa hồ sơ
+File     : app/Http/Controllers/Operator/AuthController.php, routes/api_operator.php
+Vấn đề   : me() đọc $operator->tax_number / ->license_number — cột THỰC là tax_code /
+           business_license (đúng như seeder fix §3.16) → Eloquent trả null âm thầm, màn
+           hồ sơ nhà xe luôn trống MST/GPKD. Ngoài ra operator KHÔNG có updateProfile/
+           changePassword (controller/route/api/FE đều thiếu) dù PRD §5.1 ghi
+           PUT /operator/auth/profile → không tự sửa được TK ngân hàng nhận tiền (F-O01),
+           ảnh hưởng quyết toán.
+Giải pháp: me() → tax_code/business_license + thêm bank_account/bank_name/bank_account_name/
+           logo_url/description vào response. Thêm updateProfile (sửa liên hệ + bank info +
+           logo/description; KHÔNG cho sửa tax_code/business_license — giấy tờ admin duyệt) +
+           changePassword. Routes PUT /operator/auth/{profile,password}. Test
+           tests/Feature/OperatorProfileTest.php (6 case). FE (operatorApi + trang Profile) làm sau.
+Note     : Khi viết response me()/Resource cho operator, dùng ĐÚNG tên cột tax_code/
+           business_license — đối chiếu Operator model TRƯỚC. Bug cùng họ với §3.16 và mục 5 (2026-06-15).
+
 ### 2026-06-15 — Lỗi: Trang /admin/finance không hiển thị doanh thu
 File     : app/Http/Controllers/Admin/FinanceController.php, routes/api_admin.php
            (FE: resources/js/pages/admin/Finance/Overview.vue)
