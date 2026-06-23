@@ -1,12 +1,12 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import { driverRoutes, setupDriverGuard } from './driver.routes'
+import { createRouter, createWebHistory } from 'vue-router';
+import { driverRoutes, setupDriverGuard } from './driver.routes';
 
 const router = createRouter({
-  history: createWebHistory(),
-  routes: driverRoutes,
-  scrollBehavior: () => ({ top: 0 }),
-})
+    history: createWebHistory(),
+    routes: driverRoutes,
+    scrollBehavior: () => ({ top: 0 }),
+});
 
-setupDriverGuard(router)
+setupDriverGuard(router);
 
-export default router
+export default router;

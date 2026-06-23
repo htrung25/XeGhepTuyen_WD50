@@ -1,2 +1,8 @@
 resources/js/components/ui/*
 resources/views/mail/*
+
+# Wayfinder output — sinh tự động lúc build; để generator giữ format riêng,
+# tránh Prettier reformat rồi bị regenerate ghi đè (đồng bộ với eslint ignore).
+resources/js/actions
+resources/js/routes
+resources/js/wayfinder

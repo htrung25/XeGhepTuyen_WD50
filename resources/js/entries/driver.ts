@@ -1,7 +1,7 @@
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-import DriverApp from '@/DriverApp.vue'
-import driverRouter from '@/router/driver.router'
+import { createPinia } from 'pinia';
+import { createApp } from 'vue';
+import DriverApp from '@/DriverApp.vue';
+import driverRouter from '@/router/driver.router';
 
-const app = createApp(DriverApp)
-app.use(createPinia()).use(driverRouter).mount('#app')
+const app = createApp(DriverApp);
+app.use(createPinia()).use(driverRouter).mount('#app');

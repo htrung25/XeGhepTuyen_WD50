@@ -1,12 +1,12 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import { customerRoutes, setupCustomerGuard } from './customer.routes'
+import { createRouter, createWebHistory } from 'vue-router';
+import { customerRoutes, setupCustomerGuard } from './customer.routes';
 
 const router = createRouter({
-  history: createWebHistory(),
-  routes: customerRoutes,
-  scrollBehavior: () => ({ top: 0 }),
-})
+    history: createWebHistory(),
+    routes: customerRoutes,
+    scrollBehavior: () => ({ top: 0 }),
+});
 
-setupCustomerGuard(router)
+setupCustomerGuard(router);
 
-export default router
+export default router;
