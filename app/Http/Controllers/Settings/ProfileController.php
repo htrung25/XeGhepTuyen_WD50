@@ -30,11 +30,9 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
+        // Bảng users của dự án xác thực qua SĐT (is_verified/OTP), KHÔNG có cột
+        // email_verified_at — nên không reset trạng thái xác minh email tại đây.
         $request->user()->fill($request->validated());
-
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
-        }
 
         $request->user()->save();
 

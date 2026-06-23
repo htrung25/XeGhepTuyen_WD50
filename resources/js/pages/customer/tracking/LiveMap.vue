@@ -66,6 +66,10 @@ function copyPhone(phone: string) {
   navigator.clipboard?.writeText(phone)
 }
 
+function copyShareLink() {
+  navigator.clipboard?.writeText(window.location.href)
+}
+
 onMounted(async () => {
   if (!bookingId) return
   const { data, error } = await customerApi.trackBooking(bookingId)
@@ -146,7 +150,7 @@ onUnmounted(() => {
             <p class="text-xs text-gray-500 mt-0.5">Họ có thể theo dõi xe của bạn theo thời gian thực</p>
           </div>
           <button
-            @click="navigator.clipboard?.writeText(window.location.href)"
+            @click="copyShareLink()"
             class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap">
             🔗 Sao chép link
           </button>

@@ -31,6 +31,11 @@ const statusConfig = {
   cancelled:   { label: 'Đã hủy',     cls: 'bg-red-100 text-red-600',     headerCls: 'bg-red-500'   },
 } as const
 
+// trip.status là any (ref<any>) — ép về key hợp lệ để TS không báo implicit-any khi index.
+function statusInfo(status: string) {
+  return statusConfig[status as keyof typeof statusConfig]
+}
+
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
 }
@@ -115,13 +120,13 @@ onMounted(async () => {
 
         <!-- Trip header card -->
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div :class="['px-5 py-4 text-white', statusConfig[trip.status]?.headerCls ?? 'bg-gray-500']">
+          <div :class="['px-5 py-4 text-white', statusInfo(trip.status)?.headerCls ?? 'bg-gray-500']">
             <div class="flex items-center justify-between">
               <h1 class="text-lg font-bold">
                 {{ trip.route?.origin_city }} → {{ trip.route?.dest_city }}
               </h1>
               <span class="text-sm font-medium bg-white/20 px-3 py-1 rounded-full">
-                {{ statusConfig[trip.status]?.label }}
+                {{ statusInfo(trip.status)?.label }}
               </span>
             </div>
             <p class="text-white/80 text-sm mt-1">{{ fmtDateTime(trip.depart_at) }} → {{ fmtTime(trip.arrive_at) }}</p>
