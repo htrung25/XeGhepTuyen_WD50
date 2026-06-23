@@ -1,4 +1,4 @@
-import type { RouteRecordRaw } from 'vue-router';
+import type { RouteRecordRaw, Router } from 'vue-router';
 import { useOperatorAuthStore } from '@/stores/operator.auth.store';
 
 export const operatorRoutes: RouteRecordRaw[] = [
@@ -53,9 +53,7 @@ export const operatorRoutes: RouteRecordRaw[] = [
 ];
 
 // Navigation guard — attach to router in operator entry
-export function setupOperatorGuard(
-    router: ReturnType<(typeof import('vue-router'))['createRouter']>,
-) {
+export function setupOperatorGuard(router: Router) {
     router.beforeEach((to) => {
         const auth = useOperatorAuthStore();
         if (to.meta.requiresAuth && !auth.isAuthenticated) {

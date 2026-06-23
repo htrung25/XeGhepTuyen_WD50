@@ -71,13 +71,6 @@ function fmtTime(iso: string) {
         minute: '2-digit',
     });
 }
-function fmtDate(d: Date) {
-    return d.toLocaleDateString('vi-VN', {
-        weekday: 'short',
-        day: 'numeric',
-        month: 'numeric',
-    });
-}
 
 // Upcoming trips sorted
 const upcomingTrips = computed(() =>
@@ -93,8 +86,6 @@ const upcomingTrips = computed(() =>
 async function load() {
     isLoading.value = true;
     errorMsg.value = '';
-    const from = weekDates.value[0].toISOString().split('T')[0];
-    const to = weekDates.value[6].toISOString().split('T')[0];
     const { data, error } = await driverApi.getTrips({
         date: undefined,
     } as any);

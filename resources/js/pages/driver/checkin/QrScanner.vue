@@ -82,7 +82,7 @@ function resetScan() {
     if (html5QrCode && scannerStarted) {
         try {
             html5QrCode.resume?.();
-        } catch (_) {}
+        } catch {}
     }
 }
 
@@ -113,7 +113,7 @@ onMounted(async () => {
 onUnmounted(() => {
     try {
         html5QrCode?.clear?.();
-    } catch (_) {}
+    } catch {}
 });
 </script>
 

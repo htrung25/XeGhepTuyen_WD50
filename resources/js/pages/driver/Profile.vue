@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
 import { driverApi } from '@/api/driver.api';
 import { useDriverAuthStore } from '@/stores/driver.auth.store';
 
-const router = useRouter();
 const auth = useDriverAuthStore();
 
 const profile = ref<any>(null);

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { customerApi } from '@/api/customer.api';
 
 type BookingTab = 'upcoming' | 'past' | 'cancelled';

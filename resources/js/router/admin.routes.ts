@@ -1,4 +1,4 @@
-import type { RouteRecordRaw } from 'vue-router';
+import type { RouteRecordRaw, Router } from 'vue-router';
 import { useAdminAuthStore } from '@/stores/admin.auth.store';
 
 export const adminRoutes: RouteRecordRaw[] = [
@@ -62,9 +62,7 @@ export const adminRoutes: RouteRecordRaw[] = [
     },
 ];
 
-export function setupAdminGuard(
-    router: ReturnType<(typeof import('vue-router'))['createRouter']>,
-) {
+export function setupAdminGuard(router: Router) {
     router.beforeEach((to) => {
         const auth = useAdminAuthStore();
         if (to.meta.requiresAuth && !auth.isAuthenticated) {

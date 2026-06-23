@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { driverApi } from '@/api/driver.api';
 import { useDriverAuthStore } from '@/stores/driver.auth.store';

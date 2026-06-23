@@ -60,10 +60,6 @@ const totalPrice = computed(() =>
     selectedSeats.value.reduce((sum, s) => sum + s.price, 0),
 );
 
-function fmt(v: number) {
-    return new Intl.NumberFormat('vi-VN').format(v) + 'đ';
-}
-
 async function proceedToCheckout() {
     if (!auth.isAuthenticated) {
         router.push({ path: '/login', query: { redirect: route.fullPath } });

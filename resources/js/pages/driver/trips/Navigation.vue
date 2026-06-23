@@ -12,7 +12,6 @@ const trip = ref<any>(null);
 const passengers = ref<any[]>([]);
 const isLoading = ref(true);
 const errorMsg = ref('');
-const arrivedLoading = ref(false);
 const showIncident = ref(false);
 const incidentNote = ref('');
 const gpsActive = ref(false);
@@ -137,13 +136,6 @@ async function loadData() {
     trip.value = tripRes.data;
     passengers.value = passRes.data ?? [];
     store.passengers = passengers.value;
-}
-
-function fmtTime(iso: string) {
-    return new Date(iso).toLocaleTimeString('vi-VN', {
-        hour: '2-digit',
-        minute: '2-digit',
-    });
 }
 
 onMounted(async () => {

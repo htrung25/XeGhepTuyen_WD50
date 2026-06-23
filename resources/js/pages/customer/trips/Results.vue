@@ -91,12 +91,6 @@ function selectTrip(trip: TripResult) {
     router.push(`/trips/${trip.id}/seats`);
 }
 
-function toggleFilter(arr: string[], key: string) {
-    const i = arr.indexOf(key);
-    if (i >= 0) arr.splice(i, 1);
-    else arr.push(key);
-}
-
 function resetFilters() {
     filterTime.value = [];
     filterType.value = [];

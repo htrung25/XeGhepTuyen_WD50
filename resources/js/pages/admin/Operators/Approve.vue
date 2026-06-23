@@ -178,9 +178,11 @@ async function confirmApprove() {
         return;
     }
     showApproveModal.value = false;
-    modalMode.value === 'application'
-        ? await loadApplications()
-        : await loadOperators();
+    if (modalMode.value === 'application') {
+        await loadApplications();
+    } else {
+        await loadOperators();
+    }
 }
 
 async function confirmReject() {
@@ -200,9 +202,11 @@ async function confirmReject() {
         return;
     }
     showRejectModal.value = false;
-    modalMode.value === 'application'
-        ? await loadApplications()
-        : await loadOperators();
+    if (modalMode.value === 'application') {
+        await loadApplications();
+    } else {
+        await loadOperators();
+    }
 }
 
 function openResetPassword(op: OperatorDoc) {

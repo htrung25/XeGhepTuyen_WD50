@@ -2,12 +2,10 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { customerApi } from '@/api/customer.api';
-import { useCustomerAuthStore } from '@/stores/customer.auth.store';
 import { useCustomerStore } from '@/stores/customer.store';
 
 const router = useRouter();
 const store = useCustomerStore();
-const auth = useCustomerAuthStore();
 const draft = store.bookingDraft;
 
 const selectedMethod = ref<'momo' | 'vnpay' | 'wallet' | 'cash'>('momo');

@@ -124,7 +124,7 @@ export const apiClient = {
         try {
             const res = await http.post(url, data, { responseType: 'blob' });
             return { data: res.data, error: null };
-        } catch (e: any) {
+        } catch {
             return { data: null, error: 'Có lỗi khi xuất file' };
         }
     },

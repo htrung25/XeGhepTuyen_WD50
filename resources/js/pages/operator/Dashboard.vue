@@ -35,7 +35,6 @@ const isLoading = ref(true);
 const errorMsg = ref('');
 const kpi = ref<KpiData | null>(null);
 const trips = ref<TripRow[]>([]);
-const chartData = ref<{ date: string; revenue: number }[]>([]);
 const onboarding = ref<OnboardingFleet | null>(null);
 
 const loadOnboarding = async () => {
@@ -72,10 +71,6 @@ const load = async () => {
     trips.value = tripsRes.data ?? [];
     isLoading.value = false;
 };
-
-// Compute bar chart heights (relative to max)
-const maxRevenue = ref(1);
-const barPercent = (v: number) => Math.round((v / maxRevenue.value) * 100);
 
 onMounted(() => {
     load();

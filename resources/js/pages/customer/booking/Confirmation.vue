@@ -13,10 +13,6 @@ const booking = ref<any>(null);
 const isLoading = ref(true);
 const errorMsg = ref('');
 
-function fmt(v: number) {
-    return new Intl.NumberFormat('vi-VN').format(v) + 'đ';
-}
-
 function fmtDateTime(iso: string) {
     const d = new Date(iso);
     const days = [
