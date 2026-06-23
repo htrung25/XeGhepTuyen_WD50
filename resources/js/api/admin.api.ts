@@ -1,6 +1,13 @@
-import { apiClient } from './client'
 import { login, me, logout } from '@/actions/App/Http/Controllers/Admin/AuthController'
+import { index as bookingsIndex } from '@/actions/App/Http/Controllers/Admin/BookingController'
 import { index as dashboard, map as dashboardMap } from '@/actions/App/Http/Controllers/Admin/DashboardController'
+import {
+  index as driversIndex, show as driverShow, approve as driverApprove,
+  reject as driverReject, suspend as driverSuspend, resetPassword as driverResetPassword,
+} from '@/actions/App/Http/Controllers/Admin/DriverController'
+import {
+  summary, transactions, refunds, commissions, payout,
+} from '@/actions/App/Http/Controllers/Admin/FinanceController'
 import {
   index as operatorsIndex, show as operatorShow, approve as operatorApprove,
   reject as operatorReject, suspend as operatorSuspend, resetPassword as operatorResetPassword,
@@ -9,23 +16,16 @@ import {
   index as partnerAppsIndex, approve as partnerAppApprove, reject as partnerAppReject,
 } from '@/actions/App/Http/Controllers/Admin/PartnerApplicationController'
 import {
-  index as driversIndex, show as driverShow, approve as driverApprove,
-  reject as driverReject, suspend as driverSuspend, resetPassword as driverResetPassword,
-} from '@/actions/App/Http/Controllers/Admin/DriverController'
-import { index as usersIndex, ban as userBan } from '@/actions/App/Http/Controllers/Admin/UserController'
-import { index as bookingsIndex } from '@/actions/App/Http/Controllers/Admin/BookingController'
-import {
   index as tripsIndex, monitor, autoResolve, show as tripShow, cancel as tripCancel,
 } from '@/actions/App/Http/Controllers/Admin/TripController'
-import {
-  summary, transactions, refunds, commissions, payout,
-} from '@/actions/App/Http/Controllers/Admin/FinanceController'
+import { index as usersIndex, ban as userBan } from '@/actions/App/Http/Controllers/Admin/UserController'
 import {
   index as vouchersIndex, store as voucherStore, update as voucherUpdate,
   toggle as voucherToggle, destroy as voucherDestroy,
 } from '@/actions/App/Http/Controllers/Admin/VoucherController'
 
 import type { QueryParams } from '@/wayfinder'
+import { apiClient } from './client'
 
 // Callers pass loose filter records; cast to Wayfinder's QueryParams at the boundary.
 type Params = Record<string, unknown>
