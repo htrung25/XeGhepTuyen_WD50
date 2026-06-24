@@ -2,6 +2,8 @@ import {
     login,
     me,
     logout,
+    updateProfile,
+    changePassword,
 } from '@/actions/App/Http/Controllers/Operator/AuthController';
 import {
     index as bookingsIndex,
@@ -59,6 +61,8 @@ export const operatorApi = {
         apiClient.send(login(), data),
     logout: () => apiClient.send(logout()),
     me: () => apiClient.send(me()),
+    updateProfile: (data: FormData) => apiClient.sendForm(updateProfile(), data),
+    changePassword: (data: unknown) => apiClient.send(changePassword(), data),
 
     // Onboarding — tiến độ thêm xe so với cơ cấu đã khai lúc đăng ký
     getOnboardingFleet: () => apiClient.send(fleet()),

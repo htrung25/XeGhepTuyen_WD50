@@ -48,6 +48,11 @@ export const operatorRoutes: RouteRecordRaw[] = [
                 component: () => import('@/pages/operator/Revenue/Report.vue'),
                 meta: { title: 'Doanh thu' },
             },
+            {
+                path: 'profile',
+                component: () => import('@/pages/operator/Profile.vue'),
+                meta: { title: 'Hồ sơ nhà xe' },
+            },
         ],
     },
 ];

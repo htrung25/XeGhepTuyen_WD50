@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Operator\AuthController::login
-* @see app/Http/Controllers/Operator/AuthController.php:19
+* @see app/Http/Controllers/Operator/AuthController.php:17
 * @route '/api/operator/auth/login'
 */
 export const login = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ login.definition = {
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::login
-* @see app/Http/Controllers/Operator/AuthController.php:19
+* @see app/Http/Controllers/Operator/AuthController.php:17
 * @route '/api/operator/auth/login'
 */
 login.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ login.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::login
-* @see app/Http/Controllers/Operator/AuthController.php:19
+* @see app/Http/Controllers/Operator/AuthController.php:17
 * @route '/api/operator/auth/login'
 */
 login.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -35,7 +35,7 @@ login.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::login
-* @see app/Http/Controllers/Operator/AuthController.php:19
+* @see app/Http/Controllers/Operator/AuthController.php:17
 * @route '/api/operator/auth/login'
 */
 const loginForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -45,7 +45,7 @@ const loginForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::login
-* @see app/Http/Controllers/Operator/AuthController.php:19
+* @see app/Http/Controllers/Operator/AuthController.php:17
 * @route '/api/operator/auth/login'
 */
 loginForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -57,7 +57,7 @@ login.form = loginForm
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::me
-* @see app/Http/Controllers/Operator/AuthController.php:54
+* @see app/Http/Controllers/Operator/AuthController.php:53
 * @route '/api/operator/auth/me'
 */
 export const me = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -72,7 +72,7 @@ me.definition = {
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::me
-* @see app/Http/Controllers/Operator/AuthController.php:54
+* @see app/Http/Controllers/Operator/AuthController.php:53
 * @route '/api/operator/auth/me'
 */
 me.url = (options?: RouteQueryOptions) => {
@@ -81,7 +81,7 @@ me.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::me
-* @see app/Http/Controllers/Operator/AuthController.php:54
+* @see app/Http/Controllers/Operator/AuthController.php:53
 * @route '/api/operator/auth/me'
 */
 me.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -91,7 +91,7 @@ me.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::me
-* @see app/Http/Controllers/Operator/AuthController.php:54
+* @see app/Http/Controllers/Operator/AuthController.php:53
 * @route '/api/operator/auth/me'
 */
 me.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -101,7 +101,7 @@ me.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::me
-* @see app/Http/Controllers/Operator/AuthController.php:54
+* @see app/Http/Controllers/Operator/AuthController.php:53
 * @route '/api/operator/auth/me'
 */
 const meForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -111,7 +111,7 @@ const meForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::me
-* @see app/Http/Controllers/Operator/AuthController.php:54
+* @see app/Http/Controllers/Operator/AuthController.php:53
 * @route '/api/operator/auth/me'
 */
 meForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -121,7 +121,7 @@ meForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::me
-* @see app/Http/Controllers/Operator/AuthController.php:54
+* @see app/Http/Controllers/Operator/AuthController.php:53
 * @route '/api/operator/auth/me'
 */
 meForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -138,7 +138,7 @@ me.form = meForm
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::logout
-* @see app/Http/Controllers/Operator/AuthController.php:48
+* @see app/Http/Controllers/Operator/AuthController.php:46
 * @route '/api/operator/auth/logout'
 */
 export const logout = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -153,7 +153,7 @@ logout.definition = {
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::logout
-* @see app/Http/Controllers/Operator/AuthController.php:48
+* @see app/Http/Controllers/Operator/AuthController.php:46
 * @route '/api/operator/auth/logout'
 */
 logout.url = (options?: RouteQueryOptions) => {
@@ -162,7 +162,7 @@ logout.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::logout
-* @see app/Http/Controllers/Operator/AuthController.php:48
+* @see app/Http/Controllers/Operator/AuthController.php:46
 * @route '/api/operator/auth/logout'
 */
 logout.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -172,7 +172,7 @@ logout.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::logout
-* @see app/Http/Controllers/Operator/AuthController.php:48
+* @see app/Http/Controllers/Operator/AuthController.php:46
 * @route '/api/operator/auth/logout'
 */
 const logoutForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -182,7 +182,7 @@ const logoutForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> =>
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::logout
-* @see app/Http/Controllers/Operator/AuthController.php:48
+* @see app/Http/Controllers/Operator/AuthController.php:46
 * @route '/api/operator/auth/logout'
 */
 logoutForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -194,7 +194,7 @@ logout.form = logoutForm
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::updateProfile
-* @see app/Http/Controllers/Operator/AuthController.php:88
+* @see app/Http/Controllers/Operator/AuthController.php:87
 * @route '/api/operator/auth/profile'
 */
 export const updateProfile = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -209,7 +209,7 @@ updateProfile.definition = {
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::updateProfile
-* @see app/Http/Controllers/Operator/AuthController.php:88
+* @see app/Http/Controllers/Operator/AuthController.php:87
 * @route '/api/operator/auth/profile'
 */
 updateProfile.url = (options?: RouteQueryOptions) => {
@@ -218,7 +218,7 @@ updateProfile.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::updateProfile
-* @see app/Http/Controllers/Operator/AuthController.php:88
+* @see app/Http/Controllers/Operator/AuthController.php:87
 * @route '/api/operator/auth/profile'
 */
 updateProfile.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -228,7 +228,7 @@ updateProfile.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::updateProfile
-* @see app/Http/Controllers/Operator/AuthController.php:88
+* @see app/Http/Controllers/Operator/AuthController.php:87
 * @route '/api/operator/auth/profile'
 */
 const updateProfileForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -243,7 +243,7 @@ const updateProfileForm = (options?: RouteQueryOptions): RouteFormDefinition<'po
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::updateProfile
-* @see app/Http/Controllers/Operator/AuthController.php:88
+* @see app/Http/Controllers/Operator/AuthController.php:87
 * @route '/api/operator/auth/profile'
 */
 updateProfileForm.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -260,7 +260,7 @@ updateProfile.form = updateProfileForm
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::changePassword
-* @see app/Http/Controllers/Operator/AuthController.php:134
+* @see app/Http/Controllers/Operator/AuthController.php:133
 * @route '/api/operator/auth/password'
 */
 export const changePassword = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -275,7 +275,7 @@ changePassword.definition = {
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::changePassword
-* @see app/Http/Controllers/Operator/AuthController.php:134
+* @see app/Http/Controllers/Operator/AuthController.php:133
 * @route '/api/operator/auth/password'
 */
 changePassword.url = (options?: RouteQueryOptions) => {
@@ -284,7 +284,7 @@ changePassword.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::changePassword
-* @see app/Http/Controllers/Operator/AuthController.php:134
+* @see app/Http/Controllers/Operator/AuthController.php:133
 * @route '/api/operator/auth/password'
 */
 changePassword.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -294,7 +294,7 @@ changePassword.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::changePassword
-* @see app/Http/Controllers/Operator/AuthController.php:134
+* @see app/Http/Controllers/Operator/AuthController.php:133
 * @route '/api/operator/auth/password'
 */
 const changePasswordForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -309,7 +309,7 @@ const changePasswordForm = (options?: RouteQueryOptions): RouteFormDefinition<'p
 
 /**
 * @see \App\Http\Controllers\Operator\AuthController::changePassword
-* @see app/Http/Controllers/Operator/AuthController.php:134
+* @see app/Http/Controllers/Operator/AuthController.php:133
 * @route '/api/operator/auth/password'
 */
 changePasswordForm.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

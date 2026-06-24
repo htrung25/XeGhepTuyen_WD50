@@ -13,6 +13,13 @@ interface OperatorInfo {
     company_name: string;
     status: string;
     commission_rate: number;
+    logo_url?: string | null;
+    description?: string | null;
+    tax_code?: string;
+    business_license?: string;
+    bank_account?: string | null;
+    bank_name?: string | null;
+    bank_account_name?: string | null;
 }
 
 export const useOperatorAuthStore = defineStore('operatorAuth', () => {

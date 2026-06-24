@@ -70,17 +70,55 @@ const resetLoading = ref(false);
 const resetResult = ref<{ phone: string; temp_password: string } | null>(null);
 const copied = ref(false);
 
+// ─── Operator Detail modal ────────────────────────────────────────────────
+const showDetailModal = ref(false);
+const detailLoading = ref(false);
+const detailOperator = ref<any>(null);
+const detailTab = ref<'info' | 'vehicles' | 'drivers'>('info');
+
+async function openDetailOperator(id: string) {
+    selectedId.value = id;
+    detailOperator.value = null;
+    detailTab.value = 'info';
+    showDetailModal.value = true;
+    detailLoading.value = true;
+    const { data, error } = await adminApi.getOperator(id);
+    detailLoading.value = false;
+    if (error) {
+        alert(error);
+        showDetailModal.value = false;
+        return;
+    }
+    detailOperator.value = data;
+}
+
+const setActiveTab = (tab: 'all' | 'suspended') => {
+    activeTab.value = tab;
+};
+
+const setAppTab = (tab: 'all' | 'pending' | 'approved' | 'rejected') => {
+    appTab.value = tab;
+};
+
+const setView = (newView: 'operators' | 'applications') => {
+    view.value = newView;
+};
+
+const setDetailTab = (tab: 'info' | 'vehicles' | 'drivers') => {
+    detailTab.value = tab;
+};
+
 const tabs = [
     { key: 'all', label: 'Tất cả' },
     { key: 'suspended', label: 'Đình chỉ' },
-];
+] as const;
 
 const appTabs = [
     { key: 'all', label: 'Tất cả' },
     { key: 'pending', label: 'Chờ xử lý' },
     { key: 'approved', label: 'Đã duyệt' },
     { key: 'rejected', label: 'Từ chối' },
-];
+] as const;
 
 const statusMap: Record<string, { label: string; class: string }> = {
     pending: { label: 'Chờ duyệt', class: 'bg-yellow-100 text-yellow-700' },
@@ -267,7 +305,7 @@ onMounted(() => {
         <!-- View switch -->
         <div class="mb-6 flex w-fit gap-1 rounded-xl bg-gray-100 p-1">
             <button
-                @click="view = 'applications'"
+                @click="setView('applications')"
                 :class="[
                     'flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm font-medium transition-colors',
                     view === 'applications'
@@ -284,7 +322,7 @@ onMounted(() => {
                 </span>
             </button>
             <button
-                @click="view = 'operators'"
+                @click="setView('operators')"
                 :class="[
                     'rounded-lg px-4 py-1.5 text-sm font-medium transition-colors',
                     view === 'operators'
@@ -302,7 +340,7 @@ onMounted(() => {
                 <button
                     v-for="tab in appTabs"
                     :key="tab.key"
-                    @click="appTab = tab.key as typeof appTab.value"
+                    @click="setAppTab(tab.key)"
                     :class="[
                         'rounded-lg px-4 py-1.5 text-sm font-medium transition-colors',
                         appTab === tab.key
@@ -487,7 +525,7 @@ onMounted(() => {
                 <button
                     v-for="tab in tabs"
                     :key="tab.key"
-                    @click="activeTab = tab.key as typeof activeTab.value"
+                    @click="setActiveTab(tab.key)"
                     :class="[
                         'rounded-lg px-4 py-1.5 text-sm font-medium transition-colors',
                         activeTab === tab.key
@@ -639,39 +677,41 @@ onMounted(() => {
                             </div>
                         </div>
 
-                        <div
-                            v-if="op.status === 'pending'"
-                            class="flex shrink-0 gap-2"
-                        >
+                        <div class="flex shrink-0 gap-2">
                             <button
-                                @click="openApproveOperator(op)"
-                                class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
+                                @click="openDetailOperator(op.id)"
+                                class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
                             >
-                                Duyệt
+                                Chi tiết
                             </button>
-                            <button
-                                @click="openRejectOperator(op)"
-                                class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
-                            >
-                                Từ chối
-                            </button>
-                        </div>
-                        <div
-                            v-else-if="op.status === 'verified'"
-                            class="flex shrink-0 gap-2"
-                        >
-                            <button
-                                @click="openResetPassword(op)"
-                                class="rounded-lg border border-amber-300 px-4 py-2 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-50"
-                            >
-                                Đặt lại mật khẩu
-                            </button>
-                            <button
-                                @click="openRejectOperator(op)"
-                                class="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
-                            >
-                                Đình chỉ
-                            </button>
+                            <template v-if="op.status === 'pending'">
+                                <button
+                                    @click="openApproveOperator(op)"
+                                    class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
+                                >
+                                    Duyệt
+                                </button>
+                                <button
+                                    @click="openRejectOperator(op)"
+                                    class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
+                                >
+                                    Từ chối
+                                </button>
+                            </template>
+                            <template v-else-if="op.status === 'verified'">
+                                <button
+                                    @click="openResetPassword(op)"
+                                    class="rounded-lg border border-amber-300 px-4 py-2 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-50"
+                                >
+                                    Đặt lại mật khẩu
+                                </button>
+                                <button
+                                    @click="openRejectOperator(op)"
+                                    class="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+                                >
+                                    Đình chỉ
+                                </button>
+                            </template>
                         </div>
                     </div>
                 </div>
@@ -886,6 +926,242 @@ onMounted(() => {
                         </button>
                     </div>
                 </template>
+            </div>
+        </div>
+    </Teleport>
+
+    <!-- Operator Detail modal -->
+    <Teleport to="body">
+        <div
+            v-if="showDetailModal"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        >
+            <div class="w-full max-w-3xl rounded-2xl bg-white shadow-xl flex flex-col max-h-[85vh] overflow-hidden">
+                <!-- Header -->
+                <div class="flex items-start justify-between border-b border-slate-100 p-5 shrink-0">
+                    <div class="flex items-center gap-4">
+                        <div class="h-16 w-16 overflow-hidden rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-center">
+                            <img
+                                v-if="detailOperator?.logo_url"
+                                :src="detailOperator.logo_url"
+                                alt="Logo"
+                                class="h-full w-full object-cover"
+                            />
+                            <div v-else class="text-xl font-bold text-red-500">
+                                {{ detailOperator?.company_name?.charAt(0) || 'O' }}
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                {{ detailOperator?.company_name || 'Đang tải...' }}
+                            </h3>
+                            <div class="mt-1 flex items-center gap-2">
+                                <span
+                                    v-if="detailOperator?.status"
+                                    :class="[
+                                        'inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold',
+                                        statusMap[detailOperator.status]?.class ?? 'bg-gray-100 text-gray-600',
+                                    ]"
+                                >
+                                    {{ statusMap[detailOperator.status]?.label ?? detailOperator.status }}
+                                </span>
+                                <span class="text-xs text-gray-400">Chiết Khấu: {{ detailOperator?.commission_rate ?? 0 }}%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button
+                        @click="showDetailModal = false"
+                        class="rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                    >
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Tabs selector -->
+                <div class="flex border-b border-slate-100 px-5 shrink-0">
+                    <button
+                        v-for="t in ([
+                            { key: 'info', label: 'Thông tin chung' },
+                            { key: 'vehicles', label: `Đội xe (${detailOperator?.vehicles?.length ?? 0})` },
+                            { key: 'drivers', label: `Tài xế (${detailOperator?.drivers?.length ?? 0})` }
+                        ] as const)"
+                        :key="t.key"
+                        @click="setDetailTab(t.key)"
+                        :class="[
+                            'border-b-2 px-4 py-3 text-sm font-semibold transition-colors',
+                            detailTab === t.key
+                                ? 'border-red-600 text-red-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                        ]"
+                    >
+                        {{ t.label }}
+                    </button>
+                </div>
+
+                <!-- Content -->
+                <div class="flex-1 overflow-y-auto p-6">
+                    <div v-if="detailLoading" class="flex flex-col items-center py-20 text-gray-400">
+                        <div class="h-8 w-8 animate-spin rounded-full border-4 border-red-600 border-t-transparent mb-3" />
+                        <p class="text-sm">Đang tải thông tin chi tiết...</p>
+                    </div>
+                    <div v-else-if="detailOperator">
+                        <!-- TAB: Info -->
+                        <div v-if="detailTab === 'info'" class="space-y-6">
+                            <!-- Description -->
+                            <div v-if="detailOperator.description" class="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Giới thiệu</h4>
+                                <p class="text-sm text-gray-600 leading-relaxed">{{ detailOperator.description }}</p>
+                            </div>
+
+                            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <!-- Contact Info -->
+                                <div class="rounded-xl border border-slate-200 p-4 space-y-3">
+                                    <h4 class="font-bold text-gray-900 text-sm border-b border-slate-100 pb-2">👤 Thông tin liên hệ</h4>
+                                    <div class="space-y-2 text-sm">
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-400">Người đại diện:</span>
+                                            <span class="font-medium text-gray-800">{{ detailOperator.user?.full_name }}</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-400">Số điện thoại:</span>
+                                            <span class="font-mono font-medium text-gray-800">{{ detailOperator.user?.phone }}</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-400">Email liên lạc:</span>
+                                            <span class="font-medium text-gray-800">{{ detailOperator.user?.email || '—' }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Bank Account -->
+                                <div class="rounded-xl border border-slate-200 p-4 space-y-3">
+                                    <h4 class="font-bold text-gray-900 text-sm border-b border-slate-100 pb-2">💳 Tài khoản nhận tiền</h4>
+                                    <div class="space-y-2 text-sm">
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-400">Ngân hàng:</span>
+                                            <span class="font-medium text-gray-800">{{ detailOperator.bank_name || '—' }}</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-400">Số tài khoản:</span>
+                                            <span class="font-mono font-bold text-slate-800">{{ detailOperator.bank_account || '—' }}</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-400">Chủ tài khoản:</span>
+                                            <span class="font-semibold text-gray-800 uppercase">{{ detailOperator.bank_account_name || '—' }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Legal Info -->
+                                <div class="rounded-xl border border-slate-200 p-4 space-y-3 sm:col-span-2">
+                                    <h4 class="font-bold text-gray-900 text-sm border-b border-slate-100 pb-2">📜 Hồ sơ pháp lý</h4>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                            <span class="text-gray-400 block mb-1">Mã số thuế:</span>
+                                            <span class="font-mono font-semibold text-gray-800 block bg-gray-50 p-2.5 rounded border border-slate-100 font-medium">
+                                                {{ detailOperator.tax_code || 'Chưa cập nhật' }}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-400 block mb-1">Giấy phép kinh doanh:</span>
+                                            <span class="font-mono font-semibold text-gray-800 block bg-gray-50 p-2.5 rounded border border-slate-100 font-medium">
+                                                {{ detailOperator.business_license || 'Chưa cập nhật' }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB: Vehicles -->
+                        <div v-else-if="detailTab === 'vehicles'">
+                            <div v-if="!detailOperator.vehicles || detailOperator.vehicles.length === 0" class="text-center py-10 text-gray-400">
+                                <p class="text-sm">Nhà xe chưa cập nhật thông tin xe nào.</p>
+                            </div>
+                            <div v-else class="space-y-4">
+                                <div
+                                    v-for="v in detailOperator.vehicles"
+                                    :key="v.id"
+                                    class="flex items-center justify-between rounded-xl border border-slate-100 p-4 bg-slate-50 transition-colors hover:bg-slate-100"
+                                >
+                                    <div class="flex items-center gap-4">
+                                        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 text-xl font-bold text-red-500">
+                                            🚐
+                                        </div>
+                                        <div>
+                                            <h5 class="font-mono font-bold text-gray-900 text-sm">{{ v.plate_number }}</h5>
+                                            <p class="text-xs text-gray-500 mt-0.5 font-medium">
+                                                Loại: {{ v.vehicle_type }} · {{ v.seat_count }} chỗ · Năm SX: {{ v.manufacture_year || '—' }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span
+                                        :class="[
+                                            'inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold border',
+                                            v.is_active ? 'bg-green-50 text-green-700 border-green-200' : 'bg-slate-100 text-slate-500 border-slate-200'
+                                        ]"
+                                    >
+                                        {{ v.is_active ? 'Hoạt động' : 'Tạm dừng' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB: Drivers -->
+                        <div v-else-if="detailTab === 'drivers'">
+                            <div v-if="!detailOperator.drivers || detailOperator.drivers.length === 0" class="text-center py-10 text-gray-400">
+                                <p class="text-sm">Nhà xe chưa cập nhật thông tin tài xế nào.</p>
+                            </div>
+                            <div v-else class="space-y-4">
+                                <div
+                                    v-for="d in detailOperator.drivers"
+                                    :key="d.id"
+                                    class="flex items-center justify-between rounded-xl border border-slate-100 p-4 bg-slate-50 transition-colors hover:bg-slate-100"
+                                >
+                                    <div class="flex items-center gap-4">
+                                        <div class="h-10 w-10 overflow-hidden rounded-full bg-slate-200 flex items-center justify-center">
+                                            <img
+                                                v-if="d.photo_url"
+                                                :src="d.photo_url"
+                                                alt="Avatar"
+                                                class="h-full w-full object-cover"
+                                            />
+                                            <div v-else class="text-sm font-bold text-gray-400">
+                                                {{ d.full_name?.charAt(0) }}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h5 class="font-bold text-gray-900 text-sm">{{ d.full_name }}</h5>
+                                            <p class="text-xs text-gray-500 mt-0.5 font-medium">
+                                                SĐT: <span class="font-mono">{{ d.phone }}</span> · GPLX Hạng: {{ d.documents?.driver_license_class || '—' }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span
+                                        :class="[
+                                            'inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold',
+                                            statusMap[d.status]?.class ?? 'bg-gray-100 text-gray-600'
+                                        ]"
+                                    >
+                                        {{ statusMap[d.status]?.label ?? d.status }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="border-t border-slate-100 p-4 shrink-0 flex justify-end">
+                    <button
+                        @click="showDetailModal = false"
+                        class="rounded-lg bg-gray-800 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-900"
+                    >
+                        Đóng
+                    </button>
+                </div>
             </div>
         </div>
     </Teleport>

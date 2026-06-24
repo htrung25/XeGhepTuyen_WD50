@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useOperatorAuthStore } from '@/stores/operator.auth.store';
+import { Toaster } from '@/components/ui/sonner';
 
 const route = useRoute();
 const router = useRouter();
@@ -16,6 +17,7 @@ const navItems = [
     { label: 'Lịch chạy', path: '/operator/trips', icon: 'calendar' },
     { label: 'Đặt chỗ', path: '/operator/bookings', icon: 'ticket' },
     { label: 'Doanh thu', path: '/operator/revenue', icon: 'chart' },
+    { label: 'Hồ sơ nhà xe', path: '/operator/profile', icon: 'user' },
 ];
 
 const isActive = (path: string) => route.path.startsWith(path);
@@ -162,6 +164,21 @@ const logout = async () => {
                             d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                         />
                     </svg>
+                    <!-- User icon -->
+                    <svg
+                        v-if="item.icon === 'user'"
+                        class="h-5 w-5 flex-shrink-0"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                    </svg>
 
                     <span v-if="sidebarOpen">{{ item.label }}</span>
                 </router-link>
@@ -246,17 +263,19 @@ const logout = async () => {
                     </button>
 
                     <!-- Avatar -->
-                    <div
-                        class="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500 text-sm font-semibold text-white"
+                    <router-link
+                        to="/operator/profile"
+                        class="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500 text-sm font-semibold text-white transition-opacity hover:opacity-90"
                     >
                         {{ auth.user?.full_name?.charAt(0) ?? 'O' }}
-                    </div>
+                    </router-link>
                 </div>
             </header>
 
             <!-- Page content -->
             <main class="flex-1 overflow-auto">
                 <router-view />
+                <Toaster />
             </main>
         </div>
     </div>
