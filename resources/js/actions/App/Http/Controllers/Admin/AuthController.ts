@@ -192,6 +192,138 @@ logoutForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 logout.form = logoutForm
 
-const AuthController = { login, me, logout }
+/**
+* @see \App\Http\Controllers\Admin\AuthController::updateProfile
+* @see app/Http/Controllers/Admin/AuthController.php:60
+* @route '/api/admin/auth/profile'
+*/
+export const updateProfile = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+    url: updateProfile.url(options),
+    method: 'put',
+})
+
+updateProfile.definition = {
+    methods: ["put"],
+    url: '/api/admin/auth/profile',
+} satisfies RouteDefinition<["put"]>
+
+/**
+* @see \App\Http\Controllers\Admin\AuthController::updateProfile
+* @see app/Http/Controllers/Admin/AuthController.php:60
+* @route '/api/admin/auth/profile'
+*/
+updateProfile.url = (options?: RouteQueryOptions) => {
+    return updateProfile.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Admin\AuthController::updateProfile
+* @see app/Http/Controllers/Admin/AuthController.php:60
+* @route '/api/admin/auth/profile'
+*/
+updateProfile.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+    url: updateProfile.url(options),
+    method: 'put',
+})
+
+/**
+* @see \App\Http\Controllers\Admin\AuthController::updateProfile
+* @see app/Http/Controllers/Admin/AuthController.php:60
+* @route '/api/admin/auth/profile'
+*/
+const updateProfileForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: updateProfile.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'PUT',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Admin\AuthController::updateProfile
+* @see app/Http/Controllers/Admin/AuthController.php:60
+* @route '/api/admin/auth/profile'
+*/
+updateProfileForm.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: updateProfile.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'PUT',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'post',
+})
+
+updateProfile.form = updateProfileForm
+
+/**
+* @see \App\Http\Controllers\Admin\AuthController::changePassword
+* @see app/Http/Controllers/Admin/AuthController.php:94
+* @route '/api/admin/auth/change-password'
+*/
+export const changePassword = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+    url: changePassword.url(options),
+    method: 'put',
+})
+
+changePassword.definition = {
+    methods: ["put"],
+    url: '/api/admin/auth/change-password',
+} satisfies RouteDefinition<["put"]>
+
+/**
+* @see \App\Http\Controllers\Admin\AuthController::changePassword
+* @see app/Http/Controllers/Admin/AuthController.php:94
+* @route '/api/admin/auth/change-password'
+*/
+changePassword.url = (options?: RouteQueryOptions) => {
+    return changePassword.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Admin\AuthController::changePassword
+* @see app/Http/Controllers/Admin/AuthController.php:94
+* @route '/api/admin/auth/change-password'
+*/
+changePassword.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+    url: changePassword.url(options),
+    method: 'put',
+})
+
+/**
+* @see \App\Http\Controllers\Admin\AuthController::changePassword
+* @see app/Http/Controllers/Admin/AuthController.php:94
+* @route '/api/admin/auth/change-password'
+*/
+const changePasswordForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: changePassword.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'PUT',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Admin\AuthController::changePassword
+* @see app/Http/Controllers/Admin/AuthController.php:94
+* @route '/api/admin/auth/change-password'
+*/
+changePasswordForm.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: changePassword.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'PUT',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'post',
+})
+
+changePassword.form = changePasswordForm
+
+const AuthController = { login, me, logout, updateProfile, changePassword }
 
 export default AuthController

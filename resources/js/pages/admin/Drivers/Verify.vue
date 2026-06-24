@@ -23,7 +23,9 @@ interface DriverDoc {
 const drivers = ref<DriverDoc[]>([]);
 const isLoading = ref(true);
 const errorMsg = ref('');
-const activeTab = ref<'all' | 'pending' | 'verified' | 'suspended'>('pending');
+type TabKey = 'all' | 'pending' | 'verified' | 'suspended';
+
+const activeTab = ref<TabKey>('pending');
 const zoomedImage = ref<string | null>(null);
 
 // Action modals
@@ -38,7 +40,7 @@ const credResult = ref<{ phone: string; temp_password: string } | null>(null);
 const credTitle = ref('');
 const credCopied = ref(false);
 
-const tabs = [
+const tabs: { key: TabKey; label: string }[] = [
     { key: 'all', label: 'Tất cả' },
     { key: 'pending', label: 'Chờ duyệt' },
     { key: 'verified', label: 'Đã duyệt' },
@@ -180,7 +182,7 @@ onMounted(loadDrivers);
             <button
                 v-for="tab in tabs"
                 :key="tab.key"
-                @click="activeTab = tab.key as typeof activeTab.value"
+                @click="activeTab = tab.key"
                 :class="[
                     'rounded-lg px-4 py-1.5 text-sm font-medium transition-colors',
                     activeTab === tab.key

@@ -147,3 +147,16 @@ it('cho phép admin khôi phục nhà xe bị đình chỉ', function () {
     expect($operator->status->value)->toBe('verified');
     expect($operator->user->is_active)->toBeTrue();
 });
+
+it('chặn người dùng không có vai trò admin khôi phục nhà xe', function () {
+    $operator = makeFullOperator();
+    $operator->update(['status' => 'suspended']);
+
+    $customer = User::factory()->create([
+        'role' => UserRole::Customer,
+    ]);
+    Sanctum::actingAs($customer);
+
+    $this->postJson("/api/admin/operators/{$operator->id}/restore")
+        ->assertForbidden();
+});

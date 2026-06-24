@@ -2,6 +2,8 @@ import {
     login,
     me,
     logout,
+    updateProfile as adminUpdateProfile,
+    changePassword as adminChangePassword,
 } from '@/actions/App/Http/Controllers/Admin/AuthController';
 import { index as bookingsIndex } from '@/actions/App/Http/Controllers/Admin/BookingController';
 import {
@@ -29,6 +31,7 @@ import {
     approve as operatorApprove,
     reject as operatorReject,
     suspend as operatorSuspend,
+    restore as operatorRestore,
     resetPassword as operatorResetPassword,
 } from '@/actions/App/Http/Controllers/Admin/OperatorController';
 import {
@@ -67,6 +70,8 @@ export const adminApi = {
         apiClient.send(login(), data),
     logout: () => apiClient.send(logout()),
     me: () => apiClient.send(me()),
+    updateProfile: (data: unknown) => apiClient.send(adminUpdateProfile(), data),
+    changePassword: (data: unknown) => apiClient.send(adminChangePassword(), data),
 
     // Dashboard
     getDashboard: () => apiClient.send(dashboard()),
@@ -82,6 +87,8 @@ export const adminApi = {
         apiClient.send(operatorReject(id), data),
     suspendOperator: (id: string, data: { reason: string }) =>
         apiClient.send(operatorSuspend(id), data),
+    restoreOperator: (id: string) =>
+        apiClient.send(operatorRestore(id)),
     resetOperatorPassword: (id: string) =>
         apiClient.send<{ phone: string; temp_password: string }>(
             operatorResetPassword(id),

@@ -6,6 +6,8 @@ interface AdminUser {
     full_name: string;
     email: string;
     role: string;
+    phone?: string | null;
+    avatar_url?: string | null;
 }
 
 export const useAdminAuthStore = defineStore('adminAuth', () => {
@@ -23,6 +25,13 @@ export const useAdminAuthStore = defineStore('adminAuth', () => {
         localStorage.setItem('admin_user', JSON.stringify(u));
     }
 
+    function updateUser(u: Partial<AdminUser>) {
+        if (user.value) {
+            user.value = { ...user.value, ...u };
+            localStorage.setItem('admin_user', JSON.stringify(user.value));
+        }
+    }
+
     function logout() {
         token.value = null;
         user.value = null;
@@ -30,5 +39,5 @@ export const useAdminAuthStore = defineStore('adminAuth', () => {
         localStorage.removeItem('admin_user');
     }
 
-    return { token, user, isAuthenticated, setAuth, logout };
+    return { token, user, isAuthenticated, setAuth, updateUser, logout };
 });

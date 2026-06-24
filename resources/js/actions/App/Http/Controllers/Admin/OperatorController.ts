@@ -402,8 +402,82 @@ suspendForm.post = (args: { id: string | number } | [id: string | number ] | str
 suspend.form = suspendForm
 
 /**
+* @see \App\Http\Controllers\Admin\OperatorController::restore
+* @see app/Http/Controllers/Admin/OperatorController.php:91
+* @route '/api/admin/operators/{id}/restore'
+*/
+export const restore = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: restore.url(args, options),
+    method: 'post',
+})
+
+restore.definition = {
+    methods: ["post"],
+    url: '/api/admin/operators/{id}/restore',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Admin\OperatorController::restore
+* @see app/Http/Controllers/Admin/OperatorController.php:91
+* @route '/api/admin/operators/{id}/restore'
+*/
+restore.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { id: args }
+    }
+
+    if (Array.isArray(args)) {
+        args = {
+            id: args[0],
+        }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+        id: args.id,
+    }
+
+    return restore.definition.url
+            .replace('{id}', parsedArgs.id.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Admin\OperatorController::restore
+* @see app/Http/Controllers/Admin/OperatorController.php:91
+* @route '/api/admin/operators/{id}/restore'
+*/
+restore.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: restore.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Admin\OperatorController::restore
+* @see app/Http/Controllers/Admin/OperatorController.php:91
+* @route '/api/admin/operators/{id}/restore'
+*/
+const restoreForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: restore.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Admin\OperatorController::restore
+* @see app/Http/Controllers/Admin/OperatorController.php:91
+* @route '/api/admin/operators/{id}/restore'
+*/
+restoreForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: restore.url(args, options),
+    method: 'post',
+})
+
+restore.form = restoreForm
+
+/**
 * @see \App\Http\Controllers\Admin\OperatorController::resetPassword
-* @see app/Http/Controllers/Admin/OperatorController.php:95
+* @see app/Http/Controllers/Admin/OperatorController.php:115
 * @route '/api/admin/operators/{id}/reset-password'
 */
 export const resetPassword = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -418,7 +492,7 @@ resetPassword.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::resetPassword
-* @see app/Http/Controllers/Admin/OperatorController.php:95
+* @see app/Http/Controllers/Admin/OperatorController.php:115
 * @route '/api/admin/operators/{id}/reset-password'
 */
 resetPassword.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -445,7 +519,7 @@ resetPassword.url = (args: { id: string | number } | [id: string | number ] | st
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::resetPassword
-* @see app/Http/Controllers/Admin/OperatorController.php:95
+* @see app/Http/Controllers/Admin/OperatorController.php:115
 * @route '/api/admin/operators/{id}/reset-password'
 */
 resetPassword.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -455,7 +529,7 @@ resetPassword.post = (args: { id: string | number } | [id: string | number ] | s
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::resetPassword
-* @see app/Http/Controllers/Admin/OperatorController.php:95
+* @see app/Http/Controllers/Admin/OperatorController.php:115
 * @route '/api/admin/operators/{id}/reset-password'
 */
 const resetPasswordForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -465,7 +539,7 @@ const resetPasswordForm = (args: { id: string | number } | [id: string | number 
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::resetPassword
-* @see app/Http/Controllers/Admin/OperatorController.php:95
+* @see app/Http/Controllers/Admin/OperatorController.php:115
 * @route '/api/admin/operators/{id}/reset-password'
 */
 resetPasswordForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -475,6 +549,6 @@ resetPasswordForm.post = (args: { id: string | number } | [id: string | number ]
 
 resetPassword.form = resetPasswordForm
 
-const OperatorController = { index, show, approve, reject, suspend, resetPassword }
+const OperatorController = { index, show, approve, reject, suspend, restore, resetPassword }
 
 export default OperatorController

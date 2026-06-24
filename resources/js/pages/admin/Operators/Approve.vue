@@ -279,6 +279,21 @@ async function confirmReject() {
     }
 }
 
+async function restoreOperator(op: OperatorDoc) {
+    if (
+        !confirm(
+            `Bạn có chắc chắn muốn khôi phục hoạt động cho nhà xe ${op.company_name}?`
+        )
+    )
+        return;
+    const { error } = await adminApi.restoreOperator(op.id);
+    if (error) {
+        alert(error);
+        return;
+    }
+    await loadOperators();
+}
+
 function openResetPassword(op: OperatorDoc) {
     selectedId.value = op.id;
     selectedName.value = op.company_name;
@@ -742,6 +757,14 @@ onMounted(() => {
                                     class="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
                                 >
                                     Đình chỉ
+                                </button>
+                            </template>
+                            <template v-else-if="op.status === 'suspended'">
+                                <button
+                                    @click="restoreOperator(op)"
+                                    class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
+                                >
+                                    Khôi phục
                                 </button>
                             </template>
                         </div>
