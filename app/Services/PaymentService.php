@@ -6,10 +6,14 @@ use App\Enums\BookingPaymentStatus;
 use App\Enums\BookingStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
+use App\Events\BookingConfirmed;
+use App\Events\PaymentProcessed;
+use App\Exceptions\BookingExpiredException;
 use App\Exceptions\PaymentVerificationException;
 use App\Models\Booking;
 use App\Models\Payment;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -26,7 +30,7 @@ class PaymentService
     public function initiate(Booking $booking, PaymentMethod $method): array
     {
         if ($booking->isExpired()) {
-            throw new \App\Exceptions\BookingExpiredException();
+            throw new BookingExpiredException;
         }
 
         // Chuyến đã khởi hành → không cho thanh toán/confirm (tránh tạo vé "mồ côi")
@@ -41,20 +45,20 @@ class PaymentService
         }
 
         $payment = Payment::create([
-            'booking_id'       => $booking->id,
-            'user_id'          => $booking->user_id,
-            'amount'           => $booking->final_amount,
-            'method'           => $method,
-            'status'           => PaymentStatus::Pending,
-            'gateway_order_id' => 'XEGHEP-' . strtoupper(Str::random(10)),
+            'booking_id' => $booking->id,
+            'user_id' => $booking->user_id,
+            'amount' => $booking->final_amount,
+            'method' => $method,
+            'status' => PaymentStatus::Pending,
+            'gateway_order_id' => 'XEGHEP-'.strtoupper(Str::random(10)),
         ]);
 
-        return match($method) {
-            PaymentMethod::Momo    => $this->initiateMomo($payment, $booking),
-            PaymentMethod::Vnpay   => $this->initiateVnpay($payment, $booking),
-            PaymentMethod::Wallet  => $this->initiateWallet($payment, $booking),
-            PaymentMethod::Cash    => $this->initiateCash($payment, $booking),
-            default                => throw new \InvalidArgumentException('Phương thức thanh toán không hỗ trợ'),
+        return match ($method) {
+            PaymentMethod::Momo => $this->initiateMomo($payment, $booking),
+            PaymentMethod::Vnpay => $this->initiateVnpay($payment, $booking),
+            PaymentMethod::Wallet => $this->initiateWallet($payment, $booking),
+            PaymentMethod::Cash => $this->initiateCash($payment, $booking),
+            default => throw new \InvalidArgumentException('Phương thức thanh toán không hỗ trợ'),
         };
     }
 
@@ -64,7 +68,17 @@ class PaymentService
     public function handleMomoCallback(array $payload): bool
     {
         $this->verifyMomoSignature($payload);
-        return $this->processCallback($payload['orderId'], $payload['transId'] ?? null, $payload);
+
+        // MoMo: resultCode === 0 nghĩa là giao dịch THÀNH CÔNG. Giá trị khác = thất bại/hủy
+        // → không được confirm vé (tránh xác nhận vé chưa thanh toán). Tương tự VNPay '00'.
+        $success = (int) ($payload['resultCode'] ?? -1) === 0;
+
+        return $this->processCallback(
+            $payload['orderId'],
+            $payload['transId'] ?? null,
+            $payload,
+            $success
+        );
     }
 
     /**
@@ -74,6 +88,7 @@ class PaymentService
     {
         $this->verifyVnpaySignature($payload);
         $success = ($payload['vnp_ResponseCode'] ?? '') === '00';
+
         return $this->processCallback(
             $payload['vnp_TxnRef'],
             $payload['vnp_TransactionNo'] ?? null,
@@ -90,7 +105,7 @@ class PaymentService
         DB::transaction(function () use ($booking, $amount) {
             $payment = $booking->payment;
 
-            if (!$payment || !$payment->isSuccessful()) {
+            if (! $payment || ! $payment->isSuccessful()) {
                 return;
             }
 
@@ -103,9 +118,9 @@ class PaymentService
             );
 
             $payment->update([
-                'status'       => PaymentStatus::Refunded,
+                'status' => PaymentStatus::Refunded,
                 'refund_amount' => $amount,
-                'refunded_at'  => now(),
+                'refunded_at' => now(),
             ]);
 
             $booking->update(['payment_status' => BookingPaymentStatus::Refunded]);
@@ -116,8 +131,9 @@ class PaymentService
     {
         $payment = Payment::where('gateway_order_id', $orderId)->first();
 
-        if (!$payment) {
+        if (! $payment) {
             Log::warning('Payment callback: không tìm thấy payment', ['order_id' => $orderId]);
+
             return false;
         }
 
@@ -126,27 +142,28 @@ class PaymentService
             return true;
         }
 
-        if (!$success) {
+        if (! $success) {
             $payment->update(['status' => PaymentStatus::Failed, 'gateway_response' => $payload]);
+
             return false;
         }
 
         DB::transaction(function () use ($payment, $gatewayTxnId, $payload) {
             $payment->update([
-                'status'          => PaymentStatus::Success,
-                'gateway_txn_id'  => $gatewayTxnId,
-                'gateway_response'=> $payload,
-                'paid_at'         => now(),
+                'status' => PaymentStatus::Success,
+                'gateway_txn_id' => $gatewayTxnId,
+                'gateway_response' => $payload,
+                'paid_at' => now(),
             ]);
 
             $booking = $payment->booking;
             $booking->update([
                 'payment_status' => BookingPaymentStatus::Paid,
                 'booking_status' => BookingStatus::Confirmed,
-                'confirmed_at'   => now(),
+                'confirmed_at' => now(),
             ]);
 
-            event(new \App\Events\PaymentProcessed($booking, $payment));
+            event(new PaymentProcessed($booking, $payment));
         });
 
         return true;
@@ -158,25 +175,25 @@ class PaymentService
         $partnerCode = config('services.momo.partner_code');
         $accessKey = config('services.momo.access_key');
         $secretKey = config('services.momo.secret_key');
-        $redirectUrl = config('app.url') . '/payment/momo/return';
-        $ipnUrl = config('app.url') . '/api/public/payments/momo/callback';
+        $redirectUrl = config('app.url').'/payment/momo/return';
+        $ipnUrl = config('app.url').'/api/public/payments/momo/callback';
 
         $rawHash = "accessKey={$accessKey}&amount={$payment->amount}&extraData=&ipnUrl={$ipnUrl}&orderId={$payment->gateway_order_id}&orderInfo=Vé xe {$booking->booking_code}&partnerCode={$partnerCode}&redirectUrl={$redirectUrl}&requestId={$payment->id}&requestType=captureWallet";
         $signature = hash_hmac('sha256', $rawHash, $secretKey);
 
         try {
-            $response = \Illuminate\Support\Facades\Http::post($endpoint . '/v2/gateway/api/create', [
+            $response = Http::post($endpoint.'/v2/gateway/api/create', [
                 'partnerCode' => $partnerCode,
-                'requestId'   => $payment->id,
-                'amount'      => $payment->amount,
-                'orderId'     => $payment->gateway_order_id,
-                'orderInfo'   => "Vé xe {$booking->booking_code}",
+                'requestId' => $payment->id,
+                'amount' => $payment->amount,
+                'orderId' => $payment->gateway_order_id,
+                'orderInfo' => "Vé xe {$booking->booking_code}",
                 'redirectUrl' => $redirectUrl,
-                'ipnUrl'      => $ipnUrl,
-                'lang'        => 'vi',
+                'ipnUrl' => $ipnUrl,
+                'lang' => 'vi',
                 'requestType' => 'captureWallet',
-                'extraData'   => '',
-                'signature'   => $signature,
+                'extraData' => '',
+                'signature' => $signature,
             ]);
 
             return ['payment_url' => $response->json('payUrl'), 'order_id' => $payment->gateway_order_id];
@@ -188,22 +205,22 @@ class PaymentService
 
     private function initiateVnpay(Payment $payment, Booking $booking): array
     {
-        $tmnCode   = config('services.vnpay.tmn_code');
+        $tmnCode = config('services.vnpay.tmn_code');
         $hashSecret = config('services.vnpay.hash_secret');
-        $vnpUrl    = config('services.vnpay.url');
+        $vnpUrl = config('services.vnpay.url');
 
         $inputData = [
-            'vnp_Version'    => '2.1.0',
-            'vnp_Command'    => 'pay',
-            'vnp_TmnCode'    => $tmnCode,
-            'vnp_Locale'     => 'vn',
-            'vnp_CurrCode'   => 'VND',
-            'vnp_TxnRef'     => $payment->gateway_order_id,
-            'vnp_OrderInfo'  => "Thanh toan ve xe {$booking->booking_code}",
-            'vnp_OrderType'  => 'other',
-            'vnp_Amount'     => $payment->amount * 100,
-            'vnp_ReturnUrl'  => config('app.url') . '/payment/vnpay/return',
-            'vnp_IpAddr'     => request()->ip(),
+            'vnp_Version' => '2.1.0',
+            'vnp_Command' => 'pay',
+            'vnp_TmnCode' => $tmnCode,
+            'vnp_Locale' => 'vn',
+            'vnp_CurrCode' => 'VND',
+            'vnp_TxnRef' => $payment->gateway_order_id,
+            'vnp_OrderInfo' => "Thanh toan ve xe {$booking->booking_code}",
+            'vnp_OrderType' => 'other',
+            'vnp_Amount' => $payment->amount * 100,
+            'vnp_ReturnUrl' => config('app.url').'/payment/vnpay/return',
+            'vnp_IpAddr' => request()->ip(),
             'vnp_CreateDate' => now()->format('YmdHis'),
             'vnp_ExpireDate' => now()->addMinutes(15)->format('YmdHis'),
         ];
@@ -213,7 +230,7 @@ class PaymentService
         $vnpSecureHash = hash_hmac('sha512', $hashData, $hashSecret);
         $inputData['vnp_SecureHash'] = $vnpSecureHash;
 
-        $paymentUrl = $vnpUrl . '?' . http_build_query($inputData);
+        $paymentUrl = $vnpUrl.'?'.http_build_query($inputData);
 
         return ['payment_url' => $paymentUrl, 'order_id' => $payment->gateway_order_id];
     }
@@ -227,7 +244,7 @@ class PaymentService
             $booking->id
         );
 
-        $this->processCallback($payment->gateway_order_id, 'WALLET-' . time(), [], true);
+        $this->processCallback($payment->gateway_order_id, 'WALLET-'.time(), [], true);
 
         return ['payment_url' => null, 'status' => 'paid'];
     }
@@ -241,18 +258,18 @@ class PaymentService
             $payment->update(['status' => PaymentStatus::Pending]); // chờ tài xế thu
             $booking->update([
                 'booking_status' => BookingStatus::Confirmed,
-                'confirmed_at'   => now(),
-                'expires_at'     => null,
+                'confirmed_at' => now(),
+                'expires_at' => null,
             ]);
         });
 
         // Thông báo xác nhận đặt vé (tương tự luồng online)
-        event(new \App\Events\BookingConfirmed($booking->fresh()));
+        event(new BookingConfirmed($booking->fresh()));
 
         return [
             'payment_url' => null,
-            'status'      => 'confirmed_unpaid',
-            'message'     => 'Đặt vé thành công. Vui lòng thanh toán tiền mặt khi lên xe.',
+            'status' => 'confirmed_unpaid',
+            'message' => 'Đặt vé thành công. Vui lòng thanh toán tiền mặt khi lên xe.',
         ];
     }
 
@@ -273,21 +290,21 @@ class PaymentService
         return DB::transaction(function () use ($booking, $driverId) {
             // Lấy payment cash đang chờ; nếu chưa có thì tạo mới (an toàn)
             $payment = Payment::where('booking_id', $booking->id)
-                              ->where('method', PaymentMethod::Cash)
-                              ->latest()
-                              ->first()
+                ->where('method', PaymentMethod::Cash)
+                ->latest()
+                ->first()
                 ?? Payment::create([
-                    'booking_id'       => $booking->id,
-                    'user_id'          => $booking->user_id,
-                    'amount'           => $booking->final_amount,
-                    'method'           => PaymentMethod::Cash,
-                    'status'           => PaymentStatus::Pending,
-                    'gateway_order_id' => 'CASH-' . strtoupper(Str::random(10)),
+                    'booking_id' => $booking->id,
+                    'user_id' => $booking->user_id,
+                    'amount' => $booking->final_amount,
+                    'method' => PaymentMethod::Cash,
+                    'status' => PaymentStatus::Pending,
+                    'gateway_order_id' => 'CASH-'.strtoupper(Str::random(10)),
                 ]);
 
             $payment->update([
-                'status'       => PaymentStatus::Success,
-                'paid_at'      => now(),
+                'status' => PaymentStatus::Success,
+                'paid_at' => now(),
                 'collected_by' => $driverId,
             ]);
 
@@ -312,12 +329,12 @@ class PaymentService
 
     private function verifyVnpaySignature(array $payload): void
     {
-        $hashSecret  = config('services.vnpay.hash_secret');
-        $secureHash  = $payload['vnp_SecureHash'] ?? '';
-        $inputData   = array_filter($payload, fn($k) => !in_array($k, ['vnp_SecureHash', 'vnp_SecureHashType']), ARRAY_FILTER_USE_KEY);
+        $hashSecret = config('services.vnpay.hash_secret');
+        $secureHash = $payload['vnp_SecureHash'] ?? '';
+        $inputData = array_filter($payload, fn ($k) => ! in_array($k, ['vnp_SecureHash', 'vnp_SecureHashType']), ARRAY_FILTER_USE_KEY);
         ksort($inputData);
-        $hashData  = urldecode(http_build_query($inputData));
-        $expected  = hash_hmac('sha512', $hashData, $hashSecret);
+        $hashData = urldecode(http_build_query($inputData));
+        $expected = hash_hmac('sha512', $hashData, $hashSecret);
 
         if ($expected !== $secureHash) {
             throw new PaymentVerificationException('Chữ ký VNPay không hợp lệ');
