@@ -576,6 +576,24 @@ Phát hiện phụ (CHƯA sửa, chờ quyết định): (a) trạng thái 'boar
   (c) start() không chặn bắt đầu trước giờ khởi hành. Đều không chặn vận hành.
 ```
 
+### 4.15 Tất toán vé khi hoàn tất chuyến — vé confirmed → completed (chốt 2026-06-22, Hướng 2)
+```
+Vấn đề   : 2 luồng kết thúc chuyến xử lý vé Confirmed-chưa-check-in KHÁC nhau →
+           cùng vé, kết quả khác tùy ai bấm: completeTrip/cron (finalizeOnTripComplete)
+           đánh confirmed→no_show (mất doanh thu nếu tài xế quên quét QR); còn
+           markRanCompleted (nhà xe "Đã chạy xong") đánh confirmed→completed.
+Chốt     : THỐNG NHẤT theo markRanCompleted. BookingService::finalizeOnTripComplete giờ
+           checked_in + confirmed → completed (ghi nhận doanh thu kể cả khi quên check-in);
+           pending → cancelled. no_show CHỈ còn đặt khi tài xế CHỦ ĐỘNG đánh vắng
+           (CheckinController::absent). Ảnh hưởng cả Driver completeTrip lẫn cron auto-resolve.
+Rủi ro   : nếu khách thực sự không đi mà tài xế không đánh vắng → vẫn tính doanh thu.
+           Chấp nhận: mặc định "đã xác nhận = đã đi", no_show là hành động chủ động.
+Test     : tests/Feature/TripCompletionTest.php (confirmed/checked_in→completed, pending→cancelled).
+Lưu ý    : markRanCompleted (TripService) và finalizeOnTripComplete giờ trùng logic phần
+           cập nhật booking (khác tầng: TripService còn set trip status + event). KHÔNG gộp
+           (giữ surgical) — nếu muốn dedupe sau, cho markRanCompleted gọi finalizeOnTripComplete.
+```
+
 ### 4.13 Cô lập 4 portal bằng middleware `role` (chốt 2026-06-21)
 ```
 Vấn đề   : 03-architecture §2 ghi "4 guard riêng biệt" là FINAL, nhưng THỰC TẾ cả 4

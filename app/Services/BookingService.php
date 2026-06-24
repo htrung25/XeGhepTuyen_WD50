@@ -215,21 +215,17 @@ class BookingService
     }
 
     /**
-     * Tất toán vé khi chuyến HOÀN TẤT:
-     *  - checked_in → completed (khách đã đi)
-     *  - confirmed (đã xác nhận nhưng không lên xe) → no_show (khách lỡ chuyến, KHÔNG hoàn tiền)
+     * Tất toán vé khi chuyến HOÀN TẤT (Hướng 2 — thống nhất với markRanCompleted):
+     *  - checked_in + confirmed → completed (ghi nhận doanh thu kể cả khi tài xế quên
+     *    quét QR). no_show CHỈ đặt khi tài xế CHỦ ĐỘNG đánh vắng (check-in/absent).
      *  - pending (chưa thanh toán, bỏ dở) → cancelled
      */
     public function finalizeOnTripComplete(Trip $trip): void
     {
         DB::transaction(function () use ($trip) {
             $trip->bookings()
-                ->where('booking_status', BookingStatus::CheckedIn->value)
+                ->whereIn('booking_status', [BookingStatus::CheckedIn->value, BookingStatus::Confirmed->value])
                 ->update(['booking_status' => BookingStatus::Completed, 'completed_at' => now()]);
-
-            $trip->bookings()
-                ->where('booking_status', BookingStatus::Confirmed->value)
-                ->update(['booking_status' => BookingStatus::NoShow]);
 
             $trip->bookings()
                 ->where('booking_status', BookingStatus::Pending->value)
