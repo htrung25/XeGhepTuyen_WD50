@@ -30,9 +30,9 @@ class SeatMap extends Model
     {
         return [
             'seat_type' => SeatType::class,
-            'status'    => SeatStatus::class,
+            'status' => SeatStatus::class,
             'locked_at' => 'datetime',
-            'price'     => 'integer',
+            'price' => 'integer',
         ];
     }
 
@@ -64,7 +64,9 @@ class SeatMap extends Model
 
     public function isAvailable(): bool
     {
-        return $this->status === SeatStatus::Available;
+        // Ghế Locked nhưng đã quá hạn giữ (10') coi như còn trống — tự liền ngay ở
+        // tầng đọc, không phụ thuộc ExpireLockedSeatsJob chạy đúng giờ.
+        return $this->status === SeatStatus::Available || $this->isLockExpired();
     }
 
     public function isLockExpired(): bool

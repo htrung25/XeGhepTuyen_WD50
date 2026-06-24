@@ -109,13 +109,17 @@ class PaymentService
                 return;
             }
 
-            // Hoàn về ví nội bộ
-            $this->walletService->credit(
-                $booking->user,
-                $amount,
-                "Hoàn tiền vé {$booking->booking_code}",
-                $booking->id
-            );
+            // Tiền mặt do tài xế/nhà xe giữ (Phương án A) — nền tảng KHÔNG hoàn từ quỹ/ví;
+            // nhà xe hoàn tiền mặt trực tiếp cho khách. Chỉ đánh dấu trạng thái để đối soát.
+            // Vé online: nền tảng đang giữ tiền ⇒ hoàn về ví nội bộ.
+            if ($payment->method !== PaymentMethod::Cash) {
+                $this->walletService->credit(
+                    $booking->user,
+                    $amount,
+                    "Hoàn tiền vé {$booking->booking_code}",
+                    $booking->id
+                );
+            }
 
             $payment->update([
                 'status' => PaymentStatus::Refunded,
@@ -237,14 +241,18 @@ class PaymentService
 
     private function initiateWallet(Payment $payment, Booking $booking): array
     {
-        $this->walletService->debit(
-            $booking->user,
-            $payment->amount,
-            "Thanh toán vé {$booking->booking_code}",
-            $booking->id
-        );
+        // Trừ ví + xác nhận vé phải ATOMIC: nếu confirm lỗi thì rollback luôn lệnh trừ ví
+        // (tránh trừ tiền nhưng vé không được confirm).
+        DB::transaction(function () use ($payment, $booking) {
+            $this->walletService->debit(
+                $booking->user,
+                $payment->amount,
+                "Thanh toán vé {$booking->booking_code}",
+                $booking->id
+            );
 
-        $this->processCallback($payment->gateway_order_id, 'WALLET-'.time(), [], true);
+            $this->processCallback($payment->gateway_order_id, 'WALLET-'.time(), [], true);
+        });
 
         return ['payment_url' => null, 'status' => 'paid'];
     }

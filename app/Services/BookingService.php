@@ -5,20 +5,19 @@ namespace App\Services;
 use App\Enums\BookingPaymentStatus;
 use App\Enums\BookingStatus;
 use App\Enums\SeatStatus;
-use App\Enums\WalletTransactionType;
-use App\Exceptions\BookingExpiredException;
 use App\Exceptions\SeatNotAvailableException;
 use App\Exceptions\TripNotAvailableException;
 use App\Jobs\ExpireUnpaidBookingJob;
 use App\Jobs\GenerateQrCodeJob;
+use App\Jobs\ProcessRefundJob;
 use App\Models\Booking;
 use App\Models\BookingPassenger;
 use App\Models\SeatMap;
 use App\Models\Trip;
 use App\Models\User;
 use App\Repositories\Contracts\BookingRepositoryInterface;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class BookingService
@@ -41,18 +40,18 @@ class BookingService
      */
     public function create(array $data, User $user): Booking
     {
-        // Kiểm tra user không có quá 3 booking pending
-        $pendingCount = $this->bookingRepo->countPendingByUser($user->id);
-        if ($pendingCount >= 3) {
-            throw new \InvalidArgumentException('Bạn đang có quá nhiều vé chờ thanh toán (tối đa 3 vé)');
-        }
-
         return DB::transaction(function () use ($data, $user) {
+            // Khóa theo user để đếm vé pending chính xác dưới đồng thời (tránh lách quá 3 vé)
+            DB::table('users')->where('id', $user->id)->lockForUpdate()->first();
+            if ($this->bookingRepo->countPendingByUser($user->id) >= 3) {
+                throw new \InvalidArgumentException('Bạn đang có quá nhiều vé chờ thanh toán (tối đa 3 vé)');
+            }
+
             // 1. Lock ghế để tránh race condition
             $seats = SeatMap::whereIn('id', $data['seat_ids'])
-                            ->where('trip_id', $data['trip_id'])
-                            ->lockForUpdate()
-                            ->get();
+                ->where('trip_id', $data['trip_id'])
+                ->lockForUpdate()
+                ->get();
 
             if ($seats->count() !== count($data['seat_ids'])) {
                 throw new SeatNotAvailableException('Một số ghế không tồn tại trên chuyến này');
@@ -60,9 +59,9 @@ class BookingService
 
             // 2. Kiểm tra từng ghế còn available hoặc đang locked bởi chính user này
             foreach ($seats as $seat) {
-                $lockedByMe = $seat->status === \App\Enums\SeatStatus::Locked
+                $lockedByMe = $seat->status === SeatStatus::Locked
                     && $seat->locked_by === $user->id;
-                if (!$seat->isAvailable() && !$lockedByMe) {
+                if (! $seat->isAvailable() && ! $lockedByMe) {
                     throw new SeatNotAvailableException("Ghế {$seat->seat_code} đã được đặt bởi người khác");
                 }
             }
@@ -74,17 +73,17 @@ class BookingService
 
             // 4. Kiểm tra chuyến còn hợp lệ
             $trip = Trip::lockForUpdate()->findOrFail($data['trip_id']);
-            if (!$trip->canBeBooked()) {
+            if (! $trip->canBeBooked()) {
                 throw new TripNotAvailableException('Chuyến đi không còn nhận đặt vé');
             }
 
             // 5. Tính giá
             $subtotal = $seats->sum('price');
             $discount = 0;
-            $voucher  = null;
+            $voucher = null;
 
-            if (!empty($data['voucher_code'])) {
-                $voucher  = $this->voucherService->validate($data['voucher_code'], $subtotal, $user, $trip->id);
+            if (! empty($data['voucher_code'])) {
+                $voucher = $this->voucherService->validate($data['voucher_code'], $subtotal, $user, $trip->id);
                 $discount = $voucher->calculateDiscount($subtotal);
             }
 
@@ -92,44 +91,44 @@ class BookingService
 
             // 6. Tạo booking
             $booking = Booking::create([
-                'booking_code'    => $this->generateCode($trip),
-                'user_id'         => $user->id,
-                'trip_id'         => $data['trip_id'],
-                'pickup_stop_id'  => $data['pickup_stop_id'],
+                'booking_code' => $this->generateCode($trip),
+                'user_id' => $user->id,
+                'trip_id' => $data['trip_id'],
+                'pickup_stop_id' => $data['pickup_stop_id'],
                 'dropoff_stop_id' => $data['dropoff_stop_id'],
-                'pickup_address'  => $data['pickup_address'] ?? null,
+                'pickup_address' => $data['pickup_address'] ?? null,
                 'dropoff_address' => $data['dropoff_address'] ?? null,
                 'passenger_count' => $data['passenger_count'],
-                'contact_name'    => $data['contact_name'],
-                'contact_phone'   => $data['contact_phone'],
-                'note'            => $data['note'] ?? null,
-                'subtotal'        => $subtotal,
+                'contact_name' => $data['contact_name'],
+                'contact_phone' => $data['contact_phone'],
+                'note' => $data['note'] ?? null,
+                'subtotal' => $subtotal,
                 'discount_amount' => $discount,
-                'final_amount'    => $finalAmount,
-                'payment_method'  => $data['payment_method'],
-                'payment_status'  => BookingPaymentStatus::Unpaid,
-                'booking_status'  => BookingStatus::Pending,
-                'voucher_id'      => $voucher?->id,
-                'qr_token'        => Str::random(32),
-                'expires_at'      => now()->addMinutes(15),
+                'final_amount' => $finalAmount,
+                'payment_method' => $data['payment_method'],
+                'payment_status' => BookingPaymentStatus::Unpaid,
+                'booking_status' => BookingStatus::Pending,
+                'voucher_id' => $voucher?->id,
+                'qr_token' => Str::random(32),
+                'expires_at' => now()->addMinutes(15),
             ]);
 
             // 7. Tạo booking_passengers
             foreach ($data['passengers'] as $i => $passenger) {
                 BookingPassenger::create([
-                    'booking_id'  => $booking->id,
+                    'booking_id' => $booking->id,
                     'seat_map_id' => $seats[$i]->id,
-                    'full_name'   => $passenger['full_name'],
-                    'phone'       => $passenger['phone'] ?? null,
-                    'is_primary'  => $i === 0,
+                    'full_name' => $passenger['full_name'],
+                    'phone' => $passenger['phone'] ?? null,
+                    'is_primary' => $i === 0,
                 ]);
             }
 
             // 8. Cập nhật ghế → booked
             SeatMap::whereIn('id', $data['seat_ids'])->update([
-                'status'     => SeatStatus::Booked,
-                'locked_by'  => null,
-                'locked_at'  => null,
+                'status' => SeatStatus::Booked,
+                'locked_by' => null,
+                'locked_at' => null,
             ]);
 
             // 9. Giảm available_seats trên trip
@@ -157,19 +156,19 @@ class BookingService
      */
     public function cancel(Booking $booking, User $user, string $reason = ''): array
     {
-        if (!$booking->canCancel()) {
+        if (! $booking->canCancel()) {
             throw new \InvalidArgumentException('Vé này không thể hủy');
         }
 
-        return DB::transaction(function () use ($booking, $user, $reason) {
+        return DB::transaction(function () use ($booking, $reason) {
             $refundPercent = $booking->refundPercent();
-            $refundAmount  = $booking->refundAmount();
+            $refundAmount = $booking->refundAmount();
 
             // Cập nhật trạng thái booking
             $booking->update([
                 'booking_status' => BookingStatus::Cancelled,
-                'cancelled_at'   => now(),
-                'cancel_reason'  => $reason,
+                'cancelled_at' => now(),
+                'cancel_reason' => $reason,
             ]);
 
             // Giải phóng ghế
@@ -182,12 +181,12 @@ class BookingService
 
             // Dispatch hoàn tiền nếu đã thanh toán
             if ($booking->payment_status === BookingPaymentStatus::Paid && $refundAmount > 0) {
-                \App\Jobs\ProcessRefundJob::dispatch($booking, $refundAmount)->onQueue('high');
+                ProcessRefundJob::dispatch($booking, $refundAmount)->onQueue('high');
             }
 
             return [
                 'refund_percent' => $refundPercent,
-                'refund_amount'  => $refundAmount,
+                'refund_amount' => $refundAmount,
             ];
         });
     }
@@ -197,15 +196,15 @@ class BookingService
      */
     public function expire(Booking $booking): void
     {
-        if (!$booking->isExpired()) {
+        if (! $booking->isExpired()) {
             return;
         }
 
         DB::transaction(function () use ($booking) {
             $booking->update([
                 'booking_status' => BookingStatus::Cancelled,
-                'cancelled_at'   => now(),
-                'cancel_reason'  => 'Hết hạn thanh toán',
+                'cancelled_at' => now(),
+                'cancel_reason' => 'Hết hạn thanh toán',
             ]);
 
             $seatIds = $booking->passengers()->pluck('seat_map_id');
@@ -225,20 +224,20 @@ class BookingService
     {
         DB::transaction(function () use ($trip) {
             $trip->bookings()
-                 ->where('booking_status', BookingStatus::CheckedIn->value)
-                 ->update(['booking_status' => BookingStatus::Completed, 'completed_at' => now()]);
+                ->where('booking_status', BookingStatus::CheckedIn->value)
+                ->update(['booking_status' => BookingStatus::Completed, 'completed_at' => now()]);
 
             $trip->bookings()
-                 ->where('booking_status', BookingStatus::Confirmed->value)
-                 ->update(['booking_status' => BookingStatus::NoShow]);
+                ->where('booking_status', BookingStatus::Confirmed->value)
+                ->update(['booking_status' => BookingStatus::NoShow]);
 
             $trip->bookings()
-                 ->where('booking_status', BookingStatus::Pending->value)
-                 ->update([
-                     'booking_status' => BookingStatus::Cancelled,
-                     'cancelled_at'   => now(),
-                     'cancel_reason'  => 'Chuyến đã kết thúc, vé chưa thanh toán',
-                 ]);
+                ->where('booking_status', BookingStatus::Pending->value)
+                ->update([
+                    'booking_status' => BookingStatus::Cancelled,
+                    'cancelled_at' => now(),
+                    'cancel_reason' => 'Chuyến đã kết thúc, vé chưa thanh toán',
+                ]);
         });
     }
 
@@ -246,7 +245,7 @@ class BookingService
      * Hủy vé do NHÀ XE (hủy chuyến / không thực hiện chuyến):
      *  - hoàn 100% nếu đã thanh toán + bồi thường vào ví + giải phóng ghế.
      *
-     * @param bool $compensate có cộng tiền bồi thường vào ví hay không
+     * @param  bool  $compensate  có cộng tiền bồi thường vào ví hay không
      */
     public function cancelByOperator(Booking $booking, string $reason, bool $compensate = true): void
     {
@@ -259,8 +258,8 @@ class BookingService
         DB::transaction(function () use ($booking, $reason, $compensate, $wasPaid) {
             $booking->update([
                 'booking_status' => BookingStatus::Cancelled,
-                'cancelled_at'   => now(),
-                'cancel_reason'  => $reason,
+                'cancelled_at' => now(),
+                'cancel_reason' => $reason,
             ]);
 
             // Giải phóng ghế + trả lại available_seats
@@ -272,7 +271,7 @@ class BookingService
             // Chỉ vé ĐÃ THANH TOÁN mới hoàn tiền + bồi thường.
             // Vé chưa trả (pending / tiền mặt chưa thu) → chỉ hủy, không có gì để hoàn/bồi thường.
             if ($wasPaid) {
-                \App\Jobs\ProcessRefundJob::dispatch($booking, (int) $booking->final_amount)->onQueue('high');
+                ProcessRefundJob::dispatch($booking, (int) $booking->final_amount)->onQueue('high');
 
                 if ($compensate) {
                     $this->walletService->credit(
@@ -293,18 +292,18 @@ class BookingService
     {
         DB::transaction(function () use ($seatIds, $userId, $tripId) {
             $seats = SeatMap::whereIn('id', $seatIds)
-                            ->where('trip_id', $tripId)
-                            ->lockForUpdate()
-                            ->get();
+                ->where('trip_id', $tripId)
+                ->lockForUpdate()
+                ->get();
 
             foreach ($seats as $seat) {
-                if (!$seat->isAvailable()) {
+                if (! $seat->isAvailable()) {
                     throw new SeatNotAvailableException("Ghế {$seat->seat_code} không còn trống");
                 }
             }
 
             SeatMap::whereIn('id', $seatIds)->update([
-                'status'    => SeatStatus::Locked,
+                'status' => SeatStatus::Locked,
                 'locked_at' => now(),
                 'locked_by' => $userId,
             ]);
@@ -320,27 +319,29 @@ class BookingService
      */
     private function generateCode(Trip $trip): string
     {
-        $route    = $trip->route;
-        $origin   = $this->cityCode($route->origin_city);
-        $dest     = $this->cityCode($route->dest_city);
-        $date     = now()->format('ymd');
-        $prefix   = "{$origin}{$dest}{$date}";
+        $route = $trip->route;
+        $origin = $this->cityCode($route->origin_city);
+        $dest = $this->cityCode($route->dest_city);
+        $date = now()->format('ymd');
+        $prefix = "{$origin}{$dest}{$date}";
 
+        // Lấy vé mới nhất cùng prefix theo THỜI GIAN (không so chuỗi) rồi tăng số đuôi —
+        // tránh vỡ khi seq vượt 999 (so chuỗi sẽ xếp "1000" < "999").
         $last = Booking::where('booking_code', 'like', "{$prefix}%")
-                       ->orderByDesc('booking_code')
-                       ->value('booking_code');
+            ->latest()
+            ->value('booking_code');
 
-        $seq = $last ? (int) substr($last, -3) + 1 : 1;
+        $seq = $last ? ((int) substr($last, strlen($prefix))) + 1 : 1;
 
-        return $prefix . str_pad($seq, 3, '0', STR_PAD_LEFT);
+        return $prefix.str_pad((string) $seq, 3, '0', STR_PAD_LEFT);
     }
 
     private function cityCode(string $city): string
     {
-        return match(true) {
-            str_contains($city, 'Hà Nội')   => 'HN',
+        return match (true) {
+            str_contains($city, 'Hà Nội') => 'HN',
             str_contains($city, 'Hải Phòng') => 'HP',
-            default                          => strtoupper(substr($city, 0, 2)),
+            default => strtoupper(substr($city, 0, 2)),
         };
     }
 }
