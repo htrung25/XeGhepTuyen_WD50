@@ -36,6 +36,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('operators/{id}/approve', [OperatorController::class, 'approve']);
     Route::post('operators/{id}/reject', [OperatorController::class, 'reject']);
     Route::post('operators/{id}/suspend', [OperatorController::class, 'suspend']);
+    Route::post('operators/{id}/restore', [OperatorController::class, 'restore']);
     Route::post('operators/{id}/reset-password', [OperatorController::class, 'resetPassword']);
 
     // Đơn đăng ký đối tác (chờ duyệt nhà xe)

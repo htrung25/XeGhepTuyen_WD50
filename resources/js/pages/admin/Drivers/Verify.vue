@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { adminApi } from '@/api/admin.api';
 
 interface DriverDoc {
@@ -68,7 +68,11 @@ function isLicenseExpiringSoon(expiry?: string) {
 async function loadDrivers() {
     isLoading.value = true;
     errorMsg.value = '';
-    const { data, error } = await adminApi.getDrivers();
+    const params: Record<string, any> = {};
+    if (activeTab.value !== 'all') {
+        params.status = activeTab.value;
+    }
+    const { data, error } = await adminApi.getDrivers(params);
     if (error) {
         errorMsg.value = error;
         isLoading.value = false;
@@ -77,6 +81,10 @@ async function loadDrivers() {
     drivers.value = (data as DriverDoc[]) ?? [];
     isLoading.value = false;
 }
+
+watch(activeTab, () => {
+    loadDrivers();
+});
 
 async function approveDriver(d: DriverDoc) {
     if (

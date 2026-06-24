@@ -116,3 +116,34 @@ it('trả về 404 khi xem chi tiết nhà xe không tồn tại', function () {
     $this->getJson('/api/admin/operators/non-existent-uuid')
         ->assertNotFound();
 });
+
+it('cho phép admin đình chỉ nhà xe', function () {
+    Sanctum::actingAs(makeAdminUser());
+    $operator = makeFullOperator();
+    $operator->update(['status' => 'verified']);
+
+    $response = $this->postJson("/api/admin/operators/{$operator->id}/suspend", [
+        'reason' => 'Vi phạm điều khoản dịch vụ',
+    ])
+        ->assertOk()
+        ->assertJsonPath('success', true);
+
+    $operator->refresh();
+    expect($operator->status->value)->toBe('suspended');
+    expect($operator->user->is_active)->toBeFalse();
+});
+
+it('cho phép admin khôi phục nhà xe bị đình chỉ', function () {
+    Sanctum::actingAs(makeAdminUser());
+    $operator = makeFullOperator();
+    $operator->update(['status' => 'suspended']);
+    $operator->user->update(['is_active' => false]);
+
+    $response = $this->postJson("/api/admin/operators/{$operator->id}/restore")
+        ->assertOk()
+        ->assertJsonPath('success', true);
+
+    $operator->refresh();
+    expect($operator->status->value)->toBe('verified');
+    expect($operator->user->is_active)->toBeTrue();
+});

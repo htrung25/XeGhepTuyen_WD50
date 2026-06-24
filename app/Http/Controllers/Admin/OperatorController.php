@@ -88,6 +88,26 @@ class OperatorController extends Controller
         return response()->json(['success' => true, 'message' => 'Đã tạm đình chỉ nhà xe']);
     }
 
+    public function restore(string $id): JsonResponse
+    {
+        $operator = Operator::find($id);
+
+        if (! $operator) {
+            return response()->json(['success' => false, 'message' => 'Nhà xe không tồn tại'], 404);
+        }
+
+        if ($operator->status !== OperatorStatus::Suspended) {
+            return response()->json(['success' => false, 'message' => 'Nhà xe này không ở trạng thái đình chỉ'], 422);
+        }
+
+        $operator->update(['status' => OperatorStatus::Verified]);
+        if ($operator->user) {
+            $operator->user->update(['is_active' => true]);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Đã khôi phục hoạt động cho nhà xe']);
+    }
+
     /**
      * Đặt lại mật khẩu nhà xe — sinh mật khẩu tạm mới, gửi SMS và trả về cho admin
      * để chuyển trực tiếp khi SMS không tới.

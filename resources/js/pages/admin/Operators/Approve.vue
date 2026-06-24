@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { adminApi } from '@/api/admin.api';
 
 interface OperatorDoc {
@@ -55,6 +55,7 @@ const appTab = ref<'all' | 'pending' | 'approved' | 'rejected'>('pending');
 const modalMode = ref<'operator' | 'application'>('operator');
 const selectedId = ref('');
 const selectedName = ref('');
+const selectedStatus = ref('');
 
 const showApproveModal = ref(false);
 const commissionRate = ref(10);
@@ -146,7 +147,11 @@ const pendingAppCount = computed(
 async function loadOperators() {
     isLoading.value = true;
     errorMsg.value = '';
-    const { data, error } = await adminApi.getOperators();
+    const params: Record<string, any> = {};
+    if (activeTab.value !== 'all') {
+        params.status = activeTab.value;
+    }
+    const { data, error } = await adminApi.getOperators(params);
     if (error) {
         errorMsg.value = error;
         isLoading.value = false;
@@ -159,7 +164,11 @@ async function loadOperators() {
 async function loadApplications() {
     appLoading.value = true;
     appError.value = '';
-    const { data, error } = await adminApi.getPartnerApplications();
+    const params: Record<string, any> = {};
+    if (appTab.value !== 'all') {
+        params.status = appTab.value;
+    }
+    const { data, error } = await adminApi.getPartnerApplications(params);
     if (error) {
         appError.value = error;
         appLoading.value = false;
@@ -168,6 +177,14 @@ async function loadApplications() {
     applications.value = (data as PartnerApp[]) ?? [];
     appLoading.value = false;
 }
+
+watch(activeTab, () => {
+    loadOperators();
+});
+
+watch(appTab, () => {
+    loadApplications();
+});
 
 // ─── Approve / Reject (branch theo modalMode) ───────────────────────────────
 function openApproveOperator(op: OperatorDoc) {
@@ -188,6 +205,7 @@ function openRejectOperator(op: OperatorDoc) {
     modalMode.value = 'operator';
     selectedId.value = op.id;
     selectedName.value = op.company_name;
+    selectedStatus.value = op.status;
     rejectReason.value = '';
     showRejectModal.value = true;
 }
@@ -226,14 +244,28 @@ async function confirmApprove() {
 async function confirmReject() {
     if (!selectedId.value || !rejectReason.value.trim()) return;
     rejectLoading.value = true;
-    const { error } =
-        modalMode.value === 'application'
-            ? await adminApi.rejectPartnerApplication(selectedId.value, {
-                  reason: rejectReason.value,
-              })
-            : await adminApi.rejectOperator(selectedId.value, {
-                  reason: rejectReason.value,
-              });
+    
+    let error;
+    if (modalMode.value === 'application') {
+        const res = await adminApi.rejectPartnerApplication(selectedId.value, {
+            reason: rejectReason.value,
+        });
+        error = res.error;
+    } else {
+        const isSuspend = selectedStatus.value === 'verified';
+        if (isSuspend) {
+            const res = await adminApi.suspendOperator(selectedId.value, {
+                reason: rejectReason.value,
+            });
+            error = res.error;
+        } else {
+            const res = await adminApi.rejectOperator(selectedId.value, {
+                reason: rejectReason.value,
+            });
+            error = res.error;
+        }
+    }
+    
     rejectLoading.value = false;
     if (error) {
         alert(error);
