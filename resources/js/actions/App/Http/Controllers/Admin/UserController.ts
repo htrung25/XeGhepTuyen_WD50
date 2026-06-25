@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Admin\UserController::show
-* @see app/Http/Controllers/Admin/UserController.php:30
+* @see app/Http/Controllers/Admin/UserController.php:42
 * @route '/api/admin/users/{id}'
 */
 export const show = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -97,7 +97,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\UserController::show
-* @see app/Http/Controllers/Admin/UserController.php:30
+* @see app/Http/Controllers/Admin/UserController.php:42
 * @route '/api/admin/users/{id}'
 */
 show.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -124,7 +124,7 @@ show.url = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\Admin\UserController::show
-* @see app/Http/Controllers/Admin/UserController.php:30
+* @see app/Http/Controllers/Admin/UserController.php:42
 * @route '/api/admin/users/{id}'
 */
 show.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -134,7 +134,7 @@ show.get = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\Admin\UserController::show
-* @see app/Http/Controllers/Admin/UserController.php:30
+* @see app/Http/Controllers/Admin/UserController.php:42
 * @route '/api/admin/users/{id}'
 */
 show.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -144,7 +144,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
 
 /**
 * @see \App\Http\Controllers\Admin\UserController::show
-* @see app/Http/Controllers/Admin/UserController.php:30
+* @see app/Http/Controllers/Admin/UserController.php:42
 * @route '/api/admin/users/{id}'
 */
 const showForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -154,7 +154,7 @@ const showForm = (args: { id: string | number } | [id: string | number ] | strin
 
 /**
 * @see \App\Http\Controllers\Admin\UserController::show
-* @see app/Http/Controllers/Admin/UserController.php:30
+* @see app/Http/Controllers/Admin/UserController.php:42
 * @route '/api/admin/users/{id}'
 */
 showForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -164,7 +164,7 @@ showForm.get = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\Admin\UserController::show
-* @see app/Http/Controllers/Admin/UserController.php:30
+* @see app/Http/Controllers/Admin/UserController.php:42
 * @route '/api/admin/users/{id}'
 */
 showForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -181,7 +181,7 @@ show.form = showForm
 
 /**
 * @see \App\Http\Controllers\Admin\UserController::ban
-* @see app/Http/Controllers/Admin/UserController.php:41
+* @see app/Http/Controllers/Admin/UserController.php:53
 * @route '/api/admin/users/{id}/ban'
 */
 export const ban = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -196,7 +196,7 @@ ban.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\UserController::ban
-* @see app/Http/Controllers/Admin/UserController.php:41
+* @see app/Http/Controllers/Admin/UserController.php:53
 * @route '/api/admin/users/{id}/ban'
 */
 ban.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -223,7 +223,7 @@ ban.url = (args: { id: string | number } | [id: string | number ] | string | num
 
 /**
 * @see \App\Http\Controllers\Admin\UserController::ban
-* @see app/Http/Controllers/Admin/UserController.php:41
+* @see app/Http/Controllers/Admin/UserController.php:53
 * @route '/api/admin/users/{id}/ban'
 */
 ban.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -233,7 +233,7 @@ ban.post = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\Admin\UserController::ban
-* @see app/Http/Controllers/Admin/UserController.php:41
+* @see app/Http/Controllers/Admin/UserController.php:53
 * @route '/api/admin/users/{id}/ban'
 */
 const banForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -243,7 +243,7 @@ const banForm = (args: { id: string | number } | [id: string | number ] | string
 
 /**
 * @see \App\Http\Controllers\Admin\UserController::ban
-* @see app/Http/Controllers/Admin/UserController.php:41
+* @see app/Http/Controllers/Admin/UserController.php:53
 * @route '/api/admin/users/{id}/ban'
 */
 banForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -255,7 +255,7 @@ ban.form = banForm
 
 /**
 * @see \App\Http\Controllers\Admin\UserController::unban
-* @see app/Http/Controllers/Admin/UserController.php:57
+* @see app/Http/Controllers/Admin/UserController.php:69
 * @route '/api/admin/users/{id}/unban'
 */
 export const unban = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -270,7 +270,7 @@ unban.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\UserController::unban
-* @see app/Http/Controllers/Admin/UserController.php:57
+* @see app/Http/Controllers/Admin/UserController.php:69
 * @route '/api/admin/users/{id}/unban'
 */
 unban.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -297,7 +297,7 @@ unban.url = (args: { id: string | number } | [id: string | number ] | string | n
 
 /**
 * @see \App\Http\Controllers\Admin\UserController::unban
-* @see app/Http/Controllers/Admin/UserController.php:57
+* @see app/Http/Controllers/Admin/UserController.php:69
 * @route '/api/admin/users/{id}/unban'
 */
 unban.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -307,7 +307,7 @@ unban.post = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Http\Controllers\Admin\UserController::unban
-* @see app/Http/Controllers/Admin/UserController.php:57
+* @see app/Http/Controllers/Admin/UserController.php:69
 * @route '/api/admin/users/{id}/unban'
 */
 const unbanForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -317,7 +317,7 @@ const unbanForm = (args: { id: string | number } | [id: string | number ] | stri
 
 /**
 * @see \App\Http\Controllers\Admin\UserController::unban
-* @see app/Http/Controllers/Admin/UserController.php:57
+* @see app/Http/Controllers/Admin/UserController.php:69
 * @route '/api/admin/users/{id}/unban'
 */
 unbanForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

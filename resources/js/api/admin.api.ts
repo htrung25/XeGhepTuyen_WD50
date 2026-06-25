@@ -49,6 +49,8 @@ import {
 import {
     index as usersIndex,
     ban as userBan,
+    show as userShow,
+    unban as userUnban,
 } from '@/actions/App/Http/Controllers/Admin/UserController';
 import {
     index as vouchersIndex,
@@ -124,8 +126,12 @@ export const adminApi = {
     // Users
     getUsers: (params?: Params) =>
         apiClient.send(usersIndex({ query: params as QueryParams })),
+    getUser: (id: string) =>
+        apiClient.send(userShow(id)),
     banUser: (id: string, data: { reason: string }) =>
         apiClient.send(userBan(id), data),
+    unbanUser: (id: string) =>
+        apiClient.send(userUnban(id)),
 
     // Bookings
     getBookings: (params?: Params) =>

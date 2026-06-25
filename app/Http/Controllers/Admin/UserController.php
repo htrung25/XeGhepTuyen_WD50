@@ -15,15 +15,27 @@ class UserController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $users = $this->userRepo->paginate([
+        $filters = [
             'search' => $request->search,
             'role'   => $request->role,
-        ]);
+        ];
+
+        if ($request->status === 'active') {
+            $filters['is_active'] = true;
+        } elseif ($request->status === 'banned') {
+            $filters['is_active'] = false;
+        }
+
+        $users = $this->userRepo->paginate($filters);
 
         return response()->json([
             'success' => true,
             'data'    => UserResource::collection($users->items()),
-            'meta'    => ['current_page' => $users->currentPage(), 'total' => $users->total()],
+            'meta'    => [
+                'current_page' => $users->currentPage(),
+                'last_page'    => $users->lastPage(),
+                'total'        => $users->total(),
+            ],
         ]);
     }
 
