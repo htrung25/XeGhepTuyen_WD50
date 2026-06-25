@@ -35,6 +35,8 @@ interface Transaction {
     booking_code: string;
     customer: string;
     operator: string;
+    method: string;
+    status: string;
     created_at: string;
 }
 
@@ -96,6 +98,13 @@ const paymentMethodMap: Record<string, string> = {
     zalopay: 'ZaloPay',
     wallet: 'Ví XeGhep',
     cash: 'Tiền mặt',
+};
+
+const paymentStatusMap: Record<string, { label: string; class: string }> = {
+    pending: { label: 'Đang xử lý', class: 'bg-yellow-100 text-yellow-700' },
+    success: { label: 'Thành công', class: 'bg-green-100 text-green-700 font-semibold' },
+    failed: { label: 'Thất bại', class: 'bg-red-100 text-red-700' },
+    refunded: { label: 'Đã hoàn tiền', class: 'bg-orange-100 text-orange-700 font-semibold' },
 };
 
 function fmt(v: number) {
@@ -351,7 +360,17 @@ onMounted(loadData);
                                     <th
                                         class="px-4 py-3 text-left text-xs font-medium tracking-wide text-gray-500 uppercase"
                                     >
+                                        Nhà xe
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium tracking-wide text-gray-500 uppercase"
+                                    >
                                         Loại
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium tracking-wide text-gray-500 uppercase"
+                                    >
+                                        Phương thức
                                     </th>
                                     <th
                                         class="px-4 py-3 text-right text-xs font-medium tracking-wide text-gray-500 uppercase"
@@ -369,6 +388,11 @@ onMounted(loadData);
                                         Khách hàng
                                     </th>
                                     <th
+                                        class="px-4 py-3 text-center text-xs font-medium tracking-wide text-gray-500 uppercase"
+                                    >
+                                        Trạng thái
+                                    </th>
+                                    <th
                                         class="px-4 py-3 text-left text-xs font-medium tracking-wide text-gray-500 uppercase"
                                     >
                                         Thời gian
@@ -378,7 +402,7 @@ onMounted(loadData);
                             <tbody class="divide-y divide-slate-100">
                                 <tr v-if="transactions.length === 0">
                                     <td
-                                        colspan="6"
+                                        colspan="9"
                                         class="px-4 py-12 text-center text-gray-400"
                                     >
                                         Không có giao dịch nào
@@ -393,6 +417,9 @@ onMounted(loadData);
                                         class="px-4 py-3 font-mono text-xs text-gray-500"
                                     >
                                         {{ t.id.substring(0, 8) }}...
+                                    </td>
+                                    <td class="px-4 py-3 font-medium text-gray-900">
+                                        {{ t.operator }}
                                     </td>
                                     <td class="px-4 py-3">
                                         <span
@@ -409,16 +436,34 @@ onMounted(loadData);
                                             }}
                                         </span>
                                     </td>
+                                    <td class="px-4 py-3 text-gray-700">
+                                        {{ paymentMethodMap[t.method] || t.method }}
+                                    </td>
                                     <td
-                                        class="px-4 py-3 text-right font-medium text-gray-900"
+                                        class="px-4 py-3 text-right font-semibold text-gray-900"
                                     >
                                         {{ fmt(t.amount) }}
                                     </td>
-                                    <td class="px-4 py-3 font-mono text-xs">
+                                    <td class="px-4 py-3 font-mono text-xs text-gray-600">
                                         {{ t.booking_code }}
                                     </td>
                                     <td class="px-4 py-3 text-gray-700">
                                         {{ t.customer }}
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        <span
+                                            :class="[
+                                                'inline-flex rounded-full px-2 py-0.5 text-xs font-medium',
+                                                paymentStatusMap[t.status]
+                                                    ?.class ??
+                                                    'bg-gray-100 text-gray-600',
+                                            ]"
+                                        >
+                                            {{
+                                                paymentStatusMap[t.status]
+                                                    ?.label ?? t.status
+                                            }}
+                                        </span>
                                     </td>
                                     <td class="px-4 py-3 text-xs text-gray-500">
                                         {{

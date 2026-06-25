@@ -175,15 +175,38 @@ class FinanceController extends Controller
 
     public function transactions(Request $request): JsonResponse
     {
-        $payments = Payment::with(['booking.user', 'booking.trip.route'])
+        $payments = Payment::with(['booking.user', 'booking.trip.route.operator'])
             ->when($request->method, fn ($q) => $q->where('method', $request->method))
             ->when($request->status, fn ($q) => $q->where('status', $request->status))
             ->latest('paid_at')
             ->paginate(30);
 
+        $mapped = collect($payments->items())->map(function (Payment $payment) {
+            $operatorName = 'N/A';
+            if ($payment->booking && $payment->booking->trip) {
+                if ($payment->booking->trip->route && $payment->booking->trip->route->operator) {
+                    $operatorName = $payment->booking->trip->route->operator->company_name;
+                } elseif ($payment->booking->trip->driver && $payment->booking->trip->driver->operator) {
+                    $operatorName = $payment->booking->trip->driver->operator->company_name;
+                }
+            }
+
+            return [
+                'id' => $payment->id,
+                'type' => $payment->status->value === 'refunded' ? 'refund' : 'booking',
+                'amount' => $payment->amount,
+                'booking_code' => $payment->booking ? $payment->booking->booking_code : 'N/A',
+                'customer' => $payment->booking && $payment->booking->user ? $payment->booking->user->full_name : ($payment->user ? $payment->user->full_name : 'N/A'),
+                'operator' => $operatorName,
+                'method' => $payment->method ? $payment->method->value : '',
+                'status' => $payment->status ? $payment->status->value : '',
+                'created_at' => $payment->paid_at ? $payment->paid_at->toIso8601String() : $payment->created_at->toIso8601String(),
+            ];
+        });
+
         return response()->json([
             'success' => true,
-            'data' => $payments->items(),
+            'data' => $mapped,
             'meta' => ['current_page' => $payments->currentPage(), 'total' => $payments->total()],
         ]);
     }
