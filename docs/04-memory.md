@@ -58,6 +58,7 @@ Cập nhật  : 2026-06-06
 [x] pages/admin/Operators/Approve.vue
 [x] pages/admin/Drivers/Verify.vue
 [x] pages/admin/Finance/Overview.vue
+[x] pages/admin/Trips/Index.vue
 [x] pages/admin/Trips/LiveMap.vue
 [x] pages/admin/Vouchers/Index.vue
 [x] layouts/AdminLayout.vue

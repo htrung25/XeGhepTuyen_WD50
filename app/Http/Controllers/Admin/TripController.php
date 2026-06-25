@@ -58,6 +58,9 @@ class TripController extends Controller
             return response()->json(['success' => false, 'message' => 'Chuyến đi không tồn tại'], 404);
         }
 
+        // Eager load bookings với pickup/dropoff stop để trang detail hiển thị danh sách hành khách
+        $trip->load(['bookings.pickupStop', 'bookings.dropoffStop']);
+
         return response()->json(['success' => true, 'data' => new TripResource($trip)]);
     }
 
