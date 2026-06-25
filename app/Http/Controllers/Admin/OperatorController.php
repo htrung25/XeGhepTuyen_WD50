@@ -19,7 +19,19 @@ class OperatorController extends Controller
         $operators = Operator::with('user', 'partnerApplication')
             ->withCount('vehicles')
             ->when($request->status, fn ($q) => $q->where('status', $request->status))
-            ->when($request->search, fn ($q) => $q->where('company_name', 'LIKE', "%{$request->search}%"))
+            ->when($request->search, function ($q) use ($request) {
+                $search = $request->search;
+                $q->where(function ($sub) use ($search) {
+                    $sub->where('company_name', 'LIKE', "%{$search}%")
+                        ->orWhere('tax_code', 'LIKE', "%{$search}%")
+                        ->orWhere('business_license', 'LIKE', "%{$search}%")
+                        ->orWhereHas('user', function ($u) use ($search) {
+                            $u->where('full_name', 'LIKE', "%{$search}%")
+                              ->orWhere('phone', 'LIKE', "%{$search}%")
+                              ->orWhere('email', 'LIKE', "%{$search}%");
+                        });
+                });
+            })
             ->paginate(20);
 
         return response()->json([

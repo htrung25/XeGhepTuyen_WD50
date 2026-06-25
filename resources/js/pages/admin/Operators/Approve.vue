@@ -15,6 +15,8 @@ interface OperatorDoc {
     declared_fleet_total?: number;
     declared_fleet_summary?: string;
     actual_vehicles_count?: number;
+    tax_code?: string;
+    business_license?: string;
 }
 
 interface PartnerApp {
@@ -50,6 +52,7 @@ const applications = ref<PartnerApp[]>([]);
 const appLoading = ref(true);
 const appError = ref('');
 const appTab = ref<'all' | 'pending' | 'approved' | 'rejected'>('pending');
+const searchQuery = ref('');
 
 // Shared modal state (dùng chung cho cả 2 luồng)
 const modalMode = ref<'operator' | 'application'>('operator');
@@ -103,6 +106,7 @@ const setAppTab = (tab: 'all' | 'pending' | 'approved' | 'rejected') => {
 
 const setView = (newView: 'operators' | 'applications') => {
     view.value = newView;
+    searchQuery.value = '';
 };
 
 const setDetailTab = (tab: 'info' | 'vehicles' | 'drivers') => {
@@ -131,13 +135,42 @@ const statusMap: Record<string, { label: string; class: string }> = {
 };
 
 const filtered = computed(() => {
-    if (activeTab.value === 'all') return operators.value;
-    return operators.value.filter((o) => o.status === activeTab.value);
+    let result = operators.value;
+    if (activeTab.value !== 'all') {
+        result = result.filter((o) => o.status === activeTab.value);
+    }
+    if (searchQuery.value.trim()) {
+        const q = searchQuery.value.toLowerCase().trim();
+        result = result.filter(
+            (o) =>
+                (o.company_name || '').toLowerCase().includes(q) ||
+                (o.owner_name || '').toLowerCase().includes(q) ||
+                (o.phone || '').includes(q) ||
+                (o.email || '').toLowerCase().includes(q) ||
+                (o.tax_code || '').toLowerCase().includes(q) ||
+                (o.business_license || '').toLowerCase().includes(q)
+        );
+    }
+    return result;
 });
 
 const filteredApps = computed(() => {
-    if (appTab.value === 'all') return applications.value;
-    return applications.value.filter((a) => a.status === appTab.value);
+    let result = applications.value;
+    if (appTab.value !== 'all') {
+        result = result.filter((a) => a.status === appTab.value);
+    }
+    if (searchQuery.value.trim()) {
+        const q = searchQuery.value.toLowerCase().trim();
+        result = result.filter(
+            (a) =>
+                (a.company_name || '').toLowerCase().includes(q) ||
+                (a.representative_name || '').toLowerCase().includes(q) ||
+                (a.phone || '').includes(q) ||
+                (a.email || '').toLowerCase().includes(q) ||
+                (a.tax_code || '').includes(q)
+        );
+    }
+    return result;
 });
 
 const pendingAppCount = computed(
@@ -151,13 +184,22 @@ async function loadOperators() {
     if (activeTab.value !== 'all') {
         params.status = activeTab.value;
     }
+    if (searchQuery.value.trim()) {
+        params.search = searchQuery.value.trim();
+    }
     const { data, error } = await adminApi.getOperators(params);
     if (error) {
         errorMsg.value = error;
         isLoading.value = false;
         return;
     }
-    operators.value = (data as OperatorDoc[]) ?? [];
+    const raw = (data as any[]) ?? [];
+    operators.value = raw.map((o) => ({
+        ...o,
+        owner_name: o.user?.full_name ?? '',
+        phone: o.user?.phone ?? o.phone ?? '',
+        email: o.user?.email ?? o.email ?? '',
+    }));
     isLoading.value = false;
 }
 
@@ -168,6 +210,9 @@ async function loadApplications() {
     if (appTab.value !== 'all') {
         params.status = appTab.value;
     }
+    if (searchQuery.value.trim()) {
+        params.search = searchQuery.value.trim();
+    }
     const { data, error } = await adminApi.getPartnerApplications(params);
     if (error) {
         appError.value = error;
@@ -177,6 +222,23 @@ async function loadApplications() {
     applications.value = (data as PartnerApp[]) ?? [];
     appLoading.value = false;
 }
+
+let searchTimeout: any = null;
+function triggerSearch() {
+    if (searchTimeout) clearTimeout(searchTimeout);
+    if (view.value === 'applications') {
+        loadApplications();
+    } else {
+        loadOperators();
+    }
+}
+
+watch(searchQuery, () => {
+    if (searchTimeout) clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        triggerSearch();
+    }, 300);
+});
 
 watch(activeTab, () => {
     loadOperators();
@@ -350,53 +412,77 @@ onMounted(() => {
         </div>
 
         <!-- View switch -->
-        <div class="mb-6 flex w-fit gap-1 rounded-xl bg-gray-100 p-1">
-            <button
-                @click="setView('applications')"
-                :class="[
-                    'flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm font-medium transition-colors',
-                    view === 'applications'
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-500 hover:text-gray-700',
-                ]"
-            >
-                Đơn đăng ký đối tác
-                <span
-                    v-if="pendingAppCount > 0"
-                    class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-xs font-semibold text-white"
+        <div class="mb-6 border-b border-slate-200">
+            <nav class="-mb-px flex gap-6" aria-label="Tabs">
+                <button
+                    @click="setView('applications')"
+                    :class="[
+                        'shrink-0 border-b-2 py-4 px-1 text-sm font-semibold transition-all flex items-center gap-2',
+                        view === 'applications'
+                            ? 'border-amber-500 text-amber-600'
+                            : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700',
+                    ]"
                 >
-                    {{ pendingAppCount }}
-                </span>
-            </button>
-            <button
-                @click="setView('operators')"
-                :class="[
-                    'rounded-lg px-4 py-1.5 text-sm font-medium transition-colors',
-                    view === 'operators'
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-500 hover:text-gray-700',
-                ]"
-            >
-                Nhà xe đã có tài khoản
-            </button>
+                    Đơn đăng ký đối tác
+                    <span
+                        v-if="pendingAppCount > 0"
+                        :class="[
+                            'inline-flex h-5 min-w-5 items-center justify-center rounded-full text-xs font-bold px-1.5',
+                            view === 'applications'
+                                ? 'bg-amber-100 text-amber-700'
+                                : 'bg-slate-100 text-slate-600'
+                        ]"
+                    >
+                        {{ pendingAppCount }}
+                    </span>
+                </button>
+                <button
+                    @click="setView('operators')"
+                    :class="[
+                        'shrink-0 border-b-2 py-4 px-1 text-sm font-semibold transition-all',
+                        view === 'operators'
+                            ? 'border-amber-500 text-amber-600'
+                            : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700',
+                    ]"
+                >
+                    Nhà xe đã có tài khoản
+                </button>
+            </nav>
         </div>
 
         <!-- ═══════════ PARTNER APPLICATIONS ═══════════ -->
         <template v-if="view === 'applications'">
-            <div class="mb-6 flex w-fit gap-1 rounded-xl bg-gray-100 p-1">
-                <button
-                    v-for="tab in appTabs"
-                    :key="tab.key"
-                    @click="setAppTab(tab.key)"
-                    :class="[
-                        'rounded-lg px-4 py-1.5 text-sm font-medium transition-colors',
-                        appTab === tab.key
-                            ? 'bg-white text-gray-900 shadow-sm'
-                            : 'text-gray-500 hover:text-gray-700',
-                    ]"
-                >
-                    {{ tab.label }}
-                </button>
+            <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex w-fit gap-1 rounded-lg bg-slate-100 p-0.5 border border-slate-200/50">
+                    <button
+                        v-for="tab in appTabs"
+                        :key="tab.key"
+                        @click="setAppTab(tab.key)"
+                        :class="[
+                            'rounded-md px-3 py-1 text-xs font-semibold transition-all',
+                            appTab === tab.key
+                                ? 'bg-white text-slate-900 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700',
+                        ]"
+                    >
+                        {{ tab.label }}
+                    </button>
+                </div>
+                <!-- Search -->
+                <div class="relative w-full max-w-xs">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </span>
+                    <input
+                        v-model="searchQuery"
+                        @keydown.enter.prevent="triggerSearch"
+                        type="text"
+                        placeholder="Tìm theo tên, SĐT, MST..."
+                        class="w-full rounded-xl border border-slate-200 bg-white py-1.5 pl-9 pr-4 text-xs placeholder-slate-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-all shadow-sm font-sans"
+                    />
+                </div>
             </div>
 
             <div v-if="appLoading" class="space-y-4">
@@ -568,20 +654,37 @@ onMounted(() => {
 
         <!-- ═══════════ OPERATORS ═══════════ -->
         <template v-else>
-            <div class="mb-6 flex w-fit gap-1 rounded-xl bg-gray-100 p-1">
-                <button
-                    v-for="tab in tabs"
-                    :key="tab.key"
-                    @click="setActiveTab(tab.key)"
-                    :class="[
-                        'rounded-lg px-4 py-1.5 text-sm font-medium transition-colors',
-                        activeTab === tab.key
-                            ? 'bg-white text-gray-900 shadow-sm'
-                            : 'text-gray-500 hover:text-gray-700',
-                    ]"
-                >
-                    {{ tab.label }}
-                </button>
+            <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex w-fit gap-1 rounded-lg bg-slate-100 p-0.5 border border-slate-200/50">
+                    <button
+                        v-for="tab in tabs"
+                        :key="tab.key"
+                        @click="setActiveTab(tab.key)"
+                        :class="[
+                            'rounded-md px-3 py-1 text-xs font-semibold transition-all',
+                            activeTab === tab.key
+                                ? 'bg-white text-slate-900 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700',
+                        ]"
+                    >
+                        {{ tab.label }}
+                    </button>
+                </div>
+                <!-- Search -->
+                <div class="relative w-full max-w-xs">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </span>
+                    <input
+                        v-model="searchQuery"
+                        @keydown.enter.prevent="triggerSearch"
+                        type="text"
+                        placeholder="Tìm theo tên, SĐT, email..."
+                        class="w-full rounded-xl border border-slate-200 bg-white py-1.5 pl-9 pr-4 text-xs placeholder-slate-400 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-all shadow-sm font-sans"
+                    />
+                </div>
             </div>
 
             <div v-if="isLoading" class="space-y-4">

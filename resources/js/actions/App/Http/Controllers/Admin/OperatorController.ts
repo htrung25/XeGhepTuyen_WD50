@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::show
-* @see app/Http/Controllers/Admin/OperatorController.php:32
+* @see app/Http/Controllers/Admin/OperatorController.php:44
 * @route '/api/admin/operators/{id}'
 */
 export const show = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -97,7 +97,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::show
-* @see app/Http/Controllers/Admin/OperatorController.php:32
+* @see app/Http/Controllers/Admin/OperatorController.php:44
 * @route '/api/admin/operators/{id}'
 */
 show.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -124,7 +124,7 @@ show.url = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::show
-* @see app/Http/Controllers/Admin/OperatorController.php:32
+* @see app/Http/Controllers/Admin/OperatorController.php:44
 * @route '/api/admin/operators/{id}'
 */
 show.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -134,7 +134,7 @@ show.get = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::show
-* @see app/Http/Controllers/Admin/OperatorController.php:32
+* @see app/Http/Controllers/Admin/OperatorController.php:44
 * @route '/api/admin/operators/{id}'
 */
 show.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -144,7 +144,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::show
-* @see app/Http/Controllers/Admin/OperatorController.php:32
+* @see app/Http/Controllers/Admin/OperatorController.php:44
 * @route '/api/admin/operators/{id}'
 */
 const showForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -154,7 +154,7 @@ const showForm = (args: { id: string | number } | [id: string | number ] | strin
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::show
-* @see app/Http/Controllers/Admin/OperatorController.php:32
+* @see app/Http/Controllers/Admin/OperatorController.php:44
 * @route '/api/admin/operators/{id}'
 */
 showForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -164,7 +164,7 @@ showForm.get = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::show
-* @see app/Http/Controllers/Admin/OperatorController.php:32
+* @see app/Http/Controllers/Admin/OperatorController.php:44
 * @route '/api/admin/operators/{id}'
 */
 showForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -181,7 +181,7 @@ show.form = showForm
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::approve
-* @see app/Http/Controllers/Admin/OperatorController.php:43
+* @see app/Http/Controllers/Admin/OperatorController.php:55
 * @route '/api/admin/operators/{id}/approve'
 */
 export const approve = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -196,7 +196,7 @@ approve.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::approve
-* @see app/Http/Controllers/Admin/OperatorController.php:43
+* @see app/Http/Controllers/Admin/OperatorController.php:55
 * @route '/api/admin/operators/{id}/approve'
 */
 approve.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -223,7 +223,7 @@ approve.url = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::approve
-* @see app/Http/Controllers/Admin/OperatorController.php:43
+* @see app/Http/Controllers/Admin/OperatorController.php:55
 * @route '/api/admin/operators/{id}/approve'
 */
 approve.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -233,7 +233,7 @@ approve.post = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::approve
-* @see app/Http/Controllers/Admin/OperatorController.php:43
+* @see app/Http/Controllers/Admin/OperatorController.php:55
 * @route '/api/admin/operators/{id}/approve'
 */
 const approveForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -243,7 +243,7 @@ const approveForm = (args: { id: string | number } | [id: string | number ] | st
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::approve
-* @see app/Http/Controllers/Admin/OperatorController.php:43
+* @see app/Http/Controllers/Admin/OperatorController.php:55
 * @route '/api/admin/operators/{id}/approve'
 */
 approveForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -255,7 +255,7 @@ approve.form = approveForm
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::reject
-* @see app/Http/Controllers/Admin/OperatorController.php:60
+* @see app/Http/Controllers/Admin/OperatorController.php:72
 * @route '/api/admin/operators/{id}/reject'
 */
 export const reject = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -270,7 +270,7 @@ reject.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::reject
-* @see app/Http/Controllers/Admin/OperatorController.php:60
+* @see app/Http/Controllers/Admin/OperatorController.php:72
 * @route '/api/admin/operators/{id}/reject'
 */
 reject.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -297,7 +297,7 @@ reject.url = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::reject
-* @see app/Http/Controllers/Admin/OperatorController.php:60
+* @see app/Http/Controllers/Admin/OperatorController.php:72
 * @route '/api/admin/operators/{id}/reject'
 */
 reject.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -307,7 +307,7 @@ reject.post = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::reject
-* @see app/Http/Controllers/Admin/OperatorController.php:60
+* @see app/Http/Controllers/Admin/OperatorController.php:72
 * @route '/api/admin/operators/{id}/reject'
 */
 const rejectForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -317,7 +317,7 @@ const rejectForm = (args: { id: string | number } | [id: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::reject
-* @see app/Http/Controllers/Admin/OperatorController.php:60
+* @see app/Http/Controllers/Admin/OperatorController.php:72
 * @route '/api/admin/operators/{id}/reject'
 */
 rejectForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -329,7 +329,7 @@ reject.form = rejectForm
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::suspend
-* @see app/Http/Controllers/Admin/OperatorController.php:75
+* @see app/Http/Controllers/Admin/OperatorController.php:87
 * @route '/api/admin/operators/{id}/suspend'
 */
 export const suspend = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -344,7 +344,7 @@ suspend.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::suspend
-* @see app/Http/Controllers/Admin/OperatorController.php:75
+* @see app/Http/Controllers/Admin/OperatorController.php:87
 * @route '/api/admin/operators/{id}/suspend'
 */
 suspend.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -371,7 +371,7 @@ suspend.url = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::suspend
-* @see app/Http/Controllers/Admin/OperatorController.php:75
+* @see app/Http/Controllers/Admin/OperatorController.php:87
 * @route '/api/admin/operators/{id}/suspend'
 */
 suspend.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -381,7 +381,7 @@ suspend.post = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::suspend
-* @see app/Http/Controllers/Admin/OperatorController.php:75
+* @see app/Http/Controllers/Admin/OperatorController.php:87
 * @route '/api/admin/operators/{id}/suspend'
 */
 const suspendForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -391,7 +391,7 @@ const suspendForm = (args: { id: string | number } | [id: string | number ] | st
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::suspend
-* @see app/Http/Controllers/Admin/OperatorController.php:75
+* @see app/Http/Controllers/Admin/OperatorController.php:87
 * @route '/api/admin/operators/{id}/suspend'
 */
 suspendForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -403,7 +403,7 @@ suspend.form = suspendForm
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::restore
-* @see app/Http/Controllers/Admin/OperatorController.php:91
+* @see app/Http/Controllers/Admin/OperatorController.php:103
 * @route '/api/admin/operators/{id}/restore'
 */
 export const restore = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -418,7 +418,7 @@ restore.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::restore
-* @see app/Http/Controllers/Admin/OperatorController.php:91
+* @see app/Http/Controllers/Admin/OperatorController.php:103
 * @route '/api/admin/operators/{id}/restore'
 */
 restore.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -445,7 +445,7 @@ restore.url = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::restore
-* @see app/Http/Controllers/Admin/OperatorController.php:91
+* @see app/Http/Controllers/Admin/OperatorController.php:103
 * @route '/api/admin/operators/{id}/restore'
 */
 restore.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -455,7 +455,7 @@ restore.post = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::restore
-* @see app/Http/Controllers/Admin/OperatorController.php:91
+* @see app/Http/Controllers/Admin/OperatorController.php:103
 * @route '/api/admin/operators/{id}/restore'
 */
 const restoreForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -465,7 +465,7 @@ const restoreForm = (args: { id: string | number } | [id: string | number ] | st
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::restore
-* @see app/Http/Controllers/Admin/OperatorController.php:91
+* @see app/Http/Controllers/Admin/OperatorController.php:103
 * @route '/api/admin/operators/{id}/restore'
 */
 restoreForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -477,7 +477,7 @@ restore.form = restoreForm
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::resetPassword
-* @see app/Http/Controllers/Admin/OperatorController.php:115
+* @see app/Http/Controllers/Admin/OperatorController.php:127
 * @route '/api/admin/operators/{id}/reset-password'
 */
 export const resetPassword = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -492,7 +492,7 @@ resetPassword.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::resetPassword
-* @see app/Http/Controllers/Admin/OperatorController.php:115
+* @see app/Http/Controllers/Admin/OperatorController.php:127
 * @route '/api/admin/operators/{id}/reset-password'
 */
 resetPassword.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -519,7 +519,7 @@ resetPassword.url = (args: { id: string | number } | [id: string | number ] | st
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::resetPassword
-* @see app/Http/Controllers/Admin/OperatorController.php:115
+* @see app/Http/Controllers/Admin/OperatorController.php:127
 * @route '/api/admin/operators/{id}/reset-password'
 */
 resetPassword.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -529,7 +529,7 @@ resetPassword.post = (args: { id: string | number } | [id: string | number ] | s
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::resetPassword
-* @see app/Http/Controllers/Admin/OperatorController.php:115
+* @see app/Http/Controllers/Admin/OperatorController.php:127
 * @route '/api/admin/operators/{id}/reset-password'
 */
 const resetPasswordForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -539,7 +539,7 @@ const resetPasswordForm = (args: { id: string | number } | [id: string | number 
 
 /**
 * @see \App\Http\Controllers\Admin\OperatorController::resetPassword
-* @see app/Http/Controllers/Admin/OperatorController.php:115
+* @see app/Http/Controllers/Admin/OperatorController.php:127
 * @route '/api/admin/operators/{id}/reset-password'
 */
 resetPasswordForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

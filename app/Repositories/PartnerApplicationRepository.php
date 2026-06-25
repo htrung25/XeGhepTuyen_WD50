@@ -15,7 +15,9 @@ class PartnerApplicationRepository implements PartnerApplicationRepositoryInterf
             ->when($filters['search'] ?? null, fn ($q, $search) => $q->where(function ($sub) use ($search) {
                 $sub->where('company_name', 'LIKE', "%{$search}%")
                     ->orWhere('representative_name', 'LIKE', "%{$search}%")
-                    ->orWhere('phone', 'LIKE', "%{$search}%");
+                    ->orWhere('phone', 'LIKE', "%{$search}%")
+                    ->orWhere('email', 'LIKE', "%{$search}%")
+                    ->orWhere('tax_code', 'LIKE', "%{$search}%");
             }))
             ->latest()
             ->paginate($perPage);
