@@ -59,6 +59,11 @@ export const adminRoutes: RouteRecordRaw[] = [
                 meta: { title: 'Voucher' },
             },
             {
+                path: 'audit-logs',
+                component: () => import('@/pages/admin/AuditLogs/Index.vue'),
+                meta: { title: 'Nhật ký hệ thống' },
+            },
+            {
                 path: 'profile',
                 component: () => import('@/pages/admin/Profile.vue'),
                 meta: { title: 'Thông tin cá nhân' },

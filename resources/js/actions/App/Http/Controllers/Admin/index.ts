@@ -8,6 +8,7 @@ import BookingController from './BookingController'
 import TripController from './TripController'
 import FinanceController from './FinanceController'
 import VoucherController from './VoucherController'
+import AuditLogController from './AuditLogController'
 
 const Admin = {
     AuthController: Object.assign(AuthController, AuthController),
@@ -20,6 +21,7 @@ const Admin = {
     TripController: Object.assign(TripController, TripController),
     FinanceController: Object.assign(FinanceController, FinanceController),
     VoucherController: Object.assign(VoucherController, VoucherController),
+    AuditLogController: Object.assign(AuditLogController, AuditLogController),
 }
 
 export default Admin

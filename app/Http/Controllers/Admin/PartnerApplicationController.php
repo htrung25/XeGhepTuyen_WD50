@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Admin\PartnerApplicationResource;
 use App\Repositories\Contracts\PartnerApplicationRepositoryInterface;
 use App\Services\PartnerApplicationService;
+use App\Services\AuditLogService;
 use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -54,6 +55,14 @@ class PartnerApplicationController extends Controller
                 $request->user(),
             );
 
+            app(AuditLogService::class)->log(
+                action: 'approve_partner_application',
+                model: $application,
+                description: "Đã duyệt đơn đăng ký đối tác thành công: {$application->company_name}. Tỷ lệ hoa hồng: " . ($validated['commission_rate'] ?? 10) . "%",
+                oldValues: ['status' => $application->status],
+                newValues: ['status' => 'approved', 'operator_id' => $operator->id]
+            );
+
             return response()->json([
                 'success' => true,
                 'message' => 'Đã duyệt đơn, tạo tài khoản nhà xe và gửi SMS thông tin đăng nhập',
@@ -83,6 +92,14 @@ class PartnerApplicationController extends Controller
 
         try {
             $this->applicationService->reject($application, $validated['reason'], $request->user());
+
+            app(AuditLogService::class)->log(
+                action: 'reject_partner_application',
+                model: $application,
+                description: "Đã từ chối đơn đăng ký đối tác: {$application->company_name}. Lý do: {$validated['reason']}",
+                oldValues: ['status' => $application->status],
+                newValues: ['status' => 'rejected', 'note' => $validated['reason']]
+            );
 
             return response()->json(['success' => true, 'message' => 'Đã từ chối đơn đăng ký']);
 

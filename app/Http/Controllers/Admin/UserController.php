@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Admin\UserResource;
 use App\Models\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Services\AuditLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -63,6 +64,13 @@ class UserController extends Controller
         $user->update(['is_active' => false]);
         $user->tokens()->delete();
 
+        app(AuditLogService::class)->log(
+            action: 'ban_user',
+            model: $user,
+            description: "Đã khoá tài khoản người dùng: {$user->full_name} (SĐT: {$user->phone}). Lý do: {$request->reason}",
+            newValues: ['is_active' => false, 'ban_reason' => $request->reason]
+        );
+
         return response()->json(['success' => true, 'message' => 'Đã khoá tài khoản người dùng']);
     }
 
@@ -75,6 +83,13 @@ class UserController extends Controller
         }
 
         $user->update(['is_active' => true]);
+
+        app(AuditLogService::class)->log(
+            action: 'unban_user',
+            model: $user,
+            description: "Đã mở khoá tài khoản người dùng: {$user->full_name} (SĐT: {$user->phone})",
+            newValues: ['is_active' => true]
+        );
 
         return response()->json(['success' => true, 'message' => 'Đã mở khoá tài khoản']);
     }

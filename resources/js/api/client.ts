@@ -46,10 +46,19 @@ http.interceptors.response.use(
 export const apiClient = {
     async get<T = any>(url: string, config = {}) {
         try {
-            const res = await http.get<{ success: boolean; data: T }>(
+            const res = await http.get<any>(
                 url,
                 config,
             );
+            if (res.data && 'meta' in res.data) {
+                return {
+                    data: {
+                        data: res.data.data,
+                        meta: res.data.meta,
+                    } as unknown as T,
+                    error: null,
+                };
+            }
             return { data: res.data.data, error: null };
         } catch (e: any) {
             return {
@@ -143,11 +152,7 @@ export const apiClient = {
         error: string | null;
     }> {
         try {
-            const res = await http.request<{
-                success: boolean;
-                data: T;
-                message?: string;
-            }>({
+            const res = await http.request<any>({
                 url: route.url,
                 method: route.method,
                 baseURL: '',
@@ -160,6 +165,16 @@ export const apiClient = {
                     message: null,
                     error: null,
                 };
+            if (res.data && 'meta' in res.data) {
+                return {
+                    data: {
+                        data: res.data.data,
+                        meta: res.data.meta,
+                    } as unknown as T,
+                    message: res.data?.message ?? null,
+                    error: null,
+                };
+            }
             return {
                 data: res.data?.data ?? null,
                 message: res.data?.message ?? null,

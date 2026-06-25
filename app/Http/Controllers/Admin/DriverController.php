@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Admin\DriverResource;
 use App\Models\Driver;
 use App\Services\DriverService;
+use App\Services\AuditLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -55,6 +56,14 @@ class DriverController extends Controller
         // Duyệt + cấp mật khẩu đăng nhập mới + gửi SMS cho tài xế
         $tempPassword = $this->driverService->approveAndIssueCredentials($driver);
 
+        app(AuditLogService::class)->log(
+            action: 'approve_driver',
+            model: $driver,
+            description: "Đã duyệt tài xế thành công: {$driver->user->full_name} (SĐT: {$driver->user->phone})",
+            oldValues: ['status' => 'pending'],
+            newValues: ['status' => 'verified']
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Đã duyệt tài xế, cấp mật khẩu và gửi SMS thông tin đăng nhập',
@@ -75,6 +84,12 @@ class DriverController extends Controller
 
         $tempPassword = $this->driverService->resetPassword($driver);
 
+        app(AuditLogService::class)->log(
+            action: 'reset_driver_password',
+            model: $driver,
+            description: "Đã cấp lại mật khẩu cho tài xế: {$driver->user->full_name} (SĐT: {$driver->user->phone})"
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Đã cấp lại mật khẩu và gửi SMS cho tài xế',
@@ -92,7 +107,16 @@ class DriverController extends Controller
             return response()->json(['success' => false, 'message' => 'Tài xế không tồn tại'], 404);
         }
 
+        $oldStatus = $driver->status->value;
         $driver->update(['status' => DriverStatus::Rejected, 'reject_reason' => $request->reason]);
+
+        app(AuditLogService::class)->log(
+            action: 'reject_driver',
+            model: $driver,
+            description: "Đã từ chối hồ sơ tài xế: {$driver->user->full_name} (SĐT: {$driver->user->phone}). Lý do: {$request->reason}",
+            oldValues: ['status' => $oldStatus],
+            newValues: ['status' => DriverStatus::Rejected->value, 'reject_reason' => $request->reason]
+        );
 
         return response()->json(['success' => true, 'message' => 'Đã từ chối hồ sơ tài xế']);
     }
@@ -105,8 +129,17 @@ class DriverController extends Controller
             return response()->json(['success' => false, 'message' => 'Tài xế không tồn tại'], 404);
         }
 
+        $oldStatus = $driver->status->value;
         $driver->update(['status' => DriverStatus::Suspended]);
         $driver->user()->update(['is_active' => false]);
+
+        app(AuditLogService::class)->log(
+            action: 'suspend_driver',
+            model: $driver,
+            description: "Đã tạm đình chỉ hoạt động tài xế: {$driver->user->full_name} (SĐT: {$driver->user->phone})",
+            oldValues: ['status' => $oldStatus, 'user_is_active' => true],
+            newValues: ['status' => DriverStatus::Suspended->value, 'user_is_active' => false]
+        );
 
         return response()->json(['success' => true, 'message' => 'Đã tạm đình chỉ tài xế']);
     }

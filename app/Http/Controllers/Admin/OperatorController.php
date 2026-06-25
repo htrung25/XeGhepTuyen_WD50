@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Admin\OperatorResource;
 use App\Models\Operator;
 use App\Services\OperatorAccountService;
+use App\Services\AuditLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -64,7 +65,16 @@ class OperatorController extends Controller
             return response()->json(['success' => false, 'message' => 'Nhà xe này không ở trạng thái chờ duyệt'], 422);
         }
 
+        $oldStatus = $operator->status->value;
         $operator->update(['status' => OperatorStatus::Verified, 'verified_at' => now()]);
+
+        app(AuditLogService::class)->log(
+            action: 'approve_operator',
+            model: $operator,
+            description: "Đã duyệt nhà xe thành công: {$operator->company_name}",
+            oldValues: ['status' => $oldStatus],
+            newValues: ['status' => OperatorStatus::Verified->value, 'verified_at' => now()->format('Y-m-d H:i:s')]
+        );
 
         return response()->json(['success' => true, 'message' => 'Đã duyệt nhà xe thành công']);
     }
@@ -79,7 +89,16 @@ class OperatorController extends Controller
             return response()->json(['success' => false, 'message' => 'Nhà xe không tồn tại'], 404);
         }
 
+        $oldStatus = $operator->status->value;
         $operator->update(['status' => OperatorStatus::Rejected, 'reject_reason' => $request->reason]);
+
+        app(AuditLogService::class)->log(
+            action: 'reject_operator',
+            model: $operator,
+            description: "Đã từ chối nhà xe: {$operator->company_name}. Lý do: {$request->reason}",
+            oldValues: ['status' => $oldStatus],
+            newValues: ['status' => OperatorStatus::Rejected->value, 'reject_reason' => $request->reason]
+        );
 
         return response()->json(['success' => true, 'message' => 'Đã từ chối nhà xe']);
     }
@@ -94,8 +113,17 @@ class OperatorController extends Controller
             return response()->json(['success' => false, 'message' => 'Nhà xe không tồn tại'], 404);
         }
 
+        $oldStatus = $operator->status->value;
         $operator->update(['status' => OperatorStatus::Suspended]);
         $operator->user()->update(['is_active' => false]);
+
+        app(AuditLogService::class)->log(
+            action: 'suspend_operator',
+            model: $operator,
+            description: "Đã tạm đình chỉ nhà xe: {$operator->company_name}. Lý do: {$request->reason}",
+            oldValues: ['status' => $oldStatus, 'user_is_active' => true],
+            newValues: ['status' => OperatorStatus::Suspended->value, 'user_is_active' => false]
+        );
 
         return response()->json(['success' => true, 'message' => 'Đã tạm đình chỉ nhà xe']);
     }
@@ -112,10 +140,19 @@ class OperatorController extends Controller
             return response()->json(['success' => false, 'message' => 'Nhà xe này không ở trạng thái đình chỉ'], 422);
         }
 
+        $oldStatus = $operator->status->value;
         $operator->update(['status' => OperatorStatus::Verified]);
         if ($operator->user) {
             $operator->user->update(['is_active' => true]);
         }
+
+        app(AuditLogService::class)->log(
+            action: 'restore_operator',
+            model: $operator,
+            description: "Đã khôi phục hoạt động cho nhà xe: {$operator->company_name}",
+            oldValues: ['status' => $oldStatus, 'user_is_active' => false],
+            newValues: ['status' => OperatorStatus::Verified->value, 'user_is_active' => true]
+        );
 
         return response()->json(['success' => true, 'message' => 'Đã khôi phục hoạt động cho nhà xe']);
     }
@@ -137,6 +174,12 @@ class OperatorController extends Controller
         }
 
         $tempPassword = $this->accountService->resetPassword($operator);
+
+        app(AuditLogService::class)->log(
+            action: 'reset_operator_password',
+            model: $operator,
+            description: "Đã đặt lại mật khẩu đăng nhập cho nhà xe: {$operator->company_name} (SĐT: {$operator->user->phone})"
+        );
 
         return response()->json([
             'success' => true,

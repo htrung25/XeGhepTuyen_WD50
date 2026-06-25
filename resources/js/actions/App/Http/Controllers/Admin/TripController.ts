@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Admin\TripController::index
-* @see app/Http/Controllers/Admin/TripController.php:36
+* @see app/Http/Controllers/Admin/TripController.php:42
 * @route '/api/admin/trips'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::index
-* @see app/Http/Controllers/Admin/TripController.php:36
+* @see app/Http/Controllers/Admin/TripController.php:42
 * @route '/api/admin/trips'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::index
-* @see app/Http/Controllers/Admin/TripController.php:36
+* @see app/Http/Controllers/Admin/TripController.php:42
 * @route '/api/admin/trips'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::index
-* @see app/Http/Controllers/Admin/TripController.php:36
+* @see app/Http/Controllers/Admin/TripController.php:42
 * @route '/api/admin/trips'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::index
-* @see app/Http/Controllers/Admin/TripController.php:36
+* @see app/Http/Controllers/Admin/TripController.php:42
 * @route '/api/admin/trips'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::index
-* @see app/Http/Controllers/Admin/TripController.php:36
+* @see app/Http/Controllers/Admin/TripController.php:42
 * @route '/api/admin/trips'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::index
-* @see app/Http/Controllers/Admin/TripController.php:36
+* @see app/Http/Controllers/Admin/TripController.php:42
 * @route '/api/admin/trips'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::autoResolve
-* @see app/Http/Controllers/Admin/TripController.php:25
+* @see app/Http/Controllers/Admin/TripController.php:26
 * @route '/api/admin/trips/auto-resolve'
 */
 export const autoResolve = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -97,7 +97,7 @@ autoResolve.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::autoResolve
-* @see app/Http/Controllers/Admin/TripController.php:25
+* @see app/Http/Controllers/Admin/TripController.php:26
 * @route '/api/admin/trips/auto-resolve'
 */
 autoResolve.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ autoResolve.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::autoResolve
-* @see app/Http/Controllers/Admin/TripController.php:25
+* @see app/Http/Controllers/Admin/TripController.php:26
 * @route '/api/admin/trips/auto-resolve'
 */
 autoResolve.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -116,7 +116,7 @@ autoResolve.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::autoResolve
-* @see app/Http/Controllers/Admin/TripController.php:25
+* @see app/Http/Controllers/Admin/TripController.php:26
 * @route '/api/admin/trips/auto-resolve'
 */
 const autoResolveForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -126,7 +126,7 @@ const autoResolveForm = (options?: RouteQueryOptions): RouteFormDefinition<'post
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::autoResolve
-* @see app/Http/Controllers/Admin/TripController.php:25
+* @see app/Http/Controllers/Admin/TripController.php:26
 * @route '/api/admin/trips/auto-resolve'
 */
 autoResolveForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -138,7 +138,7 @@ autoResolve.form = autoResolveForm
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::monitor
-* @see app/Http/Controllers/Admin/TripController.php:67
+* @see app/Http/Controllers/Admin/TripController.php:73
 * @route '/api/admin/trips/monitor'
 */
 export const monitor = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -153,7 +153,7 @@ monitor.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::monitor
-* @see app/Http/Controllers/Admin/TripController.php:67
+* @see app/Http/Controllers/Admin/TripController.php:73
 * @route '/api/admin/trips/monitor'
 */
 monitor.url = (options?: RouteQueryOptions) => {
@@ -162,7 +162,7 @@ monitor.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::monitor
-* @see app/Http/Controllers/Admin/TripController.php:67
+* @see app/Http/Controllers/Admin/TripController.php:73
 * @route '/api/admin/trips/monitor'
 */
 monitor.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -172,7 +172,7 @@ monitor.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::monitor
-* @see app/Http/Controllers/Admin/TripController.php:67
+* @see app/Http/Controllers/Admin/TripController.php:73
 * @route '/api/admin/trips/monitor'
 */
 monitor.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -182,7 +182,7 @@ monitor.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::monitor
-* @see app/Http/Controllers/Admin/TripController.php:67
+* @see app/Http/Controllers/Admin/TripController.php:73
 * @route '/api/admin/trips/monitor'
 */
 const monitorForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -192,7 +192,7 @@ const monitorForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::monitor
-* @see app/Http/Controllers/Admin/TripController.php:67
+* @see app/Http/Controllers/Admin/TripController.php:73
 * @route '/api/admin/trips/monitor'
 */
 monitorForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -202,7 +202,7 @@ monitorForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::monitor
-* @see app/Http/Controllers/Admin/TripController.php:67
+* @see app/Http/Controllers/Admin/TripController.php:73
 * @route '/api/admin/trips/monitor'
 */
 monitorForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -219,7 +219,7 @@ monitor.form = monitorForm
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::show
-* @see app/Http/Controllers/Admin/TripController.php:53
+* @see app/Http/Controllers/Admin/TripController.php:59
 * @route '/api/admin/trips/{id}'
 */
 export const show = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -234,7 +234,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::show
-* @see app/Http/Controllers/Admin/TripController.php:53
+* @see app/Http/Controllers/Admin/TripController.php:59
 * @route '/api/admin/trips/{id}'
 */
 show.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -261,7 +261,7 @@ show.url = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::show
-* @see app/Http/Controllers/Admin/TripController.php:53
+* @see app/Http/Controllers/Admin/TripController.php:59
 * @route '/api/admin/trips/{id}'
 */
 show.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -271,7 +271,7 @@ show.get = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::show
-* @see app/Http/Controllers/Admin/TripController.php:53
+* @see app/Http/Controllers/Admin/TripController.php:59
 * @route '/api/admin/trips/{id}'
 */
 show.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -281,7 +281,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::show
-* @see app/Http/Controllers/Admin/TripController.php:53
+* @see app/Http/Controllers/Admin/TripController.php:59
 * @route '/api/admin/trips/{id}'
 */
 const showForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -291,7 +291,7 @@ const showForm = (args: { id: string | number } | [id: string | number ] | strin
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::show
-* @see app/Http/Controllers/Admin/TripController.php:53
+* @see app/Http/Controllers/Admin/TripController.php:59
 * @route '/api/admin/trips/{id}'
 */
 showForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -301,7 +301,7 @@ showForm.get = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::show
-* @see app/Http/Controllers/Admin/TripController.php:53
+* @see app/Http/Controllers/Admin/TripController.php:59
 * @route '/api/admin/trips/{id}'
 */
 showForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -318,7 +318,7 @@ show.form = showForm
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::cancel
-* @see app/Http/Controllers/Admin/TripController.php:77
+* @see app/Http/Controllers/Admin/TripController.php:83
 * @route '/api/admin/trips/{id}/cancel'
 */
 export const cancel = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -333,7 +333,7 @@ cancel.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::cancel
-* @see app/Http/Controllers/Admin/TripController.php:77
+* @see app/Http/Controllers/Admin/TripController.php:83
 * @route '/api/admin/trips/{id}/cancel'
 */
 cancel.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -360,7 +360,7 @@ cancel.url = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::cancel
-* @see app/Http/Controllers/Admin/TripController.php:77
+* @see app/Http/Controllers/Admin/TripController.php:83
 * @route '/api/admin/trips/{id}/cancel'
 */
 cancel.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -370,7 +370,7 @@ cancel.post = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::cancel
-* @see app/Http/Controllers/Admin/TripController.php:77
+* @see app/Http/Controllers/Admin/TripController.php:83
 * @route '/api/admin/trips/{id}/cancel'
 */
 const cancelForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -380,7 +380,7 @@ const cancelForm = (args: { id: string | number } | [id: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\Admin\TripController::cancel
-* @see app/Http/Controllers/Admin/TripController.php:77
+* @see app/Http/Controllers/Admin/TripController.php:83
 * @route '/api/admin/trips/{id}/cancel'
 */
 cancelForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

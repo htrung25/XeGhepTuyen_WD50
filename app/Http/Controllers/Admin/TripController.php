@@ -7,6 +7,7 @@ use App\Http\Resources\Admin\LiveTripResource;
 use App\Http\Resources\Admin\TripResource;
 use App\Repositories\Contracts\TripRepositoryInterface;
 use App\Services\TripService;
+use App\Services\AuditLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -25,6 +26,11 @@ class TripController extends Controller
     public function autoResolve(): JsonResponse
     {
         Artisan::call('trips:auto-resolve');
+
+        app(AuditLogService::class)->log(
+            action: 'auto_resolve_trips',
+            description: "Đã kích hoạt thủ công lệnh trips:auto-resolve xử lý các chuyến đi quá giờ"
+        );
 
         return response()->json([
             'success' => true,
@@ -89,7 +95,16 @@ class TripController extends Controller
         }
 
         // Hủy chuyến + hoàn 100% + bồi thường cho toàn bộ hành khách
+        $oldStatus = $trip->status->value;
         $this->tripService->cancelTrip($trip, $request->reason, true);
+
+        app(AuditLogService::class)->log(
+            action: 'cancel_trip',
+            model: $trip,
+            description: "Đã hủy chuyến đi: {$trip->id}. Lý do: {$request->reason}",
+            oldValues: ['status' => $oldStatus],
+            newValues: ['status' => 'cancelled']
+        );
 
         return response()->json(['success' => true, 'message' => 'Đã hủy chuyến + hoàn tiền cho hành khách']);
     }

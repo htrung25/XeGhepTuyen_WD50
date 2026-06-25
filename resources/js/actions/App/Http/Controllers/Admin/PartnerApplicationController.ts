@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Admin\PartnerApplicationController::index
-* @see app/Http/Controllers/Admin/PartnerApplicationController.php:21
+* @see app/Http/Controllers/Admin/PartnerApplicationController.php:22
 * @route '/api/admin/partner-applications'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\PartnerApplicationController::index
-* @see app/Http/Controllers/Admin/PartnerApplicationController.php:21
+* @see app/Http/Controllers/Admin/PartnerApplicationController.php:22
 * @route '/api/admin/partner-applications'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Admin\PartnerApplicationController::index
-* @see app/Http/Controllers/Admin/PartnerApplicationController.php:21
+* @see app/Http/Controllers/Admin/PartnerApplicationController.php:22
 * @route '/api/admin/partner-applications'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\PartnerApplicationController::index
-* @see app/Http/Controllers/Admin/PartnerApplicationController.php:21
+* @see app/Http/Controllers/Admin/PartnerApplicationController.php:22
 * @route '/api/admin/partner-applications'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\PartnerApplicationController::index
-* @see app/Http/Controllers/Admin/PartnerApplicationController.php:21
+* @see app/Http/Controllers/Admin/PartnerApplicationController.php:22
 * @route '/api/admin/partner-applications'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Admin\PartnerApplicationController::index
-* @see app/Http/Controllers/Admin/PartnerApplicationController.php:21
+* @see app/Http/Controllers/Admin/PartnerApplicationController.php:22
 * @route '/api/admin/partner-applications'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\PartnerApplicationController::index
-* @see app/Http/Controllers/Admin/PartnerApplicationController.php:21
+* @see app/Http/Controllers/Admin/PartnerApplicationController.php:22
 * @route '/api/admin/partner-applications'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Admin\PartnerApplicationController::approve
-* @see app/Http/Controllers/Admin/PartnerApplicationController.php:39
+* @see app/Http/Controllers/Admin/PartnerApplicationController.php:40
 * @route '/api/admin/partner-applications/{id}/approve'
 */
 export const approve = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -97,7 +97,7 @@ approve.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\PartnerApplicationController::approve
-* @see app/Http/Controllers/Admin/PartnerApplicationController.php:39
+* @see app/Http/Controllers/Admin/PartnerApplicationController.php:40
 * @route '/api/admin/partner-applications/{id}/approve'
 */
 approve.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -124,7 +124,7 @@ approve.url = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Http\Controllers\Admin\PartnerApplicationController::approve
-* @see app/Http/Controllers/Admin/PartnerApplicationController.php:39
+* @see app/Http/Controllers/Admin/PartnerApplicationController.php:40
 * @route '/api/admin/partner-applications/{id}/approve'
 */
 approve.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -134,7 +134,7 @@ approve.post = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\Admin\PartnerApplicationController::approve
-* @see app/Http/Controllers/Admin/PartnerApplicationController.php:39
+* @see app/Http/Controllers/Admin/PartnerApplicationController.php:40
 * @route '/api/admin/partner-applications/{id}/approve'
 */
 const approveForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -144,7 +144,7 @@ const approveForm = (args: { id: string | number } | [id: string | number ] | st
 
 /**
 * @see \App\Http\Controllers\Admin\PartnerApplicationController::approve
-* @see app/Http/Controllers/Admin/PartnerApplicationController.php:39
+* @see app/Http/Controllers/Admin/PartnerApplicationController.php:40
 * @route '/api/admin/partner-applications/{id}/approve'
 */
 approveForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -156,7 +156,7 @@ approve.form = approveForm
 
 /**
 * @see \App\Http\Controllers\Admin\PartnerApplicationController::reject
-* @see app/Http/Controllers/Admin/PartnerApplicationController.php:73
+* @see app/Http/Controllers/Admin/PartnerApplicationController.php:82
 * @route '/api/admin/partner-applications/{id}/reject'
 */
 export const reject = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -171,7 +171,7 @@ reject.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\PartnerApplicationController::reject
-* @see app/Http/Controllers/Admin/PartnerApplicationController.php:73
+* @see app/Http/Controllers/Admin/PartnerApplicationController.php:82
 * @route '/api/admin/partner-applications/{id}/reject'
 */
 reject.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -198,7 +198,7 @@ reject.url = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Http\Controllers\Admin\PartnerApplicationController::reject
-* @see app/Http/Controllers/Admin/PartnerApplicationController.php:73
+* @see app/Http/Controllers/Admin/PartnerApplicationController.php:82
 * @route '/api/admin/partner-applications/{id}/reject'
 */
 reject.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -208,7 +208,7 @@ reject.post = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Http\Controllers\Admin\PartnerApplicationController::reject
-* @see app/Http/Controllers/Admin/PartnerApplicationController.php:73
+* @see app/Http/Controllers/Admin/PartnerApplicationController.php:82
 * @route '/api/admin/partner-applications/{id}/reject'
 */
 const rejectForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -218,7 +218,7 @@ const rejectForm = (args: { id: string | number } | [id: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\Admin\PartnerApplicationController::reject
-* @see app/Http/Controllers/Admin/PartnerApplicationController.php:73
+* @see app/Http/Controllers/Admin/PartnerApplicationController.php:82
 * @route '/api/admin/partner-applications/{id}/reject'
 */
 rejectForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

@@ -41,6 +41,7 @@ const navItems = [
     { path: '/admin/trips', label: 'Chuyến đi', icon: 'map' },
     { path: '/admin/finance', label: 'Tài chính', icon: 'cash' },
     { path: '/admin/vouchers', label: 'Voucher', icon: 'tag' },
+    { path: '/admin/audit-logs', label: 'Nhật ký hệ thống', icon: 'history' },
 ];
 
 function isActive(path: string) {
@@ -222,6 +223,21 @@ async function handleLogout() {
                                 stroke-linejoin="round"
                                 stroke-width="2"
                                 d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
+                            />
+                        </svg>
+                        <!-- History icon -->
+                        <svg
+                            v-else-if="item.icon === 'history'"
+                            class="h-5 w-5 shrink-0"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                             />
                         </svg>
                         <span v-if="!sidebarCollapsed" class="truncate">{{

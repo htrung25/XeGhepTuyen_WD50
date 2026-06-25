@@ -7,6 +7,7 @@ use App\Models\Operator;
 use App\Models\Payment;
 use App\Models\Payout;
 use App\Services\SettlementService;
+use App\Services\AuditLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -126,6 +127,13 @@ class FinanceController extends Controller
 
         $payout = $result['payout'];
 
+        app(AuditLogService::class)->log(
+            action: 'payout_operator',
+            model: $operator,
+            description: "Đã quyết toán thành công " . number_format($payout->amount, 0, ',', '.') . "đ cho nhà xe: {$operator->company_name}",
+            newValues: $payout->toArray()
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Đã quyết toán '.number_format($payout->amount, 0, ',', '.').'đ cho '.$operator->company_name,
@@ -176,8 +184,8 @@ class FinanceController extends Controller
     public function transactions(Request $request): JsonResponse
     {
         $payments = Payment::with(['booking.user', 'booking.trip.route.operator'])
-            ->when($request->method, fn ($q) => $q->where('method', $request->method))
-            ->when($request->status, fn ($q) => $q->where('status', $request->status))
+            ->when($request->input('method'), fn ($q) => $q->where('method', $request->input('method')))
+            ->when($request->input('status'), fn ($q) => $q->where('status', $request->input('status')))
             ->latest('paid_at')
             ->paginate(30);
 

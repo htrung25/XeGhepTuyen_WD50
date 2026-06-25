@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\PartnerApplicationController;
 use App\Http\Controllers\Admin\TripController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VoucherController;
+use App\Http\Controllers\Admin\AuditLogController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -84,4 +85,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::put('vouchers/{id}', [VoucherController::class, 'update']);
     Route::put('vouchers/{id}/toggle', [VoucherController::class, 'toggle']);
     Route::delete('vouchers/{id}', [VoucherController::class, 'destroy']);
+
+    // Audit Logs
+    Route::get('audit-logs', [AuditLogController::class, 'index']);
+    Route::get('audit-logs/{id}', [AuditLogController::class, 'show']);
 });

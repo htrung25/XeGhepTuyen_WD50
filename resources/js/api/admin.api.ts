@@ -59,6 +59,10 @@ import {
     toggle as voucherToggle,
     destroy as voucherDestroy,
 } from '@/actions/App/Http/Controllers/Admin/VoucherController';
+import {
+    index as auditLogsIndex,
+    show as auditLogShow,
+} from '@/actions/App/Http/Controllers/Admin/AuditLogController';
 
 import type { QueryParams } from '@/wayfinder';
 import { apiClient } from './client';
@@ -166,4 +170,10 @@ export const adminApi = {
         apiClient.send(voucherUpdate(id), data),
     deleteVoucher: (id: string) => apiClient.send(voucherDestroy(id)),
     toggleVoucher: (id: string) => apiClient.send(voucherToggle(id)),
+
+    // Audit Logs
+    getAuditLogs: (params?: Params) =>
+        apiClient.send(auditLogsIndex({ query: params as QueryParams })),
+    getAuditLog: (id: string) =>
+        apiClient.send(auditLogShow(id)),
 };
