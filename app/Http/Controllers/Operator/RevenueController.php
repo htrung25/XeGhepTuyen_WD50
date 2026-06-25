@@ -66,9 +66,12 @@ class RevenueController extends Controller
 
         $tripIds = $this->operatorTripIds($operator->id, $from, $to);
 
-        $grossRevenue = (int) $this->realizedBookings($tripIds)->sum('final_amount');
-        $commission = (int) round($grossRevenue * $rate / 100);
-        $netRevenue = $grossRevenue - $commission;
+        // Số tiền lấy từ SettlementService — NGUỒN TÍNH DUY NHẤT (đối soát online/cash),
+        // khớp tuyệt đối với trang quyết toán/payout.
+        $s = $this->settlementService->forOperator($operator->id, $rate, $tripIds);
+        $grossRevenue = $s['gross'];
+        $commission = $s['commission'];
+        $netRevenue = $grossRevenue - $commission; // doanh thu ròng = gross − hoa hồng (PRD F-O06)
         $totalBookings = (int) $this->realizedBookings($tripIds)->count();
 
         // Chuyến đã hoàn thành trong kỳ
@@ -94,6 +97,10 @@ class RevenueController extends Controller
                 'commission' => $commission,
                 'commission_rate' => $rate,
                 'net_revenue' => $netRevenue,
+                // Tiền mặt nhà xe đã tự thu (ngoài nền tảng) vs số nền tảng sẽ chuyển/đối soát
+                // kỳ này — giúp phân biệt "doanh thu ròng" với "số thực nhận từ nền tảng".
+                'cash_collected' => $s['cash_gross'],
+                'settlement' => $s['settlement'],
                 'avg_occupancy' => $occupancy,
             ],
         ]);
