@@ -82,7 +82,7 @@ async function fetchLogs() {
     if (dateFrom.value) params.date_from = dateFrom.value;
     if (dateTo.value) params.date_to = dateTo.value;
 
-    const { data, error } = await adminApi.getAuditLogs(params);
+    const { data, meta, error } = await adminApi.getAuditLogs(params);
     loading.value = false;
 
     if (error) {
@@ -90,9 +90,9 @@ async function fetchLogs() {
         return;
     }
 
-    logs.value = data?.data ?? [];
-    totalPages.value = data?.meta?.last_page ?? 1;
-    totalLogs.value = data?.meta?.total ?? 0;
+    logs.value = data ?? [];
+    totalPages.value = meta?.last_page ?? 1;
+    totalLogs.value = meta?.total ?? 0;
 }
 
 let searchTimeout: any = null;

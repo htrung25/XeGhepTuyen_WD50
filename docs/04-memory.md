@@ -18,7 +18,7 @@ Phase     : MVP (Phase 1) hoàn tất + đang mở rộng (post-MVP)
 Tiến độ   : 100% MVP — 4 portal SPAs fully wired, build OK
             Post-MVP đã thêm: đăng ký đối tác [[4.9]], đối soát/quyết toán [[4.8]],
             cấp MK tài xế [[4.11]], cô lập portal role-middleware [[4.13]], Wayfinder [[4.14]].
-            Đang làm dở: Audit Log [[4.16]] (chưa commit).
+            Audit Log [[4.16]] đã review/verify xong (6/6 test, chưa commit).
 Cập nhật  : 2026-06-25
 ```
 
@@ -672,10 +672,16 @@ BE       : migration 2026_06_25_000000_create_audit_logs_table; app/Models/Audit
 Routes   : GET /admin/audit-logs, GET /admin/audit-logs/{id} (trong group role:admin [[4.13]]).
 FE       : resources/js/pages/admin/AuditLogs/Index.vue + route 'audit-logs' (admin.routes.ts) +
            action generated (wayfinder) + admin.api.ts. Link trong AdminLayout.
-Trạng thái: code + test (tests/Feature/AdminAuditLogTest.php) đã có, CHƯA commit. Cần verify:
-           chạy test, và cài đặt điểm GHI log ở các hành động nhạy cảm (duyệt/đình chỉ operator
-           & driver, payout, refund thủ công, cấp lại mật khẩu).
-Lưu ý    : đây là phần việc đang dở DUY NHẤT chưa nằm trong progress tracker; xong thì cập nhật §3.
+Điểm ghi  : ĐÃ wire 20 điểm log ở 7 controller admin — User(ban/unban), Operator(approve/reject/
+           suspend/restore/reset-password), Driver(approve/reject/suspend/reset-password),
+           Voucher(create/update/toggle/delete), Trip(cancel/auto-resolve), PartnerApplication
+           (approve/reject), Finance(payout). 20 chuỗi `action` KHỚP 1:1 với actionLabels FE.
+Trạng thái: ✅ ĐÃ REVIEW & VERIFY xong 2026-06-25 (vẫn CHƯA commit). Test
+           tests/Feature/AdminAuditLogTest.php = 6/6 pass (thêm 404 + lọc theo ngày); full suite
+           60 pass/3 skip/0 fail (20 điểm log không gây regression); FE không lỗi TS.
+Lưu ý    : Auth::id() lấy đúng user vì middleware auth:sanctum gọi shouldUse('sanctum') khi pass.
+           refund THỦ CÔNG admin chưa tồn tại (chỉ có GET finance/refunds + POST finance/payouts) →
+           không có điểm log nào bị sót. Khi nào commit thì coi như đóng.
 ```
 
 ---
@@ -683,6 +689,22 @@ Lưu ý    : đây là phần việc đang dở DUY NHẤT chưa nằm trong pro
 ## 5. VẤN ĐỀ ĐÃ GẶP VÀ CÁCH GIẢI QUYẾT
 
 > AI Agent ghi vào đây khi gặp lỗi để tránh lặp lại.
+
+### 2026-06-25 — Lỗi: 4 trang admin (operators/drivers/bookings/vouchers) vỡ sau commit audit-log
+File     : resources/js/api/client.ts (+ 4 trang Pattern A)
+Vấn đề   : commit d81b359 (audit-log) sửa apiClient.get/send DÙNG CHUNG mọi portal: với
+           response có `meta` (phân trang) trả về shape LỒNG `data = { data: [...], meta }`
+           thay vì `data = [...]`. Trang AuditLogs mới viết theo shape lồng, NHƯNG mọi trang
+           cũ (đa số, cả 4 portal) đọc `data ?? []` / `data as X[]` → nhận object thay vì mảng
+           → v-for vỡ. 4 trang user báo chỉ là phần nổi; bán kính thực = mọi list phân trang.
+Giải pháp: Trả client về shape TƯƠNG THÍCH NGƯỢC: `data` LUÔN là payload (mảng/đối tượng),
+           `meta` là field ANH EM (`{ data, meta, error }`). → khôi phục toàn bộ trang Pattern B
+           ở mọi portal ngay. Chỉ cần sửa 4 trang Pattern A (admin AuditLogs/Users/Trips +
+           operator/Bookings) đọc `meta` từ field anh em (destructure `{ data, meta, error }`,
+           bỏ `data.data`/`data.meta`). Build OK, BE 60 pass.
+Note     : KHÔNG đổi contract của apiClient dùng chung để chiều 1 trang mới — sẽ vỡ dây chuyền
+           toàn bộ list. Giữ `data`=payload, thêm `meta` anh em. Khi thêm trang phân trang mới:
+           dùng `const { data, meta } = ...` (KHÔNG `data.data`/`data.meta`).
 
 ### 2026-06-22 — Lỗi: Quyết toán payout operator↔admin không đồng bộ (R1/R2/R4)
 File     : app/Http/Controllers/Operator/RevenueController.php, app/Http/Controllers/Admin/FinanceController.php

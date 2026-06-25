@@ -50,19 +50,17 @@ export const apiClient = {
                 url,
                 config,
             );
-            if (res.data && 'meta' in res.data) {
-                return {
-                    data: {
-                        data: res.data.data,
-                        meta: res.data.meta,
-                    } as unknown as T,
-                    error: null,
-                };
-            }
-            return { data: res.data.data, error: null };
+            // `data` luôn là payload (mảng/đối tượng); `meta` (phân trang) là field
+            // anh em — giữ shape tương thích với mọi trang đọc `data` trực tiếp.
+            return {
+                data: (res.data?.data ?? null) as T | null,
+                meta: res.data?.meta ?? null,
+                error: null,
+            };
         } catch (e: any) {
             return {
                 data: null as T | null,
+                meta: null,
                 error: e.response?.data?.message ?? 'Có lỗi xảy ra',
             };
         }
@@ -148,6 +146,7 @@ export const apiClient = {
         opts?: { blob?: boolean },
     ): Promise<{
         data: T | null;
+        meta: any | null;
         message: string | null;
         error: string | null;
     }> {
@@ -162,21 +161,14 @@ export const apiClient = {
             if (opts?.blob)
                 return {
                     data: res.data as unknown as T,
+                    meta: null,
                     message: null,
                     error: null,
                 };
-            if (res.data && 'meta' in res.data) {
-                return {
-                    data: {
-                        data: res.data.data,
-                        meta: res.data.meta,
-                    } as unknown as T,
-                    message: res.data?.message ?? null,
-                    error: null,
-                };
-            }
+            // `data` luôn là payload; `meta` (phân trang) là field anh em.
             return {
                 data: res.data?.data ?? null,
+                meta: res.data?.meta ?? null,
                 message: res.data?.message ?? null,
                 error: null,
             };
@@ -184,7 +176,7 @@ export const apiClient = {
             const error = opts?.blob
                 ? 'Có lỗi khi xuất file'
                 : (e.response?.data?.message ?? 'Có lỗi xảy ra');
-            return { data: null, message: null, error };
+            return { data: null, meta: null, message: null, error };
         }
     },
 

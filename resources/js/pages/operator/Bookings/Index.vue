@@ -58,15 +58,15 @@ async function fetchBookings() {
     const params: Record<string, unknown> = { page: page.value };
     if (search.value.trim()) params.search = search.value.trim();
     if (statusTab.value !== 'all') params.status = statusTab.value;
-    const { data, error: err } = await operatorApi.getBookings(params);
+    const { data, meta, error: err } = await operatorApi.getBookings(params);
     loading.value = false;
     if (err) {
         error.value = err;
         return;
     }
-    bookings.value = data.data ?? data ?? [];
-    totalPages.value = data.meta?.last_page ?? 1;
-    totalCount.value = data.meta?.total ?? bookings.value.length;
+    bookings.value = data ?? [];
+    totalPages.value = meta?.last_page ?? 1;
+    totalCount.value = meta?.total ?? bookings.value.length;
 }
 
 function onFilter() {

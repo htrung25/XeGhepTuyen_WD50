@@ -48,15 +48,15 @@ async function fetchUsers() {
     const params: Record<string, unknown> = { page: page.value };
     if (search.value.trim()) params.search = search.value.trim();
     if (statusFilter.value !== 'all') params.status = statusFilter.value;
-    const { data, error: err } = await adminApi.getUsers(params);
+    const { data, meta, error: err } = await adminApi.getUsers(params);
     loading.value = false;
     if (err) {
         error.value = err;
         return;
     }
-    users.value = data.data ?? data;
-    totalPages.value = data.meta?.last_page ?? 1;
-    totalCount.value = data.meta?.total ?? users.value.length;
+    users.value = data ?? [];
+    totalPages.value = meta?.last_page ?? 1;
+    totalCount.value = meta?.total ?? users.value.length;
 }
 
 async function openBanModal(user: User) {

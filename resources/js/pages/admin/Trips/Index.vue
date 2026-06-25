@@ -60,15 +60,15 @@ async function fetchTrips() {
     if (statusTab.value !== 'all') params.status = statusTab.value;
     if (dateFrom.value) params.from_date = dateFrom.value;
     if (dateTo.value) params.to_date = dateTo.value;
-    const { data, error: err } = await adminApi.getTrips(params);
+    const { data, meta, error: err } = await adminApi.getTrips(params);
     loading.value = false;
     if (err) {
         error.value = err;
         return;
     }
-    trips.value = data.data ?? data;
-    totalPages.value = data.meta?.last_page ?? 1;
-    totalCount.value = data.meta?.total ?? trips.value.length;
+    trips.value = data ?? [];
+    totalPages.value = meta?.last_page ?? 1;
+    totalCount.value = meta?.total ?? trips.value.length;
 }
 
 function onFilter() {
