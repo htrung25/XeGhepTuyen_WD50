@@ -666,6 +666,10 @@ GET  /api/driver/auth/me
 PUT  /api/driver/auth/profile             Body: { full_name, avatar, fcm_token }
 POST /api/driver/auth/register            Đăng ký + upload documents
 PUT  /api/driver/status                   Body: { is_online: bool }
+                                          ⚠️ memory §4.12: XeGhep là xe GHÉP TUYẾN CỐ ĐỊNH,
+                                          tài xế KHÔNG tự bắt khách → toggle "nhận khách" ĐÃ GỠ ở
+                                          FE. Endpoint + cột is_online còn (mồ côi, có thể tái dùng
+                                          làm active/inactive sau). Admin "drivers_online" luôn 0.
 ```
 
 **Đăng ký tài xế (documents required):**
@@ -753,14 +757,15 @@ POST /api/driver/location
 GET /api/driver/earnings                  Tổng thu nhập + thống kê
     Query: { period: today|week|month|custom, from_date, to_date }
 GET /api/driver/earnings/transactions     Lịch sử giao dịch chi tiết
-POST /api/driver/earnings/withdraw        Yêu cầu rút tiền
+POST /api/driver/earnings/withdraw        ❌ ĐÃ GỠ (memory §4.7 — không có route/method)
 ```
 
 **Công thức tính thu nhập:**
 ```
 Doanh thu chuyến = final_amount của booking
 Hoa hồng nền tảng = doanh thu × operator.commission_rate / 100
-Thu nhập tài xế = (doanh thu - hoa hồng) × driver_share_rate (do nhà xe cấu hình)
+> ⚠️ memory §4.7 (Phương án A): tiền về NHÀ XE, nhà xe trả tài xế NGOÀI nền tảng.
+>    Trang earnings CHỈ XEM (bảng kê doanh thu chuyến), KHÔNG có ví/rút tiền tài xế.
 ```
 
 ---
@@ -1011,6 +1016,9 @@ GET    /api/admin/vouchers/{id}/usages    Ai đã dùng voucher này
 
 ### 6.9 Xử lý khiếu nại
 **File:** `app/Http/Controllers/Admin/ComplaintController.php`
+> ❌ CHƯA XÂY (2026-06-25): controller/route/UI đều không tồn tại trong code. OUT OF SCOPE MVP.
+> Bù lại có 2 tính năng admin THỰC TẾ ngoài tài liệu gốc: PartnerApplicationController (duyệt
+> đối tác — memory §4.9) và AuditLogController (nhật ký — memory §4.16).
 
 ```
 GET  /api/admin/complaints                Danh sách khiếu nại từ review thấp

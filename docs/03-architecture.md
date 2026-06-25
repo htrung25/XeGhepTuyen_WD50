@@ -2,6 +2,13 @@
 # Xe Ghép Tuyến Hà Nội – Hải Phòng
 > Mọi quyết định kiến trúc đã được thống nhất. AI Agent phải tuân thủ các pattern này.
 
+> ⚠️ ĐÍCH SẢN XUẤT vs TRIỂN KHAI HIỆN TẠI (cập nhật 2026-06-25): sơ đồ và các mục dưới mô tả
+> kiến trúc ĐÍCH (Redis cache/queue/session, Laravel Reverb WebSocket). NHƯNG cấu hình chạy
+> hiện tại là: `QUEUE_CONNECTION=database`, `CACHE_STORE=database`, `BROADCAST_CONNECTION=log`,
+> và `laravel/reverb`/`predis` CHƯA cài (xem memory §6). Pattern (Service/Repo, event-driven,
+> queue cho external call) vẫn áp dụng; chỉ khác driver hạ tầng. Muốn bật Redis/Reverb thật →
+> cài package + đổi env trước.
+
 ---
 
 ## 1. SYSTEM ARCHITECTURE OVERVIEW
@@ -97,6 +104,16 @@
     'admins'    => ['driver' => 'eloquent', 'model' => User::class],
 ],
 ```
+
+> ⚠️ TRẠNG THÁI THỰC TẾ (cập nhật 2026-06-25, xem memory §4.13): vì cả 4 guard đều dùng
+> Sanctum + CHUNG model `User`, token sẽ resolve tokenable bỏ qua provider của guard ⇒ đổi
+> `auth:customer/driver/operator/admin` KHÔNG lọc được theo vai trò. Cô lập 4 portal hiện
+> dựa vào **middleware `role`** chứ không phải guard:
+> - 4 route group dùng `['auth:sanctum', 'role:<portal>']` (KHÔNG dùng `auth:<guard>`).
+> - `app/Http/Middleware/EnsureUserRole.php` so `user()->role` với tham số → lệch thì abort(403).
+> - `config/auth.php` thực tế: `'defaults' => ['guard' => env('AUTH_GUARD','web')]` (web=session),
+>   4 guard customer/driver/operator/admin vẫn khai báo nhưng việc phân quyền do `role:` đảm nhận.
+> Phần "Token Naming" (§2.2) và "auth:customer" (§2.3) bên dưới là Ý ĐỊNH BAN ĐẦU — đọc kèm §4.13.
 
 ### 2.2 Token Naming Convention (Sanctum)
 ```php

@@ -191,12 +191,15 @@ Hủy vé thành công:
 
 ### F-D05: Thu nhập
 **Priority**: P1
-**Acceptance Criteria**:
-- [x] Xem thu nhập hôm nay, tuần này, tháng này
+> ⚠️ ĐÃ ĐIỀU CHỈNH NGHIỆP VỤ (memory §4.7, Phương án A): tiền về NHÀ XE, nhà xe trả tài xế
+> trực tiếp NGOÀI nền tảng. Nền tảng KHÔNG giữ ví tài xế ⇒ trang thu nhập CHỈ XEM (bảng kê),
+> ĐÃ GỠ "rút tiền" và "số dư ví".
+**Acceptance Criteria (thực tế):**
+- [x] Xem thu nhập hôm nay, tuần này, tháng này (chỉ xem)
 - [x] Biểu đồ doanh thu 7 ngày gần nhất
-- [x] Lịch sử từng chuyến với số tiền nhận được
-- [x] Số dư ví hiện tại
-- [x] Yêu cầu rút tiền (tối thiểu 100.000đ)
+- [x] Lịch sử từng chuyến với số tiền ghi nhận
+- [ ] ~~Số dư ví hiện tại~~ — ĐÃ GỠ (ví tài xế không dùng)
+- [ ] ~~Yêu cầu rút tiền (tối thiểu 100.000đ)~~ — ĐÃ GỠ (route/controller/UI đều bỏ)
 
 ---
 

@@ -14,9 +14,12 @@
 
 ```
 Dự án     : XeGhep.vn – Hà Nội ↔ Hải Phòng
-Phase     : MVP (Phase 1)
+Phase     : MVP (Phase 1) hoàn tất + đang mở rộng (post-MVP)
 Tiến độ   : 100% MVP — 4 portal SPAs fully wired, build OK
-Cập nhật  : 2026-06-06
+            Post-MVP đã thêm: đăng ký đối tác [[4.9]], đối soát/quyết toán [[4.8]],
+            cấp MK tài xế [[4.11]], cô lập portal role-middleware [[4.13]], Wayfinder [[4.14]].
+            Đang làm dở: Audit Log [[4.16]] (chưa commit).
+Cập nhật  : 2026-06-25
 ```
 
 ### Progress Tracker
@@ -144,12 +147,18 @@ Cập nhật  : 2026-06-06
 Project ID : 3429828540487639736
 DS ID      : assets/5831b0afd0cb4a52ac6f664b0fdf61fe
 DS Name    : XeGhep Utility System
-Primary    : #F59E0B (amber-500)
 Font       : Be Vietnam Pro
 Background : #F7F9FB
 Card       : bg-white rounded-xl border border-slate-200 shadow-sm
 Badge pill : inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium
 ```
+> ⚠️ MÀU PRIMARY (cập nhật 2026-06-25): amber-500 (#F59E0B) là màu Stitch DS GỐC, nhưng
+> các đợt rewrite desktop ĐÃ ĐỔI theo portal — KHÔNG còn 1 primary thống nhất:
+> - Customer : blue-600 (chủ đạo) — [[project_customer_portal]]
+> - Driver   : green-600 (sidebar) — [[project_driver_portal]]
+> - Operator/Admin : còn nhiều amber-500 (DS gốc), trộn thêm blue/green.
+> Thực tế cả 4 portal đang trộn amber/blue/green. Khi làm UI mới: bám màu của ĐÚNG portal
+> đang sửa (Customer=blue, Driver=green), đừng mặc định amber.
 
 ---
 
@@ -219,7 +228,17 @@ Badge pill : inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium
 [x] 2024_01_01_000015_create_wallets_table.php
 [x] 2024_01_01_000016_create_wallet_transactions_table.php
 [x] 2024_01_01_000017_create_notifications_table.php
+[x] 2024_01_01_000018_create_partner_applications_table.php   (đăng ký đối tác — [[4.9]])
+[x] 2024_01_01_000019_update_partner_applications_fleet.php   (fleet_breakdown JSON — [[4.9]])
+[x] 2026_06_05_103907_create_personal_access_tokens_table.php (Sanctum, uuidMorphs)
+[x] 2026_06_05_104703_create_sessions_table.php
+[x] 2026_06_11_000001_add_collected_by_to_payments_table.php  (vé tiền mặt — [[project_cash_payment]])
+[x] 2026_06_12_000001_add_current_vehicle_id_to_drivers_table.php (xe mặc định)
+[x] 2026_06_13_000001_create_payouts_table.php               (quyết toán nhà xe)
+[x] 2026_06_25_000000_create_audit_logs_table.php            (nhật ký admin — [[4.16]])
 ```
+> Lưu ý: progress tracker cũ ghi "17/17 migrations" — thực tế đã có THÊM 9 migration mở rộng
+> (post-MVP). Không dùng spatie/activitylog cho audit (chưa cài) → bảng audit_logs tự định nghĩa.
 
 ### 3.2 Models
 ```
@@ -297,7 +316,11 @@ Badge pill : inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium
 [x] app/Http/Controllers/Admin/TripController.php
 [x] app/Http/Controllers/Admin/FinanceController.php
 [x] app/Http/Controllers/Admin/VoucherController.php
+[x] app/Http/Controllers/Admin/PartnerApplicationController.php  (duyệt đơn đối tác — [[4.9]])
+[x] app/Http/Controllers/Admin/AuditLogController.php            (nhật ký admin — [[4.16]])
 ```
+> ⚠️ Tài liệu task §6.9 có liệt kê `Admin/ComplaintController` (xử lý khiếu nại) — CHƯA sinh,
+> coi như OUT OF SCOPE MVP hiện tại (không có trong code, không có route).
 
 ### 3.8 Jobs
 ```
@@ -638,6 +661,23 @@ Test     : tests/Feature/DriverSelfServiceTest.php (8 case BE) + viết lại 2 
 Lưu ý    : routes driver/admin đã gắn role middleware [[4.13]] nên endpoint mới tự kế thừa.
 ```
 
+### 4.16 Nhật ký thao tác admin — Audit Log (đang làm, chốt 2026-06-25)
+```
+Bối cảnh : PRD F-A02 yêu cầu "Lịch sử duyệt (ai duyệt, lúc nào)". spatie/laravel-activitylog
+           KHÔNG được cài → tự viết bảng audit_logs + Model + Service riêng (không thêm package).
+BE       : migration 2026_06_25_000000_create_audit_logs_table; app/Models/AuditLog.php (HasUuids);
+           app/Services/AuditLogService.php (ghi log: actor=Auth user, action, subject, IP/UA qua
+           Request); app/Http/Resources/Admin/AuditLogResource.php;
+           app/Http/Controllers/Admin/AuditLogController.php (index + show).
+Routes   : GET /admin/audit-logs, GET /admin/audit-logs/{id} (trong group role:admin [[4.13]]).
+FE       : resources/js/pages/admin/AuditLogs/Index.vue + route 'audit-logs' (admin.routes.ts) +
+           action generated (wayfinder) + admin.api.ts. Link trong AdminLayout.
+Trạng thái: code + test (tests/Feature/AdminAuditLogTest.php) đã có, CHƯA commit. Cần verify:
+           chạy test, và cài đặt điểm GHI log ở các hành động nhạy cảm (duyệt/đình chỉ operator
+           & driver, payout, refund thủ công, cấp lại mật khẩu).
+Lưu ý    : đây là phần việc đang dở DUY NHẤT chưa nằm trong progress tracker; xong thì cập nhật §3.
+```
+
 ---
 
 ## 5. VẤN ĐỀ ĐÃ GẶP VÀ CÁCH GIẢI QUYẾT
@@ -738,19 +778,36 @@ Note     : [lưu ý tránh tái diễn]
 
 ## 6. CÁC DEPENDENCY NGOÀI ĐÃ DÙNG
 
-```php
-// composer.json — packages đã dùng
+> ⚠️ Cập nhật 2026-06-25: đối chiếu lại với `composer.json`/`composer.lock` THỰC TẾ.
+> Danh sách cũ ở đây phần lớn KHÔNG được cài — đã sửa cho khớp.
+
+```jsonc
+// composer.json — "require" THỰC TẾ (đã verify trong composer.lock)
 "require": {
-    "laravel/framework": "^11.0",
-    "laravel/sanctum": "^4.0",
-    "laravel/reverb": "^1.0",
-    "predis/predis": "^2.0",        // Redis client
-    "barryvdh/laravel-dompdf": "^3.0", // PDF export
-    "simplesoftwareio/simple-qrcode": "^4.2", // QR code
-    "intervention/image": "^3.0",    // Image processing
-    "maatwebsite/excel": "^3.1",     // Excel export
-    "spatie/laravel-activitylog": "^4.7", // Audit log
+    "php": "^8.3",
+    "laravel/framework": "^13.7",
+    "laravel/sanctum": "^4.3",
+    "laravel/fortify": "^1.37.2",
+    "laravel/wayfinder": "^0.1.14",     // typed FE routes/actions ([[project_wayfinder_migration]])
+    "laravel/tinker": "^3.0",
+    "laravel/chisel": "^0.1.0",
+    "inertiajs/inertia-laravel": "^3.0",
+    "bacon/bacon-qr-code": "^3.0"       // QR code (DÙNG TRỰC TIẾP, không qua simple-qrcode)
 }
+```
+
+**Khác biệt thực tế vs stack "FINAL" tuyên bố (cần biết để không giả định sai):**
+```
+❌ laravel/reverb            : CHƯA cài. BROADCAST_CONNECTION=log (không có WebSocket thật ở môi trường hiện tại).
+❌ predis/predis             : CHƯA cài. REDIS_CLIENT=phpredis, NHƯNG QUEUE_CONNECTION=database,
+                               CACHE_STORE=database → Redis hiện KHÔNG dùng cho queue/cache ở local.
+❌ barryvdh/laravel-dompdf   : CHƯA cài → "xuất manifest PDF" (F-O04) chưa có package PDF.
+❌ maatwebsite/excel         : CHƯA cài → "xuất Excel" (F-O05/F-A03) chưa có package Excel.
+❌ spatie/laravel-activitylog: CHƯA cài → Audit Log tự viết bằng Model/Service riêng (xem [[4.16]]).
+❌ simplesoftwareio/simple-qrcode, intervention/image: CHƯA cài.
+➕ Phát sinh thêm: fortify, wayfinder, inertia, chisel (không có trong tài liệu gốc).
+Lưu ý: các quyết định kiến trúc Reverb/Redis vẫn là ĐÍCH sản xuất; phần trên là TRẠNG THÁI
+       TRIỂN KHAI HIỆN TẠI. Khi code tính năng cần PDF/Excel/WebSocket → phải cài package trước.
 ```
 
 ---

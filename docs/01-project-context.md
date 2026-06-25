@@ -139,9 +139,10 @@ confirmed → no_show (nếu tài xế không check-in được)
 ### Technical Constraints
 ```
 - PHP >= 8.3
-- Laravel >= 11.0
+- Laravel >= 13.0 (thực tế composer: ^13.7 — KHÔNG phải 11.0 như bản cũ ghi)
 - MySQL >= 8.0 (không dùng PostgreSQL)
-- Redis >= 7.0 (queue + cache + session)
+- Redis >= 7.0 (queue + cache + session) — ĐÍCH sản xuất; hiện local đang dùng
+  database driver cho queue/cache (xem memory §6), chưa bật Redis/Reverb
 - Server: Ubuntu 22.04 LTS
 - Không dùng Docker trong production (deploy truyền thống)
 - File upload: tối đa 10MB mỗi file
