@@ -10,6 +10,7 @@ use App\Services\SettlementService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class RevenueController extends Controller
 {
@@ -216,21 +217,30 @@ class RevenueController extends Controller
         $operator = auth('operator')->user()->operator;
         $rate = (float) $operator->commission_rate;
 
-        $balance = $this->availableBalance($operator->id, $rate);
+        // Khóa nhà xe + tính available TRONG transaction để 2 yêu cầu đồng thời không
+        // cùng vượt qua check rồi tạo 2 payout vượt settlement (R2).
+        $payout = DB::transaction(function () use ($operator, $rate) {
+            DB::table('operators')->where('id', $operator->id)->lockForUpdate()->first();
 
-        if ($balance['available'] <= 0) {
+            $available = $this->availableBalance($operator->id, $rate)['available'];
+            if ($available <= 0) {
+                return null;
+            }
+
+            return Payout::create([
+                'operator_id' => $operator->id,
+                'amount' => $available,
+                'status' => 'pending',
+                'requested_at' => now(),
+            ]);
+        });
+
+        if (! $payout) {
             return response()->json([
                 'success' => false,
                 'message' => 'Không có số dư khả dụng để quyết toán',
             ], 422);
         }
-
-        $payout = Payout::create([
-            'operator_id' => $operator->id,
-            'amount' => $balance['available'],
-            'status' => 'pending',
-            'requested_at' => now(),
-        ]);
 
         return response()->json([
             'success' => true,

@@ -10,6 +10,7 @@ use App\Services\SettlementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class FinanceController extends Controller
 {
@@ -59,11 +60,9 @@ class FinanceController extends Controller
     /** Admin thực hiện quyết toán (chi tiền) cho 1 nhà xe */
     public function payout(Request $request): JsonResponse
     {
-        $operatorId = $request->input('commission_id');
+        $operator = Operator::find($request->input('commission_id'));
 
-        $settlement = $this->operatorSettlements()->firstWhere('id', $operatorId);
-
-        if (! $settlement) {
+        if (! $operator) {
             return response()->json([
                 'success' => false,
                 'message' => 'Không tìm thấy nhà xe cần quyết toán',
@@ -71,15 +70,53 @@ class FinanceController extends Controller
             ], 404);
         }
 
-        if ($settlement['net_amount'] < 0) {
+        $rate = (float) $operator->commission_rate;
+        $adminId = auth()->id();
+
+        // Atomic + khóa nhà xe để không chi trùng khi bấm 2 lần / 2 admin đồng thời (R4).
+        $result = DB::transaction(function () use ($operator, $rate, $adminId) {
+            DB::table('operators')->where('id', $operator->id)->lockForUpdate()->first();
+
+            $settlement = $this->settlementService->forOperator($operator->id, $rate)['settlement'];
+            if ($settlement < 0) {
+                return ['code' => 'OPERATOR_OWES_PLATFORM', 'owed' => -$settlement];
+            }
+
+            $paid = (int) Payout::where('operator_id', $operator->id)->where('status', 'paid')->sum('amount');
+            $outstanding = $settlement - $paid;
+            if ($outstanding <= 0) {
+                return ['code' => 'NOTHING_TO_SETTLE'];
+            }
+
+            // Chi TOÀN BỘ phần còn nợ: gộp (supersede) mọi yêu cầu pending của nhà xe rồi
+            // ghi đúng 1 bản ghi 'paid' = outstanding → không chi trùng, không để pending mồ côi.
+            Payout::where('operator_id', $operator->id)->where('status', 'pending')->update([
+                'status' => 'rejected',
+                'processed_at' => now(),
+                'processed_by' => $adminId,
+                'note' => 'Gộp vào đợt quyết toán toàn bộ bởi admin',
+            ]);
+
+            return ['payout' => Payout::create([
+                'operator_id' => $operator->id,
+                'amount' => $outstanding,
+                'status' => 'paid',
+                'note' => 'Quyết toán bởi admin',
+                'requested_at' => now(),
+                'processed_at' => now(),
+                'processed_by' => $adminId,
+            ])];
+        });
+
+        if (($result['code'] ?? null) === 'OPERATOR_OWES_PLATFORM') {
             return response()->json([
                 'success' => false,
-                'message' => 'Nhà xe đang NỢ nền tảng '.number_format(-$settlement['net_amount'], 0, ',', '.').'đ (hoa hồng vé tiền mặt), không thể chi quyết toán',
+                'message' => 'Nhà xe đang NỢ nền tảng '.number_format($result['owed'], 0, ',', '.').'đ (hoa hồng vé tiền mặt), không thể chi quyết toán',
                 'code' => 'OPERATOR_OWES_PLATFORM',
             ], 422);
         }
 
-        if ($settlement['net_amount'] === 0) {
+        if (($result['code'] ?? null) === 'NOTHING_TO_SETTLE') {
             return response()->json([
                 'success' => false,
                 'message' => 'Nhà xe này không có số dư cần quyết toán',
@@ -87,19 +124,11 @@ class FinanceController extends Controller
             ], 422);
         }
 
-        $payout = Payout::create([
-            'operator_id' => $operatorId,
-            'amount' => $settlement['net_amount'],
-            'status' => 'paid',
-            'note' => 'Quyết toán bởi admin',
-            'requested_at' => now(),
-            'processed_at' => now(),
-            'processed_by' => auth()->id(),
-        ]);
+        $payout = $result['payout'];
 
         return response()->json([
             'success' => true,
-            'message' => 'Đã quyết toán '.number_format($payout->amount, 0, ',', '.').'đ cho '.$settlement['operator_name'],
+            'message' => 'Đã quyết toán '.number_format($payout->amount, 0, ',', '.').'đ cho '.$operator->company_name,
             'data' => ['amount' => (int) $payout->amount],
         ], 201);
     }

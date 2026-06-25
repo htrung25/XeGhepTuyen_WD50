@@ -643,6 +643,25 @@ Lưu ý    : routes driver/admin đã gắn role middleware [[4.13]] nên endpoi
 
 > AI Agent ghi vào đây khi gặp lỗi để tránh lặp lại.
 
+### 2026-06-22 — Lỗi: Quyết toán payout operator↔admin không đồng bộ (R1/R2/R4)
+File     : app/Http/Controllers/Operator/RevenueController.php, app/Http/Controllers/Admin/FinanceController.php
+Vấn đề   : 2 luồng tạo Payout độc lập: operator requestPayout tạo 'pending' (available =
+           settlement − Σ payout !=rejected); admin payout tạo 'paid' TRỰC TIẾP cho
+           outstanding = settlement − Σ paid, KHÔNG xử lý/gộp yêu cầu pending của operator.
+           → yêu cầu pending mồ côi (available operator kẹt thấp vĩnh viễn); rủi ro chi
+           trùng nếu sau này có endpoint xử lý pending. Cả 2 không atomic (race tạo nhiều payout).
+Giải pháp: (R1) admin payout giờ CHẠY TRONG transaction + khóa operator: tính
+           outstanding = settlement − Σ paid; GỘP (supersede) mọi payout 'pending' →
+           'rejected' (note "gộp vào đợt quyết toán toàn bộ") rồi ghi đúng 1 'paid' = outstanding.
+           → available operator về 0 chính xác, không mồ côi, không chi trùng. Chặn settlement<0
+           (OPERATOR_OWES_PLATFORM) + outstanding<=0 (NOTHING_TO_SETTLE).
+           (R2) operator requestPayout cũng bọc transaction + khóa operator khi tính available.
+Test     : tests/Feature/PayoutTest.php (request=settlement, admin gộp pending, owes, chi lần 2 NOTHING).
+Note     : test endpoint operator dùng auth('operator') → phải auth bằng TOKEN THẬT
+           (createToken) chứ Sanctum::actingAs chỉ set guard mặc định 'sanctum' → auth('operator') null.
+           Khái niệm: operator "available" = settlement − Σ(!=rejected); admin "còn nợ" = settlement − Σ(paid)
+           — KHÁC nhau hợp lý (pending là yêu cầu chưa chi).
+
 ### 2026-06-22 — Lỗi: Operator me() trả tax_number/license_number (luôn null) + thiếu sửa hồ sơ
 File     : app/Http/Controllers/Operator/AuthController.php, routes/api_operator.php
 Vấn đề   : me() đọc $operator->tax_number / ->license_number — cột THỰC là tax_code /
