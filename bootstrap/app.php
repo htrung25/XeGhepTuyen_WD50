@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\EnsureUserRole;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -42,7 +43,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         // Chặn truy cập chéo portal sau khi auth:sanctum xác thực token.
-        $middleware->alias(['role' => EnsureUserRole::class]);
+        // `permission` kiểm tra quyền chi tiết của admin (RBAC).
+        $middleware->alias([
+            'role' => EnsureUserRole::class,
+            'permission' => EnsurePermission::class,
+        ]);
 
         $middleware->web(append: [
             HandleAppearance::class,

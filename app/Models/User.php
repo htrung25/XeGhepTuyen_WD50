@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -22,6 +23,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'admin_role_id',
         'avatar_url',
         'zalo_user_id',
         'fcm_token',
@@ -48,6 +50,11 @@ class User extends Authenticatable
     }
 
     // ─── Relationships ────────────────────────────────────────────────────────
+
+    public function adminRole(): BelongsTo
+    {
+        return $this->belongsTo(AdminRole::class);
+    }
 
     public function operator(): HasOne
     {
@@ -116,5 +123,38 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === UserRole::Admin;
+    }
+
+    /** Admin có vai trò super (bỏ qua mọi kiểm tra quyền). */
+    public function isSuperAdmin(): bool
+    {
+        return $this->isAdmin() && (bool) $this->adminRole?->is_super;
+    }
+
+    /** Kiểm tra admin hiện tại có quyền theo key (AdminPermission). */
+    public function hasPermission(string $key): bool
+    {
+        if (! $this->isAdmin()) {
+            return false;
+        }
+
+        return (bool) $this->adminRole?->hasPermission($key);
+    }
+
+    /**
+     * Danh sách key quyền hiệu lực (để trả về cho FE gate menu/nút).
+     * Super admin nhận toàn bộ catalog.
+     */
+    public function permissionKeys(): array
+    {
+        if (! $this->isAdmin()) {
+            return [];
+        }
+
+        if ($this->adminRole?->is_super) {
+            return \App\Enums\AdminPermission::values();
+        }
+
+        return $this->adminRole?->permissions ?? [];
     }
 }
