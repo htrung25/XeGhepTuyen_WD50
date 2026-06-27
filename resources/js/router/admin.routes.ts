@@ -16,52 +16,62 @@ export const adminRoutes: RouteRecordRaw[] = [
             {
                 path: 'dashboard',
                 component: () => import('@/pages/admin/Dashboard.vue'),
-                meta: { title: 'Tổng quan' },
+                meta: { title: 'Tổng quan', permission: 'dashboard.view' },
             },
             {
                 path: 'operators',
                 component: () => import('@/pages/admin/Operators/Approve.vue'),
-                meta: { title: 'Nhà xe' },
+                meta: { title: 'Nhà xe', permission: 'operators.view' },
             },
             {
                 path: 'drivers',
                 component: () => import('@/pages/admin/Drivers/Verify.vue'),
-                meta: { title: 'Tài xế' },
+                meta: { title: 'Tài xế', permission: 'drivers.view' },
             },
             {
                 path: 'users',
                 component: () => import('@/pages/admin/Users/Index.vue'),
-                meta: { title: 'Người dùng' },
+                meta: { title: 'Người dùng', permission: 'users.view' },
             },
             {
                 path: 'bookings',
                 component: () => import('@/pages/admin/Bookings/Index.vue'),
-                meta: { title: 'Đặt vé' },
+                meta: { title: 'Đặt vé', permission: 'bookings.view' },
             },
             {
                 path: 'trips',
                 component: () => import('@/pages/admin/Trips/Index.vue'),
-                meta: { title: 'Chuyến đi' },
+                meta: { title: 'Chuyến đi', permission: 'trips.view' },
             },
             {
                 path: 'trips/live',
                 component: () => import('@/pages/admin/Trips/LiveMap.vue'),
-                meta: { title: 'Chuyến đi trực tiếp' },
+                meta: { title: 'Chuyến đi trực tiếp', permission: 'trips.view' },
             },
             {
                 path: 'finance',
                 component: () => import('@/pages/admin/Finance/Overview.vue'),
-                meta: { title: 'Tài chính' },
+                meta: { title: 'Tài chính', permission: 'finance.view' },
             },
             {
                 path: 'vouchers',
                 component: () => import('@/pages/admin/Vouchers/Index.vue'),
-                meta: { title: 'Voucher' },
+                meta: { title: 'Voucher', permission: 'vouchers.view' },
             },
             {
                 path: 'audit-logs',
                 component: () => import('@/pages/admin/AuditLogs/Index.vue'),
-                meta: { title: 'Nhật ký hệ thống' },
+                meta: { title: 'Nhật ký hệ thống', permission: 'audit_logs.view' },
+            },
+            {
+                path: 'roles',
+                component: () => import('@/pages/admin/Roles/Index.vue'),
+                meta: { title: 'Phân quyền', permission: 'admin_roles.view' },
+            },
+            {
+                path: 'staff',
+                component: () => import('@/pages/admin/Staff/Index.vue'),
+                meta: { title: 'Nhân viên', permission: 'admin_staff.view' },
             },
             {
                 path: 'profile',
@@ -72,14 +82,40 @@ export const adminRoutes: RouteRecordRaw[] = [
     },
 ];
 
+// Thứ tự ưu tiên khi cần chuyển hướng tới trang đầu tiên mà admin có quyền.
+const accessOrder: { path: string; permission: string }[] = [
+    { path: '/admin/dashboard', permission: 'dashboard.view' },
+    { path: '/admin/operators', permission: 'operators.view' },
+    { path: '/admin/drivers', permission: 'drivers.view' },
+    { path: '/admin/users', permission: 'users.view' },
+    { path: '/admin/bookings', permission: 'bookings.view' },
+    { path: '/admin/trips', permission: 'trips.view' },
+    { path: '/admin/finance', permission: 'finance.view' },
+    { path: '/admin/vouchers', permission: 'vouchers.view' },
+    { path: '/admin/audit-logs', permission: 'audit_logs.view' },
+    { path: '/admin/roles', permission: 'admin_roles.view' },
+    { path: '/admin/staff', permission: 'admin_staff.view' },
+];
+
+function firstAllowedPath(can: (key: string) => boolean): string {
+    return accessOrder.find((r) => can(r.permission))?.path ?? '/admin/profile';
+}
+
 export function setupAdminGuard(router: Router) {
     router.beforeEach((to) => {
         const auth = useAdminAuthStore();
+
         if (to.meta.requiresAuth && !auth.isAuthenticated) {
             return { path: '/admin/login', query: { redirect: to.fullPath } };
         }
         if (to.path === '/admin/login' && auth.isAuthenticated) {
-            return { path: '/admin/dashboard' };
+            return { path: firstAllowedPath(auth.can) };
+        }
+
+        // Chặn route khi thiếu quyền → chuyển tới trang đầu tiên được phép.
+        const permission = to.meta.permission as string | undefined;
+        if (auth.isAuthenticated && permission && !auth.can(permission)) {
+            return { path: firstAllowedPath(auth.can) };
         }
     });
 }

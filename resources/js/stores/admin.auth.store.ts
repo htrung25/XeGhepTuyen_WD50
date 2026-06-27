@@ -1,6 +1,12 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 
+interface AdminRoleBrief {
+    id: string;
+    name: string;
+    slug: string;
+}
+
 interface AdminUser {
     id: string;
     full_name: string;
@@ -8,6 +14,9 @@ interface AdminUser {
     role: string;
     phone?: string | null;
     avatar_url?: string | null;
+    admin_role?: AdminRoleBrief | null;
+    is_super?: boolean;
+    permissions?: string[];
 }
 
 export const useAdminAuthStore = defineStore('adminAuth', () => {
@@ -17,6 +26,13 @@ export const useAdminAuthStore = defineStore('adminAuth', () => {
     );
 
     const isAuthenticated = computed(() => !!token.value);
+    const isSuper = computed(() => !!user.value?.is_super);
+    const permissions = computed<string[]>(() => user.value?.permissions ?? []);
+
+    /** Kiểm tra quyền theo key (AdminPermission). Super admin luôn true. */
+    function can(key: string): boolean {
+        return isSuper.value || permissions.value.includes(key);
+    }
 
     function setAuth(t: string, u: AdminUser) {
         token.value = t;
@@ -39,5 +55,15 @@ export const useAdminAuthStore = defineStore('adminAuth', () => {
         localStorage.removeItem('admin_user');
     }
 
-    return { token, user, isAuthenticated, setAuth, updateUser, logout };
+    return {
+        token,
+        user,
+        isAuthenticated,
+        isSuper,
+        permissions,
+        can,
+        setAuth,
+        updateUser,
+        logout,
+    };
 });

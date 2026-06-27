@@ -63,6 +63,23 @@ import {
     index as auditLogsIndex,
     show as auditLogShow,
 } from '@/actions/App/Http/Controllers/Admin/AuditLogController';
+import {
+    permissions as rolesPermissions,
+    index as rolesIndex,
+    store as roleStore,
+    show as roleShow,
+    update as roleUpdate,
+    destroy as roleDestroy,
+} from '@/actions/App/Http/Controllers/Admin/RoleController';
+import {
+    index as adminStaffIndex,
+    store as adminStaffStore,
+    show as adminStaffShow,
+    update as adminStaffUpdate,
+    ban as adminStaffBan,
+    unban as adminStaffUnban,
+    resetPassword as adminStaffResetPassword,
+} from '@/actions/App/Http/Controllers/Admin/AdminStaffController';
 
 import type { QueryParams } from '@/wayfinder';
 import { apiClient } from './client';
@@ -176,4 +193,31 @@ export const adminApi = {
         apiClient.send(auditLogsIndex({ query: params as QueryParams })),
     getAuditLog: (id: string) =>
         apiClient.send(auditLogShow(id)),
+
+    // Roles (phân quyền)
+    getPermissionCatalog: () => apiClient.send(rolesPermissions()),
+    getRoles: () => apiClient.send(rolesIndex()),
+    getRole: (id: string) => apiClient.send(roleShow(id)),
+    createRole: (data: unknown) => apiClient.send(roleStore(), data),
+    updateRole: (id: string, data: unknown) =>
+        apiClient.send(roleUpdate(id), data),
+    deleteRole: (id: string) => apiClient.send(roleDestroy(id)),
+
+    // Admin staff (nhân viên admin)
+    getAdminStaff: (params?: Params) =>
+        apiClient.send(adminStaffIndex({ query: params as QueryParams })),
+    getAdminStaffMember: (id: string) => apiClient.send(adminStaffShow(id)),
+    createAdminStaff: (data: unknown) =>
+        apiClient.send<{ staff: unknown; temp_password: string }>(
+            adminStaffStore(),
+            data,
+        ),
+    updateAdminStaff: (id: string, data: unknown) =>
+        apiClient.send(adminStaffUpdate(id), data),
+    banAdminStaff: (id: string) => apiClient.send(adminStaffBan(id)),
+    unbanAdminStaff: (id: string) => apiClient.send(adminStaffUnban(id)),
+    resetAdminStaffPassword: (id: string) =>
+        apiClient.send<{ temp_password: string }>(
+            adminStaffResetPassword(id),
+        ),
 };

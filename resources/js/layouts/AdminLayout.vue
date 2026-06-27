@@ -3,11 +3,13 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { adminApi } from '@/api/admin.api';
 import { useAdminAuthStore } from '@/stores/admin.auth.store';
+import { useCan } from '@/composables/useCan';
 import { Toaster } from 'vue-sonner';
 
 const route = useRoute();
 const router = useRouter();
 const authStore = useAdminAuthStore();
+const { can } = useCan();
 
 const sidebarCollapsed = ref(false);
 const notifCount = ref(0);
@@ -24,8 +26,11 @@ function handleClickOutside(event: MouseEvent) {
     }
 }
 
-onMounted(() => {
+onMounted(async () => {
     document.addEventListener('click', handleClickOutside);
+    // Làm mới quyền hiện tại (phòng khi vai trò bị admin khác thay đổi).
+    const { data } = await adminApi.me();
+    if (data) authStore.updateUser(data);
 });
 
 onUnmounted(() => {
@@ -33,15 +38,17 @@ onUnmounted(() => {
 });
 
 const navItems = [
-    { path: '/admin/dashboard', label: 'Tổng quan', icon: 'chart' },
-    { path: '/admin/operators', label: 'Nhà xe', icon: 'building' },
-    { path: '/admin/drivers', label: 'Tài xế', icon: 'user-check' },
-    { path: '/admin/users', label: 'Người dùng', icon: 'users' },
-    { path: '/admin/bookings', label: 'Đặt vé', icon: 'ticket' },
-    { path: '/admin/trips', label: 'Chuyến đi', icon: 'map' },
-    { path: '/admin/finance', label: 'Tài chính', icon: 'cash' },
-    { path: '/admin/vouchers', label: 'Voucher', icon: 'tag' },
-    { path: '/admin/audit-logs', label: 'Nhật ký hệ thống', icon: 'history' },
+    { path: '/admin/dashboard', label: 'Tổng quan', icon: 'chart', permission: 'dashboard.view' },
+    { path: '/admin/operators', label: 'Nhà xe', icon: 'building', permission: 'operators.view' },
+    { path: '/admin/drivers', label: 'Tài xế', icon: 'user-check', permission: 'drivers.view' },
+    { path: '/admin/users', label: 'Người dùng', icon: 'users', permission: 'users.view' },
+    { path: '/admin/bookings', label: 'Đặt vé', icon: 'ticket', permission: 'bookings.view' },
+    { path: '/admin/trips', label: 'Chuyến đi', icon: 'map', permission: 'trips.view' },
+    { path: '/admin/finance', label: 'Tài chính', icon: 'cash', permission: 'finance.view' },
+    { path: '/admin/vouchers', label: 'Voucher', icon: 'tag', permission: 'vouchers.view' },
+    { path: '/admin/audit-logs', label: 'Nhật ký hệ thống', icon: 'history', permission: 'audit_logs.view' },
+    { path: '/admin/roles', label: 'Phân quyền', icon: 'shield', permission: 'admin_roles.view' },
+    { path: '/admin/staff', label: 'Nhân viên', icon: 'user-cog', permission: 'admin_staff.view' },
 ];
 
 function isActive(path: string) {
@@ -97,6 +104,7 @@ async function handleLogout() {
             <nav class="flex-1 overflow-y-auto py-4">
                 <template v-for="item in navItems" :key="item.path">
                     <router-link
+                        v-if="!item.permission || can(item.permission)"
                         :to="item.path"
                         :class="[
                             'mx-2 mb-0.5 flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors',
@@ -238,6 +246,36 @@ async function handleLogout() {
                                 stroke-linejoin="round"
                                 stroke-width="2"
                                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                        </svg>
+                        <!-- Shield icon (Phân quyền) -->
+                        <svg
+                            v-else-if="item.icon === 'shield'"
+                            class="h-5 w-5 shrink-0"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                            />
+                        </svg>
+                        <!-- User-cog icon (Nhân viên) -->
+                        <svg
+                            v-else-if="item.icon === 'user-cog'"
+                            class="h-5 w-5 shrink-0"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                             />
                         </svg>
                         <span v-if="!sidebarCollapsed" class="truncate">{{

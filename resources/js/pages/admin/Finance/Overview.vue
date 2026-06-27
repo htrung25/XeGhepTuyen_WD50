@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import { adminApi } from '@/api/admin.api';
+import { useCan } from '@/composables/useCan';
+const { can } = useCan();
 
 type TabKey = 'overview' | 'transactions' | 'commissions' | 'refunds';
 
@@ -597,7 +599,7 @@ onMounted(loadData);
                                     </td>
                                     <td class="px-4 py-3 text-center">
                                         <button
-                                            v-if="c.status === 'pending'"
+                                            v-if="c.status === 'pending' && can('finance.payout')"
                                             @click="openPayout(c)"
                                             class="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-700"
                                         >

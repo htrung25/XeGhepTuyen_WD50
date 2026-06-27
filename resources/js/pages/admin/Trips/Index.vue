@@ -3,6 +3,8 @@ import { ref, onMounted, watch } from 'vue';
 import { watchDebounced } from '@vueuse/core';
 import { useRouter } from 'vue-router';
 import { adminApi } from '@/api/admin.api';
+import { useCan } from '@/composables/useCan';
+const { can } = useCan();
 
 interface Trip {
     id: string;
@@ -492,6 +494,7 @@ onMounted(fetchTrips);
                                     </button>
                                     <button
                                         v-if="
+                                            can('trips.cancel') &&
                                             [
                                                 'scheduled',
                                                 'in_progress',
