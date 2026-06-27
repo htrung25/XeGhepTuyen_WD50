@@ -236,6 +236,8 @@ Badge pill : inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium
 [x] 2026_06_12_000001_add_current_vehicle_id_to_drivers_table.php (xe mặc định)
 [x] 2026_06_13_000001_create_payouts_table.php               (quyết toán nhà xe)
 [x] 2026_06_25_000000_create_audit_logs_table.php            (nhật ký admin — [[4.16]])
+[x] 2026_06_27_000001_create_admin_roles_table.php           (vai trò RBAC — [[4.17]])
+[x] 2026_06_27_000002_add_admin_role_id_to_users_table.php   (gán vai trò cho admin — [[4.17]])
 ```
 > Lưu ý: progress tracker cũ ghi "17/17 migrations" — thực tế đã có THÊM 9 migration mở rộng
 > (post-MVP). Không dùng spatie/activitylog cho audit (chưa cài) → bảng audit_logs tự định nghĩa.
@@ -318,6 +320,8 @@ Badge pill : inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium
 [x] app/Http/Controllers/Admin/VoucherController.php
 [x] app/Http/Controllers/Admin/PartnerApplicationController.php  (duyệt đơn đối tác — [[4.9]])
 [x] app/Http/Controllers/Admin/AuditLogController.php            (nhật ký admin — [[4.16]])
+[x] app/Http/Controllers/Admin/RoleController.php                (CRUD vai trò RBAC — [[4.17]])
+[x] app/Http/Controllers/Admin/AdminStaffController.php          (CRUD nhân viên admin — [[4.17]])
 ```
 > ⚠️ Tài liệu task §6.9 có liệt kê `Admin/ComplaintController` (xử lý khiếu nại) — CHƯA sinh,
 > coi như OUT OF SCOPE MVP hiện tại (không có trong code, không có route).
@@ -682,6 +686,44 @@ Trạng thái: ✅ ĐÃ REVIEW & VERIFY xong 2026-06-25 (vẫn CHƯA commit). Te
 Lưu ý    : Auth::id() lấy đúng user vì middleware auth:sanctum gọi shouldUse('sanctum') khi pass.
            refund THỦ CÔNG admin chưa tồn tại (chỉ có GET finance/refunds + POST finance/payouts) →
            không có điểm log nào bị sót. Khi nào commit thì coi như đóng.
+```
+
+### 4.17 Phân quyền admin (RBAC) — vai trò động + quyền theo hành động (chốt 2026-06-27)
+```
+Bối cảnh : trước đây chỉ 1 role 'admin' → mọi admin toàn quyền 44 endpoint. Thêm RBAC nội bộ
+           cho admin (ngoài PRD). Chốt: vai trò QUẢN LÝ ĐỘNG qua DB + UI; quyền THEO HÀNH ĐỘNG;
+           có CRUD nhân viên admin đầy đủ. Nhánh feature/admin-rbac.
+Mô hình  : permissions = CỐ ĐỊNH trong code (App\Enums\AdminPermission, 26 quyền gom 12 module,
+           có label()/module()/catalog()/values()). roles = ĐỘNG trong DB (bảng admin_roles:
+           name/slug/permissions JSON/is_super/is_system). 1 admin ⇄ 1 vai trò (users.admin_role_id
+           nullable FK nullOnDelete). Migration 2026_06_27_000001/000002.
+BE       : Middleware EnsurePermission (alias 'permission', mẫu EnsureUserRole [[4.13]]) — chạy SAU
+           role:admin; super bỏ qua mọi quyền. routes/api_admin.php gắn permission:<key> TỪNG route.
+           User::hasPermission/isSuperAdmin/permissionKeys + adminRole(). AuthController login/me/
+           updateProfile trả admin_role+is_super+permissions. RoleController (CRUD + permissions
+           catalog), AdminStaffController (CRUD nhân viên admin, tách khỏi UserController=khách).
+           Mọi thay đổi ghi AuditLogService (create_role/update_role/delete_role/create_admin/
+           update_admin/ban_admin/unban_admin/reset_admin_password). 4.16 audit tái dùng.
+Quy tắc  : chặn sửa-quyền/xóa vai trò is_system; chặn xóa vai trò đang gán (422); chống tự khóa
+           (không tự ban mình) + luôn còn ≥1 Super Admin hoạt động; nhân viên mới BẮT BUỘC có vai trò;
+           validate permissions ⊂ catalog; phone admin NOT NULL (users.phone unique).
+Seeder   : AdminRoleSeeder (Super Admin is_super+is_system + 4 mẫu: Quản lý vận hành/Kế toán/CSKH/
+           Kiểm soát). DatabaseSeeder gọi AdminRoleSeeder TRƯỚC AdminSeeder; AdminSeeder gán super cho
+           admin@xeghep.vn. LƯU Ý DEPLOY: chạy AdminRoleSeeder+AdminSeeder sau migrate, nếu không
+           admin cũ admin_role_id=null sẽ bị KHÓA toàn bộ.
+FE       : admin.auth.store thêm permissions/is_super + can(); composables/useCan.ts. router
+           admin.routes meta.permission + guard chuyển hướng trang đầu được phép. AdminLayout gate
+           menu v-if can() + 2 mục mới (Phân quyền /admin/roles, Nhân viên /admin/staff) + refresh me
+           onMounted. client.ts thêm xử lý 403 → toast (KHÔNG redirect). Trang Roles/Index.vue (cây
+           checkbox quyền theo module) + Staff/Index.vue (CRUD + reveal mật khẩu tạm 1 lần). Gate nút
+           thao tác ở Users/Vouchers/Trips/Finance/Operators/Drivers theo can(). admin.api thêm nhóm
+           roles + admin-staff (Wayfinder actions sinh lại).
+Test     : tests/Feature/AdminPermissionTest + AdminRoleCrudTest + AdminStaffTest (21 case). Helper
+           dùng chung superAdminRole() ở Pest.php; ĐÃ vá các test admin cũ (PortalAccessControl,
+           AdminAuditLog, AdminOperator, DriverSelfService, Payout) gán admin_role_id super (vì giờ
+           mọi route admin cần quyền). Full suite 84: 81 passed/3 skip/0 fail. FE build OK, vue-tsc sạch.
+Lưu ý    : để quản lý nhân viên (gán vai trò) cần thêm quyền admin_roles.view (đọc danh sách vai trò
+           cho dropdown). Production có route:cache phải chạy lại sau deploy [[4.13]].
 ```
 
 ---
