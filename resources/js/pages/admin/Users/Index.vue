@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { watchDebounced } from '@vueuse/core';
 import { adminApi } from '@/api/admin.api';
 
 interface User {
@@ -135,6 +136,9 @@ function fmtCurrency(val: number | null) {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
 }
 
+// Bộ lọc tự động: ô tìm kiếm debounce 350ms (tab trạng thái đã tự lọc khi đổi).
+watchDebounced(search, onSearch, { debounce: 350 });
+
 onMounted(fetchUsers);
 </script>
 
@@ -176,7 +180,6 @@ onMounted(fetchUsers);
                     type="text"
                     placeholder="Tìm theo tên, SĐT, email..."
                     class="w-full rounded-lg border border-gray-200 py-2 pr-4 pl-9 text-sm focus:ring-2 focus:ring-red-500 focus:outline-none"
-                    @keyup.enter="onSearch"
                 />
             </div>
 

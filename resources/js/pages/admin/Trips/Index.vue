@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
+import { watchDebounced } from '@vueuse/core';
 import { useRouter } from 'vue-router';
 import { adminApi } from '@/api/admin.api';
 
@@ -235,6 +236,11 @@ function getInitials(name?: string) {
         .toUpperCase();
 }
 
+// Bộ lọc tự động: ô tìm kiếm (debounce 350ms) + khoảng ngày (tức thì).
+// Tab trạng thái đã tự gọi onFilter() khi click.
+watchDebounced(search, onFilter, { debounce: 350 });
+watch([dateFrom, dateTo], onFilter);
+
 onMounted(fetchTrips);
 </script>
 
@@ -304,7 +310,6 @@ onMounted(fetchTrips);
                         type="text"
                         placeholder="Tìm mã chuyến, tuyến đường..."
                         class="w-full rounded-lg border border-gray-200 py-2 pr-4 pl-9 text-sm focus:ring-2 focus:ring-red-500 focus:outline-none"
-                        @keyup.enter="onFilter"
                     />
                 </div>
 
@@ -322,13 +327,6 @@ onMounted(fetchTrips);
                         class="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 focus:outline-none"
                     />
                 </div>
-
-                <button
-                    @click="onFilter"
-                    class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
-                >
-                    Lọc
-                </button>
             </div>
         </div>
 

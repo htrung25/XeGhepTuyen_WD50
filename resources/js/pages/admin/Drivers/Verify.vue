@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue';
+import { watchDebounced } from '@vueuse/core';
 import { adminApi } from '@/api/admin.api';
 
 interface DriverDoc {
@@ -26,6 +27,7 @@ const errorMsg = ref('');
 type TabKey = 'all' | 'pending' | 'verified' | 'suspended';
 
 const activeTab = ref<TabKey>('pending');
+const search = ref('');
 const zoomedImage = ref<string | null>(null);
 
 // Action modals
@@ -74,6 +76,9 @@ async function loadDrivers() {
     if (activeTab.value !== 'all') {
         params.status = activeTab.value;
     }
+    if (search.value.trim()) {
+        params.search = search.value.trim();
+    }
     const { data, error } = await adminApi.getDrivers(params);
     if (error) {
         errorMsg.value = error;
@@ -87,6 +92,9 @@ async function loadDrivers() {
 watch(activeTab, () => {
     loadDrivers();
 });
+
+// Bộ lọc tự động: ô tìm kiếm theo tên/SĐT tài xế (debounce 350ms).
+watchDebounced(search, () => loadDrivers(), { debounce: 350 });
 
 async function approveDriver(d: DriverDoc) {
     if (
@@ -177,21 +185,45 @@ onMounted(loadDrivers);
             </button>
         </div>
 
-        <!-- Tabs -->
-        <div class="mb-6 flex w-fit gap-1 rounded-xl bg-gray-100 p-1">
-            <button
-                v-for="tab in tabs"
-                :key="tab.key"
-                @click="activeTab = tab.key"
-                :class="[
-                    'rounded-lg px-4 py-1.5 text-sm font-medium transition-colors',
-                    activeTab === tab.key
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-500 hover:text-gray-700',
-                ]"
-            >
-                {{ tab.label }}
-            </button>
+        <!-- Tabs + Tìm kiếm -->
+        <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex w-fit gap-1 rounded-xl bg-gray-100 p-1">
+                <button
+                    v-for="tab in tabs"
+                    :key="tab.key"
+                    @click="activeTab = tab.key"
+                    :class="[
+                        'rounded-lg px-4 py-1.5 text-sm font-medium transition-colors',
+                        activeTab === tab.key
+                            ? 'bg-white text-gray-900 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700',
+                    ]"
+                >
+                    {{ tab.label }}
+                </button>
+            </div>
+
+            <div class="relative min-w-[240px] flex-1 sm:max-w-xs">
+                <svg
+                    class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                </svg>
+                <input
+                    v-model="search"
+                    type="text"
+                    placeholder="Tìm theo tên tài xế..."
+                    class="w-full rounded-lg border border-gray-200 py-2 pr-4 pl-9 text-sm focus:ring-2 focus:ring-red-500 focus:outline-none"
+                />
+            </div>
         </div>
 
         <!-- Loading -->
