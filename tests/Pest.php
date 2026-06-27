@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Models\AdminRole;
 use App\Models\Booking;
 use App\Models\Driver;
 use App\Models\Operator;
@@ -99,4 +100,16 @@ function makeOperatorWithRevenue(int $online, int $cash, int $amount = 150000): 
     }
 
     return $operator;
+}
+
+/**
+ * Vai trò Super Admin dùng chung cho test — gán cho admin để vượt qua middleware
+ * `permission:*` (RBAC). Super bỏ qua mọi kiểm tra quyền.
+ */
+function superAdminRole(): AdminRole
+{
+    return AdminRole::firstOrCreate(
+        ['slug' => 'test-super-admin'],
+        ['name' => 'Test Super Admin', 'permissions' => [], 'is_super' => true, 'is_system' => true]
+    );
 }
