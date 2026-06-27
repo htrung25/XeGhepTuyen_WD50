@@ -10,6 +10,7 @@ function makeAuditLogAdminUser(): User
 {
     return User::factory()->create([
         'role' => UserRole::Admin,
+        'admin_role_id' => superAdminRole()->id,
     ]);
 }
 

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { toast } from 'vue-sonner';
 
 const http = axios.create({
     baseURL: '/api',
@@ -38,6 +39,14 @@ http.interceptors.response.use(
                 localStorage.removeItem(`${portal}_token`);
                 window.location.href = `/${portal}/login`;
             }
+        }
+
+        // 403 = thiếu quyền (RBAC). Thông báo, KHÔNG redirect login.
+        if (err.response?.status === 403) {
+            toast.error(
+                err.response?.data?.message ??
+                    'Bạn không có quyền thực hiện thao tác này',
+            );
         }
         return Promise.reject(err);
     },

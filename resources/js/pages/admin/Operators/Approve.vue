@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue';
 import { adminApi } from '@/api/admin.api';
+import { useCan } from '@/composables/useCan';
+const { can } = useCan();
 
 
 interface OperatorDoc {
@@ -630,8 +632,9 @@ onMounted(() => {
 
                         <div
                             v-if="
-                                app.status === 'pending' ||
-                                app.status === 'contacted'
+                                (app.status === 'pending' ||
+                                    app.status === 'contacted') &&
+                                can('partner_applications.review')
                             "
                             class="flex shrink-0 gap-2"
                         >
@@ -835,7 +838,7 @@ onMounted(() => {
                             >
                                 Chi tiết
                             </button>
-                            <template v-if="op.status === 'pending'">
+                            <template v-if="op.status === 'pending' && can('operators.review')">
                                 <button
                                     @click="openApproveOperator(op)"
                                     class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
@@ -851,12 +854,14 @@ onMounted(() => {
                             </template>
                             <template v-else-if="op.status === 'verified'">
                                 <button
+                                    v-if="can('operators.reset_password')"
                                     @click="openResetPassword(op)"
                                     class="rounded-lg border border-amber-300 px-4 py-2 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-50"
                                 >
                                     Đặt lại mật khẩu
                                 </button>
                                 <button
+                                    v-if="can('operators.suspend')"
                                     @click="openRejectOperator(op)"
                                     class="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
                                 >
@@ -865,6 +870,7 @@ onMounted(() => {
                             </template>
                             <template v-else-if="op.status === 'suspended'">
                                 <button
+                                    v-if="can('operators.suspend')"
                                     @click="restoreOperator(op)"
                                     class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
                                 >

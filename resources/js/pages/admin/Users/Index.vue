@@ -2,6 +2,8 @@
 import { ref, onMounted } from 'vue';
 import { watchDebounced } from '@vueuse/core';
 import { adminApi } from '@/api/admin.api';
+import { useCan } from '@/composables/useCan';
+const { can } = useCan();
 
 interface User {
     id: string;
@@ -389,7 +391,7 @@ onMounted(fetchUsers);
                                     </button>
                                     <!-- Ban -->
                                     <button
-                                        v-if="user.is_active"
+                                        v-if="user.is_active && can('users.ban')"
                                         @click="openBanModal(user)"
                                         class="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-100"
                                     >
@@ -397,7 +399,7 @@ onMounted(fetchUsers);
                                     </button>
                                     <!-- Unban -->
                                     <button
-                                        v-else
+                                        v-if="!user.is_active && can('users.ban')"
                                         @click="openUnbanModal(user)"
                                         class="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-600 transition-colors hover:bg-emerald-100"
                                     >

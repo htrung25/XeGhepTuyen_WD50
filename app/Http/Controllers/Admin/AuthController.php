@@ -30,9 +30,31 @@ class AuthController extends Controller
             'message' => 'Đăng nhập thành công',
             'data'    => [
                 'token' => $token,
-                'user'  => ['id' => $user->id, 'full_name' => $user->full_name, 'email' => $user->email, 'role' => $user->role->value],
+                'user'  => $this->adminPayload($user),
             ],
         ]);
+    }
+
+    /** Thông tin admin + vai trò/quyền để FE gate menu & nút. */
+    private function adminPayload(User $user): array
+    {
+        $user->loadMissing('adminRole');
+
+        return [
+            'id' => $user->id,
+            'full_name' => $user->full_name,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'avatar_url' => $user->avatar_url,
+            'role' => $user->role->value,
+            'admin_role' => $user->adminRole ? [
+                'id' => $user->adminRole->id,
+                'name' => $user->adminRole->name,
+                'slug' => $user->adminRole->slug,
+            ] : null,
+            'is_super' => $user->isSuperAdmin(),
+            'permissions' => $user->permissionKeys(),
+        ];
     }
 
     public function logout(Request $request): JsonResponse
@@ -43,17 +65,9 @@ class AuthController extends Controller
 
     public function me(Request $request): JsonResponse
     {
-        $user = $request->user();
         return response()->json([
             'success' => true,
-            'data'    => [
-                'id' => $user->id,
-                'full_name' => $user->full_name,
-                'email' => $user->email,
-                'phone' => $user->phone,
-                'avatar_url' => $user->avatar_url,
-                'role' => $user->role->value
-            ],
+            'data'    => $this->adminPayload($request->user()),
         ]);
     }
 
@@ -80,14 +94,7 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Cập nhật hồ sơ thành công',
-            'data'    => [
-                'id' => $user->id,
-                'full_name' => $user->full_name,
-                'email' => $user->email,
-                'phone' => $user->phone,
-                'avatar_url' => $user->avatar_url,
-                'role' => $user->role->value
-            ],
+            'data'    => $this->adminPayload($user),
         ]);
     }
 

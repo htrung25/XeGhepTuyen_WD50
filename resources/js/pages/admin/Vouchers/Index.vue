@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { adminApi } from '@/api/admin.api';
+import { useCan } from '@/composables/useCan';
+const { can } = useCan();
 
 interface Voucher {
     id: string;
@@ -138,6 +140,7 @@ onMounted(loadVouchers);
         <div class="mb-6 flex items-center justify-between">
             <h1 class="text-xl font-bold text-gray-900">Mã giảm giá</h1>
             <button
+                v-if="can('vouchers.manage')"
                 @click="openCreate"
                 class="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
             >
@@ -244,6 +247,7 @@ onMounted(loadVouchers);
             </svg>
             <p class="font-medium text-gray-500">Chưa có voucher nào</p>
             <button
+                v-if="can('vouchers.manage')"
                 @click="openCreate"
                 class="mt-3 rounded-lg bg-red-600 px-4 py-2 text-sm text-white transition-colors hover:bg-red-700"
             >
@@ -395,6 +399,7 @@ onMounted(loadVouchers);
                             </td>
                             <td class="px-4 py-3 text-center">
                                 <button
+                                    v-if="can('vouchers.manage')"
                                     @click="toggleVoucher(v)"
                                     :class="[
                                         'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
@@ -415,6 +420,7 @@ onMounted(loadVouchers);
                             </td>
                             <td class="px-4 py-3 text-center">
                                 <div
+                                    v-if="can('vouchers.manage')"
                                     class="flex items-center justify-center gap-1"
                                 >
                                     <button

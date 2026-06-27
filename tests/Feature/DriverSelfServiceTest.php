@@ -115,7 +115,7 @@ it('liệt kê và đánh dấu đã đọc thông báo của tài xế', functi
 });
 
 it('admin xem được bản đồ GPS chuyến đang chạy', function () {
-    Sanctum::actingAs(User::factory()->create(['role' => UserRole::Admin]));
+    Sanctum::actingAs(User::factory()->create(['role' => UserRole::Admin, 'admin_role_id' => superAdminRole()->id]));
 
     $this->getJson('/api/admin/dashboard/map')
         ->assertOk()

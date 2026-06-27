@@ -11,7 +11,11 @@ use Laravel\Sanctum\Sanctum;
  */
 function actingAsRole(UserRole $role): User
 {
-    $user = User::factory()->create(['role' => $role]);
+    $attrs = ['role' => $role];
+    if ($role === UserRole::Admin) {
+        $attrs['admin_role_id'] = superAdminRole()->id;
+    }
+    $user = User::factory()->create($attrs);
     Sanctum::actingAs($user);
 
     return $user;

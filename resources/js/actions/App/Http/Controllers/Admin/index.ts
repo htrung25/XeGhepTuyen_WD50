@@ -9,6 +9,8 @@ import TripController from './TripController'
 import FinanceController from './FinanceController'
 import VoucherController from './VoucherController'
 import AuditLogController from './AuditLogController'
+import RoleController from './RoleController'
+import AdminStaffController from './AdminStaffController'
 
 const Admin = {
     AuthController: Object.assign(AuthController, AuthController),
@@ -22,6 +24,8 @@ const Admin = {
     FinanceController: Object.assign(FinanceController, FinanceController),
     VoucherController: Object.assign(VoucherController, VoucherController),
     AuditLogController: Object.assign(AuditLogController, AuditLogController),
+    RoleController: Object.assign(RoleController, RoleController),
+    AdminStaffController: Object.assign(AdminStaffController, AdminStaffController),
 }
 
 export default Admin

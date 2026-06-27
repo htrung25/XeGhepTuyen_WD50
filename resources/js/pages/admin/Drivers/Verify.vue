@@ -2,6 +2,8 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { watchDebounced } from '@vueuse/core';
 import { adminApi } from '@/api/admin.api';
+import { useCan } from '@/composables/useCan';
+const { can } = useCan();
 
 interface DriverDoc {
     id: string;
@@ -555,12 +557,14 @@ onMounted(loadDrivers);
                         class="flex w-44 shrink-0 flex-col gap-2"
                     >
                         <button
+                            v-if="can('drivers.review')"
                             @click="approveDriver(d)"
                             class="w-full rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-green-700"
                         >
                             Duyệt tài xế
                         </button>
                         <button
+                            v-if="can('drivers.review')"
                             @click="openReject(d)"
                             class="w-full rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700"
                         >
@@ -577,12 +581,14 @@ onMounted(loadDrivers);
                         class="flex w-44 shrink-0 flex-col gap-2"
                     >
                         <button
+                            v-if="can('drivers.reset_password')"
                             @click="resetDriverPassword(d)"
                             class="w-full rounded-lg bg-slate-100 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-200"
                         >
                             Cấp lại mật khẩu
                         </button>
                         <button
+                            v-if="can('drivers.suspend')"
                             @click="openReject(d)"
                             class="w-full rounded-lg border border-red-300 px-4 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
                         >

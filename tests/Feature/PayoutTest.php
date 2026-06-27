@@ -30,7 +30,7 @@ it('admin quyết toán gộp yêu cầu pending: 1 paid = outstanding, pending 
     $operator = makeOperatorWithRevenue(online: 1, cash: 0);
     Payout::create(['operator_id' => $operator->id, 'amount' => 135000, 'status' => 'pending', 'requested_at' => now()]);
 
-    Sanctum::actingAs(User::factory()->create(['role' => UserRole::Admin]));
+    Sanctum::actingAs(User::factory()->create(['role' => UserRole::Admin, 'admin_role_id' => superAdminRole()->id]));
     $this->postJson('/api/admin/finance/payouts', ['commission_id' => $operator->id])
         ->assertCreated()
         ->assertJsonPath('data.amount', 135000);
@@ -44,7 +44,7 @@ it('admin quyết toán gộp yêu cầu pending: 1 paid = outstanding, pending 
 it('admin KHÔNG chi khi nhà xe đang NỢ nền tảng (vé tiền mặt)', function () {
     $operator = makeOperatorWithRevenue(online: 0, cash: 1); // settlement = -15.000
 
-    Sanctum::actingAs(User::factory()->create(['role' => UserRole::Admin]));
+    Sanctum::actingAs(User::factory()->create(['role' => UserRole::Admin, 'admin_role_id' => superAdminRole()->id]));
     $this->postJson('/api/admin/finance/payouts', ['commission_id' => $operator->id])
         ->assertStatus(422)
         ->assertJsonPath('code', 'OPERATOR_OWES_PLATFORM');
@@ -54,7 +54,7 @@ it('admin KHÔNG chi khi nhà xe đang NỢ nền tảng (vé tiền mặt)', fu
 
 it('admin chi lần 2 báo hết số dư (không chi trùng)', function () {
     $operator = makeOperatorWithRevenue(online: 1, cash: 0);
-    $admin = User::factory()->create(['role' => UserRole::Admin]);
+    $admin = User::factory()->create(['role' => UserRole::Admin, 'admin_role_id' => superAdminRole()->id]);
 
     Sanctum::actingAs($admin);
     $this->postJson('/api/admin/finance/payouts', ['commission_id' => $operator->id])->assertCreated();
