@@ -255,7 +255,7 @@ approve.form = approveForm
 
 /**
 * @see \App\Http\Controllers\Admin\DriverController::reject
-* @see app/Http/Controllers/Admin/DriverController.php:100
+* @see app/Http/Controllers/Admin/DriverController.php:102
 * @route '/api/admin/drivers/{id}/reject'
 */
 export const reject = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -270,7 +270,7 @@ reject.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\DriverController::reject
-* @see app/Http/Controllers/Admin/DriverController.php:100
+* @see app/Http/Controllers/Admin/DriverController.php:102
 * @route '/api/admin/drivers/{id}/reject'
 */
 reject.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -297,7 +297,7 @@ reject.url = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Http\Controllers\Admin\DriverController::reject
-* @see app/Http/Controllers/Admin/DriverController.php:100
+* @see app/Http/Controllers/Admin/DriverController.php:102
 * @route '/api/admin/drivers/{id}/reject'
 */
 reject.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -307,7 +307,7 @@ reject.post = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Http\Controllers\Admin\DriverController::reject
-* @see app/Http/Controllers/Admin/DriverController.php:100
+* @see app/Http/Controllers/Admin/DriverController.php:102
 * @route '/api/admin/drivers/{id}/reject'
 */
 const rejectForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -317,7 +317,7 @@ const rejectForm = (args: { id: string | number } | [id: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\Admin\DriverController::reject
-* @see app/Http/Controllers/Admin/DriverController.php:100
+* @see app/Http/Controllers/Admin/DriverController.php:102
 * @route '/api/admin/drivers/{id}/reject'
 */
 rejectForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -329,7 +329,7 @@ reject.form = rejectForm
 
 /**
 * @see \App\Http\Controllers\Admin\DriverController::suspend
-* @see app/Http/Controllers/Admin/DriverController.php:124
+* @see app/Http/Controllers/Admin/DriverController.php:126
 * @route '/api/admin/drivers/{id}/suspend'
 */
 export const suspend = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -344,7 +344,7 @@ suspend.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\DriverController::suspend
-* @see app/Http/Controllers/Admin/DriverController.php:124
+* @see app/Http/Controllers/Admin/DriverController.php:126
 * @route '/api/admin/drivers/{id}/suspend'
 */
 suspend.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -371,7 +371,7 @@ suspend.url = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Http\Controllers\Admin\DriverController::suspend
-* @see app/Http/Controllers/Admin/DriverController.php:124
+* @see app/Http/Controllers/Admin/DriverController.php:126
 * @route '/api/admin/drivers/{id}/suspend'
 */
 suspend.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -381,7 +381,7 @@ suspend.post = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\Admin\DriverController::suspend
-* @see app/Http/Controllers/Admin/DriverController.php:124
+* @see app/Http/Controllers/Admin/DriverController.php:126
 * @route '/api/admin/drivers/{id}/suspend'
 */
 const suspendForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -391,7 +391,7 @@ const suspendForm = (args: { id: string | number } | [id: string | number ] | st
 
 /**
 * @see \App\Http\Controllers\Admin\DriverController::suspend
-* @see app/Http/Controllers/Admin/DriverController.php:124
+* @see app/Http/Controllers/Admin/DriverController.php:126
 * @route '/api/admin/drivers/{id}/suspend'
 */
 suspendForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -403,7 +403,7 @@ suspend.form = suspendForm
 
 /**
 * @see \App\Http\Controllers\Admin\DriverController::resetPassword
-* @see app/Http/Controllers/Admin/DriverController.php:77
+* @see app/Http/Controllers/Admin/DriverController.php:78
 * @route '/api/admin/drivers/{id}/reset-password'
 */
 export const resetPassword = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -418,7 +418,7 @@ resetPassword.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\DriverController::resetPassword
-* @see app/Http/Controllers/Admin/DriverController.php:77
+* @see app/Http/Controllers/Admin/DriverController.php:78
 * @route '/api/admin/drivers/{id}/reset-password'
 */
 resetPassword.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -445,7 +445,7 @@ resetPassword.url = (args: { id: string | number } | [id: string | number ] | st
 
 /**
 * @see \App\Http\Controllers\Admin\DriverController::resetPassword
-* @see app/Http/Controllers/Admin/DriverController.php:77
+* @see app/Http/Controllers/Admin/DriverController.php:78
 * @route '/api/admin/drivers/{id}/reset-password'
 */
 resetPassword.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -455,7 +455,7 @@ resetPassword.post = (args: { id: string | number } | [id: string | number ] | s
 
 /**
 * @see \App\Http\Controllers\Admin\DriverController::resetPassword
-* @see app/Http/Controllers/Admin/DriverController.php:77
+* @see app/Http/Controllers/Admin/DriverController.php:78
 * @route '/api/admin/drivers/{id}/reset-password'
 */
 const resetPasswordForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -465,7 +465,7 @@ const resetPasswordForm = (args: { id: string | number } | [id: string | number 
 
 /**
 * @see \App\Http\Controllers\Admin\DriverController::resetPassword
-* @see app/Http/Controllers/Admin/DriverController.php:77
+* @see app/Http/Controllers/Admin/DriverController.php:78
 * @route '/api/admin/drivers/{id}/reset-password'
 */
 resetPasswordForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
