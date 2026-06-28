@@ -61,7 +61,7 @@ class TripResource extends JsonResource
             'passengers_count' => (int) ($this->passengers_count ?? 0),
             'total_seats'      => $this->vehicle->seat_count,
             'available_seats'  => $this->available_seats,
-            'revenue'          => $this->bookings()->where('booking_status', 'completed')->sum('final_amount'),
+            'revenue'          => (double) ($this->completed_revenue ?? ($this->relationLoaded('bookings') ? $this->bookings->where('booking_status', 'completed')->sum('final_amount') : $this->bookings()->where('booking_status', 'completed')->sum('final_amount'))),
             'created_at'       => $this->created_at->format('Y-m-d H:i:s'),
             // Chỉ trả bookings list khi show() – whenLoaded tránh N+1 trên index
             'bookings'         => $this->whenLoaded('bookings', function () {

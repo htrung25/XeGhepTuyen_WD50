@@ -137,7 +137,10 @@ class TripRepository implements TripRepositoryInterface
         // (mọi trạng thái trừ cancelled/no_show — khớp với available_seats đã trừ khi đặt)
         ->withSum(['bookings as passengers_count' => fn ($q) => $q->whereNotIn(
             'booking_status', ['cancelled', 'no_show']
-        )], 'passenger_count');
+        )], 'passenger_count')
+        ->withSum(['bookings as completed_revenue' => fn ($q) => $q->where(
+            'booking_status', 'completed'
+        )], 'final_amount');
 
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
