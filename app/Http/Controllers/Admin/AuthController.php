@@ -9,9 +9,12 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Dedoc\Scramble\Attributes\BodyParameter;
 
 class AuthController extends Controller
 {
+    #[BodyParameter('email', 'Email đăng nhập của quản trị viên.', required: true, type: 'string', example: 'admin@xeghep.vn')]
+    #[BodyParameter('password', 'Mật khẩu đăng nhập.', required: true, type: 'string', example: 'password')]
     public function login(LoginRequest $request): JsonResponse
     {
         $user = User::where('email', $request->email)

@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use OpenApi\Attributes as OA;
+use Dedoc\Scramble\Attributes\BodyParameter;
 
 class AuthController extends Controller
 {
@@ -55,6 +56,7 @@ class AuthController extends Controller
             ]
         )
     )]
+    #[BodyParameter('phone', 'Số điện thoại Việt Nam nhận mã OTP.', required: true, type: 'string', example: '0900000000')]
     public function sendOtp(SendOtpRequest $request): JsonResponse
     {
         try {
@@ -77,6 +79,8 @@ class AuthController extends Controller
         }
     }
 
+    #[BodyParameter('phone', 'Số điện thoại đã nhận mã OTP.', required: true, type: 'string', example: '0900000000')]
+    #[BodyParameter('otp', 'Mã OTP gồm 6 chữ số.', required: true, type: 'string', example: '123456')]
     public function verifyOtp(Request $request): JsonResponse
     {
         $request->validate([
@@ -92,6 +96,11 @@ class AuthController extends Controller
         }
     }
 
+    #[BodyParameter('phone', 'Số điện thoại đăng ký.', required: true, type: 'string', example: '0912345678')]
+    #[BodyParameter('full_name', 'Họ và tên khách hàng.', required: true, type: 'string', example: 'Nguyễn Văn A')]
+    #[BodyParameter('email', 'Địa chỉ email liên hệ (Không bắt buộc).', required: false, type: 'string', example: 'nguyenvana@gmail.com')]
+    #[BodyParameter('password', 'Mật khẩu đăng nhập tối thiểu 6 ký tự.', required: true, type: 'string', example: '123456')]
+    #[BodyParameter('password_confirmation', 'Nhập lại mật khẩu để xác nhận.', required: true, type: 'string', example: '123456')]
     public function register(RegisterRequest $request): JsonResponse
     {
         try {
@@ -156,6 +165,8 @@ class AuthController extends Controller
             ]
         )
     )]
+    #[BodyParameter('phone', 'Số điện thoại đăng nhập của khách hàng.', required: true, type: 'string', example: '0900000000')]
+    #[BodyParameter('password', 'Mật khẩu đăng nhập.', required: true, type: 'string', example: '123456')]
     public function login(LoginRequest $request): JsonResponse
     {
         $user = User::where('phone', $request->phone)

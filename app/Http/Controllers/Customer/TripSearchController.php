@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use OpenApi\Attributes as OA;
+use Dedoc\Scramble\Attributes\QueryParameter;
 
 class TripSearchController extends Controller
 {
@@ -23,11 +24,11 @@ class TripSearchController extends Controller
         summary: "Tìm kiếm chuyến xe ghép",
         tags: ["Trips"]
     )]
-    #[OA\QueryParameter(name: "from_city", required: true, description: "Thành phố xuất phát", schema: new OA\Schema(type: "string"))]
-    #[OA\QueryParameter(name: "to_city", required: true, description: "Thành phố đến", schema: new OA\Schema(type: "string"))]
-    #[OA\QueryParameter(name: "date", required: true, description: "Ngày đi (YYYY-MM-DD)", schema: new OA\Schema(type: "string", format: "date"))]
-    #[OA\QueryParameter(name: "passengers", required: false, description: "Số lượng hành khách (1-4)", schema: new OA\Schema(type: "integer", default: 1))]
-    #[OA\QueryParameter(name: "sort", required: false, description: "Sắp xếp kết quả", schema: new OA\Schema(type: "string", enum: ["price_asc", "price_desc", "depart_asc"]))]
+    #[QueryParameter('from_city', 'Thành phố xuất phát.', required: true, type: 'string', example: 'Hà Nội')]
+    #[QueryParameter('to_city', 'Thành phố đến.', required: true, type: 'string', example: 'Hải Phòng')]
+    #[QueryParameter('date', 'Ngày khởi hành (Định dạng YYYY-MM-DD).', required: true, type: 'string', example: '2026-06-30')]
+    #[QueryParameter('passengers', 'Số lượng hành khách (1-4).', required: false, type: 'integer', example: 1)]
+    #[QueryParameter('sort', 'Sắp xếp kết quả (price_asc, price_desc, depart_asc).', required: false, type: 'string', example: 'price_asc')]
     #[OA\Response(
         response: 200,
         description: "Danh sách chuyến xe hợp lệ",

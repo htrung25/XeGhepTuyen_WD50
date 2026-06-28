@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\IndexAuditLogRequest;
 use App\Http\Resources\Admin\AuditLogResource;
 use App\Models\AuditLog;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
 
 class AuditLogController extends Controller
@@ -17,12 +17,6 @@ class AuditLogController extends Controller
         tags: ["Admin Audit Logs"],
         security: [["sanctum" => []]]
     )]
-    #[OA\QueryParameter(name: "user_id", required: false, description: "Lọc theo ID người thực hiện", schema: new OA\Schema(type: "string", format: "uuid"))]
-    #[OA\QueryParameter(name: "action", required: false, description: "Lọc theo loại hành động", schema: new OA\Schema(type: "string"))]
-    #[OA\QueryParameter(name: "model_type", required: false, description: "Lọc theo loại Model (Class FQCN)", schema: new OA\Schema(type: "string"))]
-    #[OA\QueryParameter(name: "date_from", required: false, description: "Từ ngày (YYYY-MM-DD)", schema: new OA\Schema(type: "string", format: "date"))]
-    #[OA\QueryParameter(name: "date_to", required: false, description: "Đến ngày (YYYY-MM-DD)", schema: new OA\Schema(type: "string", format: "date"))]
-    #[OA\QueryParameter(name: "search", required: false, description: "Tìm kiếm từ khóa", schema: new OA\Schema(type: "string"))]
     #[OA\Response(
         response: 200,
         description: "Danh sách nhật ký hoạt động",
@@ -36,7 +30,7 @@ class AuditLogController extends Controller
     )]
     #[OA\Response(response: 401, description: "Chưa xác thực")]
     #[OA\Response(response: 403, description: "Không có quyền truy cập")]
-    public function index(Request $request): JsonResponse
+    public function index(IndexAuditLogRequest $request): JsonResponse
     {
         $query = AuditLog::with('user');
 

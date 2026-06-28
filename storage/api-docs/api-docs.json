@@ -575,6 +575,86 @@
                 "tags": [
                     "AuditLog"
                 ],
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "action",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 255
+                        }
+                    },
+                    {
+                        "name": "model_type",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 255
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 255
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "",
@@ -623,6 +703,9 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -702,11 +785,27 @@
                     "Auth"
                 ],
                 "requestBody": {
-                    "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/SendOtpRequest"
+                                "allOf": [
+                                    {
+                                        "$ref": "#/components/schemas/SendOtpRequest"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "phone": {
+                                                "type": "string",
+                                                "description": "S\u1ed1 \u0111i\u1ec7n tho\u1ea1i Vi\u1ec7t Nam nh\u1eadn m\u00e3 OTP.",
+                                                "example": "0900000000"
+                                            }
+                                        },
+                                        "required": [
+                                            "phone"
+                                        ]
+                                    }
+                                ]
                             }
                         }
                     }
@@ -801,10 +900,13 @@
                                 "properties": {
                                     "phone": {
                                         "type": "string",
-                                        "pattern": "^(0[3|5|7|8|9])+([0-9]{8})$"
+                                        "description": "S\u1ed1 \u0111i\u1ec7n tho\u1ea1i \u0111\u00e3 nh\u1eadn m\u00e3 OTP.",
+                                        "example": "0900000000"
                                     },
                                     "otp": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "M\u00e3 OTP g\u1ed3m 6 ch\u1eef s\u1ed1.",
+                                        "example": "123456"
                                     }
                                 },
                                 "required": [
@@ -852,11 +954,50 @@
                     "Auth"
                 ],
                 "requestBody": {
-                    "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/RegisterRequest"
+                                "allOf": [
+                                    {
+                                        "$ref": "#/components/schemas/RegisterRequest"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "phone": {
+                                                "type": "string",
+                                                "description": "S\u1ed1 \u0111i\u1ec7n tho\u1ea1i \u0111\u0103ng k\u00fd.",
+                                                "example": "0912345678"
+                                            },
+                                            "full_name": {
+                                                "type": "string",
+                                                "description": "H\u1ecd v\u00e0 t\u00ean kh\u00e1ch h\u00e0ng.",
+                                                "example": "Nguy\u1ec5n V\u0103n A"
+                                            },
+                                            "email": {
+                                                "type": "string",
+                                                "description": "\u0110\u1ecba ch\u1ec9 email li\u00ean h\u1ec7 (Kh\u00f4ng b\u1eaft bu\u1ed9c).",
+                                                "example": "nguyenvana@gmail.com"
+                                            },
+                                            "password": {
+                                                "type": "string",
+                                                "description": "M\u1eadt kh\u1ea9u \u0111\u0103ng nh\u1eadp t\u1ed1i thi\u1ec3u 6 k\u00fd t\u1ef1.",
+                                                "example": "123456"
+                                            },
+                                            "password_confirmation": {
+                                                "type": "string",
+                                                "description": "Nh\u1eadp l\u1ea1i m\u1eadt kh\u1ea9u \u0111\u1ec3 x\u00e1c nh\u1eadn.",
+                                                "example": "123456"
+                                            }
+                                        },
+                                        "required": [
+                                            "phone",
+                                            "full_name",
+                                            "password",
+                                            "password_confirmation"
+                                        ]
+                                    }
+                                ]
                             }
                         }
                     }
@@ -971,11 +1112,33 @@
                     "Auth"
                 ],
                 "requestBody": {
-                    "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/LoginRequest"
+                                "allOf": [
+                                    {
+                                        "$ref": "#/components/schemas/LoginRequest"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "phone": {
+                                                "type": "string",
+                                                "description": "S\u1ed1 \u0111i\u1ec7n tho\u1ea1i \u0111\u0103ng nh\u1eadp c\u1ee7a kh\u00e1ch h\u00e0ng.",
+                                                "example": "0900000000"
+                                            },
+                                            "password": {
+                                                "type": "string",
+                                                "description": "M\u1eadt kh\u1ea9u \u0111\u0103ng nh\u1eadp.",
+                                                "example": "123456"
+                                            }
+                                        },
+                                        "required": [
+                                            "phone",
+                                            "password"
+                                        ]
+                                    }
+                                ]
                             }
                         }
                     }
@@ -2638,11 +2801,33 @@
                     "Auth"
                 ],
                 "requestBody": {
-                    "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/App.Http.Requests.Admin.LoginRequest"
+                                "allOf": [
+                                    {
+                                        "$ref": "#/components/schemas/App.Http.Requests.Admin.LoginRequest"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "email": {
+                                                "type": "string",
+                                                "description": "Email \u0111\u0103ng nh\u1eadp c\u1ee7a qu\u1ea3n tr\u1ecb vi\u00ean.",
+                                                "example": "admin@xeghep.vn"
+                                            },
+                                            "password": {
+                                                "type": "string",
+                                                "description": "M\u1eadt kh\u1ea9u \u0111\u0103ng nh\u1eadp.",
+                                                "example": "password"
+                                            }
+                                        },
+                                        "required": [
+                                            "email",
+                                            "password"
+                                        ]
+                                    }
+                                ]
                             }
                         }
                     }
@@ -11409,53 +11594,49 @@
                         "name": "from_city",
                         "in": "query",
                         "required": true,
+                        "description": "Th\u00e0nh ph\u1ed1 xu\u1ea5t ph\u00e1t.",
                         "schema": {
                             "type": "string"
-                        }
+                        },
+                        "example": "H\u00e0 N\u1ed9i"
                     },
                     {
                         "name": "to_city",
                         "in": "query",
                         "required": true,
+                        "description": "Th\u00e0nh ph\u1ed1 \u0111\u1ebfn.",
                         "schema": {
                             "type": "string"
-                        }
+                        },
+                        "example": "H\u1ea3i Ph\u00f2ng"
                     },
                     {
                         "name": "date",
                         "in": "query",
                         "required": true,
+                        "description": "Ng\u00e0y kh\u1edfi h\u00e0nh (\u0110\u1ecbnh d\u1ea1ng YYYY-MM-DD).",
                         "schema": {
-                            "type": "string",
-                            "format": "date-time"
-                        }
+                            "type": "string"
+                        },
+                        "example": "2026-06-30"
                     },
                     {
                         "name": "passengers",
                         "in": "query",
+                        "description": "S\u1ed1 l\u01b0\u1ee3ng h\u00e0nh kh\u00e1ch (1-4).",
                         "schema": {
-                            "type": [
-                                "integer",
-                                "null"
-                            ],
-                            "minimum": 1,
-                            "maximum": 4
-                        }
+                            "type": "integer"
+                        },
+                        "example": 1
                     },
                     {
                         "name": "sort",
                         "in": "query",
+                        "description": "S\u1eafp x\u1ebfp k\u1ebft qu\u1ea3 (price_asc, price_desc, depart_asc).",
                         "schema": {
-                            "type": [
-                                "string",
-                                "null"
-                            ],
-                            "enum": [
-                                "price_asc",
-                                "price_desc",
-                                "depart_asc"
-                            ]
-                        }
+                            "type": "string"
+                        },
+                        "example": "price_asc"
                     }
                 ],
                 "responses": {
@@ -11693,53 +11874,49 @@
                         "name": "from_city",
                         "in": "query",
                         "required": true,
+                        "description": "Th\u00e0nh ph\u1ed1 xu\u1ea5t ph\u00e1t.",
                         "schema": {
                             "type": "string"
-                        }
+                        },
+                        "example": "H\u00e0 N\u1ed9i"
                     },
                     {
                         "name": "to_city",
                         "in": "query",
                         "required": true,
+                        "description": "Th\u00e0nh ph\u1ed1 \u0111\u1ebfn.",
                         "schema": {
                             "type": "string"
-                        }
+                        },
+                        "example": "H\u1ea3i Ph\u00f2ng"
                     },
                     {
                         "name": "date",
                         "in": "query",
                         "required": true,
+                        "description": "Ng\u00e0y kh\u1edfi h\u00e0nh (\u0110\u1ecbnh d\u1ea1ng YYYY-MM-DD).",
                         "schema": {
-                            "type": "string",
-                            "format": "date-time"
-                        }
+                            "type": "string"
+                        },
+                        "example": "2026-06-30"
                     },
                     {
                         "name": "passengers",
                         "in": "query",
+                        "description": "S\u1ed1 l\u01b0\u1ee3ng h\u00e0nh kh\u00e1ch (1-4).",
                         "schema": {
-                            "type": [
-                                "integer",
-                                "null"
-                            ],
-                            "minimum": 1,
-                            "maximum": 4
-                        }
+                            "type": "integer"
+                        },
+                        "example": 1
                     },
                     {
                         "name": "sort",
                         "in": "query",
+                        "description": "S\u1eafp x\u1ebfp k\u1ebft qu\u1ea3 (price_asc, price_desc, depart_asc).",
                         "schema": {
-                            "type": [
-                                "string",
-                                "null"
-                            ],
-                            "enum": [
-                                "price_asc",
-                                "price_desc",
-                                "depart_asc"
-                            ]
-                        }
+                            "type": "string"
+                        },
+                        "example": "price_asc"
                     }
                 ],
                 "responses": {
