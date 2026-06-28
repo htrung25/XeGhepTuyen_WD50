@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { toast } from 'vue-sonner';
 import { adminApi } from '@/api/admin.api';
 import { useAdminAuthStore } from '@/stores/admin.auth.store';
-import { toast } from 'vue-sonner';
 
 const authStore = useAdminAuthStore();
 
@@ -90,7 +90,7 @@ const saveProfile = async () => {
             }
             await fetchProfile();
         }
-    } catch (e: any) {
+    } catch {
         toast.error('Đã xảy ra lỗi khi cập nhật hồ sơ.');
     } finally {
         saveLoading.value = false;
@@ -130,7 +130,7 @@ const changePassword = async () => {
                 new_password_confirmation: '',
             };
         }
-    } catch (e: any) {
+    } catch {
         toast.error('Đã xảy ra lỗi khi đổi mật khẩu.');
     } finally {
         pwLoading.value = false;
