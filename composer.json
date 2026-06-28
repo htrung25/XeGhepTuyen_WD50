@@ -12,6 +12,7 @@
         "php": "^8.3",
         "bacon/bacon-qr-code": "^3.0",
         "darkaonline/l5-swagger": "^11.1",
+        "dedoc/scramble": "^0.13.30",
         "doctrine/annotations": "^2.0",
         "inertiajs/inertia-laravel": "^3.0",
         "laravel/chisel": "^0.1.0",
@@ -63,6 +64,10 @@
         ],
         "wayfinder": [
             "@php artisan wayfinder:generate --with-form"
+        ],
+        "swagger": [
+            "@php artisan scramble:export",
+            "@php -r \"copy('api.json', 'storage/api-docs/api-docs.json');\""
         ],
         "lint:check": [
             "pint --parallel --test"

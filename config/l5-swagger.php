@@ -276,7 +276,7 @@ return [
          * 'method' (sort by HTTP method).
          * Default is the order returned by the server unchanged.
          */
-        'operations_sort' => env('L5_SWAGGER_OPERATIONS_SORT', null),
+        'operations_sort' => env('L5_SWAGGER_OPERATIONS_SORT', 'alpha'),
 
         /*
          * Pass the validatorUrl parameter to SwaggerUi init on the JS side.
