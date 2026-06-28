@@ -38,6 +38,8 @@ import {
     commissions,
     payout,
     payouts as financePayouts,
+    anomalies as financeAnomalies,
+    exportMethod as financeExport,
     refund as financeRefund,
 } from '@/actions/App/Http/Controllers/Admin/FinanceController';
 import {
@@ -176,6 +178,14 @@ export const adminApi = {
     createPayout: (data: unknown) => apiClient.send(payout(), data),
     getPayoutHistory: (params?: Params) =>
         apiClient.send(financePayouts({ query: params as QueryParams })),
+    getAnomalies: (params?: Params) =>
+        apiClient.send(financeAnomalies({ query: params as QueryParams })),
+    exportFinance: (type: 'transactions' | 'commissions') =>
+        apiClient.send<Blob>(
+            financeExport({ query: { type } as QueryParams }),
+            undefined,
+            { blob: true },
+        ),
     refundBooking: (bookingId: string, data: { amount: number; reason: string }) =>
         apiClient.send<{ amount: number }>(financeRefund(bookingId), data),
 

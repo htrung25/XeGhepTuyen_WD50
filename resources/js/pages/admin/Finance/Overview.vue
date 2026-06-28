@@ -5,7 +5,12 @@ import { adminApi } from '@/api/admin.api';
 import { useCan } from '@/composables/useCan';
 const { can } = useCan();
 
-type TabKey = 'overview' | 'transactions' | 'commissions' | 'refunds';
+type TabKey =
+    | 'overview'
+    | 'transactions'
+    | 'commissions'
+    | 'refunds'
+    | 'anomalies';
 
 interface FinanceSummary {
     total_revenue: number;
@@ -83,6 +88,16 @@ interface PayoutHistory {
 }
 const payoutHistory = ref<PayoutHistory[]>([]);
 const payoutHistoryLoaded = ref(false);
+// Cảnh báo giao dịch bất thường
+interface Anomaly {
+    contact_phone: string;
+    contact_name: string;
+    booking_count: number;
+    total_amount: number;
+}
+const anomalies = ref<Anomaly[]>([]);
+const anomaliesLoaded = ref(false);
+const exporting = ref(false);
 const isLoading = ref(true);
 const errorMsg = ref('');
 
@@ -103,6 +118,7 @@ const tabs: { key: TabKey; label: string }[] = [
     { key: 'transactions', label: 'Giao dịch' },
     { key: 'commissions', label: 'Quyết toán nhà xe' },
     { key: 'refunds', label: 'Hoàn tiền' },
+    { key: 'anomalies', label: 'Cảnh báo' },
 ];
 
 const commissionStatusMap: Record<string, { label: string; class: string }> = {
@@ -201,6 +217,28 @@ async function loadPayoutHistory() {
     if (!error) payoutHistory.value = (data as PayoutHistory[]) ?? [];
 }
 
+async function loadAnomalies() {
+    const { data, error } = await adminApi.getAnomalies();
+    anomaliesLoaded.value = true;
+    if (!error) anomalies.value = (data as Anomaly[]) ?? [];
+}
+
+async function exportCsv(type: 'transactions' | 'commissions') {
+    exporting.value = true;
+    const { data, error } = await adminApi.exportFinance(type);
+    exporting.value = false;
+    if (error || !data) {
+        alert(error || 'Có lỗi khi xuất file');
+        return;
+    }
+    const url = URL.createObjectURL(data as Blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${type === 'commissions' ? 'quyet-toan' : 'giao-dich'}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
 async function loadRefunds() {
     refundsLoading.value = true;
     const { data, error } = await adminApi.getFinanceRefunds();
@@ -262,6 +300,7 @@ watch(activeTab, (tab) => {
     if (tab === 'transactions' && !txnLoaded.value) loadTransactions();
     if (tab === 'commissions' && !payoutHistoryLoaded.value) loadPayoutHistory();
     if (tab === 'refunds' && !refundsLoaded.value) loadRefunds();
+    if (tab === 'anomalies' && !anomaliesLoaded.value) loadAnomalies();
 });
 
 onMounted(loadData);
@@ -477,6 +516,16 @@ onMounted(loadData);
                     />
                 </div>
 
+                <div class="mb-3 flex justify-end">
+                    <button
+                        @click="exportCsv('transactions')"
+                        :disabled="exporting"
+                        class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100 disabled:opacity-60"
+                    >
+                        {{ exporting ? 'Đang xuất...' : 'Xuất CSV' }}
+                    </button>
+                </div>
+
                 <div
                     class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
                 >
@@ -656,6 +705,15 @@ onMounted(loadData);
 
             <!-- Commissions/Settlement tab -->
             <div v-else-if="activeTab === 'commissions'">
+                <div class="mb-3 flex justify-end">
+                    <button
+                        @click="exportCsv('commissions')"
+                        :disabled="exporting"
+                        class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100 disabled:opacity-60"
+                    >
+                        {{ exporting ? 'Đang xuất...' : 'Xuất CSV' }}
+                    </button>
+                </div>
                 <div
                     class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
                 >
@@ -978,6 +1036,81 @@ onMounted(loadData);
                                                   ).toLocaleString('vi-VN')
                                                 : '—'
                                         }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Anomalies tab (cảnh báo bất thường) -->
+            <div v-else-if="activeTab === 'anomalies'">
+                <div
+                    class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+                >
+                    <div
+                        class="border-b border-slate-100 bg-orange-50 px-4 py-3 text-sm text-orange-800"
+                    >
+                        Khách (theo SĐT liên hệ) đặt từ 3 vé trở lên — cần rà
+                        soát gian lận/spam.
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                                    >
+                                        SĐT liên hệ
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                                    >
+                                        Tên
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500"
+                                    >
+                                        Số vé
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500"
+                                    >
+                                        Tổng giá trị
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr v-if="anomalies.length === 0">
+                                    <td
+                                        colspan="4"
+                                        class="px-4 py-12 text-center text-gray-400"
+                                    >
+                                        Không phát hiện bất thường
+                                    </td>
+                                </tr>
+                                <tr
+                                    v-for="a in anomalies"
+                                    :key="a.contact_phone"
+                                    class="hover:bg-slate-50"
+                                >
+                                    <td class="px-4 py-3 font-mono text-gray-700">
+                                        {{ a.contact_phone }}
+                                    </td>
+                                    <td class="px-4 py-3 text-gray-700">
+                                        {{ a.contact_name }}
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        <span
+                                            class="inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-xs font-semibold text-orange-700"
+                                            >{{ a.booking_count }}</span
+                                        >
+                                    </td>
+                                    <td
+                                        class="px-4 py-3 text-right font-semibold text-gray-900"
+                                    >
+                                        {{ fmt(a.total_amount) }}
                                     </td>
                                 </tr>
                             </tbody>

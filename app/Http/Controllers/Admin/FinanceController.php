@@ -308,6 +308,68 @@ class FinanceController extends Controller
         ]);
     }
 
+    /**
+     * Phát hiện giao dịch bất thường (PRD F-A03): cùng SĐT liên hệ đặt nhiều vé
+     * (ngưỡng mặc định 3). Dùng để admin rà soát gian lận/spam.
+     */
+    public function anomalies(Request $request): JsonResponse
+    {
+        $threshold = max(2, (int) $request->input('min_bookings', 3));
+
+        $rows = Booking::query()
+            ->selectRaw('contact_phone, MAX(contact_name) as contact_name, COUNT(*) as booking_count, SUM(final_amount) as total_amount')
+            ->groupBy('contact_phone')
+            ->having('booking_count', '>=', $threshold)
+            ->orderByDesc('booking_count')
+            ->limit(50)
+            ->get()
+            ->map(fn ($r) => [
+                'contact_phone' => $r->contact_phone,
+                'contact_name' => $r->contact_name,
+                'booking_count' => (int) $r->booking_count,
+                'total_amount' => (int) $r->total_amount,
+            ]);
+
+        return response()->json(['success' => true, 'data' => $rows]);
+    }
+
+    /** Xuất báo cáo CSV (không cần package): type=transactions|commissions. */
+    public function export(Request $request): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $type = $request->input('type') === 'commissions' ? 'commissions' : 'transactions';
+
+        if ($type === 'commissions') {
+            $rows = $this->operatorSettlements()
+                ->map(fn ($r) => [
+                    $r['operator_name'], $r['revenue'], $r['commission'],
+                    $r['net_amount'], $r['status'],
+                ]);
+            $header = ['Nhà xe', 'Doanh thu', 'Hoa hồng', 'Còn lại (net)', 'Trạng thái'];
+            $filename = 'quyet-toan-'.now()->format('Ymd-His').'.csv';
+        } else {
+            $rows = Payment::with(['booking'])->latest('paid_at')->limit(5000)->get()
+                ->map(fn (Payment $p) => [
+                    $p->booking?->booking_code ?? 'N/A',
+                    (int) $p->amount,
+                    $p->method?->value ?? '',
+                    $p->status?->value ?? '',
+                    optional($p->paid_at ?? $p->created_at)->format('Y-m-d H:i'),
+                ]);
+            $header = ['Mã vé', 'Số tiền', 'Phương thức', 'Trạng thái', 'Thời gian'];
+            $filename = 'giao-dich-'.now()->format('Ymd-His').'.csv';
+        }
+
+        return response()->streamDownload(function () use ($header, $rows) {
+            $out = fopen('php://output', 'w');
+            fprintf($out, "\xEF\xBB\xBF"); // BOM để Excel đọc UTF-8
+            fputcsv($out, $header);
+            foreach ($rows as $row) {
+                fputcsv($out, $row);
+            }
+            fclose($out);
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
     /** Lịch sử các đợt quyết toán đã chi cho nhà xe (Payout status=paid). */
     public function payouts(Request $request): JsonResponse
     {
