@@ -19,6 +19,7 @@ class AuditLogController extends Controller
     )]
     #[OA\QueryParameter(name: "user_id", required: false, description: "Lọc theo ID người thực hiện", schema: new OA\Schema(type: "string", format: "uuid"))]
     #[OA\QueryParameter(name: "action", required: false, description: "Lọc theo loại hành động", schema: new OA\Schema(type: "string"))]
+    #[OA\QueryParameter(name: "model_type", required: false, description: "Lọc theo loại Model (Class FQCN)", schema: new OA\Schema(type: "string"))]
     #[OA\QueryParameter(name: "date_from", required: false, description: "Từ ngày (YYYY-MM-DD)", schema: new OA\Schema(type: "string", format: "date"))]
     #[OA\QueryParameter(name: "date_to", required: false, description: "Đến ngày (YYYY-MM-DD)", schema: new OA\Schema(type: "string", format: "date"))]
     #[OA\QueryParameter(name: "search", required: false, description: "Tìm kiếm từ khóa", schema: new OA\Schema(type: "string"))]
