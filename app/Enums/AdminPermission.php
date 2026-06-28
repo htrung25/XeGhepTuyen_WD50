@@ -42,6 +42,7 @@ enum AdminPermission: string
     // Tài chính
     case FinanceView = 'finance.view';
     case FinancePayout = 'finance.payout';
+    case FinanceRefund = 'finance.refund';
 
     // Voucher
     case VouchersView = 'vouchers.view';
@@ -80,6 +81,7 @@ enum AdminPermission: string
             self::TripsAutoResolve => 'Xử lý chuyến quá giờ',
             self::FinanceView => 'Xem tài chính',
             self::FinancePayout => 'Quyết toán/chi tiền nhà xe',
+            self::FinanceRefund => 'Hoàn tiền thủ công',
             self::VouchersView => 'Xem danh sách voucher',
             self::VouchersManage => 'Tạo/sửa/xóa voucher',
             self::AuditLogsView => 'Xem nhật ký hệ thống',
@@ -114,7 +116,8 @@ enum AdminPermission: string
             self::TripsCancel,
             self::TripsAutoResolve => 'Chuyến đi',
             self::FinanceView,
-            self::FinancePayout => 'Tài chính',
+            self::FinancePayout,
+            self::FinanceRefund => 'Tài chính',
             self::VouchersView,
             self::VouchersManage => 'Voucher',
             self::AuditLogsView => 'Nhật ký hệ thống',

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted } from 'vue';
 import { adminApi } from '@/api/admin.api';
 
 interface UserBrief {
@@ -62,6 +62,7 @@ const actionLabels: Record<string, { label: string; bg: string; text: string }> 
     cancel_trip: { label: 'Hủy chuyến đi', bg: 'bg-red-50 border-red-200', text: 'text-red-700' },
     auto_resolve_trips: { label: 'Xử lý chuyến quá giờ', bg: 'bg-slate-50 border-slate-200', text: 'text-slate-700' },
     payout_operator: { label: 'Quyết toán nhà xe', bg: 'bg-lime-50 border-lime-200', text: 'text-lime-700' },
+    refund_booking: { label: 'Hoàn tiền vé', bg: 'bg-orange-50 border-orange-200', text: 'text-orange-700' },
 };
 
 function getActionStyle(action: string) {

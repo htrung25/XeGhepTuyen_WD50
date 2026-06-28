@@ -32,6 +32,7 @@ interface Commission {
 
 interface Transaction {
     id: string;
+    booking_id: string | null;
     type: string;
     amount: number;
     booking_code: string;
@@ -69,6 +70,13 @@ const errorMsg = ref('');
 const showPayoutModal = ref(false);
 const selectedCommission = ref<Commission | null>(null);
 const payoutLoading = ref(false);
+
+// Refund modal (hoàn tiền thủ công)
+const showRefundModal = ref(false);
+const selectedTxn = ref<Transaction | null>(null);
+const refundAmount = ref(0);
+const refundReason = ref('');
+const refundLoading = ref(false);
 
 const tabs: { key: TabKey; label: string }[] = [
     { key: 'overview', label: 'Tổng quan' },
@@ -167,6 +175,34 @@ async function confirmPayout() {
         return;
     }
     showPayoutModal.value = false;
+    await loadData();
+}
+
+function openRefund(t: Transaction) {
+    selectedTxn.value = t;
+    refundAmount.value = t.amount;
+    refundReason.value = '';
+    showRefundModal.value = true;
+}
+
+async function confirmRefund() {
+    if (!selectedTxn.value?.booking_id) return;
+    if (!refundReason.value.trim()) {
+        alert('Vui lòng nhập lý do hoàn tiền');
+        return;
+    }
+    refundLoading.value = true;
+    const { error } = await adminApi.refundBooking(selectedTxn.value.booking_id, {
+        amount: refundAmount.value,
+        reason: refundReason.value.trim(),
+    });
+    refundLoading.value = false;
+    if (error) {
+        alert(error);
+        return;
+    }
+    showRefundModal.value = false;
+    await loadTransactions();
     await loadData();
 }
 
@@ -399,12 +435,18 @@ onMounted(loadData);
                                     >
                                         Thời gian
                                     </th>
+                                    <th
+                                        v-if="can('finance.refund')"
+                                        class="px-4 py-3 text-center text-xs font-medium tracking-wide text-gray-500 uppercase"
+                                    >
+                                        Thao tác
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 <tr v-if="transactions.length === 0">
                                     <td
-                                        colspan="9"
+                                        :colspan="can('finance.refund') ? 10 : 9"
                                         class="px-4 py-12 text-center text-gray-400"
                                     >
                                         Không có giao dịch nào
@@ -473,6 +515,19 @@ onMounted(loadData);
                                                 t.created_at,
                                             ).toLocaleString('vi-VN')
                                         }}
+                                    </td>
+                                    <td
+                                        v-if="can('finance.refund')"
+                                        class="px-4 py-3 text-center"
+                                    >
+                                        <button
+                                            v-if="t.status === 'success' && t.booking_id"
+                                            @click="openRefund(t)"
+                                            class="rounded-lg border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-medium text-orange-700 transition-colors hover:bg-orange-100"
+                                        >
+                                            Hoàn tiền
+                                        </button>
+                                        <span v-else class="text-xs text-gray-300">—</span>
                                     </td>
                                 </tr>
                             </tbody>
@@ -796,6 +851,80 @@ onMounted(loadData);
                                 ? 'Đang xử lý...'
                                 : 'Xác nhận thanh toán'
                         }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </Teleport>
+
+    <!-- Refund modal (hoàn tiền thủ công) -->
+    <Teleport to="body">
+        <div
+            v-if="showRefundModal"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        >
+            <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+                <h3 class="mb-1 text-lg font-semibold text-gray-900">
+                    Hoàn tiền thủ công
+                </h3>
+                <p class="mb-4 text-sm text-gray-500">
+                    Hoàn tiền cho vé
+                    <span class="font-mono font-medium text-gray-700">{{
+                        selectedTxn?.booking_code
+                    }}</span>
+                    — khách {{ selectedTxn?.customer }}
+                </p>
+
+                <div class="space-y-4">
+                    <div>
+                        <label
+                            class="mb-1.5 block text-sm font-medium text-gray-700"
+                            >Số tiền hoàn (tối đa
+                            {{ fmt(selectedTxn?.amount ?? 0) }})</label
+                        >
+                        <input
+                            v-model.number="refundAmount"
+                            type="number"
+                            min="1"
+                            :max="selectedTxn?.amount"
+                            class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
+                        />
+                    </div>
+                    <div>
+                        <label
+                            class="mb-1.5 block text-sm font-medium text-gray-700"
+                            >Lý do hoàn tiền</label
+                        >
+                        <textarea
+                            v-model="refundReason"
+                            rows="3"
+                            placeholder="Nhập lý do hoàn tiền cho khách..."
+                            class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
+                        />
+                    </div>
+                </div>
+
+                <div
+                    class="my-4 rounded-lg border border-orange-200 bg-orange-50 p-3 text-xs text-orange-800"
+                >
+                    Vé online sẽ được hoàn về ví khách; vé tiền mặt chỉ đánh dấu
+                    để đối soát (nhà xe hoàn trực tiếp). Khách sẽ nhận SMS thông
+                    báo.
+                </div>
+
+                <div class="flex gap-3">
+                    <button
+                        @click="showRefundModal = false"
+                        class="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                    >
+                        Hủy
+                    </button>
+                    <button
+                        @click="confirmRefund"
+                        :disabled="refundLoading"
+                        class="flex-1 rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-orange-700 disabled:opacity-60"
+                    >
+                        {{ refundLoading ? 'Đang xử lý...' : 'Xác nhận hoàn tiền' }}
                     </button>
                 </div>
             </div>

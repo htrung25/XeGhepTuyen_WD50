@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\BookingPaymentStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\RefundBookingRequest;
+use App\Jobs\SendSmsNotificationJob;
+use App\Models\Booking;
 use App\Models\Operator;
 use App\Models\Payment;
 use App\Models\Payout;
-use App\Services\SettlementService;
 use App\Services\AuditLogService;
+use App\Services\PaymentService;
+use App\Services\SettlementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -15,7 +20,10 @@ use Illuminate\Support\Facades\DB;
 
 class FinanceController extends Controller
 {
-    public function __construct(private readonly SettlementService $settlementService) {}
+    public function __construct(
+        private readonly SettlementService $settlementService,
+        private readonly PaymentService $paymentService,
+    ) {}
 
     /** Tổng quan tài chính nền tảng (toàn thời gian) cho Admin */
     public function summary(Request $request): JsonResponse
@@ -201,6 +209,7 @@ class FinanceController extends Controller
 
             return [
                 'id' => $payment->id,
+                'booking_id' => $payment->booking?->id,
                 'type' => $payment->status->value === 'refunded' ? 'refund' : 'booking',
                 'amount' => $payment->amount,
                 'booking_code' => $payment->booking ? $payment->booking->booking_code : 'N/A',
@@ -230,6 +239,58 @@ class FinanceController extends Controller
             'success' => true,
             'data' => $refunds->items(),
             'meta' => ['current_page' => $refunds->currentPage(), 'total' => $refunds->total()],
+        ]);
+    }
+
+    /**
+     * Hoàn tiền thủ công cho 1 vé (PRD F-A03). Tái dùng PaymentService::refund:
+     * vé online → hoàn về ví khách; vé tiền mặt → chỉ đánh dấu để đối soát.
+     */
+    public function refund(RefundBookingRequest $request, string $booking): JsonResponse
+    {
+        $bookingModel = Booking::with(['payment', 'user'])->find($booking);
+
+        if (! $bookingModel) {
+            return response()->json(['success' => false, 'message' => 'Không tìm thấy vé', 'code' => 'BOOKING_NOT_FOUND'], 404);
+        }
+
+        if ($bookingModel->payment_status !== BookingPaymentStatus::Paid) {
+            return response()->json(['success' => false, 'message' => 'Chỉ hoàn tiền được vé đã thanh toán', 'code' => 'BOOKING_NOT_PAID'], 422);
+        }
+
+        $amount = (int) $request->validated('amount');
+        $final = (int) $bookingModel->final_amount;
+        if ($amount > $final) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Số tiền hoàn ('.number_format($amount, 0, ',', '.').'đ) vượt quá giá trị vé ('.number_format($final, 0, ',', '.').'đ)',
+                'code' => 'REFUND_EXCEEDS_TOTAL',
+            ], 422);
+        }
+
+        $reason = (string) $request->validated('reason');
+
+        // Hoàn tiền trong transaction (PaymentService) → đánh dấu payment/booking refunded.
+        $this->paymentService->refund($bookingModel, $amount);
+
+        // Thông báo khách qua SMS (môi trường dev: hiện ở terminal).
+        SendSmsNotificationJob::dispatch(
+            $bookingModel->contact_phone,
+            "[XeGhep] Vé {$bookingModel->booking_code} đã được hoàn ".number_format($amount, 0, ',', '.')."đ. Lý do: {$reason}",
+            $bookingModel->id,
+        )->onQueue('notifications');
+
+        app(AuditLogService::class)->log(
+            action: 'refund_booking',
+            model: $bookingModel,
+            description: 'Đã hoàn '.number_format($amount, 0, ',', '.')."đ cho vé {$bookingModel->booking_code}. Lý do: {$reason}",
+            newValues: ['amount' => $amount, 'reason' => $reason]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã hoàn '.number_format($amount, 0, ',', '.').'đ cho vé '.$bookingModel->booking_code,
+            'data' => ['amount' => $amount],
         ]);
     }
 }
