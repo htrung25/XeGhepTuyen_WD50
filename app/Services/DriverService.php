@@ -52,6 +52,13 @@ class DriverService
 
         $this->sendPendingSms($driver->user, $operator->company_name);
 
+        app(AdminNotificationService::class)->notify(
+            'drivers.review',
+            'Tài xế chờ duyệt',
+            "Tài xế \"{$driver->user->full_name}\" (nhà xe {$operator->company_name}) đang chờ duyệt hồ sơ.",
+            ['kind' => 'driver_pending', 'link' => '/admin/drivers', 'driver_id' => $driver->id],
+        );
+
         return $driver;
     }
 

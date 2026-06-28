@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\BookingController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DriverController;
 use App\Http\Controllers\Admin\FinanceController;
+use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\OperatorController;
 use App\Http\Controllers\Admin\PartnerApplicationController;
 use App\Http\Controllers\Admin\RoleController;
@@ -33,6 +34,11 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('auth/logout', [AuthController::class, 'logout']);
     Route::put('auth/profile', [AuthController::class, 'updateProfile']);
     Route::put('auth/change-password', [AuthController::class, 'changePassword']);
+
+    // Thông báo — mọi admin xem thông báo của mình (không cần quyền riêng)
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::put('notifications/read-all', [NotificationController::class, 'markAllRead']);
+    Route::put('notifications/{id}/read', [NotificationController::class, 'markRead']);
 
     // Dashboard
     Route::get('dashboard', [DashboardController::class, 'index'])->middleware('permission:dashboard.view');

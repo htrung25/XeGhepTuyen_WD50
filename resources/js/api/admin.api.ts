@@ -44,6 +44,11 @@ import {
     refund as financeRefund,
 } from '@/actions/App/Http/Controllers/Admin/FinanceController';
 import {
+    index as notificationsIndex,
+    markRead as notificationMarkRead,
+    markAllRead as notificationsMarkAllRead,
+} from '@/actions/App/Http/Controllers/Admin/NotificationController';
+import {
     index as operatorsIndex,
     show as operatorShow,
     approve as operatorApprove,
@@ -206,6 +211,13 @@ export const adminApi = {
         apiClient.send(auditLogsIndex({ query: params as QueryParams })),
     getAuditLog: (id: string) =>
         apiClient.send(auditLogShow(id)),
+
+    // Notifications
+    getNotifications: (params?: Params) =>
+        apiClient.send(notificationsIndex({ query: params as QueryParams })),
+    markNotificationRead: (id: string) =>
+        apiClient.send(notificationMarkRead(id)),
+    markAllNotificationsRead: () => apiClient.send(notificationsMarkAllRead()),
 
     // Roles (phân quyền)
     getPermissionCatalog: () => apiClient.send(rolesPermissions()),

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Payout;
 use App\Models\Trip;
+use App\Services\AdminNotificationService;
 use App\Services\SettlementService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -248,6 +249,13 @@ class RevenueController extends Controller
                 'message' => 'Không có số dư khả dụng để quyết toán',
             ], 422);
         }
+
+        app(AdminNotificationService::class)->notify(
+            'finance.payout',
+            'Yêu cầu quyết toán mới',
+            "Nhà xe \"{$operator->company_name}\" yêu cầu quyết toán ".number_format($payout->amount, 0, ',', '.').'đ.',
+            ['kind' => 'payout_request', 'link' => '/admin/finance', 'operator_id' => $operator->id, 'amount' => (int) $payout->amount],
+        );
 
         return response()->json([
             'success' => true,

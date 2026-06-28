@@ -56,7 +56,16 @@ class PartnerApplicationService
 
         $data['status'] = PartnerApplicationStatus::Pending->value;
 
-        return $this->applicationRepo->create($data);
+        $application = $this->applicationRepo->create($data);
+
+        app(AdminNotificationService::class)->notify(
+            'partner_applications.review',
+            'Đơn đăng ký đối tác mới',
+            "Nhà xe \"{$application->company_name}\" vừa gửi đơn đăng ký đối tác.",
+            ['kind' => 'partner_application', 'link' => '/admin/operators', 'application_id' => $application->id],
+        );
+
+        return $application;
     }
 
     /**
