@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { watchDebounced } from '@vueuse/core';
 import { ref, onMounted, watch } from 'vue';
 import { adminApi } from '@/api/admin.api';
 import { useCan } from '@/composables/useCan';
@@ -60,9 +61,28 @@ const activeTab = ref<TabKey>('overview');
 const summary = ref<FinanceSummary | null>(null);
 const commissions = ref<Commission[]>([]);
 const transactions = ref<Transaction[]>([]);
+// Bộ lọc + phân trang giao dịch
+const txnSearch = ref('');
+const txnMethod = ref('');
+const txnStatus = ref('');
+const txnDateFrom = ref('');
+const txnDateTo = ref('');
+const txnPage = ref(1);
+const txnTotalPages = ref(1);
+const txnLoaded = ref(false);
 const refunds = ref<Refund[]>([]);
 const refundsLoading = ref(false);
 const refundsLoaded = ref(false);
+// Lịch sử quyết toán đã chi
+interface PayoutHistory {
+    id: string;
+    operator_name: string;
+    amount: number;
+    note: string | null;
+    processed_at: string | null;
+}
+const payoutHistory = ref<PayoutHistory[]>([]);
+const payoutHistoryLoaded = ref(false);
 const isLoading = ref(true);
 const errorMsg = ref('');
 
@@ -146,8 +166,39 @@ async function loadData() {
 }
 
 async function loadTransactions() {
-    const { data, error } = await adminApi.getFinanceTransactions();
-    if (!error) transactions.value = (data as Transaction[]) ?? [];
+    const params: Record<string, unknown> = { page: txnPage.value };
+    if (txnSearch.value.trim()) params.search = txnSearch.value.trim();
+    if (txnMethod.value) params.method = txnMethod.value;
+    if (txnStatus.value) params.status = txnStatus.value;
+    if (txnDateFrom.value) params.date_from = txnDateFrom.value;
+    if (txnDateTo.value) params.date_to = txnDateTo.value;
+    const { data, meta, error } = await adminApi.getFinanceTransactions(params);
+    txnLoaded.value = true;
+    if (!error) {
+        transactions.value = (data as Transaction[]) ?? [];
+        txnTotalPages.value = meta?.last_page ?? 1;
+    }
+}
+
+function onTxnFilter() {
+    txnPage.value = 1;
+    loadTransactions();
+}
+
+function changeTxnPage(p: number) {
+    if (p < 1 || p > txnTotalPages.value) return;
+    txnPage.value = p;
+    loadTransactions();
+}
+
+// Bộ lọc tự động (debounce ô tìm kiếm; tức thì cho select/ngày)
+watchDebounced(txnSearch, onTxnFilter, { debounce: 350 });
+watch([txnMethod, txnStatus, txnDateFrom, txnDateTo], onTxnFilter);
+
+async function loadPayoutHistory() {
+    const { data, error } = await adminApi.getPayoutHistory();
+    payoutHistoryLoaded.value = true;
+    if (!error) payoutHistory.value = (data as PayoutHistory[]) ?? [];
 }
 
 async function loadRefunds() {
@@ -176,6 +227,7 @@ async function confirmPayout() {
     }
     showPayoutModal.value = false;
     await loadData();
+    await loadPayoutHistory();
 }
 
 function openRefund(t: Transaction) {
@@ -207,8 +259,8 @@ async function confirmRefund() {
 }
 
 watch(activeTab, (tab) => {
-    if (tab === 'transactions' && transactions.value.length === 0)
-        loadTransactions();
+    if (tab === 'transactions' && !txnLoaded.value) loadTransactions();
+    if (tab === 'commissions' && !payoutHistoryLoaded.value) loadPayoutHistory();
     if (tab === 'refunds' && !refundsLoaded.value) loadRefunds();
 });
 
@@ -383,6 +435,48 @@ onMounted(loadData);
 
             <!-- Transactions tab -->
             <div v-else-if="activeTab === 'transactions'">
+                <!-- Bộ lọc -->
+                <div
+                    class="mb-4 grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-5"
+                >
+                    <input
+                        v-model="txnSearch"
+                        type="text"
+                        placeholder="Tìm mã vé, khách, SĐT..."
+                        class="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
+                    />
+                    <select
+                        v-model="txnMethod"
+                        class="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-red-500 focus:outline-none"
+                    >
+                        <option value="">Tất cả phương thức</option>
+                        <option value="momo">MoMo</option>
+                        <option value="vnpay">VNPay</option>
+                        <option value="cash">Tiền mặt</option>
+                        <option value="wallet">Ví</option>
+                    </select>
+                    <select
+                        v-model="txnStatus"
+                        class="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-red-500 focus:outline-none"
+                    >
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="success">Thành công</option>
+                        <option value="pending">Chờ xử lý</option>
+                        <option value="failed">Thất bại</option>
+                        <option value="refunded">Đã hoàn tiền</option>
+                    </select>
+                    <input
+                        v-model="txnDateFrom"
+                        type="date"
+                        class="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-red-500 focus:outline-none"
+                    />
+                    <input
+                        v-model="txnDateTo"
+                        type="date"
+                        class="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-red-500 focus:outline-none"
+                    />
+                </div>
+
                 <div
                     class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
                 >
@@ -534,6 +628,30 @@ onMounted(loadData);
                         </table>
                     </div>
                 </div>
+
+                <!-- Phân trang -->
+                <div
+                    v-if="txnTotalPages > 1"
+                    class="mt-4 flex items-center justify-end gap-2"
+                >
+                    <button
+                        @click="changeTxnPage(txnPage - 1)"
+                        :disabled="txnPage === 1"
+                        class="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                    >
+                        Trước
+                    </button>
+                    <span class="text-xs text-gray-600"
+                        >Trang {{ txnPage }} / {{ txnTotalPages }}</span
+                    >
+                    <button
+                        @click="changeTxnPage(txnPage + 1)"
+                        :disabled="txnPage === txnTotalPages"
+                        class="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                    >
+                        Sau
+                    </button>
+                </div>
             </div>
 
             <!-- Commissions/Settlement tab -->
@@ -669,6 +787,81 @@ onMounted(loadData);
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+
+                <!-- Lịch sử quyết toán đã chi -->
+                <div class="mt-6">
+                    <h3 class="mb-3 text-sm font-semibold text-gray-700">
+                        Lịch sử quyết toán đã chi
+                    </h3>
+                    <div
+                        class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+                    >
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                                        >
+                                            Nhà xe
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500"
+                                        >
+                                            Số tiền
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                                        >
+                                            Ghi chú
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                                        >
+                                            Thời gian
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    <tr v-if="payoutHistory.length === 0">
+                                        <td
+                                            colspan="4"
+                                            class="px-4 py-8 text-center text-gray-400"
+                                        >
+                                            Chưa có đợt quyết toán nào
+                                        </td>
+                                    </tr>
+                                    <tr
+                                        v-for="p in payoutHistory"
+                                        :key="p.id"
+                                        class="hover:bg-slate-50"
+                                    >
+                                        <td class="px-4 py-3 font-medium text-gray-900">
+                                            {{ p.operator_name }}
+                                        </td>
+                                        <td
+                                            class="px-4 py-3 text-right font-semibold text-green-700"
+                                        >
+                                            {{ fmt(p.amount) }}
+                                        </td>
+                                        <td class="px-4 py-3 text-gray-600">
+                                            {{ p.note || '—' }}
+                                        </td>
+                                        <td class="px-4 py-3 text-xs text-gray-500">
+                                            {{
+                                                p.processed_at
+                                                    ? new Date(
+                                                          p.processed_at,
+                                                      ).toLocaleString('vi-VN')
+                                                    : '—'
+                                            }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>

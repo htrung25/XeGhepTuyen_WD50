@@ -194,6 +194,16 @@ class FinanceController extends Controller
         $payments = Payment::with(['booking.user', 'booking.trip.route.operator'])
             ->when($request->input('method'), fn ($q) => $q->where('method', $request->input('method')))
             ->when($request->input('status'), fn ($q) => $q->where('status', $request->input('status')))
+            ->when($request->input('date_from'), fn ($q) => $q->whereDate('created_at', '>=', $request->input('date_from')))
+            ->when($request->input('date_to'), fn ($q) => $q->whereDate('created_at', '<=', $request->input('date_to')))
+            ->when($request->input('search'), function ($q) use ($request) {
+                $search = $request->input('search');
+                $q->whereHas('booking', function ($b) use ($search) {
+                    $b->where('booking_code', 'LIKE', "%{$search}%")
+                        ->orWhere('contact_phone', 'LIKE', "%{$search}%")
+                        ->orWhereHas('user', fn ($u) => $u->where('full_name', 'LIKE', "%{$search}%"));
+                });
+            })
             ->latest('paid_at')
             ->paginate(30);
 
@@ -224,7 +234,11 @@ class FinanceController extends Controller
         return response()->json([
             'success' => true,
             'data' => $mapped,
-            'meta' => ['current_page' => $payments->currentPage(), 'total' => $payments->total()],
+            'meta' => [
+                'current_page' => $payments->currentPage(),
+                'last_page' => $payments->lastPage(),
+                'total' => $payments->total(),
+            ],
         ]);
     }
 
@@ -291,6 +305,33 @@ class FinanceController extends Controller
             'success' => true,
             'message' => 'Đã hoàn '.number_format($amount, 0, ',', '.').'đ cho vé '.$bookingModel->booking_code,
             'data' => ['amount' => $amount],
+        ]);
+    }
+
+    /** Lịch sử các đợt quyết toán đã chi cho nhà xe (Payout status=paid). */
+    public function payouts(Request $request): JsonResponse
+    {
+        $payouts = Payout::with('operator')
+            ->where('status', 'paid')
+            ->latest('processed_at')
+            ->paginate(20);
+
+        $mapped = collect($payouts->items())->map(fn (Payout $p) => [
+            'id' => $p->id,
+            'operator_name' => $p->operator?->company_name ?? 'N/A',
+            'amount' => (int) $p->amount,
+            'note' => $p->note,
+            'processed_at' => $p->processed_at?->toIso8601String(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $mapped,
+            'meta' => [
+                'current_page' => $payouts->currentPage(),
+                'last_page' => $payouts->lastPage(),
+                'total' => $payouts->total(),
+            ],
         ]);
     }
 }

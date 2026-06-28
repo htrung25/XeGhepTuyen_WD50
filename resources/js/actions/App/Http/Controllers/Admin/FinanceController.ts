@@ -163,7 +163,7 @@ transactions.form = transactionsForm
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::refunds
-* @see app/Http/Controllers/Admin/FinanceController.php:231
+* @see app/Http/Controllers/Admin/FinanceController.php:245
 * @route '/api/admin/finance/refunds'
 */
 export const refunds = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -178,7 +178,7 @@ refunds.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::refunds
-* @see app/Http/Controllers/Admin/FinanceController.php:231
+* @see app/Http/Controllers/Admin/FinanceController.php:245
 * @route '/api/admin/finance/refunds'
 */
 refunds.url = (options?: RouteQueryOptions) => {
@@ -187,7 +187,7 @@ refunds.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::refunds
-* @see app/Http/Controllers/Admin/FinanceController.php:231
+* @see app/Http/Controllers/Admin/FinanceController.php:245
 * @route '/api/admin/finance/refunds'
 */
 refunds.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -197,7 +197,7 @@ refunds.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::refunds
-* @see app/Http/Controllers/Admin/FinanceController.php:231
+* @see app/Http/Controllers/Admin/FinanceController.php:245
 * @route '/api/admin/finance/refunds'
 */
 refunds.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -207,7 +207,7 @@ refunds.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::refunds
-* @see app/Http/Controllers/Admin/FinanceController.php:231
+* @see app/Http/Controllers/Admin/FinanceController.php:245
 * @route '/api/admin/finance/refunds'
 */
 const refundsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -217,7 +217,7 @@ const refundsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::refunds
-* @see app/Http/Controllers/Admin/FinanceController.php:231
+* @see app/Http/Controllers/Admin/FinanceController.php:245
 * @route '/api/admin/finance/refunds'
 */
 refundsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -227,7 +227,7 @@ refundsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::refunds
-* @see app/Http/Controllers/Admin/FinanceController.php:231
+* @see app/Http/Controllers/Admin/FinanceController.php:245
 * @route '/api/admin/finance/refunds'
 */
 refundsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -324,6 +324,87 @@ commissionsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'>
 commissions.form = commissionsForm
 
 /**
+* @see \App\Http\Controllers\Admin\FinanceController::payouts
+* @see app/Http/Controllers/Admin/FinanceController.php:312
+* @route '/api/admin/finance/payouts'
+*/
+export const payouts = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: payouts.url(options),
+    method: 'get',
+})
+
+payouts.definition = {
+    methods: ["get","head"],
+    url: '/api/admin/finance/payouts',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Admin\FinanceController::payouts
+* @see app/Http/Controllers/Admin/FinanceController.php:312
+* @route '/api/admin/finance/payouts'
+*/
+payouts.url = (options?: RouteQueryOptions) => {
+    return payouts.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Admin\FinanceController::payouts
+* @see app/Http/Controllers/Admin/FinanceController.php:312
+* @route '/api/admin/finance/payouts'
+*/
+payouts.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: payouts.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Admin\FinanceController::payouts
+* @see app/Http/Controllers/Admin/FinanceController.php:312
+* @route '/api/admin/finance/payouts'
+*/
+payouts.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: payouts.url(options),
+    method: 'head',
+})
+
+/**
+* @see \App\Http\Controllers\Admin\FinanceController::payouts
+* @see app/Http/Controllers/Admin/FinanceController.php:312
+* @route '/api/admin/finance/payouts'
+*/
+const payoutsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: payouts.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Admin\FinanceController::payouts
+* @see app/Http/Controllers/Admin/FinanceController.php:312
+* @route '/api/admin/finance/payouts'
+*/
+payoutsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: payouts.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Admin\FinanceController::payouts
+* @see app/Http/Controllers/Admin/FinanceController.php:312
+* @route '/api/admin/finance/payouts'
+*/
+payoutsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: payouts.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+payouts.form = payoutsForm
+
+/**
 * @see \App\Http\Controllers\Admin\FinanceController::payout
 * @see app/Http/Controllers/Admin/FinanceController.php:70
 * @route '/api/admin/finance/payouts'
@@ -381,7 +462,7 @@ payout.form = payoutForm
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::refund
-* @see app/Http/Controllers/Admin/FinanceController.php:249
+* @see app/Http/Controllers/Admin/FinanceController.php:263
 * @route '/api/admin/finance/refund/{booking}'
 */
 export const refund = (args: { booking: string | number } | [booking: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -396,7 +477,7 @@ refund.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::refund
-* @see app/Http/Controllers/Admin/FinanceController.php:249
+* @see app/Http/Controllers/Admin/FinanceController.php:263
 * @route '/api/admin/finance/refund/{booking}'
 */
 refund.url = (args: { booking: string | number } | [booking: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -423,7 +504,7 @@ refund.url = (args: { booking: string | number } | [booking: string | number ] |
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::refund
-* @see app/Http/Controllers/Admin/FinanceController.php:249
+* @see app/Http/Controllers/Admin/FinanceController.php:263
 * @route '/api/admin/finance/refund/{booking}'
 */
 refund.post = (args: { booking: string | number } | [booking: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -433,7 +514,7 @@ refund.post = (args: { booking: string | number } | [booking: string | number ] 
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::refund
-* @see app/Http/Controllers/Admin/FinanceController.php:249
+* @see app/Http/Controllers/Admin/FinanceController.php:263
 * @route '/api/admin/finance/refund/{booking}'
 */
 const refundForm = (args: { booking: string | number } | [booking: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -443,7 +524,7 @@ const refundForm = (args: { booking: string | number } | [booking: string | numb
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::refund
-* @see app/Http/Controllers/Admin/FinanceController.php:249
+* @see app/Http/Controllers/Admin/FinanceController.php:263
 * @route '/api/admin/finance/refund/{booking}'
 */
 refundForm.post = (args: { booking: string | number } | [booking: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -453,6 +534,6 @@ refundForm.post = (args: { booking: string | number } | [booking: string | numbe
 
 refund.form = refundForm
 
-const FinanceController = { summary, transactions, refunds, commissions, payout, refund }
+const FinanceController = { summary, transactions, refunds, commissions, payouts, payout, refund }
 
 export default FinanceController

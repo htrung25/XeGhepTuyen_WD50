@@ -37,6 +37,7 @@ import {
     refunds,
     commissions,
     payout,
+    payouts as financePayouts,
     refund as financeRefund,
 } from '@/actions/App/Http/Controllers/Admin/FinanceController';
 import {
@@ -173,6 +174,8 @@ export const adminApi = {
     getCommissions: (params?: Params) =>
         apiClient.send(commissions({ query: params as QueryParams })),
     createPayout: (data: unknown) => apiClient.send(payout(), data),
+    getPayoutHistory: (params?: Params) =>
+        apiClient.send(financePayouts({ query: params as QueryParams })),
     refundBooking: (bookingId: string, data: { amount: number; reason: string }) =>
         apiClient.send<{ amount: number }>(financeRefund(bookingId), data),
 
