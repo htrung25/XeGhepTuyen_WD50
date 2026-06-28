@@ -1,10 +1,16 @@
 <script setup lang="ts">
+import { watchDebounced } from '@vueuse/core';
 import { ref, onMounted, watch } from 'vue';
 import { adminApi } from '@/api/admin.api';
 import { useCan } from '@/composables/useCan';
 const { can } = useCan();
 
-type TabKey = 'overview' | 'transactions' | 'commissions' | 'refunds';
+type TabKey =
+    | 'overview'
+    | 'transactions'
+    | 'commissions'
+    | 'refunds'
+    | 'anomalies';
 
 interface FinanceSummary {
     total_revenue: number;
@@ -32,6 +38,7 @@ interface Commission {
 
 interface Transaction {
     id: string;
+    booking_id: string | null;
     type: string;
     amount: number;
     booking_code: string;
@@ -59,9 +66,38 @@ const activeTab = ref<TabKey>('overview');
 const summary = ref<FinanceSummary | null>(null);
 const commissions = ref<Commission[]>([]);
 const transactions = ref<Transaction[]>([]);
+// Bộ lọc + phân trang giao dịch
+const txnSearch = ref('');
+const txnMethod = ref('');
+const txnStatus = ref('');
+const txnDateFrom = ref('');
+const txnDateTo = ref('');
+const txnPage = ref(1);
+const txnTotalPages = ref(1);
+const txnLoaded = ref(false);
 const refunds = ref<Refund[]>([]);
 const refundsLoading = ref(false);
 const refundsLoaded = ref(false);
+// Lịch sử quyết toán đã chi
+interface PayoutHistory {
+    id: string;
+    operator_name: string;
+    amount: number;
+    note: string | null;
+    processed_at: string | null;
+}
+const payoutHistory = ref<PayoutHistory[]>([]);
+const payoutHistoryLoaded = ref(false);
+// Cảnh báo giao dịch bất thường
+interface Anomaly {
+    contact_phone: string;
+    contact_name: string;
+    booking_count: number;
+    total_amount: number;
+}
+const anomalies = ref<Anomaly[]>([]);
+const anomaliesLoaded = ref(false);
+const exporting = ref(false);
 const isLoading = ref(true);
 const errorMsg = ref('');
 
@@ -70,11 +106,19 @@ const showPayoutModal = ref(false);
 const selectedCommission = ref<Commission | null>(null);
 const payoutLoading = ref(false);
 
+// Refund modal (hoàn tiền thủ công)
+const showRefundModal = ref(false);
+const selectedTxn = ref<Transaction | null>(null);
+const refundAmount = ref(0);
+const refundReason = ref('');
+const refundLoading = ref(false);
+
 const tabs: { key: TabKey; label: string }[] = [
     { key: 'overview', label: 'Tổng quan' },
     { key: 'transactions', label: 'Giao dịch' },
     { key: 'commissions', label: 'Quyết toán nhà xe' },
     { key: 'refunds', label: 'Hoàn tiền' },
+    { key: 'anomalies', label: 'Cảnh báo' },
 ];
 
 const commissionStatusMap: Record<string, { label: string; class: string }> = {
@@ -138,8 +182,61 @@ async function loadData() {
 }
 
 async function loadTransactions() {
-    const { data, error } = await adminApi.getFinanceTransactions();
-    if (!error) transactions.value = (data as Transaction[]) ?? [];
+    const params: Record<string, unknown> = { page: txnPage.value };
+    if (txnSearch.value.trim()) params.search = txnSearch.value.trim();
+    if (txnMethod.value) params.method = txnMethod.value;
+    if (txnStatus.value) params.status = txnStatus.value;
+    if (txnDateFrom.value) params.date_from = txnDateFrom.value;
+    if (txnDateTo.value) params.date_to = txnDateTo.value;
+    const { data, meta, error } = await adminApi.getFinanceTransactions(params);
+    txnLoaded.value = true;
+    if (!error) {
+        transactions.value = (data as Transaction[]) ?? [];
+        txnTotalPages.value = meta?.last_page ?? 1;
+    }
+}
+
+function onTxnFilter() {
+    txnPage.value = 1;
+    loadTransactions();
+}
+
+function changeTxnPage(p: number) {
+    if (p < 1 || p > txnTotalPages.value) return;
+    txnPage.value = p;
+    loadTransactions();
+}
+
+// Bộ lọc tự động (debounce ô tìm kiếm; tức thì cho select/ngày)
+watchDebounced(txnSearch, onTxnFilter, { debounce: 350 });
+watch([txnMethod, txnStatus, txnDateFrom, txnDateTo], onTxnFilter);
+
+async function loadPayoutHistory() {
+    const { data, error } = await adminApi.getPayoutHistory();
+    payoutHistoryLoaded.value = true;
+    if (!error) payoutHistory.value = (data as PayoutHistory[]) ?? [];
+}
+
+async function loadAnomalies() {
+    const { data, error } = await adminApi.getAnomalies();
+    anomaliesLoaded.value = true;
+    if (!error) anomalies.value = (data as Anomaly[]) ?? [];
+}
+
+async function exportCsv(type: 'transactions' | 'commissions') {
+    exporting.value = true;
+    const { data, error } = await adminApi.exportFinance(type);
+    exporting.value = false;
+    if (error || !data) {
+        alert(error || 'Có lỗi khi xuất file');
+        return;
+    }
+    const url = URL.createObjectURL(data as Blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${type === 'commissions' ? 'quyet-toan' : 'giao-dich'}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
 }
 
 async function loadRefunds() {
@@ -168,12 +265,42 @@ async function confirmPayout() {
     }
     showPayoutModal.value = false;
     await loadData();
+    await loadPayoutHistory();
+}
+
+function openRefund(t: Transaction) {
+    selectedTxn.value = t;
+    refundAmount.value = t.amount;
+    refundReason.value = '';
+    showRefundModal.value = true;
+}
+
+async function confirmRefund() {
+    if (!selectedTxn.value?.booking_id) return;
+    if (!refundReason.value.trim()) {
+        alert('Vui lòng nhập lý do hoàn tiền');
+        return;
+    }
+    refundLoading.value = true;
+    const { error } = await adminApi.refundBooking(selectedTxn.value.booking_id, {
+        amount: refundAmount.value,
+        reason: refundReason.value.trim(),
+    });
+    refundLoading.value = false;
+    if (error) {
+        alert(error);
+        return;
+    }
+    showRefundModal.value = false;
+    await loadTransactions();
+    await loadData();
 }
 
 watch(activeTab, (tab) => {
-    if (tab === 'transactions' && transactions.value.length === 0)
-        loadTransactions();
+    if (tab === 'transactions' && !txnLoaded.value) loadTransactions();
+    if (tab === 'commissions' && !payoutHistoryLoaded.value) loadPayoutHistory();
     if (tab === 'refunds' && !refundsLoaded.value) loadRefunds();
+    if (tab === 'anomalies' && !anomaliesLoaded.value) loadAnomalies();
 });
 
 onMounted(loadData);
@@ -347,6 +474,58 @@ onMounted(loadData);
 
             <!-- Transactions tab -->
             <div v-else-if="activeTab === 'transactions'">
+                <!-- Bộ lọc -->
+                <div
+                    class="mb-4 grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-5"
+                >
+                    <input
+                        v-model="txnSearch"
+                        type="text"
+                        placeholder="Tìm mã vé, khách, SĐT..."
+                        class="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
+                    />
+                    <select
+                        v-model="txnMethod"
+                        class="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-red-500 focus:outline-none"
+                    >
+                        <option value="">Tất cả phương thức</option>
+                        <option value="momo">MoMo</option>
+                        <option value="vnpay">VNPay</option>
+                        <option value="cash">Tiền mặt</option>
+                        <option value="wallet">Ví</option>
+                    </select>
+                    <select
+                        v-model="txnStatus"
+                        class="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-red-500 focus:outline-none"
+                    >
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="success">Thành công</option>
+                        <option value="pending">Chờ xử lý</option>
+                        <option value="failed">Thất bại</option>
+                        <option value="refunded">Đã hoàn tiền</option>
+                    </select>
+                    <input
+                        v-model="txnDateFrom"
+                        type="date"
+                        class="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-red-500 focus:outline-none"
+                    />
+                    <input
+                        v-model="txnDateTo"
+                        type="date"
+                        class="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-red-500 focus:outline-none"
+                    />
+                </div>
+
+                <div class="mb-3 flex justify-end">
+                    <button
+                        @click="exportCsv('transactions')"
+                        :disabled="exporting"
+                        class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100 disabled:opacity-60"
+                    >
+                        {{ exporting ? 'Đang xuất...' : 'Xuất CSV' }}
+                    </button>
+                </div>
+
                 <div
                     class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
                 >
@@ -399,12 +578,18 @@ onMounted(loadData);
                                     >
                                         Thời gian
                                     </th>
+                                    <th
+                                        v-if="can('finance.refund')"
+                                        class="px-4 py-3 text-center text-xs font-medium tracking-wide text-gray-500 uppercase"
+                                    >
+                                        Thao tác
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
                                 <tr v-if="transactions.length === 0">
                                     <td
-                                        colspan="9"
+                                        :colspan="can('finance.refund') ? 10 : 9"
                                         class="px-4 py-12 text-center text-gray-400"
                                     >
                                         Không có giao dịch nào
@@ -474,15 +659,61 @@ onMounted(loadData);
                                             ).toLocaleString('vi-VN')
                                         }}
                                     </td>
+                                    <td
+                                        v-if="can('finance.refund')"
+                                        class="px-4 py-3 text-center"
+                                    >
+                                        <button
+                                            v-if="t.status === 'success' && t.booking_id"
+                                            @click="openRefund(t)"
+                                            class="rounded-lg border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-medium text-orange-700 transition-colors hover:bg-orange-100"
+                                        >
+                                            Hoàn tiền
+                                        </button>
+                                        <span v-else class="text-xs text-gray-300">—</span>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
+
+                <!-- Phân trang -->
+                <div
+                    v-if="txnTotalPages > 1"
+                    class="mt-4 flex items-center justify-end gap-2"
+                >
+                    <button
+                        @click="changeTxnPage(txnPage - 1)"
+                        :disabled="txnPage === 1"
+                        class="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                    >
+                        Trước
+                    </button>
+                    <span class="text-xs text-gray-600"
+                        >Trang {{ txnPage }} / {{ txnTotalPages }}</span
+                    >
+                    <button
+                        @click="changeTxnPage(txnPage + 1)"
+                        :disabled="txnPage === txnTotalPages"
+                        class="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                    >
+                        Sau
+                    </button>
+                </div>
             </div>
 
             <!-- Commissions/Settlement tab -->
             <div v-else-if="activeTab === 'commissions'">
+                <div class="mb-3 flex justify-end">
+                    <button
+                        @click="exportCsv('commissions')"
+                        :disabled="exporting"
+                        class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100 disabled:opacity-60"
+                    >
+                        {{ exporting ? 'Đang xuất...' : 'Xuất CSV' }}
+                    </button>
+                </div>
                 <div
                     class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
                 >
@@ -616,6 +847,81 @@ onMounted(loadData);
                         </table>
                     </div>
                 </div>
+
+                <!-- Lịch sử quyết toán đã chi -->
+                <div class="mt-6">
+                    <h3 class="mb-3 text-sm font-semibold text-gray-700">
+                        Lịch sử quyết toán đã chi
+                    </h3>
+                    <div
+                        class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+                    >
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                                        >
+                                            Nhà xe
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500"
+                                        >
+                                            Số tiền
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                                        >
+                                            Ghi chú
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                                        >
+                                            Thời gian
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    <tr v-if="payoutHistory.length === 0">
+                                        <td
+                                            colspan="4"
+                                            class="px-4 py-8 text-center text-gray-400"
+                                        >
+                                            Chưa có đợt quyết toán nào
+                                        </td>
+                                    </tr>
+                                    <tr
+                                        v-for="p in payoutHistory"
+                                        :key="p.id"
+                                        class="hover:bg-slate-50"
+                                    >
+                                        <td class="px-4 py-3 font-medium text-gray-900">
+                                            {{ p.operator_name }}
+                                        </td>
+                                        <td
+                                            class="px-4 py-3 text-right font-semibold text-green-700"
+                                        >
+                                            {{ fmt(p.amount) }}
+                                        </td>
+                                        <td class="px-4 py-3 text-gray-600">
+                                            {{ p.note || '—' }}
+                                        </td>
+                                        <td class="px-4 py-3 text-xs text-gray-500">
+                                            {{
+                                                p.processed_at
+                                                    ? new Date(
+                                                          p.processed_at,
+                                                      ).toLocaleString('vi-VN')
+                                                    : '—'
+                                            }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Refunds tab -->
@@ -737,6 +1043,81 @@ onMounted(loadData);
                     </div>
                 </div>
             </div>
+
+            <!-- Anomalies tab (cảnh báo bất thường) -->
+            <div v-else-if="activeTab === 'anomalies'">
+                <div
+                    class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+                >
+                    <div
+                        class="border-b border-slate-100 bg-orange-50 px-4 py-3 text-sm text-orange-800"
+                    >
+                        Khách (theo SĐT liên hệ) đặt từ 3 vé trở lên — cần rà
+                        soát gian lận/spam.
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                                    >
+                                        SĐT liên hệ
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                                    >
+                                        Tên
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500"
+                                    >
+                                        Số vé
+                                    </th>
+                                    <th
+                                        class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500"
+                                    >
+                                        Tổng giá trị
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr v-if="anomalies.length === 0">
+                                    <td
+                                        colspan="4"
+                                        class="px-4 py-12 text-center text-gray-400"
+                                    >
+                                        Không phát hiện bất thường
+                                    </td>
+                                </tr>
+                                <tr
+                                    v-for="a in anomalies"
+                                    :key="a.contact_phone"
+                                    class="hover:bg-slate-50"
+                                >
+                                    <td class="px-4 py-3 font-mono text-gray-700">
+                                        {{ a.contact_phone }}
+                                    </td>
+                                    <td class="px-4 py-3 text-gray-700">
+                                        {{ a.contact_name }}
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        <span
+                                            class="inline-flex rounded-full bg-orange-100 px-2 py-0.5 text-xs font-semibold text-orange-700"
+                                            >{{ a.booking_count }}</span
+                                        >
+                                    </td>
+                                    <td
+                                        class="px-4 py-3 text-right font-semibold text-gray-900"
+                                    >
+                                        {{ fmt(a.total_amount) }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </template>
     </div>
 
@@ -796,6 +1177,80 @@ onMounted(loadData);
                                 ? 'Đang xử lý...'
                                 : 'Xác nhận thanh toán'
                         }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </Teleport>
+
+    <!-- Refund modal (hoàn tiền thủ công) -->
+    <Teleport to="body">
+        <div
+            v-if="showRefundModal"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        >
+            <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+                <h3 class="mb-1 text-lg font-semibold text-gray-900">
+                    Hoàn tiền thủ công
+                </h3>
+                <p class="mb-4 text-sm text-gray-500">
+                    Hoàn tiền cho vé
+                    <span class="font-mono font-medium text-gray-700">{{
+                        selectedTxn?.booking_code
+                    }}</span>
+                    — khách {{ selectedTxn?.customer }}
+                </p>
+
+                <div class="space-y-4">
+                    <div>
+                        <label
+                            class="mb-1.5 block text-sm font-medium text-gray-700"
+                            >Số tiền hoàn (tối đa
+                            {{ fmt(selectedTxn?.amount ?? 0) }})</label
+                        >
+                        <input
+                            v-model.number="refundAmount"
+                            type="number"
+                            min="1"
+                            :max="selectedTxn?.amount"
+                            class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
+                        />
+                    </div>
+                    <div>
+                        <label
+                            class="mb-1.5 block text-sm font-medium text-gray-700"
+                            >Lý do hoàn tiền</label
+                        >
+                        <textarea
+                            v-model="refundReason"
+                            rows="3"
+                            placeholder="Nhập lý do hoàn tiền cho khách..."
+                            class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
+                        />
+                    </div>
+                </div>
+
+                <div
+                    class="my-4 rounded-lg border border-orange-200 bg-orange-50 p-3 text-xs text-orange-800"
+                >
+                    Vé online sẽ được hoàn về ví khách; vé tiền mặt chỉ đánh dấu
+                    để đối soát (nhà xe hoàn trực tiếp). Khách sẽ nhận SMS thông
+                    báo.
+                </div>
+
+                <div class="flex gap-3">
+                    <button
+                        @click="showRefundModal = false"
+                        class="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                    >
+                        Hủy
+                    </button>
+                    <button
+                        @click="confirmRefund"
+                        :disabled="refundLoading"
+                        class="flex-1 rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-orange-700 disabled:opacity-60"
+                    >
+                        {{ refundLoading ? 'Đang xử lý...' : 'Xác nhận hoàn tiền' }}
                     </button>
                 </div>
             </div>

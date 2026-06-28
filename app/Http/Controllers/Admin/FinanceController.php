@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\BookingPaymentStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\RefundBookingRequest;
+use App\Jobs\SendSmsNotificationJob;
+use App\Models\Booking;
 use App\Models\Operator;
 use App\Models\Payment;
 use App\Models\Payout;
-use App\Services\SettlementService;
 use App\Services\AuditLogService;
+use App\Services\PaymentService;
+use App\Services\SettlementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -15,7 +20,10 @@ use Illuminate\Support\Facades\DB;
 
 class FinanceController extends Controller
 {
-    public function __construct(private readonly SettlementService $settlementService) {}
+    public function __construct(
+        private readonly SettlementService $settlementService,
+        private readonly PaymentService $paymentService,
+    ) {}
 
     /** Tổng quan tài chính nền tảng (toàn thời gian) cho Admin */
     public function summary(Request $request): JsonResponse
@@ -186,6 +194,16 @@ class FinanceController extends Controller
         $payments = Payment::with(['booking.user', 'booking.trip.route.operator'])
             ->when($request->input('method'), fn ($q) => $q->where('method', $request->input('method')))
             ->when($request->input('status'), fn ($q) => $q->where('status', $request->input('status')))
+            ->when($request->input('date_from'), fn ($q) => $q->whereDate('created_at', '>=', $request->input('date_from')))
+            ->when($request->input('date_to'), fn ($q) => $q->whereDate('created_at', '<=', $request->input('date_to')))
+            ->when($request->input('search'), function ($q) use ($request) {
+                $search = $request->input('search');
+                $q->whereHas('booking', function ($b) use ($search) {
+                    $b->where('booking_code', 'LIKE', "%{$search}%")
+                        ->orWhere('contact_phone', 'LIKE', "%{$search}%")
+                        ->orWhereHas('user', fn ($u) => $u->where('full_name', 'LIKE', "%{$search}%"));
+                });
+            })
             ->latest('paid_at')
             ->paginate(30);
 
@@ -201,6 +219,7 @@ class FinanceController extends Controller
 
             return [
                 'id' => $payment->id,
+                'booking_id' => $payment->booking?->id,
                 'type' => $payment->status->value === 'refunded' ? 'refund' : 'booking',
                 'amount' => $payment->amount,
                 'booking_code' => $payment->booking ? $payment->booking->booking_code : 'N/A',
@@ -215,7 +234,11 @@ class FinanceController extends Controller
         return response()->json([
             'success' => true,
             'data' => $mapped,
-            'meta' => ['current_page' => $payments->currentPage(), 'total' => $payments->total()],
+            'meta' => [
+                'current_page' => $payments->currentPage(),
+                'last_page' => $payments->lastPage(),
+                'total' => $payments->total(),
+            ],
         ]);
     }
 
@@ -230,6 +253,147 @@ class FinanceController extends Controller
             'success' => true,
             'data' => $refunds->items(),
             'meta' => ['current_page' => $refunds->currentPage(), 'total' => $refunds->total()],
+        ]);
+    }
+
+    /**
+     * Hoàn tiền thủ công cho 1 vé (PRD F-A03). Tái dùng PaymentService::refund:
+     * vé online → hoàn về ví khách; vé tiền mặt → chỉ đánh dấu để đối soát.
+     */
+    public function refund(RefundBookingRequest $request, string $booking): JsonResponse
+    {
+        $bookingModel = Booking::with(['payment', 'user'])->find($booking);
+
+        if (! $bookingModel) {
+            return response()->json(['success' => false, 'message' => 'Không tìm thấy vé', 'code' => 'BOOKING_NOT_FOUND'], 404);
+        }
+
+        if ($bookingModel->payment_status !== BookingPaymentStatus::Paid) {
+            return response()->json(['success' => false, 'message' => 'Chỉ hoàn tiền được vé đã thanh toán', 'code' => 'BOOKING_NOT_PAID'], 422);
+        }
+
+        $amount = (int) $request->validated('amount');
+        $final = (int) $bookingModel->final_amount;
+        if ($amount > $final) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Số tiền hoàn ('.number_format($amount, 0, ',', '.').'đ) vượt quá giá trị vé ('.number_format($final, 0, ',', '.').'đ)',
+                'code' => 'REFUND_EXCEEDS_TOTAL',
+            ], 422);
+        }
+
+        $reason = (string) $request->validated('reason');
+
+        // Hoàn tiền trong transaction (PaymentService) → đánh dấu payment/booking refunded.
+        $this->paymentService->refund($bookingModel, $amount);
+
+        // Thông báo khách qua SMS (môi trường dev: hiện ở terminal).
+        SendSmsNotificationJob::dispatch(
+            $bookingModel->contact_phone,
+            "[XeGhep] Vé {$bookingModel->booking_code} đã được hoàn ".number_format($amount, 0, ',', '.')."đ. Lý do: {$reason}",
+            $bookingModel->id,
+        )->onQueue('notifications');
+
+        app(AuditLogService::class)->log(
+            action: 'refund_booking',
+            model: $bookingModel,
+            description: 'Đã hoàn '.number_format($amount, 0, ',', '.')."đ cho vé {$bookingModel->booking_code}. Lý do: {$reason}",
+            newValues: ['amount' => $amount, 'reason' => $reason]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã hoàn '.number_format($amount, 0, ',', '.').'đ cho vé '.$bookingModel->booking_code,
+            'data' => ['amount' => $amount],
+        ]);
+    }
+
+    /**
+     * Phát hiện giao dịch bất thường (PRD F-A03): cùng SĐT liên hệ đặt nhiều vé
+     * (ngưỡng mặc định 3). Dùng để admin rà soát gian lận/spam.
+     */
+    public function anomalies(Request $request): JsonResponse
+    {
+        $threshold = max(2, (int) $request->input('min_bookings', 3));
+
+        $rows = Booking::query()
+            ->selectRaw('contact_phone, MAX(contact_name) as contact_name, COUNT(*) as booking_count, SUM(final_amount) as total_amount')
+            ->groupBy('contact_phone')
+            ->having('booking_count', '>=', $threshold)
+            ->orderByDesc('booking_count')
+            ->limit(50)
+            ->get()
+            ->map(fn ($r) => [
+                'contact_phone' => $r->contact_phone,
+                'contact_name' => $r->contact_name,
+                'booking_count' => (int) $r->booking_count,
+                'total_amount' => (int) $r->total_amount,
+            ]);
+
+        return response()->json(['success' => true, 'data' => $rows]);
+    }
+
+    /** Xuất báo cáo CSV (không cần package): type=transactions|commissions. */
+    public function export(Request $request): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $type = $request->input('type') === 'commissions' ? 'commissions' : 'transactions';
+
+        if ($type === 'commissions') {
+            $rows = $this->operatorSettlements()
+                ->map(fn ($r) => [
+                    $r['operator_name'], $r['revenue'], $r['commission'],
+                    $r['net_amount'], $r['status'],
+                ]);
+            $header = ['Nhà xe', 'Doanh thu', 'Hoa hồng', 'Còn lại (net)', 'Trạng thái'];
+            $filename = 'quyet-toan-'.now()->format('Ymd-His').'.csv';
+        } else {
+            $rows = Payment::with(['booking'])->latest('paid_at')->limit(5000)->get()
+                ->map(fn (Payment $p) => [
+                    $p->booking?->booking_code ?? 'N/A',
+                    (int) $p->amount,
+                    $p->method?->value ?? '',
+                    $p->status?->value ?? '',
+                    optional($p->paid_at ?? $p->created_at)->format('Y-m-d H:i'),
+                ]);
+            $header = ['Mã vé', 'Số tiền', 'Phương thức', 'Trạng thái', 'Thời gian'];
+            $filename = 'giao-dich-'.now()->format('Ymd-His').'.csv';
+        }
+
+        return response()->streamDownload(function () use ($header, $rows) {
+            $out = fopen('php://output', 'w');
+            fprintf($out, "\xEF\xBB\xBF"); // BOM để Excel đọc UTF-8
+            fputcsv($out, $header);
+            foreach ($rows as $row) {
+                fputcsv($out, $row);
+            }
+            fclose($out);
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    /** Lịch sử các đợt quyết toán đã chi cho nhà xe (Payout status=paid). */
+    public function payouts(Request $request): JsonResponse
+    {
+        $payouts = Payout::with('operator')
+            ->where('status', 'paid')
+            ->latest('processed_at')
+            ->paginate(20);
+
+        $mapped = collect($payouts->items())->map(fn (Payout $p) => [
+            'id' => $p->id,
+            'operator_name' => $p->operator?->company_name ?? 'N/A',
+            'amount' => (int) $p->amount,
+            'note' => $p->note,
+            'processed_at' => $p->processed_at?->toIso8601String(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $mapped,
+            'meta' => [
+                'current_page' => $payouts->currentPage(),
+                'last_page' => $payouts->lastPage(),
+                'total' => $payouts->total(),
+            ],
         ]);
     }
 }

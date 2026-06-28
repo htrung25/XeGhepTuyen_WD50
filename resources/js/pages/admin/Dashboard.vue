@@ -30,7 +30,7 @@ const statusMap: Record<string, { label: string; class: string }> = {
     pending: { label: 'Chờ xử lý', class: 'bg-yellow-100 text-yellow-700' },
     confirmed: { label: 'Đã xác nhận', class: 'bg-blue-100 text-blue-700' },
     in_progress: { label: 'Đang đi', class: 'bg-green-100 text-green-700' },
-    completed: { label: 'Hoàn thành', class: 'bg-gray-100 text-gray-600' },
+    completed: { label: 'Hoàn thành', class: 'bg-green-50 text-green-700' },
     cancelled: { label: 'Đã hủy', class: 'bg-red-100 text-red-700' },
 };
 
