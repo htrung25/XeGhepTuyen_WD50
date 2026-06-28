@@ -33,6 +33,15 @@ class SendSmsNotificationJob implements ShouldQueue
         $secretKey = config('services.esms.secret_key');
         $brandName = config('services.esms.brand_name', 'XeGhep');
 
+        // Fallback dev: ESMS chưa cấu hình → in nội dung SMS (gồm mật khẩu tạm lúc
+        // duyệt nhà xe/tài xế) ra log/terminal thay vì gọi API (sẽ thất bại + retry).
+        // Production có key thật thì nhánh này KHÔNG chạy → không rò rỉ.
+        if (blank($apiKey) || blank($secretKey)) {
+            Log::info("[SMS][DEV] Gửi tới {$this->phone}: {$this->message}");
+
+            return;
+        }
+
         $response = Http::post('https://rest.esms.vn/MainService.svc/json/SendMultipleMessage_V4_post_json/', [
             'ApiKey'    => $apiKey,
             'SecretKey' => $secretKey,
