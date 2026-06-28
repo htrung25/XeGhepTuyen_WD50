@@ -10,9 +10,11 @@ use App\Models\Booking;
 use App\Models\Operator;
 use App\Models\Payment;
 use App\Models\Payout;
+use App\Models\Trip;
 use App\Services\AuditLogService;
 use App\Services\PaymentService;
 use App\Services\SettlementService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -395,5 +397,109 @@ class FinanceController extends Controller
                 'total' => $payouts->total(),
             ],
         ]);
+    }
+
+    /**
+     * Báo cáo doanh thu nền tảng theo kỳ (P3). Trục thời gian = giờ chạy chuyến (depart_at).
+     * KHÔNG đụng settlement/payout (vốn tích lũy toàn thời gian). Tái dùng
+     * SettlementService::forOperator(..., $tripIds) → hoa hồng khớp tuyệt đối quyết toán.
+     */
+    public function revenue(Request $request): JsonResponse
+    {
+        [$from, $to, $period] = $this->resolvePeriod($request);
+
+        // Tổng nền tảng + theo nhà xe (lặp operator, lọc chuyến theo kỳ qua depart_at).
+        $gmv = 0;
+        $commission = 0;
+        $cashCollected = 0;
+        $byOperator = [];
+
+        foreach (Operator::all() as $op) {
+            $tripIds = Trip::whereHas('vehicle', fn ($q) => $q->where('operator_id', $op->id))
+                ->whereBetween('depart_at', [$from, $to])
+                ->pluck('id');
+            if ($tripIds->isEmpty()) {
+                continue;
+            }
+            $s = $this->settlementService->forOperator($op->id, (float) $op->commission_rate, $tripIds);
+            if ($s['gross'] <= 0) {
+                continue;
+            }
+            $gmv += $s['gross'];
+            $commission += $s['commission'];
+            $cashCollected += $s['cash_gross'];
+            $byOperator[] = [
+                'operator_name' => $op->company_name,
+                'revenue' => $s['gross'],
+                'commission' => $s['commission'],
+            ];
+        }
+        usort($byOperator, fn ($a, $b) => $b['revenue'] <=> $a['revenue']);
+
+        // Tập chuyến trong kỳ (platform-wide) cho chỉ số đếm + biểu đồ theo ngày.
+        $periodTripIds = Trip::whereBetween('depart_at', [$from, $to])->pluck('id');
+        $realized = Booking::whereIn('trip_id', $periodTripIds)
+            ->where('booking_status', 'completed')
+            ->where('payment_status', 'paid');
+
+        $totalTrips = (int) Trip::whereIn('id', $periodTripIds)->where('status', 'completed')->count();
+        $totalBookings = (int) (clone $realized)->count();
+        $totalPassengers = (int) (clone $realized)->sum('passenger_count');
+        $totalRefunds = (int) Payment::where('status', 'refunded')
+            ->whereBetween('refunded_at', [$from, $to])
+            ->sum('refund_amount');
+
+        // Doanh thu theo NGÀY CHẠY (biểu đồ).
+        $daily = (clone $realized)
+            ->join('trips', 'bookings.trip_id', '=', 'trips.id')
+            ->selectRaw('DATE(trips.depart_at) as date, COUNT(*) as total_bookings, SUM(bookings.final_amount) as revenue')
+            ->groupByRaw('DATE(trips.depart_at)')
+            ->orderBy('date')
+            ->get()
+            ->map(fn ($r) => [
+                'date' => $r->date,
+                'total_bookings' => (int) $r->total_bookings,
+                'revenue' => (int) $r->revenue,
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'period' => $period,
+                'from' => $from->format('Y-m-d'),
+                'to' => $to->format('Y-m-d'),
+                'summary' => [
+                    'gmv' => $gmv,
+                    'commission' => $commission,
+                    'cash_collected' => $cashCollected,
+                    'platform_held' => $gmv - $cashCollected,
+                    'total_trips' => $totalTrips,
+                    'total_bookings' => $totalBookings,
+                    'total_passengers' => $totalPassengers,
+                    'total_refunds' => $totalRefunds,
+                ],
+                'by_operator' => $byOperator,
+                'daily' => $daily,
+            ],
+        ]);
+    }
+
+    /** Giải kỳ today/week/month/custom → [from, to, label] (mirror Operator/RevenueController). */
+    private function resolvePeriod(Request $request): array
+    {
+        $period = $request->get('period', 'month');
+
+        [$from, $to] = match ($period) {
+            'today' => [today(), today()->endOfDay()],
+            'week' => [now()->startOfWeek(), now()->endOfWeek()],
+            'month' => [now()->startOfMonth(), now()->endOfMonth()],
+            'custom' => [
+                Carbon::parse($request->input('from_date') ?: 'today')->startOfDay(),
+                Carbon::parse($request->input('to_date') ?: 'today')->endOfDay(),
+            ],
+            default => [now()->startOfMonth(), now()->endOfMonth()],
+        };
+
+        return [$from, $to, $period];
     }
 }

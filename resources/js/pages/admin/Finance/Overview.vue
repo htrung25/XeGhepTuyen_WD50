@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { watchDebounced } from '@vueuse/core';
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { adminApi } from '@/api/admin.api';
 import { useCan } from '@/composables/useCan';
 const { can } = useCan();
 
 type TabKey =
     | 'overview'
+    | 'report'
     | 'transactions'
     | 'commissions'
     | 'refunds'
@@ -98,6 +99,35 @@ interface Anomaly {
 const anomalies = ref<Anomaly[]>([]);
 const anomaliesLoaded = ref(false);
 const exporting = ref(false);
+// Báo cáo doanh thu theo kỳ (P3)
+interface ReportSummary {
+    gmv: number;
+    commission: number;
+    cash_collected: number;
+    platform_held: number;
+    total_trips: number;
+    total_bookings: number;
+    total_passengers: number;
+    total_refunds: number;
+}
+interface ByOperatorRow {
+    operator_name: string;
+    revenue: number;
+    commission: number;
+}
+interface DailyRow {
+    date: string;
+    total_bookings: number;
+    revenue: number;
+}
+const reportPeriod = ref<'today' | 'week' | 'month' | 'custom'>('month');
+const reportFrom = ref('');
+const reportTo = ref('');
+const reportSummary = ref<ReportSummary | null>(null);
+const reportByOperator = ref<ByOperatorRow[]>([]);
+const reportDaily = ref<DailyRow[]>([]);
+const reportLoading = ref(false);
+const reportLoaded = ref(false);
 const isLoading = ref(true);
 const errorMsg = ref('');
 
@@ -115,6 +145,7 @@ const refundLoading = ref(false);
 
 const tabs: { key: TabKey; label: string }[] = [
     { key: 'overview', label: 'Tổng quan' },
+    { key: 'report', label: 'Báo cáo' },
     { key: 'transactions', label: 'Giao dịch' },
     { key: 'commissions', label: 'Quyết toán nhà xe' },
     { key: 'refunds', label: 'Hoàn tiền' },
@@ -223,6 +254,44 @@ async function loadAnomalies() {
     if (!error) anomalies.value = (data as Anomaly[]) ?? [];
 }
 
+async function loadReport() {
+    reportLoading.value = true;
+    const params: Record<string, unknown> = { period: reportPeriod.value };
+    if (reportPeriod.value === 'custom') {
+        params.from_date = reportFrom.value;
+        params.to_date = reportTo.value;
+    }
+    const { data, error } = await adminApi.getRevenueReport(params);
+    reportLoading.value = false;
+    reportLoaded.value = true;
+    if (!error && data) {
+        const d = data as {
+            summary: ReportSummary;
+            by_operator: ByOperatorRow[];
+            daily: DailyRow[];
+        };
+        reportSummary.value = d.summary;
+        reportByOperator.value = d.by_operator ?? [];
+        reportDaily.value = d.daily ?? [];
+    }
+}
+
+const reportMaxRev = computed(() =>
+    Math.max(1, ...reportDaily.value.map((d) => d.revenue)),
+);
+function reportBarH(v: number) {
+    return Math.max(4, Math.round((v / reportMaxRev.value) * 120));
+}
+
+// Đổi kỳ → tải lại (custom đợi đủ 2 mốc ngày)
+watch(reportPeriod, () => {
+    if (reportPeriod.value !== 'custom') loadReport();
+});
+watch([reportFrom, reportTo], () => {
+    if (reportPeriod.value === 'custom' && reportFrom.value && reportTo.value)
+        loadReport();
+});
+
 async function exportCsv(type: 'transactions' | 'commissions') {
     exporting.value = true;
     const { data, error } = await adminApi.exportFinance(type);
@@ -298,6 +367,7 @@ async function confirmRefund() {
 
 watch(activeTab, (tab) => {
     if (tab === 'transactions' && !txnLoaded.value) loadTransactions();
+    if (tab === 'report' && !reportLoaded.value) loadReport();
     if (tab === 'commissions' && !payoutHistoryLoaded.value) loadPayoutHistory();
     if (tab === 'refunds' && !refundsLoaded.value) loadRefunds();
     if (tab === 'anomalies' && !anomaliesLoaded.value) loadAnomalies();
@@ -470,6 +540,225 @@ onMounted(loadData);
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Report tab (báo cáo theo kỳ) -->
+            <div v-else-if="activeTab === 'report'">
+                <!-- Bộ chọn kỳ -->
+                <div
+                    class="mb-5 flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white p-4"
+                >
+                    <div class="flex gap-1 rounded-lg bg-gray-100 p-1">
+                        <button
+                            v-for="p in [
+                                { v: 'today', l: 'Hôm nay' },
+                                { v: 'week', l: 'Tuần này' },
+                                { v: 'month', l: 'Tháng này' },
+                                { v: 'custom', l: 'Tùy chọn' },
+                            ]"
+                            :key="p.v"
+                            @click="reportPeriod = p.v as typeof reportPeriod"
+                            :class="[
+                                'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                                reportPeriod === p.v
+                                    ? 'bg-white text-gray-900 shadow-sm'
+                                    : 'text-gray-500 hover:text-gray-700',
+                            ]"
+                        >
+                            {{ p.l }}
+                        </button>
+                    </div>
+                    <template v-if="reportPeriod === 'custom'">
+                        <input
+                            v-model="reportFrom"
+                            type="date"
+                            class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700 focus:border-red-500 focus:outline-none"
+                        />
+                        <span class="text-sm text-gray-400">–</span>
+                        <input
+                            v-model="reportTo"
+                            type="date"
+                            class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700 focus:border-red-500 focus:outline-none"
+                        />
+                    </template>
+                    <span
+                        v-if="reportSummary"
+                        class="ml-auto text-xs text-gray-400"
+                        >Trục thời gian: giờ chạy chuyến</span
+                    >
+                </div>
+
+                <div v-if="reportLoading" class="py-12 text-center text-gray-400">
+                    Đang tải báo cáo...
+                </div>
+
+                <template v-else-if="reportSummary">
+                    <!-- KPI cards -->
+                    <div
+                        class="mb-5 grid grid-cols-2 gap-4 lg:grid-cols-4"
+                    >
+                        <div
+                            class="rounded-xl border border-slate-200 bg-white p-4"
+                        >
+                            <p class="text-xs text-gray-500">Doanh thu (GMV)</p>
+                            <p class="mt-1 text-lg font-bold text-gray-900">
+                                {{ fmt(reportSummary.gmv) }}
+                            </p>
+                        </div>
+                        <div
+                            class="rounded-xl border border-slate-200 bg-white p-4"
+                        >
+                            <p class="text-xs text-gray-500">
+                                Hoa hồng nền tảng
+                            </p>
+                            <p class="mt-1 text-lg font-bold text-emerald-600">
+                                {{ fmt(reportSummary.commission) }}
+                            </p>
+                        </div>
+                        <div
+                            class="rounded-xl border border-slate-200 bg-white p-4"
+                        >
+                            <p class="text-xs text-gray-500">Nền tảng giữ</p>
+                            <p class="mt-1 text-lg font-bold text-gray-900">
+                                {{ fmt(reportSummary.platform_held) }}
+                            </p>
+                        </div>
+                        <div
+                            class="rounded-xl border border-slate-200 bg-white p-4"
+                        >
+                            <p class="text-xs text-gray-500">Tiền mặt thu</p>
+                            <p class="mt-1 text-lg font-bold text-gray-900">
+                                {{ fmt(reportSummary.cash_collected) }}
+                            </p>
+                        </div>
+                        <div
+                            class="rounded-xl border border-slate-200 bg-white p-4"
+                        >
+                            <p class="text-xs text-gray-500">Số chuyến</p>
+                            <p class="mt-1 text-lg font-bold text-gray-900">
+                                {{ reportSummary.total_trips }}
+                            </p>
+                        </div>
+                        <div
+                            class="rounded-xl border border-slate-200 bg-white p-4"
+                        >
+                            <p class="text-xs text-gray-500">Số vé</p>
+                            <p class="mt-1 text-lg font-bold text-gray-900">
+                                {{ reportSummary.total_bookings }}
+                            </p>
+                        </div>
+                        <div
+                            class="rounded-xl border border-slate-200 bg-white p-4"
+                        >
+                            <p class="text-xs text-gray-500">Số khách</p>
+                            <p class="mt-1 text-lg font-bold text-gray-900">
+                                {{ reportSummary.total_passengers }}
+                            </p>
+                        </div>
+                        <div
+                            class="rounded-xl border border-slate-200 bg-white p-4"
+                        >
+                            <p class="text-xs text-gray-500">Hoàn tiền</p>
+                            <p class="mt-1 text-lg font-bold text-orange-600">
+                                {{ fmt(reportSummary.total_refunds) }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Biểu đồ doanh thu theo ngày -->
+                    <div
+                        class="mb-5 rounded-xl border border-slate-200 bg-white p-5"
+                    >
+                        <h3 class="mb-4 text-sm font-semibold text-gray-700">
+                            Doanh thu theo ngày
+                        </h3>
+                        <div
+                            v-if="reportDaily.length === 0"
+                            class="py-10 text-center text-sm text-gray-400"
+                        >
+                            Không có dữ liệu trong kỳ
+                        </div>
+                        <div
+                            v-else
+                            class="flex items-end gap-2 overflow-x-auto pb-2"
+                            style="min-height: 150px"
+                        >
+                            <div
+                                v-for="d in reportDaily"
+                                :key="d.date"
+                                class="flex shrink-0 flex-col items-center gap-1"
+                            >
+                                <span class="text-[10px] text-gray-400">{{
+                                    Math.round(d.revenue / 1000)
+                                }}k</span>
+                                <div
+                                    class="w-6 rounded-t bg-red-400 transition-colors hover:bg-red-500"
+                                    :style="{ height: reportBarH(d.revenue) + 'px' }"
+                                    :title="`${d.date}: ${fmt(d.revenue)}`"
+                                />
+                                <span class="text-[10px] text-gray-400">{{
+                                    d.date.slice(5)
+                                }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Doanh thu theo nhà xe -->
+                    <div
+                        class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+                    >
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th
+                                            class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                                        >
+                                            Nhà xe
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500"
+                                        >
+                                            Doanh thu
+                                        </th>
+                                        <th
+                                            class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500"
+                                        >
+                                            Hoa hồng
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    <tr v-if="reportByOperator.length === 0">
+                                        <td
+                                            colspan="3"
+                                            class="px-4 py-8 text-center text-gray-400"
+                                        >
+                                            Không có doanh thu trong kỳ
+                                        </td>
+                                    </tr>
+                                    <tr
+                                        v-for="r in reportByOperator"
+                                        :key="r.operator_name"
+                                        class="hover:bg-slate-50"
+                                    >
+                                        <td class="px-4 py-3 font-medium text-gray-900">
+                                            {{ r.operator_name }}
+                                        </td>
+                                        <td class="px-4 py-3 text-right text-gray-900">
+                                            {{ fmt(r.revenue) }}
+                                        </td>
+                                        <td
+                                            class="px-4 py-3 text-right font-semibold text-emerald-600"
+                                        >
+                                            {{ fmt(r.commission) }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </template>
             </div>
 
             <!-- Transactions tab -->

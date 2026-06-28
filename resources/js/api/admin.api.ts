@@ -39,6 +39,7 @@ import {
     payout,
     payouts as financePayouts,
     anomalies as financeAnomalies,
+    revenue as financeRevenue,
     exportMethod as financeExport,
     refund as financeRefund,
 } from '@/actions/App/Http/Controllers/Admin/FinanceController';
@@ -178,6 +179,8 @@ export const adminApi = {
     createPayout: (data: unknown) => apiClient.send(payout(), data),
     getPayoutHistory: (params?: Params) =>
         apiClient.send(financePayouts({ query: params as QueryParams })),
+    getRevenueReport: (params?: Params) =>
+        apiClient.send(financeRevenue({ query: params as QueryParams })),
     getAnomalies: (params?: Params) =>
         apiClient.send(financeAnomalies({ query: params as QueryParams })),
     exportFinance: (type: 'transactions' | 'commissions') =>
