@@ -1,5 +1,6 @@
 import AuthController from './AuthController'
 import DashboardController from './DashboardController'
+import NotificationController from './NotificationController'
 import OperatorController from './OperatorController'
 import PartnerApplicationController from './PartnerApplicationController'
 import DriverController from './DriverController'
@@ -15,6 +16,7 @@ import AdminStaffController from './AdminStaffController'
 const Admin = {
     AuthController: Object.assign(AuthController, AuthController),
     DashboardController: Object.assign(DashboardController, DashboardController),
+    NotificationController: Object.assign(NotificationController, NotificationController),
     OperatorController: Object.assign(OperatorController, OperatorController),
     PartnerApplicationController: Object.assign(PartnerApplicationController, PartnerApplicationController),
     DriverController: Object.assign(DriverController, DriverController),

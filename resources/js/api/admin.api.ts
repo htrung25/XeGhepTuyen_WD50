@@ -22,6 +22,7 @@ import { index as bookingsIndex } from '@/actions/App/Http/Controllers/Admin/Boo
 import {
     index as dashboard,
     map as dashboardMap,
+    pendingCounts as dashboardPendingCounts,
 } from '@/actions/App/Http/Controllers/Admin/DashboardController';
 import {
     index as driversIndex,
@@ -43,6 +44,11 @@ import {
     exportMethod as financeExport,
     refund as financeRefund,
 } from '@/actions/App/Http/Controllers/Admin/FinanceController';
+import {
+    index as notificationsIndex,
+    markRead as notificationMarkRead,
+    markAllRead as notificationsMarkAllRead,
+} from '@/actions/App/Http/Controllers/Admin/NotificationController';
 import {
     index as operatorsIndex,
     show as operatorShow,
@@ -104,6 +110,7 @@ export const adminApi = {
     // Dashboard
     getDashboard: () => apiClient.send(dashboard()),
     getDashboardMap: () => apiClient.send(dashboardMap()),
+    getPendingCounts: () => apiClient.send(dashboardPendingCounts()),
 
     // Operators
     getOperators: (params?: Params) =>
@@ -206,6 +213,13 @@ export const adminApi = {
         apiClient.send(auditLogsIndex({ query: params as QueryParams })),
     getAuditLog: (id: string) =>
         apiClient.send(auditLogShow(id)),
+
+    // Notifications
+    getNotifications: (params?: Params) =>
+        apiClient.send(notificationsIndex({ query: params as QueryParams })),
+    markNotificationRead: (id: string) =>
+        apiClient.send(notificationMarkRead(id)),
+    markAllNotificationsRead: () => apiClient.send(notificationsMarkAllRead()),
 
     // Roles (phân quyền)
     getPermissionCatalog: () => apiClient.send(rolesPermissions()),

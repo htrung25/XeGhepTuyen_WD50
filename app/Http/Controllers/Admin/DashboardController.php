@@ -7,10 +7,13 @@ use App\Http\Resources\Admin\LiveTripResource;
 use App\Models\Booking;
 use App\Models\Driver;
 use App\Models\Operator;
+use App\Models\PartnerApplication;
+use App\Models\Payout;
 use App\Models\Trip;
 use App\Models\User;
 use App\Repositories\Contracts\TripRepositoryInterface;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class DashboardController extends Controller
@@ -67,5 +70,27 @@ class DashboardController extends Controller
             'success' => true,
             'data' => LiveTripResource::collection($this->tripRepo->findInProgress()),
         ]);
+    }
+
+    /**
+     * Số việc đang CHỜ XỬ LÝ theo từng mục sidebar (badge). Phản ánh trạng thái
+     * thực tế (không phụ thuộc thông báo), gate theo quyền của admin đang đăng nhập.
+     */
+    public function pendingCounts(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $counts = [];
+
+        if ($user->hasPermission('operators.view')) {
+            $counts['/admin/operators'] = PartnerApplication::where('status', 'pending')->count();
+        }
+        if ($user->hasPermission('drivers.view')) {
+            $counts['/admin/drivers'] = Driver::where('status', 'pending')->count();
+        }
+        if ($user->hasPermission('finance.view')) {
+            $counts['/admin/finance'] = Payout::where('status', 'pending')->count();
+        }
+
+        return response()->json(['success' => true, 'data' => $counts]);
     }
 }

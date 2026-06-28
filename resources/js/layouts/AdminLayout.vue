@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { adminApi } from '@/api/admin.api';
-import { useAdminAuthStore } from '@/stores/admin.auth.store';
-import { useCan } from '@/composables/useCan';
 import { Toaster } from 'vue-sonner';
+import { adminApi } from '@/api/admin.api';
+import {
+    useAdminNotifications
+    
+} from '@/composables/useAdminNotifications';
+import type {AdminNotification} from '@/composables/useAdminNotifications';
+import { useCan } from '@/composables/useCan';
+import { useAdminAuthStore } from '@/stores/admin.auth.store';
 
 const route = useRoute();
 const router = useRouter();
@@ -12,7 +17,36 @@ const authStore = useAdminAuthStore();
 const { can } = useCan();
 
 const sidebarCollapsed = ref(false);
-const notifCount = ref(0);
+
+// Thông báo admin (polling)
+const {
+    items: notifItems,
+    unreadCount: notifCount,
+    load: loadNotifs,
+    markRead: markNotifRead,
+    markAllRead: markAllNotifsRead,
+} = useAdminNotifications();
+const notifOpen = ref(false);
+const notifRef = ref<HTMLElement | null>(null);
+
+function toggleNotif() {
+    notifOpen.value = !notifOpen.value;
+    if (notifOpen.value) loadNotifs();
+}
+
+async function onNotifClick(n: AdminNotification) {
+    await markNotifRead(n);
+    notifOpen.value = false;
+    if (n.data?.link) router.push(n.data.link);
+}
+
+// Số việc đang CHỜ XỬ LÝ theo mục sidebar (badge) — từ trạng thái thực tế của hệ
+// thống (không phụ thuộc thông báo), nên đơn/tài xế/yêu cầu cũ vẫn hiện badge.
+const pendingCounts = ref<Record<string, number>>({});
+async function loadPendingCounts() {
+    const { data } = await adminApi.getPendingCounts();
+    pendingCounts.value = (data as Record<string, number>) ?? {};
+}
 
 const adminName = computed(() => authStore.user?.full_name ?? 'Admin');
 const adminInitial = computed(() => adminName.value.charAt(0).toUpperCase());
@@ -21,13 +55,21 @@ const profileDropdownOpen = ref(false);
 const dropdownRef = ref<HTMLElement | null>(null);
 
 function handleClickOutside(event: MouseEvent) {
-    if (dropdownRef.value && !dropdownRef.value.contains(event.target as Node)) {
+    const target = event.target as Node;
+    if (dropdownRef.value && !dropdownRef.value.contains(target)) {
         profileDropdownOpen.value = false;
+    }
+    if (notifRef.value && !notifRef.value.contains(target)) {
+        notifOpen.value = false;
     }
 }
 
+let pendingTimer: ReturnType<typeof setInterval> | null = null;
+
 onMounted(async () => {
     document.addEventListener('click', handleClickOutside);
+    loadPendingCounts();
+    pendingTimer = setInterval(loadPendingCounts, 60000);
     // Làm mới quyền hiện tại (phòng khi vai trò bị admin khác thay đổi).
     const { data } = await adminApi.me();
     if (data) authStore.updateUser(data);
@@ -35,6 +77,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
     document.removeEventListener('click', handleClickOutside);
+    if (pendingTimer) clearInterval(pendingTimer);
 });
 
 const navItems = [
@@ -107,7 +150,7 @@ async function handleLogout() {
                         v-if="!item.permission || can(item.permission)"
                         :to="item.path"
                         :class="[
-                            'mx-2 mb-0.5 flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors',
+                            'relative mx-2 mb-0.5 flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors',
                             isActive(item.path)
                                 ? 'bg-red-600 text-white'
                                 : 'text-gray-400 hover:bg-gray-800 hover:text-white',
@@ -281,6 +324,22 @@ async function handleLogout() {
                         <span v-if="!sidebarCollapsed" class="truncate">{{
                             item.label
                         }}</span>
+                        <!-- Badge số việc đang chờ xử lý (mở rộng) -->
+                        <span
+                            v-if="!sidebarCollapsed && pendingCounts[item.path]"
+                            class="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white"
+                        >
+                            {{
+                                pendingCounts[item.path] > 9
+                                    ? '9+'
+                                    : pendingCounts[item.path]
+                            }}
+                        </span>
+                        <!-- Chấm đỏ khi sidebar thu gọn -->
+                        <span
+                            v-else-if="sidebarCollapsed && pendingCounts[item.path]"
+                            class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-gray-900"
+                        />
                     </router-link>
                 </template>
             </nav>
@@ -319,29 +378,93 @@ async function handleLogout() {
 
                 <div class="flex items-center gap-3">
                     <!-- Notification bell -->
-                    <button
-                        class="relative rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-                    >
-                        <svg
-                            class="h-5 w-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                    <div class="relative" ref="notifRef">
+                        <button
+                            @click="toggleNotif"
+                            class="relative rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
                         >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                            />
-                        </svg>
-                        <span
-                            v-if="notifCount > 0"
-                            class="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs leading-none text-white"
+                            <svg
+                                class="h-5 w-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                                />
+                            </svg>
+                            <span
+                                v-if="notifCount > 0"
+                                class="absolute top-1 right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] leading-none text-white"
+                            >
+                                {{ notifCount > 9 ? '9+' : notifCount }}
+                            </span>
+                        </button>
+
+                        <!-- Notification panel -->
+                        <div
+                            v-if="notifOpen"
+                            class="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg"
                         >
-                            {{ notifCount }}
-                        </span>
-                    </button>
+                            <div
+                                class="flex items-center justify-between border-b border-slate-100 px-4 py-3"
+                            >
+                                <span class="text-sm font-semibold text-gray-800"
+                                    >Thông báo</span
+                                >
+                                <button
+                                    v-if="notifCount > 0"
+                                    @click="markAllNotifsRead"
+                                    class="text-xs font-medium text-red-600 hover:text-red-700"
+                                >
+                                    Đọc tất cả
+                                </button>
+                            </div>
+                            <div class="max-h-96 overflow-y-auto">
+                                <p
+                                    v-if="notifItems.length === 0"
+                                    class="px-4 py-8 text-center text-sm text-gray-400"
+                                >
+                                    Chưa có thông báo
+                                </p>
+                                <button
+                                    v-for="n in notifItems"
+                                    :key="n.id"
+                                    @click="onNotifClick(n)"
+                                    class="flex w-full gap-3 border-b border-slate-50 px-4 py-3 text-left transition-colors hover:bg-slate-50"
+                                    :class="!n.is_read ? 'bg-red-50/40' : ''"
+                                >
+                                    <span
+                                        class="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+                                        :class="
+                                            !n.is_read ? 'bg-red-500' : 'bg-transparent'
+                                        "
+                                    />
+                                    <span class="min-w-0 flex-1">
+                                        <span
+                                            class="block text-sm font-semibold text-gray-800"
+                                            >{{ n.title }}</span
+                                        >
+                                        <span
+                                            class="block text-xs leading-snug text-gray-500"
+                                            >{{ n.body }}</span
+                                        >
+                                        <span
+                                            class="mt-0.5 block text-[10px] text-gray-400"
+                                            >{{
+                                                new Date(n.sent_at).toLocaleString(
+                                                    'vi-VN',
+                                                )
+                                            }}</span
+                                        >
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Avatar with Dropdown -->
                     <div class="relative" ref="dropdownRef">
