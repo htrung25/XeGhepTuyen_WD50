@@ -9,6 +9,11 @@
             "url": "http://localhost:8000/api"
         }
     ],
+    "security": [
+        {
+            "http": []
+        }
+    ],
     "paths": {
         "/admin/admin-staff": {
             "get": {
@@ -13310,6 +13315,12 @@
         }
     },
     "components": {
+        "securitySchemes": {
+            "http": {
+                "type": "http",
+                "scheme": "bearer"
+            }
+        },
         "schemas": {
             "AdminRoleResource": {
                 "type": "object",
@@ -13765,7 +13776,9 @@
                     "available_seats": {
                         "type": "integer"
                     },
-                    "revenue": {},
+                    "revenue": {
+                        "type": "number"
+                    },
                     "created_at": {
                         "type": "string"
                     },
