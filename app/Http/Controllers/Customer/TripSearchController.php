@@ -9,6 +9,7 @@ use App\Services\TripService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use OpenApi\Attributes as OA;
 
 class TripSearchController extends Controller
 {
@@ -17,6 +18,27 @@ class TripSearchController extends Controller
         private readonly TripRepositoryInterface $tripRepo,
     ) {}
 
+    #[OA\Get(
+        path: "/api/public/trips",
+        summary: "Tìm kiếm chuyến xe ghép",
+        tags: ["Trips"]
+    )]
+    #[OA\QueryParameter(name: "from_city", required: true, description: "Thành phố xuất phát", schema: new OA\Schema(type: "string"))]
+    #[OA\QueryParameter(name: "to_city", required: true, description: "Thành phố đến", schema: new OA\Schema(type: "string"))]
+    #[OA\QueryParameter(name: "date", required: true, description: "Ngày đi (YYYY-MM-DD)", schema: new OA\Schema(type: "string", format: "date"))]
+    #[OA\QueryParameter(name: "passengers", required: false, description: "Số lượng hành khách (1-4)", schema: new OA\Schema(type: "integer", default: 1))]
+    #[OA\QueryParameter(name: "sort", required: false, description: "Sắp xếp kết quả", schema: new OA\Schema(type: "string", enum: ["price_asc", "price_desc", "depart_asc"]))]
+    #[OA\Response(
+        response: 200,
+        description: "Danh sách chuyến xe hợp lệ",
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: "success", type: "boolean", example: true),
+                new OA\Property(property: "data", type: "array", items: new OA\Items(type: "object")),
+                new OA\Property(property: "meta", type: "object")
+            ]
+        )
+    )]
     public function search(Request $request): JsonResponse
     {
         $request->validate([

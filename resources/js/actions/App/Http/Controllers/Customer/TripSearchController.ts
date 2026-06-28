@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::search
-* @see app/Http/Controllers/Customer/TripSearchController.php:20
+* @see app/Http/Controllers/Customer/TripSearchController.php:42
 * @route '/api/public/trips'
 */
 const searchc2969e39b5e42cd657a66c4c0874b6ef = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ searchc2969e39b5e42cd657a66c4c0874b6ef.definition = {
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::search
-* @see app/Http/Controllers/Customer/TripSearchController.php:20
+* @see app/Http/Controllers/Customer/TripSearchController.php:42
 * @route '/api/public/trips'
 */
 searchc2969e39b5e42cd657a66c4c0874b6ef.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ searchc2969e39b5e42cd657a66c4c0874b6ef.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::search
-* @see app/Http/Controllers/Customer/TripSearchController.php:20
+* @see app/Http/Controllers/Customer/TripSearchController.php:42
 * @route '/api/public/trips'
 */
 searchc2969e39b5e42cd657a66c4c0874b6ef.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ searchc2969e39b5e42cd657a66c4c0874b6ef.get = (options?: RouteQueryOptions): Rout
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::search
-* @see app/Http/Controllers/Customer/TripSearchController.php:20
+* @see app/Http/Controllers/Customer/TripSearchController.php:42
 * @route '/api/public/trips'
 */
 searchc2969e39b5e42cd657a66c4c0874b6ef.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ searchc2969e39b5e42cd657a66c4c0874b6ef.head = (options?: RouteQueryOptions): Rou
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::search
-* @see app/Http/Controllers/Customer/TripSearchController.php:20
+* @see app/Http/Controllers/Customer/TripSearchController.php:42
 * @route '/api/public/trips'
 */
 const searchc2969e39b5e42cd657a66c4c0874b6efForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const searchc2969e39b5e42cd657a66c4c0874b6efForm = (options?: RouteQueryOptions)
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::search
-* @see app/Http/Controllers/Customer/TripSearchController.php:20
+* @see app/Http/Controllers/Customer/TripSearchController.php:42
 * @route '/api/public/trips'
 */
 searchc2969e39b5e42cd657a66c4c0874b6efForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ searchc2969e39b5e42cd657a66c4c0874b6efForm.get = (options?: RouteQueryOptions): 
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::search
-* @see app/Http/Controllers/Customer/TripSearchController.php:20
+* @see app/Http/Controllers/Customer/TripSearchController.php:42
 * @route '/api/public/trips'
 */
 searchc2969e39b5e42cd657a66c4c0874b6efForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -81,7 +81,7 @@ searchc2969e39b5e42cd657a66c4c0874b6efForm.head = (options?: RouteQueryOptions):
 searchc2969e39b5e42cd657a66c4c0874b6ef.form = searchc2969e39b5e42cd657a66c4c0874b6efForm
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::search
-* @see app/Http/Controllers/Customer/TripSearchController.php:20
+* @see app/Http/Controllers/Customer/TripSearchController.php:42
 * @route '/api/customer/trips'
 */
 const search638ec3cd4998cbb42f67e89f8349283b = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -96,7 +96,7 @@ search638ec3cd4998cbb42f67e89f8349283b.definition = {
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::search
-* @see app/Http/Controllers/Customer/TripSearchController.php:20
+* @see app/Http/Controllers/Customer/TripSearchController.php:42
 * @route '/api/customer/trips'
 */
 search638ec3cd4998cbb42f67e89f8349283b.url = (options?: RouteQueryOptions) => {
@@ -105,7 +105,7 @@ search638ec3cd4998cbb42f67e89f8349283b.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::search
-* @see app/Http/Controllers/Customer/TripSearchController.php:20
+* @see app/Http/Controllers/Customer/TripSearchController.php:42
 * @route '/api/customer/trips'
 */
 search638ec3cd4998cbb42f67e89f8349283b.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -115,7 +115,7 @@ search638ec3cd4998cbb42f67e89f8349283b.get = (options?: RouteQueryOptions): Rout
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::search
-* @see app/Http/Controllers/Customer/TripSearchController.php:20
+* @see app/Http/Controllers/Customer/TripSearchController.php:42
 * @route '/api/customer/trips'
 */
 search638ec3cd4998cbb42f67e89f8349283b.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -125,7 +125,7 @@ search638ec3cd4998cbb42f67e89f8349283b.head = (options?: RouteQueryOptions): Rou
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::search
-* @see app/Http/Controllers/Customer/TripSearchController.php:20
+* @see app/Http/Controllers/Customer/TripSearchController.php:42
 * @route '/api/customer/trips'
 */
 const search638ec3cd4998cbb42f67e89f8349283bForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -135,7 +135,7 @@ const search638ec3cd4998cbb42f67e89f8349283bForm = (options?: RouteQueryOptions)
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::search
-* @see app/Http/Controllers/Customer/TripSearchController.php:20
+* @see app/Http/Controllers/Customer/TripSearchController.php:42
 * @route '/api/customer/trips'
 */
 search638ec3cd4998cbb42f67e89f8349283bForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -145,7 +145,7 @@ search638ec3cd4998cbb42f67e89f8349283bForm.get = (options?: RouteQueryOptions): 
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::search
-* @see app/Http/Controllers/Customer/TripSearchController.php:20
+* @see app/Http/Controllers/Customer/TripSearchController.php:42
 * @route '/api/customer/trips'
 */
 search638ec3cd4998cbb42f67e89f8349283bForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -172,7 +172,7 @@ export const search = {
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::show
-* @see app/Http/Controllers/Customer/TripSearchController.php:44
+* @see app/Http/Controllers/Customer/TripSearchController.php:66
 * @route '/api/public/trips/{id}'
 */
 const show8490f1baff0bcab313f9b43779fe119b = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -187,7 +187,7 @@ show8490f1baff0bcab313f9b43779fe119b.definition = {
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::show
-* @see app/Http/Controllers/Customer/TripSearchController.php:44
+* @see app/Http/Controllers/Customer/TripSearchController.php:66
 * @route '/api/public/trips/{id}'
 */
 show8490f1baff0bcab313f9b43779fe119b.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -214,7 +214,7 @@ show8490f1baff0bcab313f9b43779fe119b.url = (args: { id: string | number } | [id:
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::show
-* @see app/Http/Controllers/Customer/TripSearchController.php:44
+* @see app/Http/Controllers/Customer/TripSearchController.php:66
 * @route '/api/public/trips/{id}'
 */
 show8490f1baff0bcab313f9b43779fe119b.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -224,7 +224,7 @@ show8490f1baff0bcab313f9b43779fe119b.get = (args: { id: string | number } | [id:
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::show
-* @see app/Http/Controllers/Customer/TripSearchController.php:44
+* @see app/Http/Controllers/Customer/TripSearchController.php:66
 * @route '/api/public/trips/{id}'
 */
 show8490f1baff0bcab313f9b43779fe119b.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -234,7 +234,7 @@ show8490f1baff0bcab313f9b43779fe119b.head = (args: { id: string | number } | [id
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::show
-* @see app/Http/Controllers/Customer/TripSearchController.php:44
+* @see app/Http/Controllers/Customer/TripSearchController.php:66
 * @route '/api/public/trips/{id}'
 */
 const show8490f1baff0bcab313f9b43779fe119bForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -244,7 +244,7 @@ const show8490f1baff0bcab313f9b43779fe119bForm = (args: { id: string | number } 
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::show
-* @see app/Http/Controllers/Customer/TripSearchController.php:44
+* @see app/Http/Controllers/Customer/TripSearchController.php:66
 * @route '/api/public/trips/{id}'
 */
 show8490f1baff0bcab313f9b43779fe119bForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -254,7 +254,7 @@ show8490f1baff0bcab313f9b43779fe119bForm.get = (args: { id: string | number } | 
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::show
-* @see app/Http/Controllers/Customer/TripSearchController.php:44
+* @see app/Http/Controllers/Customer/TripSearchController.php:66
 * @route '/api/public/trips/{id}'
 */
 show8490f1baff0bcab313f9b43779fe119bForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -270,7 +270,7 @@ show8490f1baff0bcab313f9b43779fe119bForm.head = (args: { id: string | number } |
 show8490f1baff0bcab313f9b43779fe119b.form = show8490f1baff0bcab313f9b43779fe119bForm
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::show
-* @see app/Http/Controllers/Customer/TripSearchController.php:44
+* @see app/Http/Controllers/Customer/TripSearchController.php:66
 * @route '/api/customer/trips/{id}'
 */
 const show56e290f360a25f520e46f479bdc45c62 = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -285,7 +285,7 @@ show56e290f360a25f520e46f479bdc45c62.definition = {
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::show
-* @see app/Http/Controllers/Customer/TripSearchController.php:44
+* @see app/Http/Controllers/Customer/TripSearchController.php:66
 * @route '/api/customer/trips/{id}'
 */
 show56e290f360a25f520e46f479bdc45c62.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -312,7 +312,7 @@ show56e290f360a25f520e46f479bdc45c62.url = (args: { id: string | number } | [id:
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::show
-* @see app/Http/Controllers/Customer/TripSearchController.php:44
+* @see app/Http/Controllers/Customer/TripSearchController.php:66
 * @route '/api/customer/trips/{id}'
 */
 show56e290f360a25f520e46f479bdc45c62.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -322,7 +322,7 @@ show56e290f360a25f520e46f479bdc45c62.get = (args: { id: string | number } | [id:
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::show
-* @see app/Http/Controllers/Customer/TripSearchController.php:44
+* @see app/Http/Controllers/Customer/TripSearchController.php:66
 * @route '/api/customer/trips/{id}'
 */
 show56e290f360a25f520e46f479bdc45c62.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -332,7 +332,7 @@ show56e290f360a25f520e46f479bdc45c62.head = (args: { id: string | number } | [id
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::show
-* @see app/Http/Controllers/Customer/TripSearchController.php:44
+* @see app/Http/Controllers/Customer/TripSearchController.php:66
 * @route '/api/customer/trips/{id}'
 */
 const show56e290f360a25f520e46f479bdc45c62Form = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -342,7 +342,7 @@ const show56e290f360a25f520e46f479bdc45c62Form = (args: { id: string | number } 
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::show
-* @see app/Http/Controllers/Customer/TripSearchController.php:44
+* @see app/Http/Controllers/Customer/TripSearchController.php:66
 * @route '/api/customer/trips/{id}'
 */
 show56e290f360a25f520e46f479bdc45c62Form.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -352,7 +352,7 @@ show56e290f360a25f520e46f479bdc45c62Form.get = (args: { id: string | number } | 
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::show
-* @see app/Http/Controllers/Customer/TripSearchController.php:44
+* @see app/Http/Controllers/Customer/TripSearchController.php:66
 * @route '/api/customer/trips/{id}'
 */
 show56e290f360a25f520e46f479bdc45c62Form.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -379,7 +379,7 @@ export const show = {
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::seats
-* @see app/Http/Controllers/Customer/TripSearchController.php:58
+* @see app/Http/Controllers/Customer/TripSearchController.php:80
 * @route '/api/public/trips/{id}/seats'
 */
 const seats2b16853009a97d9ec9ec7e7d28645329 = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -394,7 +394,7 @@ seats2b16853009a97d9ec9ec7e7d28645329.definition = {
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::seats
-* @see app/Http/Controllers/Customer/TripSearchController.php:58
+* @see app/Http/Controllers/Customer/TripSearchController.php:80
 * @route '/api/public/trips/{id}/seats'
 */
 seats2b16853009a97d9ec9ec7e7d28645329.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -421,7 +421,7 @@ seats2b16853009a97d9ec9ec7e7d28645329.url = (args: { id: string | number } | [id
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::seats
-* @see app/Http/Controllers/Customer/TripSearchController.php:58
+* @see app/Http/Controllers/Customer/TripSearchController.php:80
 * @route '/api/public/trips/{id}/seats'
 */
 seats2b16853009a97d9ec9ec7e7d28645329.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -431,7 +431,7 @@ seats2b16853009a97d9ec9ec7e7d28645329.get = (args: { id: string | number } | [id
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::seats
-* @see app/Http/Controllers/Customer/TripSearchController.php:58
+* @see app/Http/Controllers/Customer/TripSearchController.php:80
 * @route '/api/public/trips/{id}/seats'
 */
 seats2b16853009a97d9ec9ec7e7d28645329.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -441,7 +441,7 @@ seats2b16853009a97d9ec9ec7e7d28645329.head = (args: { id: string | number } | [i
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::seats
-* @see app/Http/Controllers/Customer/TripSearchController.php:58
+* @see app/Http/Controllers/Customer/TripSearchController.php:80
 * @route '/api/public/trips/{id}/seats'
 */
 const seats2b16853009a97d9ec9ec7e7d28645329Form = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -451,7 +451,7 @@ const seats2b16853009a97d9ec9ec7e7d28645329Form = (args: { id: string | number }
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::seats
-* @see app/Http/Controllers/Customer/TripSearchController.php:58
+* @see app/Http/Controllers/Customer/TripSearchController.php:80
 * @route '/api/public/trips/{id}/seats'
 */
 seats2b16853009a97d9ec9ec7e7d28645329Form.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -461,7 +461,7 @@ seats2b16853009a97d9ec9ec7e7d28645329Form.get = (args: { id: string | number } |
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::seats
-* @see app/Http/Controllers/Customer/TripSearchController.php:58
+* @see app/Http/Controllers/Customer/TripSearchController.php:80
 * @route '/api/public/trips/{id}/seats'
 */
 seats2b16853009a97d9ec9ec7e7d28645329Form.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -477,7 +477,7 @@ seats2b16853009a97d9ec9ec7e7d28645329Form.head = (args: { id: string | number } 
 seats2b16853009a97d9ec9ec7e7d28645329.form = seats2b16853009a97d9ec9ec7e7d28645329Form
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::seats
-* @see app/Http/Controllers/Customer/TripSearchController.php:58
+* @see app/Http/Controllers/Customer/TripSearchController.php:80
 * @route '/api/customer/trips/{id}/seats'
 */
 const seats6cbd161ff7def05793c54d4a3538cb5c = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -492,7 +492,7 @@ seats6cbd161ff7def05793c54d4a3538cb5c.definition = {
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::seats
-* @see app/Http/Controllers/Customer/TripSearchController.php:58
+* @see app/Http/Controllers/Customer/TripSearchController.php:80
 * @route '/api/customer/trips/{id}/seats'
 */
 seats6cbd161ff7def05793c54d4a3538cb5c.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -519,7 +519,7 @@ seats6cbd161ff7def05793c54d4a3538cb5c.url = (args: { id: string | number } | [id
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::seats
-* @see app/Http/Controllers/Customer/TripSearchController.php:58
+* @see app/Http/Controllers/Customer/TripSearchController.php:80
 * @route '/api/customer/trips/{id}/seats'
 */
 seats6cbd161ff7def05793c54d4a3538cb5c.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -529,7 +529,7 @@ seats6cbd161ff7def05793c54d4a3538cb5c.get = (args: { id: string | number } | [id
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::seats
-* @see app/Http/Controllers/Customer/TripSearchController.php:58
+* @see app/Http/Controllers/Customer/TripSearchController.php:80
 * @route '/api/customer/trips/{id}/seats'
 */
 seats6cbd161ff7def05793c54d4a3538cb5c.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -539,7 +539,7 @@ seats6cbd161ff7def05793c54d4a3538cb5c.head = (args: { id: string | number } | [i
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::seats
-* @see app/Http/Controllers/Customer/TripSearchController.php:58
+* @see app/Http/Controllers/Customer/TripSearchController.php:80
 * @route '/api/customer/trips/{id}/seats'
 */
 const seats6cbd161ff7def05793c54d4a3538cb5cForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -549,7 +549,7 @@ const seats6cbd161ff7def05793c54d4a3538cb5cForm = (args: { id: string | number }
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::seats
-* @see app/Http/Controllers/Customer/TripSearchController.php:58
+* @see app/Http/Controllers/Customer/TripSearchController.php:80
 * @route '/api/customer/trips/{id}/seats'
 */
 seats6cbd161ff7def05793c54d4a3538cb5cForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -559,7 +559,7 @@ seats6cbd161ff7def05793c54d4a3538cb5cForm.get = (args: { id: string | number } |
 
 /**
 * @see \App\Http\Controllers\Customer\TripSearchController::seats
-* @see app/Http/Controllers/Customer/TripSearchController.php:58
+* @see app/Http/Controllers/Customer/TripSearchController.php:80
 * @route '/api/customer/trips/{id}/seats'
 */
 seats6cbd161ff7def05793c54d4a3538cb5cForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
