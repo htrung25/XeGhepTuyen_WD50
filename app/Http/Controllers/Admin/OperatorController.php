@@ -158,8 +158,8 @@ class OperatorController extends Controller
     }
 
     /**
-     * Đặt lại mật khẩu nhà xe — sinh mật khẩu tạm mới, gửi SMS và trả về cho admin
-     * để chuyển trực tiếp khi SMS không tới.
+     * Đặt lại mật khẩu nhà xe — sinh mật khẩu tạm mới và gửi SMS cho nhà xe.
+     * KHÔNG trả mật khẩu về cho admin (bảo đảm quyền lợi nhà xe).
      */
     public function resetPassword(string $id): JsonResponse
     {
@@ -173,7 +173,7 @@ class OperatorController extends Controller
             return response()->json(['success' => false, 'message' => 'Nhà xe chưa có tài khoản đăng nhập'], 422);
         }
 
-        $tempPassword = $this->accountService->resetPassword($operator);
+        $this->accountService->resetPassword($operator);
 
         app(AuditLogService::class)->log(
             action: 'reset_operator_password',
@@ -184,10 +184,7 @@ class OperatorController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Đã đặt lại mật khẩu và gửi SMS cho nhà xe',
-            'data' => [
-                'phone' => $operator->user->phone,
-                'temp_password' => $tempPassword,
-            ],
+            'data' => ['phone' => $operator->user->phone],
         ]);
     }
 }

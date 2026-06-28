@@ -113,9 +113,7 @@ export const adminApi = {
     restoreOperator: (id: string) =>
         apiClient.send(operatorRestore(id)),
     resetOperatorPassword: (id: string) =>
-        apiClient.send<{ phone: string; temp_password: string }>(
-            operatorResetPassword(id),
-        ),
+        apiClient.send<{ phone: string }>(operatorResetPassword(id)),
 
     // Partner applications
     getPartnerApplications: (params?: Params) =>
@@ -132,13 +130,9 @@ export const adminApi = {
         apiClient.send(driversIndex({ query: params as QueryParams })),
     getDriver: (id: string) => apiClient.send(driverShow(id)),
     verifyDriver: (id: string) =>
-        apiClient.send<{ phone: string; temp_password: string }>(
-            driverApprove(id),
-        ),
+        apiClient.send<{ phone: string }>(driverApprove(id)),
     resetDriverPassword: (id: string) =>
-        apiClient.send<{ phone: string; temp_password: string }>(
-            driverResetPassword(id),
-        ),
+        apiClient.send<{ phone: string }>(driverResetPassword(id)),
     rejectDriver: (id: string, data: { reason: string }) =>
         apiClient.send(driverReject(id), data),
     suspendDriver: (id: string, data: { reason: string }) =>

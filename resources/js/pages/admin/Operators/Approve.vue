@@ -74,8 +74,7 @@ const rejectLoading = ref(false);
 // Đặt lại mật khẩu nhà xe
 const showResetModal = ref(false);
 const resetLoading = ref(false);
-const resetResult = ref<{ phone: string; temp_password: string } | null>(null);
-const copied = ref(false);
+const resetResult = ref<{ phone: string } | null>(null);
 
 // ─── Operator Detail modal ────────────────────────────────────────────────
 const showDetailModal = ref(false);
@@ -363,7 +362,6 @@ function openResetPassword(op: OperatorDoc) {
     selectedId.value = op.id;
     selectedName.value = op.company_name;
     resetResult.value = null;
-    copied.value = false;
     showResetModal.value = true;
 }
 
@@ -379,17 +377,6 @@ async function confirmReset() {
         return;
     }
     resetResult.value = data;
-}
-
-async function copyPassword() {
-    if (!resetResult.value) return;
-    try {
-        await navigator.clipboard.writeText(resetResult.value.temp_password);
-        copied.value = true;
-        setTimeout(() => (copied.value = false), 2000);
-    } catch {
-        /* clipboard không khả dụng — admin tự copy thủ công */
-    }
 }
 
 onMounted(() => {
@@ -1003,9 +990,9 @@ onMounted(() => {
                     <div
                         class="mb-5 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
                     >
-                        Hệ thống sẽ tạo mật khẩu tạm mới, gửi SMS cho nhà xe và
-                        hiển thị để bạn chuyển trực tiếp. Mật khẩu cũ sẽ không
-                        dùng được nữa.
+                        Hệ thống sẽ tạo mật khẩu mới và gửi cho nhà xe qua SMS.
+                        Để bảo đảm quyền lợi nhà xe, admin không xem được mật
+                        khẩu. Mật khẩu cũ sẽ không dùng được nữa.
                     </div>
                     <div class="flex gap-3">
                         <button
@@ -1059,33 +1046,17 @@ onMounted(() => {
                                 resetResult.phone
                             }}</span>
                         </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-gray-500">Mật khẩu tạm:</span>
-                            <span
-                                class="font-mono text-base font-bold tracking-wider text-amber-700"
-                                >{{ resetResult.temp_password }}</span
-                            >
-                        </div>
                     </div>
 
                     <p class="mb-4 text-xs text-gray-500">
-                        SMS đã được gửi (nếu ESMS đã cấu hình). Nếu nhà xe không
-                        nhận được, hãy chuyển mật khẩu này trực tiếp —
-                        <span class="text-red-500"
-                            >mật khẩu sẽ không hiển thị lại sau khi đóng.</span
-                        >
+                        Mật khẩu mới đã được gửi cho nhà xe qua SMS. Nếu nhà xe
+                        không nhận được, hãy bấm "Đặt lại mật khẩu" để gửi lại.
                     </p>
 
                     <div class="flex gap-3">
                         <button
-                            @click="copyPassword"
-                            class="flex-1 rounded-lg border border-amber-300 px-4 py-2.5 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-50"
-                        >
-                            {{ copied ? 'Đã sao chép ✓' : 'Sao chép mật khẩu' }}
-                        </button>
-                        <button
                             @click="showResetModal = false"
-                            class="flex-1 rounded-lg bg-gray-800 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-900"
+                            class="w-full rounded-lg bg-gray-800 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-900"
                         >
                             Đóng
                         </button>
