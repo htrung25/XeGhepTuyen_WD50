@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Admin\DashboardController::pendingCounts
-* @see app/Http/Controllers/Admin/DashboardController.php:79
+* @see app/Http/Controllers/Admin/DashboardController.php:78
 * @route '/api/admin/pending-counts'
 */
 export const pendingCounts = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ pendingCounts.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\DashboardController::pendingCounts
-* @see app/Http/Controllers/Admin/DashboardController.php:79
+* @see app/Http/Controllers/Admin/DashboardController.php:78
 * @route '/api/admin/pending-counts'
 */
 pendingCounts.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ pendingCounts.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Admin\DashboardController::pendingCounts
-* @see app/Http/Controllers/Admin/DashboardController.php:79
+* @see app/Http/Controllers/Admin/DashboardController.php:78
 * @route '/api/admin/pending-counts'
 */
 pendingCounts.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ pendingCounts.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\DashboardController::pendingCounts
-* @see app/Http/Controllers/Admin/DashboardController.php:79
+* @see app/Http/Controllers/Admin/DashboardController.php:78
 * @route '/api/admin/pending-counts'
 */
 pendingCounts.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ pendingCounts.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => (
 
 /**
 * @see \App\Http\Controllers\Admin\DashboardController::pendingCounts
-* @see app/Http/Controllers/Admin/DashboardController.php:79
+* @see app/Http/Controllers/Admin/DashboardController.php:78
 * @route '/api/admin/pending-counts'
 */
 const pendingCountsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const pendingCountsForm = (options?: RouteQueryOptions): RouteFormDefinition<'ge
 
 /**
 * @see \App\Http\Controllers\Admin\DashboardController::pendingCounts
-* @see app/Http/Controllers/Admin/DashboardController.php:79
+* @see app/Http/Controllers/Admin/DashboardController.php:78
 * @route '/api/admin/pending-counts'
 */
 pendingCountsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ pendingCountsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'
 
 /**
 * @see \App\Http\Controllers\Admin\DashboardController::pendingCounts
-* @see app/Http/Controllers/Admin/DashboardController.php:79
+* @see app/Http/Controllers/Admin/DashboardController.php:78
 * @route '/api/admin/pending-counts'
 */
 pendingCountsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ pendingCounts.form = pendingCountsForm
 
 /**
 * @see \App\Http\Controllers\Admin\DashboardController::index
-* @see app/Http/Controllers/Admin/DashboardController.php:25
+* @see app/Http/Controllers/Admin/DashboardController.php:24
 * @route '/api/admin/dashboard'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -97,7 +97,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\DashboardController::index
-* @see app/Http/Controllers/Admin/DashboardController.php:25
+* @see app/Http/Controllers/Admin/DashboardController.php:24
 * @route '/api/admin/dashboard'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Admin\DashboardController::index
-* @see app/Http/Controllers/Admin/DashboardController.php:25
+* @see app/Http/Controllers/Admin/DashboardController.php:24
 * @route '/api/admin/dashboard'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -116,7 +116,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\DashboardController::index
-* @see app/Http/Controllers/Admin/DashboardController.php:25
+* @see app/Http/Controllers/Admin/DashboardController.php:24
 * @route '/api/admin/dashboard'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -126,7 +126,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\DashboardController::index
-* @see app/Http/Controllers/Admin/DashboardController.php:25
+* @see app/Http/Controllers/Admin/DashboardController.php:24
 * @route '/api/admin/dashboard'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -136,7 +136,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Admin\DashboardController::index
-* @see app/Http/Controllers/Admin/DashboardController.php:25
+* @see app/Http/Controllers/Admin/DashboardController.php:24
 * @route '/api/admin/dashboard'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -146,7 +146,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\DashboardController::index
-* @see app/Http/Controllers/Admin/DashboardController.php:25
+* @see app/Http/Controllers/Admin/DashboardController.php:24
 * @route '/api/admin/dashboard'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -163,7 +163,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Admin\DashboardController::map
-* @see app/Http/Controllers/Admin/DashboardController.php:67
+* @see app/Http/Controllers/Admin/DashboardController.php:66
 * @route '/api/admin/dashboard/map'
 */
 export const map = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -178,7 +178,7 @@ map.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\DashboardController::map
-* @see app/Http/Controllers/Admin/DashboardController.php:67
+* @see app/Http/Controllers/Admin/DashboardController.php:66
 * @route '/api/admin/dashboard/map'
 */
 map.url = (options?: RouteQueryOptions) => {
@@ -187,7 +187,7 @@ map.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Admin\DashboardController::map
-* @see app/Http/Controllers/Admin/DashboardController.php:67
+* @see app/Http/Controllers/Admin/DashboardController.php:66
 * @route '/api/admin/dashboard/map'
 */
 map.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -197,7 +197,7 @@ map.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\DashboardController::map
-* @see app/Http/Controllers/Admin/DashboardController.php:67
+* @see app/Http/Controllers/Admin/DashboardController.php:66
 * @route '/api/admin/dashboard/map'
 */
 map.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -207,7 +207,7 @@ map.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\DashboardController::map
-* @see app/Http/Controllers/Admin/DashboardController.php:67
+* @see app/Http/Controllers/Admin/DashboardController.php:66
 * @route '/api/admin/dashboard/map'
 */
 const mapForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -217,7 +217,7 @@ const mapForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\DashboardController::map
-* @see app/Http/Controllers/Admin/DashboardController.php:67
+* @see app/Http/Controllers/Admin/DashboardController.php:66
 * @route '/api/admin/dashboard/map'
 */
 mapForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -227,7 +227,7 @@ mapForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\DashboardController::map
-* @see app/Http/Controllers/Admin/DashboardController.php:67
+* @see app/Http/Controllers/Admin/DashboardController.php:66
 * @route '/api/admin/dashboard/map'
 */
 mapForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

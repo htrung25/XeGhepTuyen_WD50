@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Admin\LiveTripResource;
 use App\Models\Booking;
 use App\Models\Driver;
-use App\Models\Operator;
 use App\Models\PartnerApplication;
 use App\Models\Payout;
 use App\Models\Trip;
@@ -24,16 +23,16 @@ class DashboardController extends Controller
 
     public function index(): JsonResponse
     {
+        // Khớp ĐÚNG tên field FE đọc (active_trips, new_users_today). "Nhà xe chờ duyệt"
+        // = đơn đăng ký đối tác PENDING (PartnerApplication) — đây mới là việc cần duyệt
+        // thực tế; Operator chỉ được tạo (verified) SAU khi duyệt đơn.
         $stats = Cache::remember('admin_dashboard_stats', 60, function () {
             return [
-                'users' => User::count(),
-                'operators' => Operator::where('status', 'verified')->count(),
-                'drivers' => Driver::where('status', 'verified')->count(),
-                'trips_today' => Trip::whereDate('depart_at', today())->count(),
-                'trips_in_progress' => Trip::where('status', 'in_progress')->count(),
                 'bookings_today' => Booking::whereDate('created_at', today())->count(),
-                'revenue_today' => Booking::whereDate('created_at', today())->where('booking_status', 'completed')->sum('final_amount'),
-                'pending_operators' => Operator::where('status', 'pending')->count(),
+                'revenue_today' => (int) Booking::whereDate('created_at', today())->where('booking_status', 'completed')->sum('final_amount'),
+                'active_trips' => Trip::where('status', 'in_progress')->count(),
+                'new_users_today' => User::whereDate('created_at', today())->count(),
+                'pending_operators' => PartnerApplication::where('status', 'pending')->count(),
                 'pending_drivers' => Driver::where('status', 'pending')->count(),
             ];
         });
