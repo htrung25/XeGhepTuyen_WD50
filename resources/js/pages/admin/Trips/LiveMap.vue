@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { adminApi } from '@/api/admin.api';
+import MapboxMap from '@/components/MapboxMap.vue';
+import type {MapMarker} from '@/components/MapboxMap.vue';
 
 interface LiveTrip {
     id: string;
@@ -67,6 +69,28 @@ const filteredTrips = computed(() => {
 const delayedCount = computed(
     () => trips.value.filter((t) => t.is_delayed).length,
 );
+
+// Marker bản đồ Mapbox: chỉ xe có GPS (lat/lng ≠ 0), màu theo chọn/chậm
+const mapMarkers = computed<MapMarker[]>(() =>
+    filteredTrips.value
+        .filter((t) => t.lat !== 0 || t.lng !== 0)
+        .map((t) => ({
+            id: t.id,
+            lat: t.lat,
+            lng: t.lng,
+            color:
+                selectedTrip.value?.id === t.id
+                    ? '#dc2626'
+                    : t.is_delayed
+                      ? '#ef4444'
+                      : '#16a34a',
+            label: `${t.vehicle_plate} · ${t.trip_code}`,
+        })),
+);
+
+function onMapSelect(id: string) {
+    selectedTrip.value = trips.value.find((t) => t.id === id) ?? null;
+}
 
 async function loadLiveTrips() {
     const { data, error } = await adminApi.getLiveTrips();
@@ -214,60 +238,25 @@ onUnmounted(() => {
                         <h3 class="text-sm font-semibold text-gray-900">
                             Bản đồ thời gian thực
                         </h3>
-                        <span class="text-xs text-gray-400">Google Maps</span>
+                        <span class="text-xs text-gray-400">Mapbox</span>
                     </div>
                     <!-- Map area -->
                     <div class="relative flex-1 bg-slate-100">
-                        <!-- Map placeholder with route visualization -->
+                        <!-- Bản đồ Mapbox thời gian thực -->
+                        <MapboxMap
+                            :markers="mapMarkers"
+                            class="absolute inset-0"
+                            @select="onMapSelect"
+                        />
                         <div
-                            class="absolute inset-0 flex flex-col items-center justify-center gap-3 text-gray-400"
+                            v-if="mapMarkers.length === 0"
+                            class="pointer-events-none absolute inset-x-0 top-3 flex justify-center"
                         >
-                            <svg
-                                class="h-16 w-16"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
+                            <span
+                                class="rounded-full bg-white/90 px-3 py-1 text-xs text-gray-500 shadow"
                             >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="1"
-                                    d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
-                                />
-                            </svg>
-                            <div class="text-center">
-                                <p class="font-medium text-gray-600">
-                                    Hà Nội → Hải Phòng
-                                </p>
-                                <p class="mt-1 text-sm">
-                                    {{ filteredTrips.length }} xe đang hoạt động
-                                    trên tuyến
-                                </p>
-                            </div>
-                            <div
-                                class="mt-2 flex flex-wrap justify-center gap-3"
-                            >
-                                <div
-                                    v-for="t in filteredTrips
-                                        .filter(
-                                            (x) => x.status === 'in_progress',
-                                        )
-                                        .slice(0, 6)"
-                                    :key="t.id"
-                                    @click="selectedTrip = t"
-                                    :class="[
-                                        'flex cursor-pointer items-center gap-1.5 rounded-full border-2 px-3 py-1.5 text-xs font-medium transition-colors',
-                                        selectedTrip?.id === t.id
-                                            ? 'border-red-600 bg-red-600 text-white'
-                                            : t.is_delayed
-                                              ? 'border-red-300 bg-red-50 text-red-700'
-                                              : 'border-green-300 bg-green-50 text-green-700',
-                                    ]"
-                                >
-                                    <span>🚌</span>
-                                    {{ t.vehicle_plate }}
-                                </div>
-                            </div>
+                                Chưa có xe gửi vị trí GPS
+                            </span>
                         </div>
 
                         <!-- Selected trip popup -->

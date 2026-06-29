@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { adminApi } from '@/api/admin.api';
+import MapboxMap from '@/components/MapboxMap.vue';
+import type { MapMarker } from '@/components/MapboxMap.vue';
 
 interface DashboardStats {
     bookings_today: number;
@@ -25,6 +27,27 @@ const recentBookings = ref<RecentBooking[]>([]);
 const isLoading = ref(true);
 const errorMsg = ref('');
 let refreshTimer: ReturnType<typeof setInterval> | null = null;
+
+// Bản đồ xe đang chạy (mini-map)
+interface MapTrip {
+    id: string;
+    lat: number;
+    lng: number;
+    vehicle_plate: string;
+    trip_code: string;
+}
+const mapTrips = ref<MapTrip[]>([]);
+const mapMarkers = computed<MapMarker[]>(() =>
+    mapTrips.value
+        .filter((t) => t.lat !== 0 || t.lng !== 0)
+        .map((t) => ({
+            id: t.id,
+            lat: t.lat,
+            lng: t.lng,
+            color: '#16a34a',
+            label: `${t.vehicle_plate} · ${t.trip_code}`,
+        })),
+);
 
 const statusMap: Record<string, { label: string; class: string }> = {
     pending: { label: 'Chờ xử lý', class: 'bg-yellow-100 text-yellow-700' },
@@ -51,6 +74,9 @@ async function loadDashboard() {
     stats.value = data.stats;
     recentBookings.value = data.recent_bookings ?? [];
     isLoading.value = false;
+
+    const mapRes = await adminApi.getDashboardMap();
+    if (!mapRes.error) mapTrips.value = (mapRes.data as MapTrip[]) ?? [];
 }
 
 onMounted(() => {
@@ -312,31 +338,24 @@ onUnmounted(() => {
                             >Xem bản đồ đầy đủ →</router-link
                         >
                     </div>
-                    <div
-                        class="flex h-56 flex-col items-center justify-center gap-2 bg-slate-100 text-gray-400"
-                    >
-                        <svg
-                            class="h-12 w-12"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                    <div class="relative h-56">
+                        <MapboxMap :markers="mapMarkers" />
+                        <div
+                            v-if="mapMarkers.length === 0"
+                            class="pointer-events-none absolute inset-x-0 top-3 flex justify-center"
                         >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="1.5"
-                                d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
-                            />
-                        </svg>
-                        <p class="text-sm font-medium">Google Maps</p>
-                        <p class="text-xs">
-                            {{ stats.active_trips }} xe đang hoạt động
-                        </p>
+                            <span
+                                class="rounded-full bg-white/90 px-3 py-1 text-xs text-gray-500 shadow"
+                            >
+                                {{ stats.active_trips }} xe đang chạy — chưa có
+                                vị trí GPS
+                            </span>
+                        </div>
                         <router-link
                             to="/admin/trips/live"
-                            class="mt-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs text-white hover:bg-red-700"
+                            class="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-lg bg-red-600 px-3 py-1.5 text-xs text-white shadow hover:bg-red-700"
                         >
-                            Mở bản đồ
+                            Mở bản đồ đầy đủ
                         </router-link>
                     </div>
                 </div>
