@@ -322,9 +322,9 @@ onUnmounted(() => {
 
             <!-- Map placeholder + Recent bookings -->
             <div class="grid grid-cols-5 gap-6">
-                <!-- Map placeholder -->
+                <!-- Theo dõi xe trực tiếp (mini-map) -->
                 <div
-                    class="col-span-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+                    class="col-span-2 flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
                 >
                     <div
                         class="flex items-center justify-between border-b border-slate-100 px-5 py-4"
@@ -338,7 +338,7 @@ onUnmounted(() => {
                             >Xem bản đồ đầy đủ →</router-link
                         >
                     </div>
-                    <div class="relative h-56">
+                    <div class="relative min-h-[16rem] flex-1">
                         <MapboxMap :markers="mapMarkers" />
                         <div
                             v-if="mapMarkers.length === 0"

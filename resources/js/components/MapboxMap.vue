@@ -32,6 +32,7 @@ const container = ref<HTMLElement | null>(null);
 let map: mapboxgl.Map | null = null;
 let loaded = false;
 let markerObjs: mapboxgl.Marker[] = [];
+let resizeObserver: ResizeObserver | null = null;
 
 function clearMarkers() {
     markerObjs.forEach((m) => m.remove());
@@ -84,13 +85,21 @@ onMounted(() => {
     map.addControl(new mapboxgl.NavigationControl(), 'top-right');
     map.on('load', () => {
         loaded = true;
+        map?.resize();
         renderMarkers();
     });
+
+    // Container đổi kích thước (grid/flex layout, mở sidebar, resize cửa sổ) →
+    // gọi resize() để canvas Mapbox không bị vỡ/xám.
+    resizeObserver = new ResizeObserver(() => map?.resize());
+    resizeObserver.observe(container.value);
 });
 
 watch(() => props.markers, renderMarkers, { deep: true });
 
 onUnmounted(() => {
+    resizeObserver?.disconnect();
+    resizeObserver = null;
     clearMarkers();
     map?.remove();
     map = null;
