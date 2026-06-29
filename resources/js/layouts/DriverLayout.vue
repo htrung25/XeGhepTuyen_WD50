@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { Toaster } from '@/components/ui/sonner';
 import { driverApi } from '@/api/driver.api';
 import { useDriverAuthStore } from '@/stores/driver.auth.store';
 
@@ -237,6 +238,7 @@ async function logout() {
             <!-- Page content -->
             <main class="flex-1 overflow-auto">
                 <router-view />
+                <Toaster />
             </main>
         </div>
     </div>

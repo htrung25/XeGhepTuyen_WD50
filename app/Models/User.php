@@ -21,6 +21,7 @@ class User extends Authenticatable
         'full_name',
         'phone',
         'email',
+        'birth_date',
         'password',
         'role',
         'admin_role_id',
@@ -46,6 +47,7 @@ class User extends Authenticatable
             'is_verified'    => 'boolean',
             'is_active'      => 'boolean',
             'last_login_at'  => 'datetime',
+            'birth_date'     => 'date',
         ];
     }
 

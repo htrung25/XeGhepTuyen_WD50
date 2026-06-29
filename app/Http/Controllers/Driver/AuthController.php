@@ -104,6 +104,8 @@ class AuthController extends Controller
                 'id' => $user->id,
                 'full_name' => $user->full_name,
                 'phone' => $user->phone,
+                'email' => $user->email,
+                'birth_date' => $user->birth_date?->format('Y-m-d'),
                 'avatar_url' => $user->avatar_url,
                 // Xe mặc định nhà xe gán (Option 3 hybrid) — null nếu chưa gán
                 'vehicle' => $vehicle ? [
@@ -146,10 +148,11 @@ class AuthController extends Controller
         $request->validate([
             'full_name' => ['sometimes', 'string', 'min:2', 'max:100'],
             'email' => ['sometimes', 'nullable', 'email', 'unique:users,email,'.$user->id],
+            'birth_date' => ['sometimes', 'nullable', 'date', 'before:today'],
             'avatar' => ['sometimes', 'image', 'max:2048'],
         ]);
 
-        $data = $request->only(['full_name', 'email']);
+        $data = $request->only(['full_name', 'email', 'birth_date']);
 
         if ($request->hasFile('avatar')) {
             $path = $request->file('avatar')->store('avatars', 'public');
@@ -161,7 +164,13 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Cập nhật hồ sơ thành công',
-            'data' => ['id' => $user->id, 'full_name' => $user->full_name, 'email' => $user->email, 'avatar_url' => $user->avatar_url],
+            'data' => [
+                'id' => $user->id,
+                'full_name' => $user->full_name,
+                'email' => $user->email,
+                'birth_date' => $user->birth_date?->format('Y-m-d'),
+                'avatar_url' => $user->avatar_url,
+            ],
         ]);
     }
 

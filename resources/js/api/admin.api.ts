@@ -104,7 +104,7 @@ export const adminApi = {
         apiClient.send(login(), data),
     logout: () => apiClient.send(logout()),
     me: () => apiClient.send(me()),
-    updateProfile: (data: unknown) => apiClient.send(adminUpdateProfile(), data),
+    updateProfile: (data: FormData) => apiClient.sendForm(adminUpdateProfile(), data),
     changePassword: (data: unknown) => apiClient.send(adminChangePassword(), data),
 
     // Dashboard

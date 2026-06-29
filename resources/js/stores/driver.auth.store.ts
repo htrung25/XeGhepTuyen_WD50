@@ -6,6 +6,7 @@ interface DriverUser {
     full_name: string;
     phone: string;
     email: string | null;
+    birth_date: string | null;
     avatar_url: string | null;
     rating_avg: number;
     total_trips: number;

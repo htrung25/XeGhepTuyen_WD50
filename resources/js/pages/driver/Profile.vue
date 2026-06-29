@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { toast } from 'vue-sonner';
 import { driverApi } from '@/api/driver.api';
 import { useDriverAuthStore } from '@/stores/driver.auth.store';
 
@@ -103,18 +104,35 @@ async function saveProfile() {
     saveLoading.value = true;
     saveMsg.value = '';
     saveError.value = '';
-    // In real app: PUT /api/driver/auth/profile
-    await new Promise((r) => setTimeout(r, 600));
-    saveLoading.value = false;
-    auth.user = {
-        ...auth.user!,
+    
+    const res = await driverApi.updateProfile({
         full_name: form.value.full_name,
         email: form.value.email,
-    } as any;
-    saveMsg.value = 'Cập nhật thông tin thành công!';
-    setTimeout(() => {
-        saveMsg.value = '';
-    }, 3000);
+        birth_date: form.value.birth_date || null,
+    });
+    
+    saveLoading.value = false;
+    
+    if (res.error) {
+        saveError.value = res.error;
+        toast.error(res.error);
+    } else {
+        // Sync auth store + persist to localStorage
+        const updated = {
+            ...auth.user!,
+            full_name: form.value.full_name,
+            email: form.value.email,
+            birth_date: form.value.birth_date || null,
+        } as any;
+        auth.user = updated;
+        localStorage.setItem('driver_user', JSON.stringify(updated));
+        
+        saveMsg.value = 'Cập nhật thông tin thành công!';
+        toast.success('Cập nhật thông tin thành công!');
+        setTimeout(() => {
+            saveMsg.value = '';
+        }, 3000);
+    }
 }
 
 async function updatePassword() {
@@ -122,20 +140,34 @@ async function updatePassword() {
     pwError.value = '';
     if (pwForm.value.new_password !== pwForm.value.confirm_password) {
         pwError.value = 'Mật khẩu xác nhận không khớp';
+        toast.error('Mật khẩu xác nhận không khớp');
         return;
     }
     if (pwForm.value.new_password.length < 8) {
         pwError.value = 'Mật khẩu phải có ít nhất 8 ký tự';
+        toast.error('Mật khẩu phải có ít nhất 8 ký tự');
         return;
     }
+    
     pwLoading.value = true;
-    await new Promise((r) => setTimeout(r, 600));
+    const res = await driverApi.changePassword({
+        old_password: pwForm.value.old_password,
+        new_password: pwForm.value.new_password,
+        new_password_confirmation: pwForm.value.confirm_password,
+    });
     pwLoading.value = false;
-    pwForm.value = { old_password: '', new_password: '', confirm_password: '' };
-    pwMsg.value = 'Cập nhật mật khẩu thành công!';
-    setTimeout(() => {
-        pwMsg.value = '';
-    }, 3000);
+    
+    if (res.error) {
+        pwError.value = res.error;
+        toast.error(res.error);
+    } else {
+        pwForm.value = { old_password: '', new_password: '', confirm_password: '' };
+        pwMsg.value = 'Cập nhật mật khẩu thành công!';
+        toast.success('Cập nhật mật khẩu thành công!');
+        setTimeout(() => {
+            pwMsg.value = '';
+        }, 3000);
+    }
 }
 
 onMounted(async () => {
@@ -148,6 +180,10 @@ onMounted(async () => {
         if (u) {
             form.value.full_name = u.full_name ?? auth.user?.full_name ?? '';
             form.value.email = u.email ?? auth.user?.email ?? '';
+            form.value.birth_date = u.birth_date ?? '';
+            // Sync auth store with latest server data
+            auth.user = { ...auth.user!, ...u } as any;
+            localStorage.setItem('driver_user', JSON.stringify(auth.user));
         }
     }
     reviews.value = profile.value?.recent_reviews ?? [

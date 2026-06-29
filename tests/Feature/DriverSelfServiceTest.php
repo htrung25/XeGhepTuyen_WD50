@@ -44,11 +44,16 @@ it('cập nhật hồ sơ tài xế', function () {
     $user = makeDriverUser();
     Sanctum::actingAs($user);
 
-    $this->putJson('/api/driver/auth/profile', ['full_name' => 'Tài Xế Mới'])
+    $this->putJson('/api/driver/auth/profile', [
+        'full_name' => 'Tài Xế Mới',
+        'birth_date' => '1995-10-15',
+    ])
         ->assertOk()
-        ->assertJsonPath('data.full_name', 'Tài Xế Mới');
+        ->assertJsonPath('data.full_name', 'Tài Xế Mới')
+        ->assertJsonPath('data.birth_date', '1995-10-15');
 
     expect($user->fresh()->full_name)->toBe('Tài Xế Mới');
+    expect($user->fresh()->birth_date->format('Y-m-d'))->toBe('1995-10-15');
 });
 
 it('đổi mật khẩu thành công khi mật khẩu cũ đúng', function () {
