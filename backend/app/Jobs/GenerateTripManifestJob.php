@@ -37,7 +37,7 @@ class GenerateTripManifestJob implements ShouldQueue
 
         $pdf = Pdf::loadView('pdfs.trip-manifest', ['trip' => $trip]);
 
-        $filename = "manifests/trip_{$trip->id}_{now()->format('Ymd')}.pdf";
+        $filename = 'manifests/trip_'.$trip->id.'_'.now()->format('Ymd').'.pdf';
         Storage::disk('public')->put($filename, $pdf->output());
 
         Log::info("Manifest generated for trip {$trip->id}", ['path' => $filename]);
