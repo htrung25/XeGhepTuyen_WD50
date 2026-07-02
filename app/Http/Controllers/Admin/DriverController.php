@@ -10,7 +10,6 @@ use App\Services\AuditLogService;
 use App\Services\DriverService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class DriverController extends Controller
 {
@@ -84,12 +83,6 @@ class DriverController extends Controller
             return response()->json(['success' => false, 'message' => 'Tài xế không tồn tại'], 404);
         }
 
-        // Chỉ tài xế đang hoạt động mới đăng nhập được — reset MK cho pending/rejected/suspended
-        // vô nghĩa (họ bị gating chặn đăng nhập). Chặn để tránh gửi SMS + cấp MK thừa.
-        if ($driver->status !== DriverStatus::Verified) {
-            return response()->json(['success' => false, 'message' => 'Chỉ có thể cấp lại mật khẩu cho tài xế đang hoạt động'], 422);
-        }
-
         // Chỉ tài xế nhận mật khẩu mới qua SMS — admin không xem được.
         $this->driverService->resetPassword($driver);
 
@@ -110,15 +103,10 @@ class DriverController extends Controller
     {
         $request->validate(['reason' => ['required', 'string', 'max:500']]);
 
-        // Eager-load user: audit log đọc $driver->user (FK user_id NOT NULL — luôn có user).
-        $driver = Driver::with('user')->find($id);
+        $driver = Driver::find($id);
 
         if (! $driver) {
             return response()->json(['success' => false, 'message' => 'Tài xế không tồn tại'], 404);
-        }
-
-        if ($driver->status !== DriverStatus::Pending) {
-            return response()->json(['success' => false, 'message' => 'Chỉ có thể từ chối hồ sơ tài xế đang chờ duyệt'], 422);
         }
 
         $oldStatus = $driver->status->value;
@@ -137,24 +125,15 @@ class DriverController extends Controller
 
     public function suspend(string $id): JsonResponse
     {
-        // Eager-load user: audit log + update is_active đọc $driver->user (FK user_id NOT NULL).
-        $driver = Driver::with('user')->find($id);
+        $driver = Driver::find($id);
 
         if (! $driver) {
             return response()->json(['success' => false, 'message' => 'Tài xế không tồn tại'], 404);
         }
 
-        if ($driver->status !== DriverStatus::Verified) {
-            return response()->json(['success' => false, 'message' => 'Chỉ có thể đình chỉ tài xế đang hoạt động'], 422);
-        }
-
         $oldStatus = $driver->status->value;
-        // Bọc 2 update (drivers + users) trong 1 transaction: tránh lệch trạng thái
-        // (driver bị đình chỉ nhưng user vẫn active) nếu lỗi giữa chừng.
-        DB::transaction(function () use ($driver) {
-            $driver->update(['status' => DriverStatus::Suspended]);
-            $driver->user()->update(['is_active' => false]);
-        });
+        $driver->update(['status' => DriverStatus::Suspended]);
+        $driver->user()->update(['is_active' => false]);
 
         app(AuditLogService::class)->log(
             action: 'suspend_driver',
