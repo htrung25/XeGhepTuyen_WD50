@@ -91,6 +91,13 @@ class DriverController extends Controller
             return response()->json(['success' => false, 'message' => 'Tài xế không tồn tại'], 404);
         }
 
+        // Only an active driver can log in, so resetting the password for a
+        // pending/rejected/suspended driver (blocked by gating) is pointless and
+        // would issue a password + SMS for nothing.
+        if ($driver->status !== DriverStatus::Verified) {
+            return response()->json(['success' => false, 'message' => 'Chỉ có thể cấp lại mật khẩu cho tài xế đang hoạt động'], 422);
+        }
+
         // Chỉ tài xế nhận mật khẩu mới qua SMS — admin không xem được.
         $this->driverService->resetPassword($driver);
 
