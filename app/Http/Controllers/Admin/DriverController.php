@@ -11,6 +11,7 @@ use App\Services\DriverService;
 use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DriverController extends Controller
 {
@@ -151,8 +152,12 @@ class DriverController extends Controller
         }
 
         $oldStatus = $driver->status->value;
-        $driver->update(['status' => DriverStatus::Suspended]);
-        $driver->user()->update(['is_active' => false]);
+        // Wrap both writes (drivers + users) in one transaction so a mid-way
+        // failure can't leave the driver suspended while the user stays active.
+        DB::transaction(function () use ($driver) {
+            $driver->update(['status' => DriverStatus::Suspended]);
+            $driver->user()->update(['is_active' => false]);
+        });
 
         app(AuditLogService::class)->log(
             action: 'suspend_driver',
