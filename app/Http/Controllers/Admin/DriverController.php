@@ -109,6 +109,12 @@ class DriverController extends Controller
             return response()->json(['success' => false, 'message' => 'Tài xế không tồn tại'], 404);
         }
 
+        // Only pending applications can be rejected. Rejecting a verified/suspended
+        // driver would flip status to Rejected without clearing is_active (half state).
+        if ($driver->status !== DriverStatus::Pending) {
+            return response()->json(['success' => false, 'message' => 'Chỉ có thể từ chối hồ sơ tài xế đang chờ duyệt'], 422);
+        }
+
         $oldStatus = $driver->status->value;
         $driver->update(['status' => DriverStatus::Rejected, 'reject_reason' => $request->reason]);
 
