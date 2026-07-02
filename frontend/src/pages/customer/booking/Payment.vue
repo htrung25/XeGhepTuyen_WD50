@@ -374,7 +374,7 @@ onUnmounted(() => {
                         <div class="flex justify-between">
                             <span class="text-gray-500">Tuyến</span>
                             <span class="font-medium text-gray-900"
-                                >Hà Nội → Hải Phòng</span
+                                >{{ bookingData?.trip?.route ?? '—' }}</span
                             >
                         </div>
                         <div class="flex justify-between">
