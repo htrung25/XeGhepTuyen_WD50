@@ -137,6 +137,12 @@ class DriverController extends Controller
             return response()->json(['success' => false, 'message' => 'Tài xế không tồn tại'], 404);
         }
 
+        // Only an active (verified) driver can be suspended. Suspending a
+        // pending/rejected profile (never active) or an already-suspended one is invalid.
+        if ($driver->status !== DriverStatus::Verified) {
+            return response()->json(['success' => false, 'message' => 'Chỉ có thể đình chỉ tài xế đang hoạt động'], 422);
+        }
+
         $oldStatus = $driver->status->value;
         $driver->update(['status' => DriverStatus::Suspended]);
         $driver->user()->update(['is_active' => false]);
