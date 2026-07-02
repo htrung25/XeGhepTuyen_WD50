@@ -10,6 +10,7 @@ use App\Services\AuditLogService;
 use App\Services\DriverService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DriverController extends Controller
 {
@@ -140,8 +141,12 @@ class DriverController extends Controller
         }
 
         $oldStatus = $driver->status->value;
-        $driver->update(['status' => DriverStatus::Suspended]);
-        $driver->user()->update(['is_active' => false]);
+        // Bọc 2 update (drivers + users) trong 1 transaction: tránh lệch trạng thái
+        // (driver bị đình chỉ nhưng user vẫn active) nếu lỗi giữa chừng.
+        DB::transaction(function () use ($driver) {
+            $driver->update(['status' => DriverStatus::Suspended]);
+            $driver->user()->update(['is_active' => false]);
+        });
 
         app(AuditLogService::class)->log(
             action: 'suspend_driver',
