@@ -84,6 +84,12 @@ class DriverController extends Controller
             return response()->json(['success' => false, 'message' => 'Tài xế không tồn tại'], 404);
         }
 
+        // Chỉ tài xế đang hoạt động mới đăng nhập được — reset MK cho pending/rejected/suspended
+        // vô nghĩa (họ bị gating chặn đăng nhập). Chặn để tránh gửi SMS + cấp MK thừa.
+        if ($driver->status !== DriverStatus::Verified) {
+            return response()->json(['success' => false, 'message' => 'Chỉ có thể cấp lại mật khẩu cho tài xế đang hoạt động'], 422);
+        }
+
         // Chỉ tài xế nhận mật khẩu mới qua SMS — admin không xem được.
         $this->driverService->resetPassword($driver);
 
