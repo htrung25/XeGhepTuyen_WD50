@@ -8,6 +8,7 @@ use App\Http\Resources\Admin\DriverResource;
 use App\Models\Driver;
 use App\Services\AuditLogService;
 use App\Services\DriverService;
+use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -55,7 +56,13 @@ class DriverController extends Controller
 
         // Duyệt + cấp mật khẩu đăng nhập mới + gửi SMS cho tài xế.
         // KHÔNG trả mật khẩu về cho admin — chỉ tài xế nhận qua SMS (bảo đảm quyền lợi tài xế).
-        $this->driverService->approveAndIssueCredentials($driver);
+        // Guard + update are locked inside the service transaction; a concurrent
+        // approval that loses the race throws and is reported as 422 here.
+        try {
+            $this->driverService->approveAndIssueCredentials($driver);
+        } catch (DomainException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
 
         app(AuditLogService::class)->log(
             action: 'approve_driver',
