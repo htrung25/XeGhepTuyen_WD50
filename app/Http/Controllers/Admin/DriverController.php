@@ -135,6 +135,10 @@ class DriverController extends Controller
             return response()->json(['success' => false, 'message' => 'Tài xế không tồn tại'], 404);
         }
 
+        if ($driver->status !== DriverStatus::Verified) {
+            return response()->json(['success' => false, 'message' => 'Chỉ có thể đình chỉ tài xế đang hoạt động'], 422);
+        }
+
         $oldStatus = $driver->status->value;
         $driver->update(['status' => DriverStatus::Suspended]);
         $driver->user()->update(['is_active' => false]);
