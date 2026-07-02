@@ -111,7 +111,8 @@ class DriverController extends Controller
     {
         $request->validate(['reason' => ['required', 'string', 'max:500']]);
 
-        $driver = Driver::find($id);
+        // Eager-load user: the audit log reads $driver->user (FK user_id is NOT NULL).
+        $driver = Driver::with('user')->find($id);
 
         if (! $driver) {
             return response()->json(['success' => false, 'message' => 'Tài xế không tồn tại'], 404);
@@ -139,7 +140,8 @@ class DriverController extends Controller
 
     public function suspend(string $id): JsonResponse
     {
-        $driver = Driver::find($id);
+        // Eager-load user: audit log + is_active update read $driver->user (FK user_id NOT NULL).
+        $driver = Driver::with('user')->find($id);
 
         if (! $driver) {
             return response()->json(['success' => false, 'message' => 'Tài xế không tồn tại'], 404);
