@@ -11,6 +11,7 @@ interface DriverUser {
     rating_avg: number;
     total_trips: number;
     is_verified: boolean;
+    must_change_password: boolean;
 }
 
 interface DriverInfo {
@@ -35,6 +36,9 @@ export const useDriverAuthStore = defineStore('driverAuth', () => {
 
     const isAuthenticated = computed(() => !!token.value);
 
+    /** true = đang dùng mật khẩu tạm thời, bắt buộc đổi trước khi dùng app */
+    const mustChangePassword = computed(() => !!user.value?.must_change_password);
+
     function setAuth(t: string, u: DriverUser, d: DriverInfo) {
         token.value = t;
         user.value = u;
@@ -42,6 +46,14 @@ export const useDriverAuthStore = defineStore('driverAuth', () => {
         localStorage.setItem('driver_token', t);
         localStorage.setItem('driver_user', JSON.stringify(u));
         localStorage.setItem('driver_info', JSON.stringify(d));
+    }
+
+    /** Gọi sau khi đổi mật khẩu thành công để xoá cờ bắt buộc */
+    function clearMustChangePassword() {
+        if (user.value) {
+            user.value = { ...user.value, must_change_password: false };
+            localStorage.setItem('driver_user', JSON.stringify(user.value));
+        }
     }
 
     function setOnline(v: boolean) {
@@ -66,7 +78,9 @@ export const useDriverAuthStore = defineStore('driverAuth', () => {
         driver,
         isOnline,
         isAuthenticated,
+        mustChangePassword,
         setAuth,
+        clearMustChangePassword,
         setOnline,
         logout,
     };

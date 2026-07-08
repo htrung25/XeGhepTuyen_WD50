@@ -31,6 +31,7 @@ class User extends Authenticatable
         'is_verified',
         'is_active',
         'last_login_at',
+        'must_change_password',
     ];
 
     protected $hidden = [
@@ -42,12 +43,13 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'password'       => 'hashed',
-            'role'           => UserRole::class,
-            'is_verified'    => 'boolean',
-            'is_active'      => 'boolean',
-            'last_login_at'  => 'datetime',
-            'birth_date'     => 'date',
+            'password'             => 'hashed',
+            'role'                 => UserRole::class,
+            'is_verified'          => 'boolean',
+            'is_active'            => 'boolean',
+            'must_change_password' => 'boolean',
+            'last_login_at'        => 'datetime',
+            'birth_date'           => 'date',
         ];
     }
 

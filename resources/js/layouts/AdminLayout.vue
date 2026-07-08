@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Toaster } from '@/components/ui/sonner';
 import { adminApi } from '@/api/admin.api';
@@ -18,26 +18,31 @@ const { can } = useCan();
 
 const sidebarCollapsed = ref(false);
 
-// Thông báo admin (polling)
+// Thông báo admin (polling 20 giây)
 const {
     items: notifItems,
     unreadCount: notifCount,
     load: loadNotifs,
     markRead: markNotifRead,
     markAllRead: markAllNotifsRead,
-} = useAdminNotifications();
+} = useAdminNotifications(20000);
 const notifOpen = ref(false);
 const notifRef = ref<HTMLElement | null>(null);
 
 function toggleNotif() {
     notifOpen.value = !notifOpen.value;
-    if (notifOpen.value) loadNotifs();
+    if (notifOpen.value) {
+        loadNotifs();
+        loadPendingCounts(); // Làm mới badge ngay khi mở panel
+    }
 }
 
 async function onNotifClick(n: AdminNotification) {
     await markNotifRead(n);
     notifOpen.value = false;
     if (n.data?.link) router.push(n.data.link);
+    // Cập nhật badge ngay sau khi điều hướng
+    loadPendingCounts();
 }
 
 // Số việc đang CHỜ XỬ LÝ theo mục sidebar (badge) — từ trạng thái thực tế của hệ
@@ -47,6 +52,13 @@ async function loadPendingCounts() {
     const { data } = await adminApi.getPendingCounts();
     pendingCounts.value = (data as Record<string, number>) ?? {};
 }
+
+// Khi có thông báo mới (notifCount thay đổi) → làm mới badge sidebar ngay lập tức
+watch(notifCount, (newVal, oldVal) => {
+    if (newVal !== oldVal) {
+        loadPendingCounts();
+    }
+});
 
 const adminName = computed(() => authStore.user?.full_name ?? 'Admin');
 const adminInitial = computed(() => adminName.value.charAt(0).toUpperCase());
@@ -69,7 +81,7 @@ let pendingTimer: ReturnType<typeof setInterval> | null = null;
 onMounted(async () => {
     document.addEventListener('click', handleClickOutside);
     loadPendingCounts();
-    pendingTimer = setInterval(loadPendingCounts, 60000);
+    pendingTimer = setInterval(loadPendingCounts, 20000); // 20 giây — đồng bộ với notification polling
     // Làm mới quyền hiện tại (phòng khi vai trò bị admin khác thay đổi).
     const { data } = await adminApi.me();
     if (data) authStore.updateUser(data);
