@@ -75,8 +75,8 @@ class TripResource extends JsonResource
                     'contact_phone'   => $b->contact_phone,
                     'passenger_count' => $b->passenger_count,
                     'final_amount'    => $b->final_amount,
-                    'pickup_stop'     => $b->pickupStop?->stop_name,
-                    'dropoff_stop'    => $b->dropoffStop?->stop_name,
+                    'pickup_stop'     => $b->pickupStop ? $b->pickupStop->stop_name : $b->pickup_address,
+                    'dropoff_stop'    => $b->dropoffStop ? $b->dropoffStop->stop_name : $b->dropoff_address,
                     'created_at'      => $b->created_at->format('Y-m-d H:i:s'),
                 ]);
             }),

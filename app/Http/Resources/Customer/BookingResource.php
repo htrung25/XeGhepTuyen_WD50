@@ -35,8 +35,20 @@ class BookingResource extends JsonResource
                 'driver_name' => $this->trip->driver?->user?->full_name,
                 'driver_phone'=> $this->trip->driver?->user?->phone,
             ],
-            'pickup_stop'      => ['stop_name' => $this->pickupStop->stop_name, 'stop_address' => $this->pickupStop->stop_address],
-            'dropoff_stop'     => ['stop_name' => $this->dropoffStop->stop_name, 'stop_address' => $this->dropoffStop->stop_address],
+            'pickup_stop'      => [
+                'stop_name'    => $this->pickupStop ? $this->pickupStop->stop_name : 'Điểm đón tùy chỉnh',
+                'stop_address' => $this->pickup_address,
+                'address'      => $this->pickup_address,
+                'lat'          => (float) $this->pickup_lat,
+                'lng'          => (float) $this->pickup_lng,
+            ],
+            'dropoff_stop'     => [
+                'stop_name'    => $this->dropoffStop ? $this->dropoffStop->stop_name : 'Điểm trả tùy chỉnh',
+                'stop_address' => $this->dropoff_address,
+                'address'      => $this->dropoff_address,
+                'lat'          => (float) $this->dropoff_lat,
+                'lng'          => (float) $this->dropoff_lng,
+            ],
             'passengers'       => $this->passengers->map(fn($p) => [
                 'full_name'   => $p->full_name,
                 'gender'      => $p->gender?->value,

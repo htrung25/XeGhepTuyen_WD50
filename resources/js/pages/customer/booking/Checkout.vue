@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { customerApi } from '@/api/customer.api';
 import { useCustomerStore } from '@/stores/customer.store';
 import type { RouteStop } from '@/stores/customer.store';
+import LocationInput from '@/components/customer/LocationInput.vue';
 
 const router = useRouter();
 const store = useCustomerStore();
@@ -62,10 +63,10 @@ function validate() {
     if (!/^(0[3|5|7|8|9])[0-9]{8}$/.test(draft.passenger_phone ?? ''))
         errors.value.passenger_phone =
             'Số điện thoại không hợp lệ (10 số, bắt đầu bằng 0)';
-    if (!draft.pickup_stop_id)
-        errors.value.pickup_stop_id = 'Vui lòng chọn điểm đón';
-    if (!draft.dropoff_stop_id)
-        errors.value.dropoff_stop_id = 'Vui lòng chọn điểm trả';
+    if (!draft.pickup_address?.trim() || !draft.pickup_lat || !draft.pickup_lng)
+        errors.value.pickup_address = 'Vui lòng chọn địa điểm đón';
+    if (!draft.dropoff_address?.trim() || !draft.dropoff_lat || !draft.dropoff_lng)
+        errors.value.dropoff_address = 'Vui lòng chọn địa điểm trả';
     return Object.keys(errors.value).length === 0;
 }
 
@@ -97,9 +98,12 @@ async function submit() {
     const { data, error } = await customerApi.createBooking({
         trip_id: draft.trip_id,
         seat_ids: draft.seats.map((s) => s.id),
-        pickup_stop_id: draft.pickup_stop_id,
-        dropoff_stop_id: draft.dropoff_stop_id,
-        pickup_address: draft.pickup_detail || undefined,
+        pickup_address: draft.pickup_address,
+        pickup_lat: draft.pickup_lat!,
+        pickup_lng: draft.pickup_lng!,
+        dropoff_address: draft.dropoff_address,
+        dropoff_lat: draft.dropoff_lat!,
+        dropoff_lng: draft.dropoff_lng!,
         note: draft.note || undefined,
         voucher_code: draft.voucher_code || undefined,
         passenger_count: draft.seats.length,
@@ -276,106 +280,42 @@ onUnmounted(() => {
                     <h2 class="mb-4 font-semibold text-gray-900">
                         Điểm đón &amp; trả
                     </h2>
-                    <div class="mb-4 grid grid-cols-2 gap-4">
-                        <div>
-                            <label
-                                class="mb-1.5 block text-sm font-medium text-gray-700"
-                            >
-                                Điểm đón <span class="text-red-500">*</span>
-                            </label>
-                            <select
-                                v-model="draft.pickup_stop_id"
-                                :class="[
-                                    'w-full rounded-lg border px-3.5 py-2.5 text-sm transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none',
-                                    errors.pickup_stop_id
-                                        ? 'border-red-400 bg-red-50'
-                                        : 'border-gray-300',
-                                ]"
-                            >
-                                <option value="">-- Chọn điểm đón --</option>
-                                <template v-if="pickupStops.length">
-                                    <option
-                                        v-for="s in pickupStops"
-                                        :key="s.id"
-                                        :value="s.id"
-                                    >
-                                        {{ s.stop_name }}
-                                    </option>
-                                </template>
-                                <template v-else>
-                                    <option
-                                        v-for="name in hanoiStops"
-                                        :key="name"
-                                        :value="name"
-                                    >
-                                        {{ name }}
-                                    </option>
-                                </template>
-                            </select>
-                            <p
-                                v-if="errors.pickup_stop_id"
-                                class="mt-1 text-xs text-red-500"
-                            >
-                                {{ errors.pickup_stop_id }}
-                            </p>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Điểm đón tự do -->
+                            <LocationInput
+                                label="Điểm đón"
+                                placeholder="Nhập địa chỉ hoặc chọn bản đồ..."
+                                v-model="draft.pickup_address"
+                                v-model:lat="draft.pickup_lat"
+                                v-model:lng="draft.pickup_lng"
+                                :error="errors.pickup_address"
+                                :city-bias="tripData?.route?.origin_city"
+                            />
+                            
+                            <!-- Điểm trả tự do -->
+                            <LocationInput
+                                label="Điểm trả"
+                                placeholder="Nhập địa chỉ hoặc chọn bản đồ..."
+                                v-model="draft.dropoff_address"
+                                v-model:lat="draft.dropoff_lat"
+                                v-model:lng="draft.dropoff_lng"
+                                :error="errors.dropoff_address"
+                                :city-bias="tripData?.route?.dest_city"
+                            />
                         </div>
+                        
                         <div>
-                            <label
-                                class="mb-1.5 block text-sm font-medium text-gray-700"
-                            >
-                                Điểm trả <span class="text-red-500">*</span>
+                            <label class="mb-1.5 block text-sm font-semibold text-gray-700">
+                                Ghi chú thêm địa chỉ đón/trả <span class="font-normal text-gray-400">(không bắt buộc)</span>
                             </label>
-                            <select
-                                v-model="draft.dropoff_stop_id"
-                                :class="[
-                                    'w-full rounded-lg border px-3.5 py-2.5 text-sm transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none',
-                                    errors.dropoff_stop_id
-                                        ? 'border-red-400 bg-red-50'
-                                        : 'border-gray-300',
-                                ]"
-                            >
-                                <option value="">-- Chọn điểm trả --</option>
-                                <template v-if="dropoffStops.length">
-                                    <option
-                                        v-for="s in dropoffStops"
-                                        :key="s.id"
-                                        :value="s.id"
-                                    >
-                                        {{ s.stop_name }}
-                                    </option>
-                                </template>
-                                <template v-else>
-                                    <option
-                                        v-for="name in haiphongStops"
-                                        :key="name"
-                                        :value="name"
-                                    >
-                                        {{ name }}
-                                    </option>
-                                </template>
-                            </select>
-                            <p
-                                v-if="errors.dropoff_stop_id"
-                                class="mt-1 text-xs text-red-500"
-                            >
-                                {{ errors.dropoff_stop_id }}
-                            </p>
+                            <input
+                                v-model="draft.pickup_detail"
+                                type="text"
+                                placeholder="Số nhà, tên ngõ, hướng đi cụ thể..."
+                                class="h-12 w-full rounded-xl border border-gray-300 px-4 text-base placeholder-gray-400 focus:border-transparent focus:ring-2 focus:ring-green-500 focus:outline-none transition"
+                            />
                         </div>
-                    </div>
-                    <div>
-                        <label
-                            class="mb-1.5 block text-sm font-medium text-gray-700"
-                            >Địa chỉ chi tiết
-                            <span class="font-normal text-gray-400"
-                                >(không bắt buộc)</span
-                            ></label
-                        >
-                        <input
-                            v-model="draft.pickup_detail"
-                            type="text"
-                            placeholder="Số nhà, tên ngõ để tài xế dễ tìm hơn..."
-                            class="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                        />
                     </div>
                 </div>
 

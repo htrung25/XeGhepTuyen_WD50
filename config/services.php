@@ -74,6 +74,14 @@ return [
         'notify_url'  => env('VNPAY_NOTIFY_URL', env('APP_URL') . '/api/customer/payments/vnpay/callback'),
     ],
 
+    // SePay
+    'sepay' => [
+        'webhook_token' => env('SEPAY_WEBHOOK_TOKEN'),
+        'bank_acc'      => env('SEPAY_BANK_ACC', '0935555555'),
+        'bank_name'     => env('SEPAY_BANK_NAME', 'MBBank'),
+        'acc_name'      => env('SEPAY_ACC_NAME', 'NGUYEN VAN AD'),
+    ],
+
     // Google Maps — ETA calculation
     'google_maps' => [
         'api_key'  => env('GOOGLE_MAPS_API_KEY'),

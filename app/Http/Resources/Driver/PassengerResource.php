@@ -23,12 +23,18 @@ class PassengerResource extends JsonResource
                 && $this->payment_status?->value === 'unpaid')
                 ? (int) $this->final_amount : 0,
             'pickup_stop'    => [
-                'stop_name'    => $this->pickupStop->stop_name,
-                'stop_address' => $this->pickupStop->stop_address,
+                'stop_name'    => $this->pickupStop ? $this->pickupStop->stop_name : 'Điểm đón tùy chỉnh',
+                'stop_address' => $this->pickup_address,
+                'address'      => $this->pickup_address,
+                'lat'          => (float) $this->pickup_lat,
+                'lng'          => (float) $this->pickup_lng,
             ],
             'dropoff_stop'   => [
-                'stop_name'    => $this->dropoffStop->stop_name,
-                'stop_address' => $this->dropoffStop->stop_address,
+                'stop_name'    => $this->dropoffStop ? $this->dropoffStop->stop_name : 'Điểm trả tùy chỉnh',
+                'stop_address' => $this->dropoff_address,
+                'address'      => $this->dropoff_address,
+                'lat'          => (float) $this->dropoff_lat,
+                'lng'          => (float) $this->dropoff_lng,
             ],
             'pickup_address' => $this->pickup_address,
             'passengers'     => $this->passengers->map(fn($p) => [

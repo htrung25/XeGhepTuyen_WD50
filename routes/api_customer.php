@@ -26,6 +26,7 @@ Route::post('auth/login', [AuthController::class, 'login']);
 // Payment callbacks — no auth (gateway posts here)
 Route::post('payments/momo/callback', [PaymentController::class, 'momoCallback']);
 Route::post('payments/vnpay/callback', [PaymentController::class, 'vnpayCallback']);
+Route::post('payments/sepay/webhook', [PaymentController::class, 'sepayWebhook']);
 
 // Public trip tracking by code
 Route::get('trips/{trackingCode}/track', [TrackingController::class, 'trackByCode']);

@@ -53,6 +53,12 @@ export interface BookingDraft {
     pickup_stop_id: string;
     dropoff_stop_id: string;
     pickup_detail: string;
+    pickup_address: string;
+    pickup_lat: number | null;
+    pickup_lng: number | null;
+    dropoff_address: string;
+    dropoff_lat: number | null;
+    dropoff_lng: number | null;
     note: string;
     voucher_code: string;
     voucher_discount: number;
@@ -120,6 +126,12 @@ export const useCustomerStore = defineStore('customer', () => {
         pickup_stop_id: '',
         dropoff_stop_id: '',
         pickup_detail: '',
+        pickup_address: '',
+        pickup_lat: null,
+        pickup_lng: null,
+        dropoff_address: '',
+        dropoff_lat: null,
+        dropoff_lng: null,
         note: '',
         voucher_code: '',
         voucher_discount: 0,
@@ -149,6 +161,12 @@ export const useCustomerStore = defineStore('customer', () => {
             pickup_stop_id: '',
             dropoff_stop_id: '',
             pickup_detail: '',
+            pickup_address: '',
+            pickup_lat: null,
+            pickup_lng: null,
+            dropoff_address: '',
+            dropoff_lat: null,
+            dropoff_lng: null,
             note: '',
             voucher_code: '',
             voucher_discount: 0,

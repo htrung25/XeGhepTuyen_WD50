@@ -112,6 +112,62 @@ vnpayCallbackForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'pos
 vnpayCallback.form = vnpayCallbackForm
 
 /**
+* @see \App\Http\Controllers\Customer\PaymentController::sepayWebhook
+* @see app/Http/Controllers/Customer/PaymentController.php:0
+* @route '/api/customer/payments/sepay/webhook'
+*/
+export const sepayWebhook = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: sepayWebhook.url(options),
+    method: 'post',
+})
+
+sepayWebhook.definition = {
+    methods: ["post"],
+    url: '/api/customer/payments/sepay/webhook',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Customer\PaymentController::sepayWebhook
+* @see app/Http/Controllers/Customer/PaymentController.php:0
+* @route '/api/customer/payments/sepay/webhook'
+*/
+sepayWebhook.url = (options?: RouteQueryOptions) => {
+    return sepayWebhook.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Customer\PaymentController::sepayWebhook
+* @see app/Http/Controllers/Customer/PaymentController.php:0
+* @route '/api/customer/payments/sepay/webhook'
+*/
+sepayWebhook.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: sepayWebhook.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Customer\PaymentController::sepayWebhook
+* @see app/Http/Controllers/Customer/PaymentController.php:0
+* @route '/api/customer/payments/sepay/webhook'
+*/
+const sepayWebhookForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: sepayWebhook.url(options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Customer\PaymentController::sepayWebhook
+* @see app/Http/Controllers/Customer/PaymentController.php:0
+* @route '/api/customer/payments/sepay/webhook'
+*/
+sepayWebhookForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: sepayWebhook.url(options),
+    method: 'post',
+})
+
+sepayWebhook.form = sepayWebhookForm
+
+/**
 * @see \App\Http\Controllers\Customer\PaymentController::initiate
 * @see app/Http/Controllers/Customer/PaymentController.php:25
 * @route '/api/customer/payments/initiate'
@@ -347,6 +403,6 @@ walletForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 wallet.form = walletForm
 
-const PaymentController = { momoCallback, vnpayCallback, initiate, status, wallet }
+const PaymentController = { momoCallback, vnpayCallback, sepayWebhook, initiate, status, wallet }
 
 export default PaymentController

@@ -82,10 +82,14 @@ export const customerApi = {
     createBooking: (data: {
         trip_id: string;
         seat_ids: string[];
-        pickup_stop_id: string;
-        dropoff_stop_id: string;
-        pickup_address?: string;
-        dropoff_address?: string;
+        pickup_stop_id?: string;
+        dropoff_stop_id?: string;
+        pickup_address: string;
+        pickup_lat: number;
+        pickup_lng: number;
+        dropoff_address: string;
+        dropoff_lat: number;
+        dropoff_lng: number;
         note?: string;
         voucher_code?: string;
         passenger_count: number;

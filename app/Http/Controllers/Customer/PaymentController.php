@@ -81,6 +81,32 @@ class PaymentController extends Controller
         }
     }
 
+    public function sepayWebhook(Request $request): JsonResponse
+    {
+        try {
+            $authHeader = $request->header('Authorization');
+            $expectedToken = 'Bearer ' . config('services.sepay.webhook_token');
+
+            if (!$authHeader || $authHeader !== $expectedToken) {
+                Log::warning('SePay webhook unauthorized access attempt');
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            }
+
+            $success = $this->paymentService->handleSepayWebhook($request->all());
+
+            return response()->json([
+                'success' => $success,
+                'message' => $success ? 'Giao dịch được xử lý thành công' : 'Không tìm thấy giao dịch hoặc giao dịch đã xử lý',
+            ]);
+        } catch (PaymentVerificationException $e) {
+            Log::warning('SePay callback verification failed', ['payload' => $request->all(), 'error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
+        } catch (\Exception $e) {
+            Log::error('SePay callback error', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Internal server error'], 500);
+        }
+    }
+
     public function status(string $bookingId): JsonResponse
     {
         $booking = Booking::with('payment')->findOrFail($bookingId);

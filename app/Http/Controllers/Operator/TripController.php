@@ -174,9 +174,9 @@ class TripController extends Controller
                 'contact_name' => $p->full_name ?? $booking->contact_name,
                 'contact_phone' => $booking->contact_phone,
                 'seat_code' => $p->seatMap?->seat_code,
-                'pickup_stop' => $booking->pickupStop?->stop_name,
+                'pickup_stop' => $booking->pickupStop ? $booking->pickupStop->stop_name : $booking->pickup_address,
                 'pickup_address' => $booking->pickup_address,
-                'dropoff_stop' => $booking->dropoffStop?->stop_name,
+                'dropoff_stop' => $booking->dropoffStop ? $booking->dropoffStop->stop_name : $booking->dropoff_address,
                 'status' => $booking->booking_status->value,
                 'checked_in' => $booking->booking_status->value === 'checked_in',
                 'no_show' => $booking->booking_status->value === 'no_show',
@@ -218,8 +218,8 @@ class TripController extends Controller
                 $p->full_name ?? $booking->contact_name,
                 $booking->contact_phone,
                 $p->seatMap?->seat_code,
-                $booking->pickupStop?->stop_name,
-                $booking->dropoffStop?->stop_name,
+                $booking->pickupStop ? $booking->pickupStop->stop_name : $booking->pickup_address,
+                $booking->dropoffStop ? $booking->dropoffStop->stop_name : $booking->dropoff_address,
                 $booking->booking_status->label(),
             ]));
 

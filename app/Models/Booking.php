@@ -26,6 +26,8 @@ class Booking extends Model
         'dropoff_address',
         'pickup_lat',
         'pickup_lng',
+        'dropoff_lat',
+        'dropoff_lng',
         'passenger_count',
         'contact_name',
         'contact_phone',
@@ -64,6 +66,10 @@ class Booking extends Model
             'subtotal'        => 'integer',
             'discount_amount' => 'integer',
             'passenger_count' => 'integer',
+            'pickup_lat'      => 'float',
+            'pickup_lng'      => 'float',
+            'dropoff_lat'     => 'float',
+            'dropoff_lng'     => 'float',
         ];
     }
 

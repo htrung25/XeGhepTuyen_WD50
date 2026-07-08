@@ -49,20 +49,18 @@ class TrackingService
             return null;
         }
 
-        $nextStop = $trip->bookings()
-                         ->whereIn('booking_status', ['confirmed'])
-                         ->with('pickupStop')
-                         ->first()
-                         ?->pickupStop;
+        $nextBooking = $trip->bookings()
+                            ->whereIn('booking_status', ['confirmed'])
+                            ->first();
 
-        if (!$nextStop) {
+        if (!$nextBooking || !$nextBooking->pickup_lat || !$nextBooking->pickup_lng) {
             return null;
         }
 
         try {
             $response = Http::get('https://maps.googleapis.com/maps/api/distancematrix/json', [
                 'origins'      => "{$lat},{$lng}",
-                'destinations' => "{$nextStop->lat},{$nextStop->lng}",
+                'destinations' => "{$nextBooking->pickup_lat},{$nextBooking->pickup_lng}",
                 'key'          => $apiKey,
                 'mode'         => 'driving',
             ]);

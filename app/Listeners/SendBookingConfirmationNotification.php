@@ -18,7 +18,7 @@ class SendBookingConfirmationNotification
 
         $departAt = $booking->trip->depart_at->format('H:i d/m/Y');
         $route    = "{$booking->trip->route->origin_city} → {$booking->trip->route->dest_city}";
-        $pickup   = $booking->pickupStop->stop_name;
+        $pickup   = $booking->pickupStop ? $booking->pickupStop->stop_name : $booking->pickup_address;
         $trackUrl = config('app.url') . "/track/{$booking->booking_code}";
 
         $body = "[XeGhep] Đặt vé thành công! Mã vé: {$booking->booking_code}\n"

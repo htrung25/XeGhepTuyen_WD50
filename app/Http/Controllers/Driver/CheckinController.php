@@ -86,8 +86,8 @@ class CheckinController extends Controller
                     'cash_collected'  => $cashDue ? (int) $booking->final_amount : 0,
                     'seat_codes'      => $booking->passengers->map(fn ($p) => $p->seatMap?->seat_code)->filter()->values(),
                     'pickup_stop'     => [
-                        'stop_name' => $booking->pickupStop?->stop_name,
-                        'address'   => $booking->pickupStop?->address,
+                        'stop_name' => $booking->pickupStop ? $booking->pickupStop->stop_name : 'Điểm đón tùy chỉnh',
+                        'address'   => $booking->pickup_address,
                     ],
                 ],
             ]);

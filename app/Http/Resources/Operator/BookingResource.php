@@ -19,8 +19,8 @@ class BookingResource extends JsonResource
             'passenger_count' => $this->passenger_count,
             'total_amount'    => (int) $this->final_amount,
             'seat_codes'      => $this->passengers->map(fn ($p) => $p->seatMap?->seat_code)->filter()->values(),
-            'pickup_stop'     => ['stop_name' => $this->pickupStop?->stop_name],
-            'dropoff_stop'    => ['stop_name' => $this->dropoffStop?->stop_name],
+            'pickup_stop'     => ['stop_name' => $this->pickupStop ? $this->pickupStop->stop_name : $this->pickup_address],
+            'dropoff_stop'    => ['stop_name' => $this->dropoffStop ? $this->dropoffStop->stop_name : $this->dropoff_address],
             'trip'            => [
                 'tracking_code' => $this->trip->tracking_code,
                 'depart_at'     => $this->trip->depart_at->format('Y-m-d H:i:s'),

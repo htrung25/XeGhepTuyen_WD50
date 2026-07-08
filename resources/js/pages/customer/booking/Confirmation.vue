@@ -193,45 +193,34 @@ onMounted(async () => {
                         />
                     </div>
 
-                    <div class="mb-5 space-y-2 text-sm">
-                        <div class="flex items-start gap-2">
+                    <div class="mb-5 space-y-3 text-sm">
+                        <div class="flex items-start gap-2.5">
                             <span class="mt-0.5 text-blue-500">📍</span>
                             <div>
-                                <p class="text-xs text-gray-400">Điểm đón</p>
-                                <p class="font-medium text-gray-900">
-                                    {{
-                                        booking?.pickup_stop?.stop_name ??
-                                        'Mỹ Đình'
-                                    }}
-                                    <span class="font-normal text-gray-400">
-                                        —
-                                        {{
-                                            booking?.pickup_stop?.address ??
-                                            '20 Phạm Hùng'
-                                        }}</span
-                                    >
+                                <p class="text-xs text-gray-400 font-semibold">Điểm đón</p>
+                                <p class="font-bold text-slate-800 mt-0.5">
+                                    {{ booking?.pickup_stop?.stop_name }}
+                                </p>
+                                <p class="text-xs text-gray-500 mt-0.5">
+                                    {{ booking?.pickup_address || booking?.pickup_stop?.address }}
                                 </p>
                             </div>
                         </div>
-                        <div class="flex items-start gap-2">
+                        <div class="flex items-start gap-2.5">
                             <span class="mt-0.5 text-green-500">🏁</span>
                             <div>
-                                <p class="text-xs text-gray-400">Điểm trả</p>
-                                <p class="font-medium text-gray-900">
-                                    {{
-                                        booking?.dropoff_stop?.stop_name ??
-                                        'Trung tâm HP'
-                                    }}
-                                    <span class="font-normal text-gray-400">
-                                        —
-                                        {{
-                                            booking?.dropoff_stop?.address ??
-                                            '1 Đinh Tiên Hoàng'
-                                        }}</span
-                                    >
+                                <p class="text-xs text-gray-400 font-semibold">Điểm trả</p>
+                                <p class="font-bold text-slate-800 mt-0.5">
+                                    {{ booking?.dropoff_stop?.stop_name }}
+                                </p>
+                                <p class="text-xs text-gray-500 mt-0.5">
+                                    {{ booking?.dropoff_address || booking?.dropoff_stop?.address }}
                                 </p>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="mb-5 space-y-2 text-sm">
                         <div class="flex items-start gap-2">
                             <span class="mt-0.5">👤</span>
                             <div>
