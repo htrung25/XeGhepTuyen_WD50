@@ -14,7 +14,7 @@ enum PaymentMethod: string
     {
         return match($this) {
             self::Momo    => 'MoMo',
-            self::Vnpay   => 'VNPay',
+            self::Vnpay   => 'Chuyển khoản VietQR (SePay)',
             self::Zalopay => 'ZaloPay',
             self::Wallet  => 'Ví XeGhep',
             self::Cash    => 'Tiền mặt',

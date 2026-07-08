@@ -113,7 +113,7 @@ vnpayCallback.form = vnpayCallbackForm
 
 /**
 * @see \App\Http\Controllers\Customer\PaymentController::sepayWebhook
-* @see app/Http/Controllers/Customer/PaymentController.php:0
+* @see app/Http/Controllers/Customer/PaymentController.php:84
 * @route '/api/customer/payments/sepay/webhook'
 */
 export const sepayWebhook = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -128,7 +128,7 @@ sepayWebhook.definition = {
 
 /**
 * @see \App\Http\Controllers\Customer\PaymentController::sepayWebhook
-* @see app/Http/Controllers/Customer/PaymentController.php:0
+* @see app/Http/Controllers/Customer/PaymentController.php:84
 * @route '/api/customer/payments/sepay/webhook'
 */
 sepayWebhook.url = (options?: RouteQueryOptions) => {
@@ -137,7 +137,7 @@ sepayWebhook.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Customer\PaymentController::sepayWebhook
-* @see app/Http/Controllers/Customer/PaymentController.php:0
+* @see app/Http/Controllers/Customer/PaymentController.php:84
 * @route '/api/customer/payments/sepay/webhook'
 */
 sepayWebhook.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -147,7 +147,7 @@ sepayWebhook.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\Customer\PaymentController::sepayWebhook
-* @see app/Http/Controllers/Customer/PaymentController.php:0
+* @see app/Http/Controllers/Customer/PaymentController.php:84
 * @route '/api/customer/payments/sepay/webhook'
 */
 const sepayWebhookForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -157,7 +157,7 @@ const sepayWebhookForm = (options?: RouteQueryOptions): RouteFormDefinition<'pos
 
 /**
 * @see \App\Http\Controllers\Customer\PaymentController::sepayWebhook
-* @see app/Http/Controllers/Customer/PaymentController.php:0
+* @see app/Http/Controllers/Customer/PaymentController.php:84
 * @route '/api/customer/payments/sepay/webhook'
 */
 sepayWebhookForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -225,7 +225,7 @@ initiate.form = initiateForm
 
 /**
 * @see \App\Http\Controllers\Customer\PaymentController::status
-* @see app/Http/Controllers/Customer/PaymentController.php:84
+* @see app/Http/Controllers/Customer/PaymentController.php:110
 * @route '/api/customer/payments/{bookingId}/status'
 */
 export const status = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -240,7 +240,7 @@ status.definition = {
 
 /**
 * @see \App\Http\Controllers\Customer\PaymentController::status
-* @see app/Http/Controllers/Customer/PaymentController.php:84
+* @see app/Http/Controllers/Customer/PaymentController.php:110
 * @route '/api/customer/payments/{bookingId}/status'
 */
 status.url = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -267,7 +267,7 @@ status.url = (args: { bookingId: string | number } | [bookingId: string | number
 
 /**
 * @see \App\Http\Controllers\Customer\PaymentController::status
-* @see app/Http/Controllers/Customer/PaymentController.php:84
+* @see app/Http/Controllers/Customer/PaymentController.php:110
 * @route '/api/customer/payments/{bookingId}/status'
 */
 status.get = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -277,7 +277,7 @@ status.get = (args: { bookingId: string | number } | [bookingId: string | number
 
 /**
 * @see \App\Http\Controllers\Customer\PaymentController::status
-* @see app/Http/Controllers/Customer/PaymentController.php:84
+* @see app/Http/Controllers/Customer/PaymentController.php:110
 * @route '/api/customer/payments/{bookingId}/status'
 */
 status.head = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -287,7 +287,7 @@ status.head = (args: { bookingId: string | number } | [bookingId: string | numbe
 
 /**
 * @see \App\Http\Controllers\Customer\PaymentController::status
-* @see app/Http/Controllers/Customer/PaymentController.php:84
+* @see app/Http/Controllers/Customer/PaymentController.php:110
 * @route '/api/customer/payments/{bookingId}/status'
 */
 const statusForm = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -297,7 +297,7 @@ const statusForm = (args: { bookingId: string | number } | [bookingId: string | 
 
 /**
 * @see \App\Http\Controllers\Customer\PaymentController::status
-* @see app/Http/Controllers/Customer/PaymentController.php:84
+* @see app/Http/Controllers/Customer/PaymentController.php:110
 * @route '/api/customer/payments/{bookingId}/status'
 */
 statusForm.get = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -307,7 +307,7 @@ statusForm.get = (args: { bookingId: string | number } | [bookingId: string | nu
 
 /**
 * @see \App\Http\Controllers\Customer\PaymentController::status
-* @see app/Http/Controllers/Customer/PaymentController.php:84
+* @see app/Http/Controllers/Customer/PaymentController.php:110
 * @route '/api/customer/payments/{bookingId}/status'
 */
 statusForm.head = (args: { bookingId: string | number } | [bookingId: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -324,7 +324,7 @@ status.form = statusForm
 
 /**
 * @see \App\Http\Controllers\Customer\PaymentController::wallet
-* @see app/Http/Controllers/Customer/PaymentController.php:102
+* @see app/Http/Controllers/Customer/PaymentController.php:128
 * @route '/api/customer/wallet'
 */
 export const wallet = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -339,7 +339,7 @@ wallet.definition = {
 
 /**
 * @see \App\Http\Controllers\Customer\PaymentController::wallet
-* @see app/Http/Controllers/Customer/PaymentController.php:102
+* @see app/Http/Controllers/Customer/PaymentController.php:128
 * @route '/api/customer/wallet'
 */
 wallet.url = (options?: RouteQueryOptions) => {
@@ -348,7 +348,7 @@ wallet.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Customer\PaymentController::wallet
-* @see app/Http/Controllers/Customer/PaymentController.php:102
+* @see app/Http/Controllers/Customer/PaymentController.php:128
 * @route '/api/customer/wallet'
 */
 wallet.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -358,7 +358,7 @@ wallet.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Customer\PaymentController::wallet
-* @see app/Http/Controllers/Customer/PaymentController.php:102
+* @see app/Http/Controllers/Customer/PaymentController.php:128
 * @route '/api/customer/wallet'
 */
 wallet.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -368,7 +368,7 @@ wallet.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Customer\PaymentController::wallet
-* @see app/Http/Controllers/Customer/PaymentController.php:102
+* @see app/Http/Controllers/Customer/PaymentController.php:128
 * @route '/api/customer/wallet'
 */
 const walletForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -378,7 +378,7 @@ const walletForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => 
 
 /**
 * @see \App\Http\Controllers\Customer\PaymentController::wallet
-* @see app/Http/Controllers/Customer/PaymentController.php:102
+* @see app/Http/Controllers/Customer/PaymentController.php:128
 * @route '/api/customer/wallet'
 */
 walletForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -388,7 +388,7 @@ walletForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Customer\PaymentController::wallet
-* @see app/Http/Controllers/Customer/PaymentController.php:102
+* @see app/Http/Controllers/Customer/PaymentController.php:128
 * @route '/api/customer/wallet'
 */
 walletForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

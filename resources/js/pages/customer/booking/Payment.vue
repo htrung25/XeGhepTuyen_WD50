@@ -8,12 +8,19 @@ const router = useRouter();
 const store = useCustomerStore();
 const draft = store.bookingDraft;
 
-const selectedMethod = ref<'momo' | 'vnpay' | 'wallet' | 'cash'>('momo');
+const selectedMethod = ref<'momo' | 'vnpay' | 'wallet' | 'cash'>('vnpay');
 const isLoading = ref(false);
 const errorMsg = ref('');
 const walletBalance = ref(store.walletBalance);
 const bookingData = ref<any>(null);
 const loadingBooking = ref(true);
+
+// SePay variables
+const showSepayModal = ref(false);
+const sepayQrUrl = ref('');
+const sepayBankInfo = ref<any>(null);
+const isCopied = ref(false);
+let sepayPollingInterval: ReturnType<typeof setInterval> | null = null;
 
 const paySeconds = ref(900);
 let countdown: ReturnType<typeof setInterval> | null = null;
@@ -37,21 +44,21 @@ function fmt(v: number) {
 
 const paymentMethods = computed(() => [
     {
-        key: 'momo' as const,
-        label: 'Ví MoMo',
-        desc: 'Quét mã QR hoặc nhập số điện thoại MoMo',
-        badge: 'Phổ biến nhất',
+        key: 'vnpay' as const,
+        label: 'Chuyển khoản VietQR',
+        desc: 'Quét mã VietQR chuyển khoản ngân hàng tự động 24/7',
+        badge: 'Tự động',
         badgeColor: 'bg-green-100 text-green-700',
-        icon: '💜',
+        icon: '🏦',
         disabled: false,
     },
     {
-        key: 'vnpay' as const,
-        label: 'VNPay',
-        desc: 'Thẻ ATM nội địa / Visa / Mastercard / QR Code',
+        key: 'momo' as const,
+        label: 'Ví MoMo',
+        desc: 'Quét mã QR hoặc ứng dụng MoMo',
         badge: null,
         badgeColor: '',
-        icon: '🏦',
+        icon: '💜',
         disabled: false,
     },
     {
@@ -77,6 +84,26 @@ const paymentMethods = computed(() => [
     },
 ]);
 
+function copyText(text: string) {
+    navigator.clipboard.writeText(text);
+    isCopied.value = true;
+    setTimeout(() => {
+        isCopied.value = false;
+    }, 2000);
+}
+
+function startSepayPolling(bookingId: string) {
+    if (sepayPollingInterval) clearInterval(sepayPollingInterval);
+    sepayPollingInterval = setInterval(async () => {
+        const { data } = await customerApi.getBooking(bookingId);
+        if (data && (data.payment_status === 'paid' || data.booking_status === 'confirmed')) {
+            if (sepayPollingInterval) clearInterval(sepayPollingInterval);
+            showSepayModal.value = false;
+            router.push(`/booking/${bookingId}/confirmation`);
+        }
+    }, 3000);
+}
+
 async function pay() {
     if (isLoading.value) return;
     isLoading.value = true;
@@ -100,6 +127,19 @@ async function pay() {
         router.push(`/booking/${bookingId}/confirmation`);
         return;
     }
+
+    if (selectedMethod.value === 'vnpay') {
+        if (data?.payment_url && data?.bank_info) {
+            sepayQrUrl.value = data.payment_url;
+            sepayBankInfo.value = data.bank_info;
+            showSepayModal.value = true;
+            startSepayPolling(bookingId);
+        } else {
+            errorMsg.value = 'Không thể khởi tạo mã QR chuyển khoản. Vui lòng thử lại.';
+        }
+        return;
+    }
+
     if (data?.payment_url) {
         window.location.href = data.payment_url;
     } else {
@@ -131,6 +171,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
     if (countdown) clearInterval(countdown);
+    if (sepayPollingInterval) clearInterval(sepayPollingInterval);
 });
 </script>
 
@@ -370,6 +411,120 @@ onUnmounted(() => {
                         >
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- SEPAY VIETQR MODAL -->
+        <div
+            v-if="showSepayModal"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
+        >
+            <div class="relative w-full max-w-2xl bg-white rounded-2xl overflow-hidden shadow-2xl border border-slate-100 flex flex-col">
+                <!-- Header -->
+                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+                            <span>🏦</span> Thanh toán chuyển khoản VietQR
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Hệ thống ghi nhận giao dịch tự động trong 10-30 giây</p>
+                    </div>
+                    <button
+                        type="button"
+                        class="text-slate-400 hover:text-slate-600 transition p-1"
+                        @click="showSepayModal = false"
+                    >
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Content -->
+                <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50/50">
+                    <!-- Left: QR Code -->
+                    <div class="flex flex-col items-center justify-center bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                        <img
+                            :src="sepayQrUrl"
+                            alt="VietQR SePay"
+                            class="w-56 h-56 object-contain rounded-lg border border-slate-100 p-1"
+                        />
+                        <p class="text-[11px] text-slate-500 text-center mt-3 leading-relaxed">
+                            Mở App Ngân hàng quét mã QR để điền nhanh mọi thông tin chuyển khoản
+                        </p>
+                    </div>
+
+                    <!-- Right: Bank Info details -->
+                    <div class="space-y-4">
+                        <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm space-y-3">
+                            <div class="flex justify-between items-center text-sm border-b border-slate-100 pb-2">
+                                <span class="text-slate-500">Ngân hàng</span>
+                                <span class="font-bold text-slate-800">{{ sepayBankInfo?.bank_name }}</span>
+                            </div>
+                            
+                            <div class="flex justify-between items-center text-sm border-b border-slate-100 pb-2">
+                                <span class="text-slate-500">Số tài khoản</span>
+                                <div class="flex items-center gap-1.5 font-bold text-slate-800">
+                                    <span>{{ sepayBankInfo?.bank_acc }}</span>
+                                    <button 
+                                        @click="copyText(sepayBankInfo?.bank_acc)" 
+                                        class="text-xs text-green-600 hover:text-green-700 font-semibold"
+                                    >
+                                        Sao chép
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-between items-center text-sm border-b border-slate-100 pb-2">
+                                <span class="text-slate-500">Chủ tài khoản</span>
+                                <span class="font-bold text-slate-800 uppercase">{{ sepayBankInfo?.acc_name }}</span>
+                            </div>
+                            
+                            <div class="flex justify-between items-center text-sm border-b border-slate-100 pb-2">
+                                <span class="text-slate-500">Số tiền cần chuyển</span>
+                                <span class="font-bold text-green-600 text-base">{{ fmt(sepayBankInfo?.amount) }}</span>
+                            </div>
+                            
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-slate-500 font-medium">Nội dung bắt buộc</span>
+                                <div class="flex items-center gap-1.5 font-bold text-red-600">
+                                    <span class="font-mono bg-red-50 border border-red-200 px-2 py-0.5 rounded text-xs text-red-600 font-bold">{{ sepayBankInfo?.code }}</span>
+                                    <button 
+                                        @click="copyText(sepayBankInfo?.code)" 
+                                        class="text-xs text-green-600 hover:text-green-700 font-semibold"
+                                    >
+                                        Sao chép
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Warning banner -->
+                        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 leading-relaxed">
+                            <strong>⚠️ Chú ý:</strong> Bạn cần nhập <strong>chính xác</strong> nội dung chuyển khoản ở trên để hệ thống tự động xác thực vé.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer / Status checking -->
+                <div class="px-6 py-4 border-t border-slate-100 bg-white flex flex-col items-center gap-3">
+                    <div class="flex items-center gap-2 text-sm text-green-700 font-semibold">
+                        <div class="h-4 w-4 animate-spin rounded-full border-2 border-green-600 border-t-transparent shrink-0" />
+                        <span>Đang chờ chuyển khoản...</span>
+                    </div>
+                    
+                    <button
+                        type="button"
+                        class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl text-xs font-semibold transition"
+                        @click="showSepayModal = false"
+                    >
+                        Hủy & Chọn phương thức khác
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Copied Toast -->
+            <div v-if="isCopied" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-lg z-50">
+                Đã sao chép vào bộ nhớ tạm!
             </div>
         </div>
     </div>

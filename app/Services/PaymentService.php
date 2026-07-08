@@ -55,7 +55,7 @@ class PaymentService
 
         return match ($method) {
             PaymentMethod::Momo => $this->initiateMomo($payment, $booking),
-            PaymentMethod::Vnpay => $this->initiateVnpay($payment, $booking),
+            PaymentMethod::Vnpay => $this->initiateSepay($payment, $booking),
             PaymentMethod::Wallet => $this->initiateWallet($payment, $booking),
             PaymentMethod::Cash => $this->initiateCash($payment, $booking),
             default => throw new \InvalidArgumentException('Phương thức thanh toán không hỗ trợ'),
@@ -207,36 +207,72 @@ class PaymentService
         }
     }
 
-    private function initiateVnpay(Payment $payment, Booking $booking): array
+    private function initiateSepay(Payment $payment, Booking $booking): array
     {
-        $tmnCode = config('services.vnpay.tmn_code');
-        $hashSecret = config('services.vnpay.hash_secret');
-        $vnpUrl = config('services.vnpay.url');
+        $bankAcc = config('services.sepay.bank_acc');
+        $bankName = config('services.sepay.bank_name');
+        $accName = config('services.sepay.acc_name');
+        $description = $payment->gateway_order_id; 
 
-        $inputData = [
-            'vnp_Version' => '2.1.0',
-            'vnp_Command' => 'pay',
-            'vnp_TmnCode' => $tmnCode,
-            'vnp_Locale' => 'vn',
-            'vnp_CurrCode' => 'VND',
-            'vnp_TxnRef' => $payment->gateway_order_id,
-            'vnp_OrderInfo' => "Thanh toan ve xe {$booking->booking_code}",
-            'vnp_OrderType' => 'other',
-            'vnp_Amount' => $payment->amount * 100,
-            'vnp_ReturnUrl' => config('app.url').'/payment/vnpay/return',
-            'vnp_IpAddr' => request()->ip(),
-            'vnp_CreateDate' => now()->format('YmdHis'),
-            'vnp_ExpireDate' => now()->addMinutes(15)->format('YmdHis'),
+        $qrUrl = "https://qr.sepay.vn/img?acc={$bankAcc}&bank={$bankName}&amount={$payment->amount}&des={$description}&template=compact2";
+
+        return [
+            'payment_url' => $qrUrl, 
+            'order_id'    => $payment->gateway_order_id,
+            'bank_info'   => [
+                'bank_name' => $bankName,
+                'bank_acc'  => $bankAcc,
+                'acc_name'  => $accName,
+                'amount'    => $payment->amount,
+                'code'      => $description,
+            ]
         ];
+    }
 
-        ksort($inputData);
-        $hashData = urldecode(http_build_query($inputData));
-        $vnpSecureHash = hash_hmac('sha512', $hashData, $hashSecret);
-        $inputData['vnp_SecureHash'] = $vnpSecureHash;
+    public function handleSepayWebhook(array $payload): bool
+    {
+        $content = $payload['transactionContent'] ?? '';
+        if (empty($content)) {
+            Log::warning('SePay Webhook: transactionContent rỗng');
+            return false;
+        }
 
-        $paymentUrl = $vnpUrl.'?'.http_build_query($inputData);
+        if (!preg_match('/XEGHEP-[A-Z0-9]+/i', $content, $matches)) {
+            Log::warning('SePay Webhook: không tìm thấy mã giao dịch XEGHEP trong nội dung', ['content' => $content]);
+            return false;
+        }
 
-        return ['payment_url' => $paymentUrl, 'order_id' => $payment->gateway_order_id];
+        $orderId = strtoupper($matches[0]);
+        $amountIn = (int) ($payload['amountIn'] ?? 0);
+        $gatewayTxnId = $payload['id'] ?? null;
+
+        Log::info('SePay Webhook matched transaction', [
+            'order_id' => $orderId,
+            'amount_in' => $amountIn,
+            'gateway_txn_id' => $gatewayTxnId,
+        ]);
+
+        $payment = Payment::where('gateway_order_id', $orderId)->first();
+        if (!$payment) {
+            Log::warning('SePay Webhook: không tìm thấy giao dịch tương ứng trong DB', ['order_id' => $orderId]);
+            return false;
+        }
+
+        if ($amountIn < $payment->amount) {
+            Log::warning('SePay Webhook: số tiền chuyển khoản không đủ', [
+                'expected' => $payment->amount,
+                'actual' => $amountIn,
+                'order_id' => $orderId,
+            ]);
+            throw new PaymentVerificationException('Số tiền thanh toán không khớp');
+        }
+
+        return $this->processCallback(
+            $orderId,
+            $gatewayTxnId,
+            $payload,
+            true
+        );
     }
 
     private function initiateWallet(Payment $payment, Booking $booking): array
