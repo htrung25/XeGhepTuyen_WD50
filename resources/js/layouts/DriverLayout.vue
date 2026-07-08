@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Toaster } from '@/components/ui/sonner';
 import { driverApi } from '@/api/driver.api';
@@ -10,12 +10,16 @@ const router = useRouter();
 const auth = useDriverAuthStore();
 
 const sidebarOpen = ref(true);
+const dropdownOpen = ref(false);
+const dropdownRef = ref<HTMLElement | null>(null);
+
+const driverName = computed(() => auth.user?.full_name ?? 'Tài xế');
+const driverInitial = computed(() => driverName.value.charAt(0).toUpperCase());
 
 const navItems = [
     { label: 'Tổng quan', path: '/driver/dashboard', icon: 'home' },
     { label: 'Lịch chạy', path: '/driver/schedule', icon: 'calendar' },
     { label: 'Thu nhập', path: '/driver/earnings', icon: 'money' },
-    { label: 'Hồ sơ', path: '/driver/profile', icon: 'user' },
 ];
 
 const isActive = (path: string) => route.path.startsWith(path);
@@ -25,10 +29,25 @@ async function logout() {
     auth.logout();
     router.push('/driver/login');
 }
+
+function handleClickOutside(event: MouseEvent) {
+    const target = event.target as Node;
+    if (dropdownRef.value && !dropdownRef.value.contains(target)) {
+        dropdownOpen.value = false;
+    }
+}
+
+onMounted(() => {
+    document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside);
+});
 </script>
 
 <template>
-    <div class="flex min-h-screen bg-gray-100">
+    <div class="flex h-screen bg-gray-100 overflow-hidden">
         <!-- ─── Sidebar ──────────────────────────────────────────── -->
         <aside
             :class="sidebarOpen ? 'w-60' : 'w-16'"
@@ -61,7 +80,7 @@ async function logout() {
             </div>
 
             <!-- Nav -->
-            <nav class="mt-2 flex-1 space-y-0.5 px-2 py-3">
+            <nav class="mt-2 flex-1 overflow-y-auto space-y-0.5 px-2 py-3">
                 <router-link
                     v-for="item in navItems"
                     :key="item.path"
@@ -137,47 +156,6 @@ async function logout() {
                     <span v-if="sidebarOpen">{{ item.label }}</span>
                 </router-link>
             </nav>
-
-            <!-- Bottom: user + logout -->
-            <div class="space-y-1 border-t border-gray-800 p-3">
-                <div
-                    v-if="sidebarOpen"
-                    class="flex items-center gap-2 px-3 py-2"
-                >
-                    <div
-                        class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-green-700 text-sm font-bold text-white"
-                    >
-                        {{ auth.user?.full_name?.charAt(0) ?? 'T' }}
-                    </div>
-                    <div class="min-w-0">
-                        <p class="truncate text-xs font-semibold text-white">
-                            {{ auth.user?.full_name }}
-                        </p>
-                        <p class="truncate text-xs text-gray-500">
-                            {{ auth.driver?.operator?.company_name }}
-                        </p>
-                    </div>
-                </div>
-                <button
-                    @click="logout"
-                    class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-500 transition-colors hover:bg-gray-800 hover:text-red-400"
-                >
-                    <svg
-                        class="h-5 w-5 flex-shrink-0"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                        />
-                    </svg>
-                    <span v-if="sidebarOpen">Đăng xuất</span>
-                </button>
-            </div>
         </aside>
 
         <!-- ─── Main content ─────────────────────────────────────── -->
@@ -226,11 +204,79 @@ async function logout() {
                             auth.user.rating_avg.toFixed(1)
                         }}</span>
                     </div>
-                    <!-- Avatar -->
-                    <div
-                        class="flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-sm font-semibold text-white"
-                    >
-                        {{ auth.user?.full_name?.charAt(0) ?? 'T' }}
+                    <!-- Avatar with Dropdown -->
+                    <div class="relative" ref="dropdownRef">
+                        <button
+                            @click="dropdownOpen = !dropdownOpen"
+                            class="flex items-center gap-2 rounded-lg p-1.5 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-100 cursor-pointer"
+                        >
+                            <div
+                                class="flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-sm font-semibold text-white overflow-hidden"
+                            >
+                                <img
+                                    v-if="auth.user?.avatar_url"
+                                    :src="auth.user.avatar_url"
+                                    alt="Avatar"
+                                    class="h-full w-full object-cover"
+                                />
+                                <span v-else>{{ driverInitial }}</span>
+                            </div>
+                            <span class="hidden text-sm font-semibold text-slate-700 md:block">
+                                {{ driverName }}
+                            </span>
+                            <!-- Arrow icon -->
+                            <svg
+                                class="h-4 w-4 text-slate-500 transition-transform duration-200"
+                                :class="dropdownOpen ? 'rotate-180' : ''"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        <!-- Dropdown Menu -->
+                        <transition
+                            enter-active-class="transition duration-100 ease-out"
+                            enter-from-class="transform scale-95 opacity-0"
+                            enter-to-class="transform scale-100 opacity-100"
+                            leave-active-class="transition duration-75 ease-in"
+                            leave-from-class="transform scale-100 opacity-100"
+                            leave-to-class="transform scale-95 opacity-0"
+                        >
+                            <div
+                                v-if="dropdownOpen"
+                                class="absolute right-0 mt-2 w-48 origin-top-right rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg ring-1 ring-black/5 focus:outline-none z-50"
+                            >
+                                <!-- Profile link -->
+                                <router-link
+                                    to="/driver/profile"
+                                    @click="dropdownOpen = false"
+                                    class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50"
+                                >
+                                    <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                    Hồ sơ cá nhân
+                                </router-link>
+                                <!-- Divider -->
+                                <div class="my-1 border-t border-slate-100" />
+                                <!-- Logout link -->
+                                <button
+                                    @click="
+                                        dropdownOpen = false;
+                                        logout();
+                                    "
+                                    class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50 text-left cursor-pointer"
+                                >
+                                    <svg class="h-4 w-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                    </svg>
+                                    Đăng xuất
+                                </button>
+                            </div>
+                        </transition>
                     </div>
                 </div>
             </header>
