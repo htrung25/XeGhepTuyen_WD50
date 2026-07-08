@@ -63,42 +63,7 @@ const form = ref({
     note: '',
 });
 
-// Bulk create state
-const bulkEnabled = ref(false);
-const bulkTimes = ref<string[]>(['06:00']);
-const allTimes = [
-    '06:00',
-    '07:00',
-    '08:00',
-    '09:00',
-    '10:00',
-    '11:00',
-    '12:00',
-    '13:00',
-    '14:00',
-    '15:00',
-    '16:00',
-    '17:00',
-    '18:00',
-    '19:00',
-    '20:00',
-];
-const bulkFrom = ref('');
-const bulkTo = ref('');
-const bulkDays = ref<number[]>([1, 2, 3, 4, 5]); // Mon–Fri
-const dayLabels = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
-const toggleTime = (t: string) => {
-    const idx = bulkTimes.value.indexOf(t);
-    if (idx >= 0) bulkTimes.value.splice(idx, 1);
-    else bulkTimes.value.push(t);
-};
-
-const toggleDay = (d: number) => {
-    const idx = bulkDays.value.indexOf(d);
-    if (idx >= 0) bulkDays.value.splice(idx, 1);
-    else bulkDays.value.push(d);
-};
 
 // Calendar view — tuần đang xem (điều hướng được sang tuần cũ/mới)
 const today = new Date();
@@ -366,52 +331,6 @@ const createTrip = async () => {
     setTimeout(() => (saveSuccess.value = false), 3000);
 };
 
-const createBulk = async () => {
-    if (
-        !form.value.route_id ||
-        !form.value.vehicle_id ||
-        !form.value.driver_id ||
-        !bulkFrom.value ||
-        !bulkTo.value ||
-        bulkTimes.value.length === 0
-    ) {
-        saveError.value =
-            'Vui lòng chọn đầy đủ tuyến, xe, tài xế, khoảng ngày và ít nhất 1 giờ';
-        return;
-    }
-
-    const trips: any[] = [];
-    const from = new Date(bulkFrom.value);
-    const to = new Date(bulkTo.value);
-    for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
-        if (!bulkDays.value.includes(d.getDay())) continue;
-        for (const t of bulkTimes.value) {
-            const dt = new Date(d);
-            const [hh, mm] = t.split(':');
-            dt.setHours(+hh, +mm, 0, 0);
-            trips.push({
-                route_id: form.value.route_id,
-                vehicle_id: form.value.vehicle_id,
-                driver_id: form.value.driver_id,
-                depart_at: dt.toISOString(),
-                base_price: form.value.price,
-            });
-        }
-    }
-
-    saving.value = true;
-    saveError.value = '';
-    const { error } = await operatorApi.bulkCreateTrips(trips);
-    saving.value = false;
-    if (error) {
-        saveError.value = error;
-        return;
-    }
-
-    saveSuccess.value = true;
-    await load();
-    setTimeout(() => (saveSuccess.value = false), 3000);
-};
 
 // Đổi tuần → tải lại chuyến của tuần đó
 watch(weekStart, () => load());
@@ -774,119 +693,6 @@ onMounted(() => load());
                         </svg>
                         {{ saving ? 'Đang tạo...' : 'Tạo chuyến' }}
                     </button>
-                </div>
-
-                <!-- Bulk create -->
-                <div
-                    class="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
-                >
-                    <button
-                        class="flex w-full items-center justify-between text-sm font-semibold text-slate-700"
-                        @click="bulkEnabled = !bulkEnabled"
-                    >
-                        <span>Tạo lịch hàng loạt</span>
-                        <svg
-                            :class="bulkEnabled ? 'rotate-180' : ''"
-                            class="h-4 w-4 text-slate-400 transition-transform"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M19 9l-7 7-7-7"
-                            />
-                        </svg>
-                    </button>
-
-                    <div
-                        v-if="bulkEnabled"
-                        class="space-y-3 border-t border-slate-100 pt-1"
-                    >
-                        <!-- Time slots -->
-                        <div>
-                            <p
-                                class="mb-2 text-xs font-semibold text-slate-600"
-                            >
-                                Chọn giờ xuất phát
-                            </p>
-                            <div class="grid grid-cols-5 gap-1.5">
-                                <button
-                                    v-for="t in allTimes"
-                                    :key="t"
-                                    :class="
-                                        bulkTimes.includes(t)
-                                            ? 'bg-amber-500 text-white'
-                                            : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
-                                    "
-                                    class="rounded-lg py-1.5 text-xs font-medium transition-colors"
-                                    @click="toggleTime(t)"
-                                >
-                                    {{ t }}
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Date range -->
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label
-                                    class="mb-1 block text-xs font-medium text-slate-600"
-                                    >Từ ngày</label
-                                >
-                                <input
-                                    v-model="bulkFrom"
-                                    type="date"
-                                    class="w-full rounded-lg border border-slate-200 px-2 py-2 text-xs focus:border-amber-500 focus:outline-none"
-                                />
-                            </div>
-                            <div>
-                                <label
-                                    class="mb-1 block text-xs font-medium text-slate-600"
-                                    >Đến ngày</label
-                                >
-                                <input
-                                    v-model="bulkTo"
-                                    type="date"
-                                    class="w-full rounded-lg border border-slate-200 px-2 py-2 text-xs focus:border-amber-500 focus:outline-none"
-                                />
-                            </div>
-                        </div>
-
-                        <!-- Day of week -->
-                        <div>
-                            <p
-                                class="mb-2 text-xs font-semibold text-slate-600"
-                            >
-                                Các ngày trong tuần
-                            </p>
-                            <div class="flex gap-1">
-                                <button
-                                    v-for="(label, idx) in dayLabels"
-                                    :key="idx"
-                                    :class="
-                                        bulkDays.includes(idx)
-                                            ? 'bg-amber-500 text-white'
-                                            : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
-                                    "
-                                    class="flex-1 rounded-lg py-1.5 text-xs font-medium transition-colors"
-                                    @click="toggleDay(idx)"
-                                >
-                                    {{ label }}
-                                </button>
-                            </div>
-                        </div>
-
-                        <button
-                            :disabled="saving"
-                            class="w-full rounded-lg bg-slate-800 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-900 disabled:bg-slate-400"
-                            @click="createBulk"
-                        >
-                            {{ saving ? 'Đang tạo...' : 'Tạo hàng loạt' }}
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>

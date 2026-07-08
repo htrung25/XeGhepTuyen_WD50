@@ -105,7 +105,7 @@ export const useCustomerStore = defineStore('customer', () => {
     const searchParams = ref<SearchParams>({
         from_city: '',
         to_city: '',
-        date: new Date().toISOString().split('T')[0],
+        date: getLocalDateString(),
         passengers: 1,
         trip_type: 'one_way',
     });
@@ -172,6 +172,13 @@ export const useCustomerStore = defineStore('customer', () => {
         wallet.value = w;
         walletBalance.value = w.balance;
     }
+    function getLocalDateString() {
+        const d = new Date();
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
 
     return {
         // state
@@ -190,5 +197,7 @@ export const useCustomerStore = defineStore('customer', () => {
         setCurrentBooking,
         updateTracking,
         setWallet,
+        getLocalDateString,
+
     };
 });

@@ -10,7 +10,7 @@ const tripType = ref<'one_way' | 'round_trip'>('one_way');
 const fromCity = ref('Hà Nội');
 const toCity = ref('Hải Phòng');
 const passengers = ref(1);
-const travelDate = ref(new Date().toISOString().split('T')[0]);
+const travelDate = ref(store.getLocalDateString());
 const loadingPopular = ref(true);
 
 const popularRoutes = ref([
@@ -58,7 +58,7 @@ const features = [
     },
 ];
 
-const minDate = computed(() => new Date().toISOString().split('T')[0]);
+const minDate = computed(() => store.getLocalDateString());
 
 function swapCities() {
     [fromCity.value, toCity.value] = [toCity.value, fromCity.value];

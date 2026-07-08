@@ -63,8 +63,8 @@ class TripService
             throw new \InvalidArgumentException('Tài xế chưa được admin duyệt, không thể xếp vào chuyến');
         }
 
+        $route = Route::findOrFail($data['route_id']);
         if (empty($data['arrive_at'])) {
-            $route = Route::findOrFail($data['route_id']);
             $data['arrive_at'] = Carbon::parse($data['depart_at'])
                 ->addMinutes($route->est_duration_min);
         }
@@ -88,6 +88,79 @@ class TripService
             ->exists();
         if ($overlap) {
             throw new \InvalidArgumentException('Xe hoặc tài xế đã có chuyến trùng khung giờ này');
+        }
+
+        // Kiểm tra ràng buộc vị trí địa lý & thời gian nghỉ (Buffer Time 30 phút)
+        $bufferMinutes = 30;
+
+        // 1. Kiểm tra tài xế (Chuyến liền trước & liền sau)
+        $prevDriverTrip = Trip::with('route')
+            ->whereNotIn('status', [TripStatus::Cancelled])
+            ->where('driver_id', $driver->id)
+            ->where('depart_at', '<', $departAt)
+            ->orderBy('depart_at', 'desc')
+            ->first();
+
+        if ($prevDriverTrip) {
+            $prevRoute = $prevDriverTrip->route;
+            if ($prevRoute->dest_city !== $route->origin_city) {
+                throw new \InvalidArgumentException("Tài xế đang ở {$prevRoute->dest_city} sau chuyến trước, không thể xuất phát từ {$route->origin_city}");
+            }
+            if ($departAt->lt($prevDriverTrip->arrive_at->copy()->addMinutes($bufferMinutes))) {
+                throw new \InvalidArgumentException("Thời gian nghỉ của tài xế giữa 2 chuyến phải tối thiểu {$bufferMinutes} phút");
+            }
+        }
+
+        $nextDriverTrip = Trip::with('route')
+            ->whereNotIn('status', [TripStatus::Cancelled])
+            ->where('driver_id', $driver->id)
+            ->where('depart_at', '>', $departAt)
+            ->orderBy('depart_at', 'asc')
+            ->first();
+
+        if ($nextDriverTrip) {
+            $nextRoute = $nextDriverTrip->route;
+            if ($route->dest_city !== $nextRoute->origin_city) {
+                throw new \InvalidArgumentException("Chuyến tiếp theo của tài xế bắt đầu từ {$nextRoute->origin_city}, nhưng chuyến này kết thúc tại {$route->dest_city}");
+            }
+            if ($nextDriverTrip->depart_at->lt($arriveAt->copy()->addMinutes($bufferMinutes))) {
+                throw new \InvalidArgumentException("Thời gian nghỉ của tài xế trước chuyến tiếp theo phải tối thiểu {$bufferMinutes} phút");
+            }
+        }
+
+        // 2. Kiểm tra xe (Chuyến liền trước & liền sau)
+        $prevVehicleTrip = Trip::with('route')
+            ->whereNotIn('status', [TripStatus::Cancelled])
+            ->where('vehicle_id', $vehicle->id)
+            ->where('depart_at', '<', $departAt)
+            ->orderBy('depart_at', 'desc')
+            ->first();
+
+        if ($prevVehicleTrip) {
+            $prevRoute = $prevVehicleTrip->route;
+            if ($prevRoute->dest_city !== $route->origin_city) {
+                throw new \InvalidArgumentException("Xe đang ở {$prevRoute->dest_city} sau chuyến trước, không thể xuất phát từ {$route->origin_city}");
+            }
+            if ($departAt->lt($prevVehicleTrip->arrive_at->copy()->addMinutes($bufferMinutes))) {
+                throw new \InvalidArgumentException("Thời gian xoay vòng của xe giữa 2 chuyến phải tối thiểu {$bufferMinutes} phút");
+            }
+        }
+
+        $nextVehicleTrip = Trip::with('route')
+            ->whereNotIn('status', [TripStatus::Cancelled])
+            ->where('vehicle_id', $vehicle->id)
+            ->where('depart_at', '>', $departAt)
+            ->orderBy('depart_at', 'asc')
+            ->first();
+
+        if ($nextVehicleTrip) {
+            $nextRoute = $nextVehicleTrip->route;
+            if ($route->dest_city !== $nextRoute->origin_city) {
+                throw new \InvalidArgumentException("Chuyến tiếp theo của xe bắt đầu từ {$nextRoute->origin_city}, nhưng chuyến này kết thúc tại {$route->dest_city}");
+            }
+            if ($nextVehicleTrip->depart_at->lt($arriveAt->copy()->addMinutes($bufferMinutes))) {
+                throw new \InvalidArgumentException("Thời gian xoay vòng của xe trước chuyến tiếp theo phải tối thiểu {$bufferMinutes} phút");
+            }
         }
 
         $trip = Trip::create(array_merge($data, [
