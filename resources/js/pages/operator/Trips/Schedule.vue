@@ -78,16 +78,18 @@ const startOfWeek = (d: Date) => {
 
 const weekStart = ref(startOfWeek(today));
 
+const weekdaysShort = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+
 const weekDays = computed(() =>
     Array.from({ length: 7 }, (_, i) => {
         const d = new Date(weekStart.value);
         d.setDate(weekStart.value.getDate() + i);
+        const dayOfWeekShort = weekdaysShort[d.getDay()];
+        const dayOfMonth = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
         return {
             date: d,
-            label: d.toLocaleDateString('vi-VN', {
-                weekday: 'short',
-                day: 'numeric',
-            }),
+            label: `${dayOfWeekShort},${dayOfMonth}/${month}`,
         };
     }),
 );
@@ -404,13 +406,13 @@ onMounted(() => load());
             </div>
         </div>
 
-        <div class="flex gap-6">
+        <div class="flex flex-col lg:flex-row gap-6">
             <!-- LEFT: Calendar -->
             <div
-                class="min-w-0 flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+                class="min-w-0 flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm flex flex-col h-[calc(100vh-180px)]"
             >
                 <div
-                    class="flex items-center justify-between gap-3 border-b border-slate-100 px-6 py-4"
+                    class="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-6 py-4"
                 >
                     <div class="flex items-center gap-1.5">
                         <button
@@ -457,71 +459,76 @@ onMounted(() => load());
                     />
                 </div>
 
-                <div v-else class="grid grid-cols-7 divide-x divide-slate-100">
-                    <div
-                        v-for="day in weekDays"
-                        :key="day.label"
-                        class="min-h-[300px]"
-                    >
+                <div v-else class="overflow-x-auto flex-1 min-h-0">
+                    <div class="grid grid-cols-7 divide-x divide-slate-100 min-w-[700px] h-full">
                         <div
-                            class="border-b border-slate-100 px-2 py-2 text-center"
-                            :class="
-                                day.date.toDateString() === today.toDateString()
-                                    ? 'bg-amber-50'
-                                    : ''
-                            "
+                            v-for="day in weekDays"
+                            :key="day.label"
+                            class="flex flex-col h-full"
                         >
-                            <p class="text-xs font-medium text-slate-500">
-                                {{ day.label }}
-                            </p>
-                        </div>
-                        <div
-                            class="max-h-[340px] space-y-1 overflow-y-auto p-1"
-                        >
-                            <button
-                                v-for="trip in tripsForDay(day.date)"
-                                :key="trip.id"
-                                type="button"
-                                @click="openTrip(trip)"
-                                class="w-full cursor-pointer rounded-md px-1.5 py-1 text-left transition hover:ring-2 hover:ring-amber-300"
+                            <div
+                                class="border-b border-slate-100 px-2 py-2 text-center shrink-0"
                                 :class="
-                                    isOverdue(trip)
-                                        ? 'border border-red-300 bg-red-100 text-red-800 ring-1 ring-red-300'
-                                        : (statusColor[trip.status] ??
-                                          'bg-slate-100 text-slate-600')
+                                    day.date.toDateString() === today.toDateString()
+                                        ? 'bg-amber-50'
+                                        : ''
                                 "
                             >
-                                <span
-                                    class="block text-xs leading-tight font-bold"
-                                    >{{ fmtTime(trip.depart_at) }}</span
-                                >
-                                <span
-                                    v-if="isOverdue(trip)"
-                                    class="block text-[10px] leading-tight font-semibold"
-                                    >⏰ Quá giờ</span
-                                >
-                                <span
-                                    class="block text-[10px] leading-tight opacity-80"
-                                >
-                                    👤 {{ trip.passengers_count ?? 0 }}/{{
-                                        trip.total_seats ?? '—'
-                                    }}
-                                </span>
-                            </button>
-                            <!-- Empty day placeholder -->
-                            <p
-                                v-if="tripsForDay(day.date).length === 0"
-                                class="py-4 text-center text-xs text-slate-300"
+                                <p class="text-xs font-bold text-slate-700">
+                                    {{ day.label.split(',')[0] }}
+                                </p>
+                                <p class="mt-0.5 text-[10px] font-mono text-slate-400">
+                                    {{ day.label.split(',')[1] }}
+                                </p>
+                            </div>
+                            <div
+                                class="flex-1 overflow-y-auto space-y-1 p-1"
                             >
-                                —
-                            </p>
+                                <button
+                                    v-for="trip in tripsForDay(day.date)"
+                                    :key="trip.id"
+                                    type="button"
+                                    @click="openTrip(trip)"
+                                    class="w-full cursor-pointer rounded-md px-1.5 py-1 text-left transition hover:ring-2 hover:ring-amber-300"
+                                    :class="
+                                        isOverdue(trip)
+                                            ? 'border border-red-300 bg-red-100 text-red-800 ring-1 ring-red-300'
+                                            : (statusColor[trip.status] ??
+                                              'bg-slate-100 text-slate-600')
+                                    "
+                                >
+                                    <span
+                                        class="block text-xs leading-tight font-bold"
+                                        >{{ fmtTime(trip.depart_at) }}</span
+                                    >
+                                    <span
+                                        v-if="isOverdue(trip)"
+                                        class="block text-[10px] leading-tight font-semibold"
+                                        >⏰ Quá giờ</span
+                                    >
+                                    <span
+                                        class="block text-[10px] leading-tight opacity-80"
+                                    >
+                                        👤 {{ trip.passengers_count ?? 0 }}/{{
+                                            trip.total_seats ?? '—'
+                                        }}
+                                    </span>
+                                </button>
+                                <!-- Empty day placeholder -->
+                                <p
+                                    v-if="tripsForDay(day.date).length === 0"
+                                    class="py-4 text-center text-xs text-slate-300"
+                                >
+                                    —
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- RIGHT: Form panel -->
-            <div class="w-80 flex-shrink-0 space-y-4">
+            <div class="w-full lg:w-80 lg:flex-shrink-0 space-y-4">
                 <!-- Success alert -->
                 <div
                     v-if="saveSuccess"

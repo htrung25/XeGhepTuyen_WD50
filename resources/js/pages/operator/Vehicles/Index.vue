@@ -10,6 +10,11 @@ interface Vehicle {
     manufacture_year: number | null;
     is_active: boolean;
     image_url?: string | null;
+    brand?: string;
+    model?: string;
+    color?: string | null;
+    registration_expiry?: string | null;
+    amenities?: string[];
     current_driver?: { full_name: string; phone: string } | null;
 }
 
@@ -22,8 +27,13 @@ interface Driver {
     is_active: boolean;
     status?: string;
     status_label?: string;
+    license_number?: string;
     license_class?: string;
     license_expiry?: string;
+    id_card_number?: string;
+    id_card_front_url?: string | null;
+    id_card_back_url?: string | null;
+    license_front_url?: string | null;
     current_vehicle?: { plate_number: string; vehicle_type: string } | null;
 }
 
@@ -44,6 +54,20 @@ const assignModal = ref(false);
 const assignDriver = ref<Driver | null>(null);
 const assignVehicleId = ref('');
 const assignLoading = ref(false);
+
+const detailVehicleModal = ref(false);
+const selectedVehicle = ref<Vehicle | null>(null);
+function openVehicleDetail(v: Vehicle) {
+    selectedVehicle.value = v;
+    detailVehicleModal.value = true;
+}
+
+const detailDriverModal = ref(false);
+const selectedDriver = ref<Driver | null>(null);
+function openDriverDetail(d: Driver) {
+    selectedDriver.value = d;
+    detailDriverModal.value = true;
+}
 
 async function fetchData() {
     loading.value = true;
@@ -376,7 +400,7 @@ onMounted(fetchData);
                     { v: 'drivers', l: `Tài xế (${drivers.length})` },
                 ]"
                 :key="t.v"
-                @click="tab = t.v as typeof tab.value"
+                @click="tab = t.v as 'vehicles' | 'drivers'"
                 :class="[
                     'rounded-lg px-5 py-2 text-sm font-medium transition-colors',
                     tab === t.v
@@ -412,7 +436,6 @@ onMounted(fetchData);
             </button>
         </div>
 
-        <!-- ─── Vehicles tab ─────────────────────────────────────────────── -->
         <div
             v-else-if="tab === 'vehicles'"
             class="overflow-hidden rounded-xl border border-gray-200 bg-white"
@@ -456,12 +479,17 @@ onMounted(fetchData);
                             >
                                 Trạng thái
                             </th>
+                            <th
+                                class="px-5 py-3 text-center text-xs font-semibold text-gray-500 uppercase"
+                            >
+                                Thao tác
+                            </th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         <tr v-if="vehicles.length === 0">
                             <td
-                                colspan="6"
+                                colspan="7"
                                 class="px-5 py-12 text-center text-sm text-gray-400"
                             >
                                 Chưa có xe nào
@@ -531,6 +559,14 @@ onMounted(fetchData);
                                 >
                                     {{ v.is_active ? 'Hoạt động' : 'Ngừng' }}
                                 </span>
+                            </td>
+                            <td class="px-5 py-3 text-center">
+                                <button
+                                    @click="openVehicleDetail(v)"
+                                    class="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-100 cursor-pointer"
+                                >
+                                    Xem chi tiết
+                                </button>
                             </td>
                         </tr>
                     </tbody>
@@ -676,15 +712,21 @@ onMounted(fetchData);
                                     class="flex items-center justify-center gap-2"
                                 >
                                     <button
+                                        @click="openDriverDetail(d)"
+                                        class="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-200 cursor-pointer"
+                                    >
+                                        Xem chi tiết
+                                    </button>
+                                    <button
                                         @click="openAssign(d)"
-                                        class="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-100"
+                                        class="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-100 cursor-pointer"
                                     >
                                         Gán xe
                                     </button>
                                     <button
                                         v-if="d.status === 'verified'"
                                         @click="openResetDriver(d)"
-                                        class="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-200"
+                                        class="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-200 cursor-pointer"
                                         title="Cấp lại mật khẩu đăng nhập cho tài xế"
                                     >
                                         Cấp lại MK
@@ -1122,14 +1164,7 @@ onMounted(fetchData);
                             </div>
 
                             <div class="col-span-2">
-                                <label
-                                    class="mb-1.5 block text-sm font-medium text-gray-700"
-                                    >Ảnh giấy tờ
-                                    <span class="font-normal text-gray-400"
-                                        >(không bắt buộc — admin cần để
-                                        duyệt)</span
-                                    ></label
-                                >
+                                <label class="mb-1.5 block text-sm font-medium text-gray-700">Ảnh giấy tờ</label>
                                 <div class="grid grid-cols-3 gap-2">
                                     <label
                                         v-for="f in [
@@ -1364,6 +1399,333 @@ onMounted(fetchData);
                             </button>
                         </div>
                     </template>
+                </div>
+            </div>
+        </Teleport>
+
+        <!-- Detail Vehicle Modal -->
+        <Teleport to="body">
+            <div
+                v-if="detailVehicleModal && selectedVehicle"
+                class="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in"
+            >
+                <div
+                    class="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                    @click="detailVehicleModal = false"
+                />
+                <div
+                    v-if="selectedVehicle"
+                    class="relative w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl transition-all"
+                >
+                    <!-- Close button -->
+                    <button
+                        @click="detailVehicleModal = false"
+                        class="absolute right-4 top-4 rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors cursor-pointer"
+                    >
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+
+                    <!-- Modal Header -->
+                    <div class="mb-5 flex items-center gap-3">
+                        <span class="rounded bg-amber-500 px-2.5 py-1 text-xs font-bold text-white uppercase tracking-wider font-mono">
+                            {{ selectedVehicle?.plate_number }}
+                        </span>
+                        <h3 class="text-xl font-bold text-gray-900">
+                            Thông tin chi tiết xe
+                        </h3>
+                    </div>
+
+                    <!-- Modal Body Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Vehicle Image / Placeholder -->
+                        <div class="overflow-hidden rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-center h-48 md:h-auto">
+                            <img
+                                v-if="selectedVehicle?.image_url"
+                                :src="selectedVehicle?.image_url"
+                                alt="Ảnh xe"
+                                class="h-full w-full object-cover"
+                            />
+                            <div v-else class="text-center p-6 text-gray-400">
+                                <span class="text-6xl block mb-2">🚐</span>
+                                <span class="text-xs">Chưa có ảnh thực tế</span>
+                            </div>
+                        </div>
+
+                        <!-- Details list -->
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-slate-50 p-3 rounded-lg">
+                                    <span class="block text-[10px] uppercase font-bold tracking-wider text-slate-400">Hãng & Dòng xe</span>
+                                    <span class="font-semibold text-slate-800">{{ selectedVehicle?.brand ?? '—' }} {{ selectedVehicle?.model ?? '' }}</span>
+                                </div>
+                                <div class="bg-slate-50 p-3 rounded-lg">
+                                    <span class="block text-[10px] uppercase font-bold tracking-wider text-slate-400">Loại xe</span>
+                                    <span class="font-semibold text-slate-800">
+                                        {{ vehicleTypes.find(t => t.value === selectedVehicle?.vehicle_type)?.label ?? selectedVehicle?.vehicle_type }}
+                                    </span>
+                                </div>
+                                <div class="bg-slate-50 p-3 rounded-lg">
+                                    <span class="block text-[10px] uppercase font-bold tracking-wider text-slate-400">Năm sản xuất</span>
+                                    <span class="font-semibold text-slate-800 font-mono">{{ selectedVehicle?.manufacture_year ?? '—' }}</span>
+                                </div>
+                                <div class="bg-slate-50 p-3 rounded-lg">
+                                    <span class="block text-[10px] uppercase font-bold tracking-wider text-slate-400">Số chỗ ngồi</span>
+                                    <span class="font-semibold text-slate-800">{{ selectedVehicle?.seat_count }} chỗ</span>
+                                </div>
+                                <div class="bg-slate-50 p-3 rounded-lg">
+                                    <span class="block text-[10px] uppercase font-bold tracking-wider text-slate-400">Màu sắc</span>
+                                    <span class="font-semibold text-slate-800">{{ selectedVehicle?.color ?? '—' }}</span>
+                                </div>
+                                <div class="bg-slate-50 p-3 rounded-lg">
+                                    <span class="block text-[10px] uppercase font-bold tracking-wider text-slate-400">Hạn đăng kiểm</span>
+                                    <span class="font-semibold text-slate-800 font-mono text-xs">
+                                        {{ selectedVehicle?.registration_expiry ? new Date(selectedVehicle.registration_expiry).toLocaleDateString('vi-VN') : '—' }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Amenities -->
+                            <div>
+                                <span class="block text-xs font-semibold text-slate-500 mb-2">Tiện ích đi kèm</span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <span
+                                        v-for="a in selectedVehicle?.amenities ?? []"
+                                        :key="a"
+                                        class="inline-flex items-center gap-1 rounded bg-amber-50 px-2 py-1 text-xs text-amber-800 font-medium border border-amber-100"
+                                    >
+                                        <span class="text-xs">✨</span>
+                                        {{ { wifi: 'Wifi', ac: 'Điều hòa', usb: 'Cổng sạc USB', water: 'Nước uống', tv: 'TV giải trí' }[a] ?? a }}
+                                    </span>
+                                    <span v-if="!selectedVehicle?.amenities || selectedVehicle?.amenities.length === 0" class="text-xs text-slate-400 italic">
+                                        Không có tiện ích đặc biệt
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Assigned driver info -->
+                            <div class="border-t border-slate-100 pt-2">
+                                <span class="block text-xs font-semibold text-slate-500 mb-2">Tài xế đang gán</span>
+                                <div v-if="selectedVehicle?.current_driver" class="flex items-center gap-3 bg-green-50/50 border border-green-100/50 p-3 rounded-xl">
+                                    <div class="flex h-9 w-9 items-center justify-center rounded-full bg-green-100">
+                                        <span class="text-sm font-semibold text-green-700">👤</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-slate-800">{{ selectedVehicle?.current_driver?.full_name }}</p>
+                                        <p class="text-xs font-mono text-slate-500">{{ selectedVehicle?.current_driver?.phone }}</p>
+                                    </div>
+                                </div>
+                                <div v-else class="flex items-center gap-2 bg-slate-50 p-3 rounded-xl">
+                                    <span class="text-gray-400 text-sm">⚠️</span>
+                                    <span class="text-xs text-slate-500">Chưa gán tài xế cố định cho phương tiện này.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="mt-6 flex justify-end">
+                        <button
+                            @click="detailVehicleModal = false"
+                            class="rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800 cursor-pointer"
+                        >
+                            Đóng cửa sổ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
+
+        <!-- Detail Driver Modal -->
+        <Teleport to="body">
+            <div
+                v-if="detailDriverModal && selectedDriver"
+                class="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in"
+            >
+                <div
+                    class="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                    @click="detailDriverModal = false"
+                />
+                <div
+                    v-if="selectedDriver"
+                    class="relative w-full max-w-3xl rounded-2xl bg-white p-6 shadow-2xl transition-all"
+                >
+                    <!-- Close button -->
+                    <button
+                        @click="detailDriverModal = false"
+                        class="absolute right-4 top-4 rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors cursor-pointer"
+                    >
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+
+                    <!-- Modal Header -->
+                    <div class="mb-5 flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                            <span>👤</span> Hồ sơ & Giấy tờ tài xế
+                        </h3>
+                    </div>
+
+                    <!-- Modal Body Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                        <!-- Left Column: Personal info & vehicle (5 cols) -->
+                        <div class="md:col-span-5 space-y-4">
+                            <div class="text-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                <div class="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 ring-4 ring-amber-50">
+                                    <span class="text-xl font-bold text-amber-700">
+                                        {{ selectedDriver?.full_name?.charAt(0) }}
+                                    </span>
+                                </div>
+                                <h4 class="font-bold text-slate-800">{{ selectedDriver?.full_name }}</h4>
+                                <p class="text-xs text-slate-500 font-mono mt-0.5">{{ selectedDriver?.phone }}</p>
+                            </div>
+
+                            <div class="space-y-2.5">
+                                <div class="flex items-center justify-between bg-slate-50 px-3 py-2 rounded-xl text-xs">
+                                    <span class="font-medium text-slate-500">Đánh giá</span>
+                                    <div class="flex items-center gap-0.5">
+                                        <template v-if="selectedDriver?.rating_avg">
+                                            <span class="font-bold text-slate-800">{{ selectedDriver?.rating_avg?.toFixed(1) }}</span>
+                                            <span class="text-yellow-400">★</span>
+                                        </template>
+                                        <span v-else class="text-slate-400 italic">Chưa có</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between bg-slate-50 px-3 py-2 rounded-xl text-xs">
+                                    <span class="font-medium text-slate-500">Trạng thái</span>
+                                    <span :class="['inline-flex rounded-full px-2 py-0.5 font-semibold text-[10px]', driverStatusMap[selectedDriver?.status ?? ''] ?? 'bg-gray-100 text-gray-600']">
+                                        {{ selectedDriver?.status_label ?? (selectedDriver?.is_active ? 'Hoạt động' : 'Ngừng') }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="border-t border-slate-100 pt-3">
+                                <span class="block text-xs font-semibold text-slate-500 mb-2">Xe đang chạy</span>
+                                <div v-if="selectedDriver?.current_vehicle" class="flex items-center gap-2.5 bg-amber-50/40 border border-amber-100/50 p-2.5 rounded-xl">
+                                    <span class="text-lg">🚐</span>
+                                    <div>
+                                        <p class="text-xs font-bold text-slate-800 font-mono uppercase">{{ selectedDriver?.current_vehicle?.plate_number }}</p>
+                                        <p class="text-[10px] text-slate-500">
+                                            {{ vehicleTypes.find(t => t.value === selectedDriver?.current_vehicle?.vehicle_type)?.label ?? selectedDriver?.current_vehicle?.vehicle_type }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div v-else class="text-center py-3 bg-slate-50 rounded-xl">
+                                    <span class="text-xs text-slate-400">Chưa gán xe</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Document Details & Images (7 cols) -->
+                        <div class="md:col-span-7 space-y-4 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6">
+                            <!-- CCCD/CMND Section -->
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">1. CMND/CCCD</span>
+                                    <span class="font-mono text-sm font-bold text-slate-800">{{ selectedDriver?.id_card_number ?? 'Chưa cập nhật' }}</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <span class="block text-[9px] text-slate-400 mb-1 text-center font-medium">Mặt trước CCCD</span>
+                                        <a
+                                            v-if="selectedDriver?.id_card_front_url"
+                                            :href="selectedDriver?.id_card_front_url"
+                                            target="_blank"
+                                            class="block group relative aspect-[3/2] overflow-hidden rounded-lg border border-slate-200 bg-slate-50"
+                                        >
+                                            <img
+                                                :src="selectedDriver?.id_card_front_url"
+                                                alt="Mặt trước CCCD"
+                                                class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                                            />
+                                            <div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity animate-fade-in">
+                                                <span class="text-[10px] font-medium text-white">Xem ảnh gốc ↗</span>
+                                            </div>
+                                        </a>
+                                        <div v-else class="aspect-[3/2] flex items-center justify-center border border-dashed border-slate-200 rounded-lg text-slate-300 text-xs italic bg-slate-50/50">
+                                            Chưa tải lên
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span class="block text-[9px] text-slate-400 mb-1 text-center font-medium">Mặt sau CCCD</span>
+                                        <a
+                                            v-if="selectedDriver?.id_card_back_url"
+                                            :href="selectedDriver?.id_card_back_url"
+                                            target="_blank"
+                                            class="block group relative aspect-[3/2] overflow-hidden rounded-lg border border-slate-200 bg-slate-50"
+                                        >
+                                            <img
+                                                :src="selectedDriver?.id_card_back_url"
+                                                alt="Mặt sau CCCD"
+                                                class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                                            />
+                                            <div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity animate-fade-in">
+                                                <span class="text-[10px] font-medium text-white">Xem ảnh gốc ↗</span>
+                                            </div>
+                                        </a>
+                                        <div v-else class="aspect-[3/2] flex items-center justify-center border border-dashed border-slate-200 rounded-lg text-slate-300 text-xs italic bg-slate-50/50">
+                                            Chưa tải lên
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- GPLX Section -->
+                            <div class="space-y-2 border-t border-slate-100 pt-3">
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="font-bold uppercase tracking-wider text-slate-400">2. Giấy phép lái xe (GPLX)</span>
+                                    <span class="font-mono font-bold text-slate-800">{{ selectedDriver?.license_number ?? 'Chưa cập nhật' }}</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 text-xs">
+                                    <div class="bg-slate-50 p-2 rounded-lg">
+                                        <span class="block text-[9px] text-slate-400 font-bold uppercase">Hạng GPLX</span>
+                                        <span class="font-bold text-slate-800 font-mono text-sm">{{ selectedDriver?.license_class ?? '—' }}</span>
+                                    </div>
+                                    <div class="bg-slate-50 p-2 rounded-lg">
+                                        <span class="block text-[9px] text-slate-400 font-bold uppercase">Ngày hết hạn</span>
+                                        <span class="font-bold text-slate-800 font-mono text-xs">
+                                            {{ selectedDriver?.license_expiry ? new Date(selectedDriver.license_expiry).toLocaleDateString('vi-VN') : '—' }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="mt-2">
+                                    <span class="block text-[9px] text-slate-400 mb-1 text-center font-medium">Ảnh Giấy phép lái xe</span>
+                                    <a
+                                        v-if="selectedDriver?.license_front_url"
+                                        :href="selectedDriver?.license_front_url"
+                                        target="_blank"
+                                        class="block group relative aspect-[16/10] max-w-[240px] mx-auto overflow-hidden rounded-lg border border-slate-200 bg-slate-50"
+                                    >
+                                        <img
+                                            :src="selectedDriver?.license_front_url"
+                                            alt="Ảnh GPLX"
+                                            class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                                        />
+                                        <div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity animate-fade-in">
+                                            <span class="text-[10px] font-medium text-white">Xem ảnh gốc ↗</span>
+                                        </div>
+                                    </a>
+                                    <div v-else class="aspect-[16/10] max-w-[240px] mx-auto flex items-center justify-center border border-dashed border-slate-200 rounded-lg text-slate-300 text-xs italic bg-slate-50/50">
+                                        Chưa tải lên
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="mt-6 flex justify-end border-t border-slate-100 pt-4">
+                        <button
+                            @click="detailDriverModal = false"
+                            class="rounded-xl bg-gray-900 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800 cursor-pointer"
+                        >
+                            Đóng cửa sổ
+                        </button>
+                    </div>
                 </div>
             </div>
         </Teleport>

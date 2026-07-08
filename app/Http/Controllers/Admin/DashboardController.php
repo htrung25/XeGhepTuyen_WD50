@@ -26,16 +26,14 @@ class DashboardController extends Controller
         // Khớp ĐÚNG tên field FE đọc (active_trips, new_users_today). "Nhà xe chờ duyệt"
         // = đơn đăng ký đối tác PENDING (PartnerApplication) — đây mới là việc cần duyệt
         // thực tế; Operator chỉ được tạo (verified) SAU khi duyệt đơn.
-        $stats = Cache::remember('admin_dashboard_stats', 60, function () {
-            return [
-                'bookings_today' => Booking::whereDate('created_at', today())->count(),
-                'revenue_today' => (int) Booking::whereDate('created_at', today())->where('booking_status', 'completed')->sum('final_amount'),
-                'active_trips' => Trip::where('status', 'in_progress')->count(),
-                'new_users_today' => User::whereDate('created_at', today())->count(),
-                'pending_operators' => PartnerApplication::where('status', 'pending')->count(),
-                'pending_drivers' => Driver::where('status', 'pending')->count(),
-            ];
-        });
+        $stats = [
+            'bookings_today' => Booking::whereDate('created_at', today())->count(),
+            'revenue_today' => (int) Booking::whereDate('created_at', today())->where('booking_status', 'completed')->sum('final_amount'),
+            'active_trips' => Trip::where('status', 'in_progress')->count(),
+            'new_users_today' => User::whereDate('created_at', today())->count(),
+            'pending_operators' => PartnerApplication::where('status', 'pending')->count(),
+            'pending_drivers' => Driver::where('status', 'pending')->count(),
+        ];
 
         // Booking gần đây — map đúng shape FE cần (code/customer/route/amount/status)
         $recentBookings = Booking::with(['user', 'trip.route'])
