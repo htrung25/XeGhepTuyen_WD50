@@ -53,7 +53,7 @@ class AuthController extends Controller
     public function verifyOtp(Request $request): JsonResponse
     {
         $request->validate([
-            'phone' => ['required', 'regex:/^(0[3|5|7|8|9])+([0-9]{8})$/'],
+            'phone' => ['required', 'regex:/^(0[35789])[0-9]{8}$/'],
             'otp' => ['required', 'digits:6'],
         ]);
 
