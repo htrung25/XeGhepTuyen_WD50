@@ -1,8 +1,10 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Models\AdminRole;
 use App\Models\PartnerApplication;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Laravel\Sanctum\Sanctum;
 
 /** Dashboard admin: khớp field FE + "nhà xe chờ duyệt" = đơn đối tác pending. */
@@ -49,11 +51,30 @@ it('pending_operators đếm đơn đăng ký đối tác đang chờ duyệt', 
 });
 
 it('chặn admin không có quyền dashboard.view', function () {
-    $role = \App\Models\AdminRole::create([
+    $role = AdminRole::create([
         'name' => 'Kế toán', 'slug' => 'kt-no-dash',
         'permissions' => ['finance.view'], 'is_super' => false,
     ]);
     Sanctum::actingAs(User::factory()->create(['role' => UserRole::Admin, 'admin_role_id' => $role->id]));
 
     $this->getJson('/api/admin/dashboard')->assertStatus(403);
+});
+
+it('stats lấy từ cache-aside Redis (key admin:dashboard:stats)', function () {
+    // Seed cache giá trị giả → endpoint phải trả đúng giá trị cached, không query lại.
+    Cache::put('admin:dashboard:stats', ['bookings_today' => 999], 60);
+    actingAsDashboardAdmin();
+
+    $this->getJson('/api/admin/dashboard')
+        ->assertOk()
+        ->assertJsonPath('data.stats.bookings_today', 999);
+});
+
+it('ghi cache stats sau khi gọi lần đầu', function () {
+    Cache::forget('admin:dashboard:stats');
+    actingAsDashboardAdmin();
+
+    $this->getJson('/api/admin/dashboard')->assertOk();
+
+    expect(Cache::has('admin:dashboard:stats'))->toBeTrue();
 });
