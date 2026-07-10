@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Booking;
 use BaconQrCode\Common\ErrorCorrectionLevel;
-use BaconQrCode\Renderer\Image\ImagickImageBackEnd;
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
@@ -28,9 +28,11 @@ class QrCodeService
         // Dùng trực tiếp bacon/bacon-qr-code (đã có sẵn qua laravel/fortify) —
         // KHÔNG dùng simplesoftwareio/simple-qrcode vì nó yêu cầu bacon ^2.0
         // xung đột với fortify (cần bacon ^3.0).
+        // Backend SVG (thuần PHP, chỉ cần ext-xmlwriter) thay vì Imagick —
+        // ext-imagick không có sẵn trên Windows/CI và không đáng thêm dependency hệ thống.
         $renderer = new ImageRenderer(
             new RendererStyle(300, 1),
-            new ImagickImageBackEnd
+            new SvgImageBackEnd
         );
         $qrImage = (new Writer($renderer))->writeString(
             $content,
@@ -38,7 +40,7 @@ class QrCodeService
             ErrorCorrectionLevel::H()
         );
 
-        $path = self::QR_PATH."/qr_{$booking->booking_code}.png";
+        $path = self::QR_PATH."/qr_{$booking->booking_code}.svg";
         Storage::disk(self::QR_DISK)->put($path, $qrImage);
 
         return Storage::disk(self::QR_DISK)->url($path);
