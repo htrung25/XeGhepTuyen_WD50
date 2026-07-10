@@ -3,11 +3,9 @@
 namespace App\Services;
 
 use App\Enums\WalletTransactionType;
-use App\Exceptions\InsufficientBalanceException;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
-use Illuminate\Support\Facades\DB;
 
 class WalletService
 {
@@ -19,12 +17,14 @@ class WalletService
     public function credit(User $user, int $amount, string $description, ?string $bookingId = null): WalletTransaction
     {
         $wallet = $this->getOrCreate($user);
+
         return $wallet->credit($amount, $description, WalletTransactionType::Refund, $bookingId);
     }
 
     public function debit(User $user, int $amount, string $description, ?string $bookingId = null): WalletTransaction
     {
         $wallet = $this->getOrCreate($user);
+
         return $wallet->debit($amount, $description, WalletTransactionType::Payment, $bookingId);
     }
 
@@ -36,7 +36,7 @@ class WalletService
     public function getTransactions(User $user, int $perPage = 20)
     {
         return $this->getOrCreate($user)
-                    ->transactions()
-                    ->paginate($perPage);
+            ->transactions()
+            ->paginate($perPage);
     }
 }

@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { adminApi } from '@/api/admin.api';
 import MapboxMap from '@/components/MapboxMap.vue';
-import type {MapMarker} from '@/components/MapboxMap.vue';
+import type { MapMarker } from '@/components/MapboxMap.vue';
 
 interface LiveTrip {
     id: string;

@@ -14,14 +14,14 @@ class VoucherController extends Controller
     public function index(Request $request): JsonResponse
     {
         $vouchers = Voucher::with('operator')
-                           ->when($request->is_active !== null, fn($q) => $q->where('is_active', $request->boolean('is_active')))
-                           ->latest()
-                           ->paginate(20);
+            ->when($request->is_active !== null, fn ($q) => $q->where('is_active', $request->boolean('is_active')))
+            ->latest()
+            ->paginate(20);
 
         return response()->json([
             'success' => true,
-            'data'    => $vouchers->items(),
-            'meta'    => ['current_page' => $vouchers->currentPage(), 'total' => $vouchers->total()],
+            'data' => $vouchers->items(),
+            'meta' => ['current_page' => $vouchers->currentPage(), 'total' => $vouchers->total()],
         ]);
     }
 
@@ -32,7 +32,7 @@ class VoucherController extends Controller
         app(AuditLogService::class)->log(
             action: 'create_voucher',
             model: $voucher,
-            description: "Đã tạo voucher mới: {$voucher->code} (Giảm: " . ($voucher->discount_type === 'percent' ? $voucher->discount_value . '%' : number_format((float) $voucher->discount_value, 0, ',', '.') . 'đ') . ")",
+            description: "Đã tạo voucher mới: {$voucher->code} (Giảm: ".($voucher->discount_type === 'percent' ? $voucher->discount_value.'%' : number_format((float) $voucher->discount_value, 0, ',', '.').'đ').')',
             newValues: $voucher->toArray()
         );
 
@@ -43,7 +43,7 @@ class VoucherController extends Controller
     {
         $voucher = Voucher::with(['usages.user', 'operator'])->find($id);
 
-        if (!$voucher) {
+        if (! $voucher) {
             return response()->json(['success' => false, 'message' => 'Voucher không tồn tại'], 404);
         }
 
@@ -54,19 +54,19 @@ class VoucherController extends Controller
     {
         $voucher = Voucher::find($id);
 
-        if (!$voucher) {
+        if (! $voucher) {
             return response()->json(['success' => false, 'message' => 'Voucher không tồn tại'], 404);
         }
 
         $validated = $request->validate([
-            'discount_type'  => ['sometimes', 'in:percent,fixed'],
+            'discount_type' => ['sometimes', 'in:percent,fixed'],
             'discount_value' => ['sometimes', 'numeric', 'min:0'],
-            'min_order'      => ['sometimes', 'integer', 'min:0'],
-            'max_discount'   => ['sometimes', 'nullable', 'integer', 'min:0'],
-            'usage_limit'    => ['sometimes', 'integer', 'min:1'],
-            'valid_from'     => ['sometimes', 'date'],
-            'valid_until'    => ['sometimes', 'date', 'after:valid_from'],
-            'is_active'      => ['sometimes', 'boolean'],
+            'min_order' => ['sometimes', 'integer', 'min:0'],
+            'max_discount' => ['sometimes', 'nullable', 'integer', 'min:0'],
+            'usage_limit' => ['sometimes', 'integer', 'min:1'],
+            'valid_from' => ['sometimes', 'date'],
+            'valid_until' => ['sometimes', 'date', 'after:valid_from'],
+            'is_active' => ['sometimes', 'boolean'],
         ]);
 
         $oldValues = $voucher->toArray();
@@ -87,19 +87,19 @@ class VoucherController extends Controller
     {
         $voucher = Voucher::find($id);
 
-        if (!$voucher) {
+        if (! $voucher) {
             return response()->json(['success' => false, 'message' => 'Voucher không tồn tại'], 404);
         }
 
         $oldStatus = $voucher->is_active;
-        $voucher->update(['is_active' => !$voucher->is_active]);
+        $voucher->update(['is_active' => ! $voucher->is_active]);
 
         $status = $voucher->is_active ? 'kích hoạt' : 'vô hiệu hoá';
 
         app(AuditLogService::class)->log(
             action: 'toggle_voucher',
             model: $voucher,
-            description: "Đã " . ($voucher->is_active ? "kích hoạt" : "vô hiệu hoá") . " voucher: {$voucher->code}",
+            description: 'Đã '.($voucher->is_active ? 'kích hoạt' : 'vô hiệu hoá')." voucher: {$voucher->code}",
             oldValues: ['is_active' => $oldStatus],
             newValues: ['is_active' => $voucher->is_active]
         );
@@ -111,7 +111,7 @@ class VoucherController extends Controller
     {
         $voucher = Voucher::find($id);
 
-        if (!$voucher) {
+        if (! $voucher) {
             return response()->json(['success' => false, 'message' => 'Voucher không tồn tại'], 404);
         }
 

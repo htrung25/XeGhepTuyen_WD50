@@ -22,8 +22,8 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->string('license_url', 500)->nullable()->comment('URL ảnh giấy phép kinh doanh');
             $table->enum('status', ['pending', 'verified', 'suspended', 'rejected'])
-                  ->default('pending')
-                  ->comment('pending=chờ duyệt, verified=đã duyệt, suspended=đình chỉ, rejected=từ chối');
+                ->default('pending')
+                ->comment('pending=chờ duyệt, verified=đã duyệt, suspended=đình chỉ, rejected=từ chối');
             $table->timestamp('verified_at')->nullable();
             $table->uuid('verified_by')->nullable()->comment('admin user_id đã duyệt');
             $table->timestamps();

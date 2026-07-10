@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::table('drivers', function (Blueprint $table) {
             // Xe được nhà xe gán cố định cho tài xế
             $table->uuid('current_vehicle_id')->nullable()->after('operator_id')
-                  ->comment('Xe đang được gán cho tài xế');
+                ->comment('Xe đang được gán cho tài xế');
         });
     }
 

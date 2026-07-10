@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\AdminPermission;
 use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -43,13 +44,13 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'password'             => 'hashed',
-            'role'                 => UserRole::class,
-            'is_verified'          => 'boolean',
-            'is_active'            => 'boolean',
+            'password' => 'hashed',
+            'role' => UserRole::class,
+            'is_verified' => 'boolean',
+            'is_active' => 'boolean',
             'must_change_password' => 'boolean',
-            'last_login_at'        => 'datetime',
-            'birth_date'           => 'date',
+            'last_login_at' => 'datetime',
+            'birth_date' => 'date',
         ];
     }
 
@@ -156,7 +157,7 @@ class User extends Authenticatable
         }
 
         if ($this->adminRole?->is_super) {
-            return \App\Enums\AdminPermission::values();
+            return AdminPermission::values();
         }
 
         return $this->adminRole?->permissions ?? [];

@@ -13,12 +13,12 @@ class SendBookingCancellationNotification
 
     public function handle(BookingCancelled $event): void
     {
-        $booking      = $event->booking;
+        $booking = $event->booking;
         $refundAmount = $event->refundAmount;
-        $user         = $booking->user;
+        $user = $booking->user;
 
         $body = $refundAmount > 0
-            ? "[XeGhep] Vé {$booking->booking_code} đã hủy. Hoàn tiền " . number_format($refundAmount, 0, ',', '.') . "đ sẽ về ví trong 3-5 ngày làm việc"
+            ? "[XeGhep] Vé {$booking->booking_code} đã hủy. Hoàn tiền ".number_format($refundAmount, 0, ',', '.').'đ sẽ về ví trong 3-5 ngày làm việc'
             : "[XeGhep] Vé {$booking->booking_code} đã hủy. Không có hoàn tiền do hủy trong vòng 4 giờ trước giờ xuất phát.";
 
         $this->notificationService->send(

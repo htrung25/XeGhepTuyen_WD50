@@ -14,23 +14,23 @@ class NotificationController extends Controller
         $user = auth('customer')->user();
 
         $notifications = Notification::where('user_id', $user->id)
-                                     ->orderByDesc('sent_at')
-                                     ->paginate(20);
+            ->orderByDesc('sent_at')
+            ->paginate(20);
 
         return response()->json([
-            'success'       => true,
-            'data'          => $notifications->items(),
-            'unread_count'  => Notification::where('user_id', $user->id)->unread()->count(),
-            'meta'          => ['current_page' => $notifications->currentPage(), 'total' => $notifications->total()],
+            'success' => true,
+            'data' => $notifications->items(),
+            'unread_count' => Notification::where('user_id', $user->id)->unread()->count(),
+            'meta' => ['current_page' => $notifications->currentPage(), 'total' => $notifications->total()],
         ]);
     }
 
     public function markRead(string $id): JsonResponse
     {
-        $user         = auth('customer')->user();
+        $user = auth('customer')->user();
         $notification = Notification::where('id', $id)->where('user_id', $user->id)->first();
 
-        if (!$notification) {
+        if (! $notification) {
             return response()->json(['success' => false, 'message' => 'Thông báo không tồn tại'], 404);
         }
 

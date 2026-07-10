@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Facades\Cache;
+
 /**
  * R3: summary() lấy số tiền từ SettlementService (nguồn duy nhất) + lộ cash_collected/settlement
  * → khớp tuyệt đối với trang quyết toán, không còn net_revenue "ảo" lệch payout.
@@ -27,7 +29,7 @@ it('summary works for period=today (reproducing the CarbonImmutable bug)', funct
     $headers = ['Authorization' => 'Bearer '.$operator->user->createToken('operator_token')->plainTextToken];
 
     // Clear cache first to force buildSummary execution
-    Illuminate\Support\Facades\Cache::forget("operator:{$operator->id}:revenue:summary:today");
+    Cache::forget("operator:{$operator->id}:revenue:summary:today");
 
     $this->getJson('/api/operator/revenue/summary?period=today', $headers)
         ->assertOk();

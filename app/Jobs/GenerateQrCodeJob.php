@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 
 class GenerateQrCodeJob implements ShouldQueue
 {
-    use Queueable, InteractsWithQueue, SerializesModels;
+    use InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
 
@@ -32,7 +32,7 @@ class GenerateQrCodeJob implements ShouldQueue
     {
         Log::error('GenerateQrCodeJob thất bại', [
             'booking_id' => $this->booking->id,
-            'error'      => $e->getMessage(),
+            'error' => $e->getMessage(),
         ]);
     }
 }

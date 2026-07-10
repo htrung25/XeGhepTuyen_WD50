@@ -20,8 +20,8 @@ return new class extends Migration
             $table->text('note')->nullable()->comment('Ghi chú nội bộ');
             $table->string('tracking_code', 20)->unique()->nullable()->comment('Mã theo dõi public');
             $table->enum('status', ['scheduled', 'boarding', 'in_progress', 'completed', 'cancelled'])
-                  ->default('scheduled')
-                  ->comment('scheduled=đã lên lịch, boarding=đang đón khách, in_progress=đang chạy, completed=hoàn thành, cancelled=đã hủy');
+                ->default('scheduled')
+                ->comment('scheduled=đã lên lịch, boarding=đang đón khách, in_progress=đang chạy, completed=hoàn thành, cancelled=đã hủy');
             $table->timestamp('started_at')->nullable();
             $table->timestamp('completed_at')->nullable();
             $table->timestamp('cancelled_at')->nullable();

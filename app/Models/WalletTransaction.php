@@ -14,6 +14,7 @@ class WalletTransaction extends Model
     public $timestamps = false;
 
     const CREATED_AT = 'created_at';
+
     const UPDATED_AT = null;
 
     protected $fillable = [
@@ -28,10 +29,10 @@ class WalletTransaction extends Model
     protected function casts(): array
     {
         return [
-            'type'          => WalletTransactionType::class,
-            'amount'        => 'integer',
+            'type' => WalletTransactionType::class,
+            'amount' => 'integer',
             'balance_after' => 'integer',
-            'created_at'    => 'datetime',
+            'created_at' => 'datetime',
         ];
     }
 
@@ -52,6 +53,7 @@ class WalletTransaction extends Model
     public function getFormattedAmountAttribute(): string
     {
         $sign = $this->amount > 0 ? '+' : '';
-        return $sign . number_format($this->amount, 0, ',', '.') . 'đ';
+
+        return $sign.number_format($this->amount, 0, ',', '.').'đ';
     }
 }

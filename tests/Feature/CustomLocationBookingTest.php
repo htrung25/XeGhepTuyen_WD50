@@ -6,12 +6,11 @@ use App\Models\Driver;
 use App\Models\Operator;
 use App\Models\Route;
 use App\Models\RouteStop;
+use App\Models\SeatMap;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\Vehicle;
-use App\Models\SeatMap;
-use App\Services\BookingService;
-use Illuminate\Support\Str;
+use Laravel\Sanctum\Sanctum;
 
 function setupCustomBookingContext(): array
 {
@@ -19,17 +18,17 @@ function setupCustomBookingContext(): array
     $operator = Operator::create([
         'user_id' => $opUser->id, 'company_name' => 'NX Long', 'business_license' => 'GP-1234', 'status' => 'verified',
     ]);
-    
+
     $route = Route::create(['operator_id' => $operator->id, 'name' => 'Hà Nội - Hải Phòng', 'base_price' => 150000]);
-    
+
     RouteStop::create(['route_id' => $route->id, 'stop_name' => 'Bến xe Mỹ Đình', 'address' => 'Mỹ Đình, Hà Nội', 'lat' => 21.0285, 'lng' => 105.8544, 'stop_order' => 1]);
     RouteStop::create(['route_id' => $route->id, 'stop_name' => 'Bến xe Cầu Rào', 'address' => 'Lạch Tray, Hải Phòng', 'lat' => 20.8449, 'lng' => 106.6881, 'stop_order' => 2]);
-    
+
     $vehicle = Vehicle::create([
         'operator_id' => $operator->id, 'plate_number' => '30A-99999',
         'brand' => 'Ford', 'model' => 'Transit', 'vehicle_type' => 'van_9', 'seat_count' => 9,
     ]);
-    
+
     $drvUser = User::factory()->create(['role' => UserRole::Driver]);
     $driver = Driver::create([
         'user_id' => $drvUser->id, 'operator_id' => $operator->id,
@@ -47,7 +46,7 @@ function setupCustomBookingContext(): array
         'trip_id' => $trip->id,
         'seat_code' => 'A1',
         'price' => 150000,
-        'status' => 'available'
+        'status' => 'available',
     ]);
 
     $customer = User::factory()->create(['role' => UserRole::Customer]);
@@ -58,8 +57,8 @@ function setupCustomBookingContext(): array
 it('allows customer to book a trip using custom pickup and dropoff coordinates', function () {
     [$trip, $seat, $customer] = setupCustomBookingContext();
 
-    Laravel\Sanctum\Sanctum::actingAs($customer, ['*'], 'sanctum');
-    Laravel\Sanctum\Sanctum::actingAs($customer, ['*'], 'customer');
+    Sanctum::actingAs($customer, ['*'], 'sanctum');
+    Sanctum::actingAs($customer, ['*'], 'customer');
 
     $response = $this->postJson('/api/customer/bookings', [
         'trip_id' => $trip->id,
@@ -77,8 +76,8 @@ it('allows customer to book a trip using custom pickup and dropoff coordinates',
         'contact_phone' => '0912345678',
         'payment_method' => 'cash',
         'passengers' => [
-            ['full_name' => 'Nguyễn Văn A']
-        ]
+            ['full_name' => 'Nguyễn Văn A'],
+        ],
     ]);
 
     $response->assertStatus(201);
@@ -104,7 +103,7 @@ it('allows customer to book a trip using custom pickup and dropoff coordinates',
     $detailResponse->assertJsonPath('data.pickup_stop.address', 'Số 10 Phạm Hùng, Cầu Giấy, Hà Nội');
     $detailResponse->assertJsonPath('data.dropoff_stop.stop_name', 'Điểm trả tùy chỉnh');
     $detailResponse->assertJsonPath('data.dropoff_stop.address', 'Số 20 Lạch Tray, Ngô Quyền, Hải Phòng');
-    
+
     // Verify QR code and URL are present and identical
     expect($booking->fresh()->qr_code)->not->toBeNull();
     $detailResponse->assertJsonPath('data.qr_code', $booking->fresh()->qr_code);

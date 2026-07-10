@@ -8,7 +8,6 @@ use App\Exceptions\InsufficientBalanceException;
 use App\Exceptions\PaymentVerificationException;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
-use App\Models\Payment;
 use App\Services\PaymentService;
 use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
@@ -26,7 +25,7 @@ class PaymentController extends Controller
     {
         $request->validate([
             'booking_id' => ['required', 'uuid', 'exists:bookings,id'],
-            'method'     => ['required', 'in:momo,vnpay,zalopay,wallet,cash'],
+            'method' => ['required', 'in:momo,vnpay,zalopay,wallet,cash'],
         ]);
 
         $booking = Booking::findOrFail($request->booking_id);
@@ -41,7 +40,7 @@ class PaymentController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Khởi tạo thanh toán thành công',
-                'data'    => $result,
+                'data' => $result,
             ]);
         } catch (BookingExpiredException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage(), 'code' => 'BOOKING_EXPIRED'], 422);
@@ -49,6 +48,7 @@ class PaymentController extends Controller
             return response()->json(['success' => false, 'message' => $e->getMessage(), 'code' => 'INSUFFICIENT_BALANCE'], 422);
         } catch (\Exception $e) {
             Log::error('Payment initiate failed', ['error' => $e->getMessage(), 'booking' => $request->booking_id]);
+
             return response()->json(['success' => false, 'message' => 'Không thể khởi tạo thanh toán, vui lòng thử lại'], 500);
         }
     }
@@ -57,12 +57,15 @@ class PaymentController extends Controller
     {
         try {
             $this->paymentService->handleMomoCallback($request->all());
+
             return response()->json(['resultCode' => 0]);
         } catch (PaymentVerificationException $e) {
             Log::warning('MoMo callback verification failed', ['payload' => $request->all()]);
+
             return response()->json(['resultCode' => 1], 400);
         } catch (\Exception $e) {
             Log::error('MoMo callback error', ['error' => $e->getMessage()]);
+
             return response()->json(['resultCode' => 1], 500);
         }
     }
@@ -71,12 +74,15 @@ class PaymentController extends Controller
     {
         try {
             $this->paymentService->handleVnpayCallback($request->all());
+
             return response()->json(['RspCode' => '00', 'Message' => 'Confirm Success']);
         } catch (PaymentVerificationException $e) {
             Log::warning('VNPay callback verification failed', ['payload' => $request->all()]);
+
             return response()->json(['RspCode' => '97', 'Message' => 'Invalid Signature'], 400);
         } catch (\Exception $e) {
             Log::error('VNPay callback error', ['error' => $e->getMessage()]);
+
             return response()->json(['RspCode' => '99', 'Message' => 'Unknown Error'], 500);
         }
     }
@@ -85,10 +91,11 @@ class PaymentController extends Controller
     {
         try {
             $authHeader = $request->header('Authorization');
-            $expectedToken = 'Bearer ' . config('services.sepay.webhook_token');
+            $expectedToken = 'Bearer '.config('services.sepay.webhook_token');
 
-            if (!$authHeader || $authHeader !== $expectedToken) {
+            if (! $authHeader || $authHeader !== $expectedToken) {
                 Log::warning('SePay webhook unauthorized access attempt');
+
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
             }
 
@@ -100,9 +107,11 @@ class PaymentController extends Controller
             ]);
         } catch (PaymentVerificationException $e) {
             Log::warning('SePay callback verification failed', ['payload' => $request->all(), 'error' => $e->getMessage()]);
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
         } catch (\Exception $e) {
             Log::error('SePay callback error', ['error' => $e->getMessage()]);
+
             return response()->json(['success' => false, 'message' => 'Internal server error'], 500);
         }
     }
@@ -117,30 +126,30 @@ class PaymentController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => [
+            'data' => [
                 'booking_status' => $booking->booking_status->value,
                 'payment_status' => $booking->payment_status->value,
-                'expires_at'     => $booking->expires_at?->toIso8601String(),
+                'expires_at' => $booking->expires_at?->toIso8601String(),
             ],
         ]);
     }
 
     public function wallet(Request $request): JsonResponse
     {
-        $user    = auth('customer')->user();
+        $user = auth('customer')->user();
         $balance = $this->walletService->getBalance($user);
         $history = $this->walletService->getTransactions($user);
 
         return response()->json([
             'success' => true,
-            'data'    => [
-                'balance'      => $balance,
-                'balance_text' => number_format($balance, 0, ',', '.') . 'đ',
+            'data' => [
+                'balance' => $balance,
+                'balance_text' => number_format($balance, 0, ',', '.').'đ',
                 'transactions' => $history->items(),
             ],
-            'meta'    => [
+            'meta' => [
                 'current_page' => $history->currentPage(),
-                'total'        => $history->total(),
+                'total' => $history->total(),
             ],
         ]);
     }

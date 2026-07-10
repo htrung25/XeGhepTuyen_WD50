@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Admin\PartnerApplicationResource;
 use App\Repositories\Contracts\PartnerApplicationRepositoryInterface;
-use App\Services\PartnerApplicationService;
 use App\Services\AuditLogService;
+use App\Services\PartnerApplicationService;
 use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -58,7 +58,7 @@ class PartnerApplicationController extends Controller
             app(AuditLogService::class)->log(
                 action: 'approve_partner_application',
                 model: $application,
-                description: "Đã duyệt đơn đăng ký đối tác thành công: {$application->company_name}. Tỷ lệ hoa hồng: " . ($validated['commission_rate'] ?? 10) . "%",
+                description: "Đã duyệt đơn đăng ký đối tác thành công: {$application->company_name}. Tỷ lệ hoa hồng: ".($validated['commission_rate'] ?? 10).'%',
                 oldValues: ['status' => $application->status],
                 newValues: ['status' => 'approved', 'operator_id' => $operator->id]
             );

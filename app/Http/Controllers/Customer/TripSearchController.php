@@ -5,12 +5,13 @@ namespace App\Http\Controllers\Customer;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Customer\TripSearchResource;
 use App\Repositories\Contracts\TripRepositoryInterface;
+use App\Services\TrackingService;
 use App\Services\TripService;
+use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use OpenApi\Attributes as OA;
-use Dedoc\Scramble\Attributes\QueryParameter;
 
 class TripSearchController extends Controller
 {
@@ -20,9 +21,9 @@ class TripSearchController extends Controller
     ) {}
 
     #[OA\Get(
-        path: "/api/public/trips",
-        summary: "Tìm kiếm chuyến xe ghép",
-        tags: ["Trips"]
+        path: '/api/public/trips',
+        summary: 'Tìm kiếm chuyến xe ghép',
+        tags: ['Trips']
     )]
     #[QueryParameter('from_city', 'Thành phố xuất phát.', required: true, type: 'string', example: 'Hà Nội')]
     #[QueryParameter('to_city', 'Thành phố đến.', required: true, type: 'string', example: 'Hải Phòng')]
@@ -31,23 +32,23 @@ class TripSearchController extends Controller
     #[QueryParameter('sort', 'Sắp xếp kết quả (price_asc, price_desc, depart_asc).', required: false, type: 'string', example: 'price_asc')]
     #[OA\Response(
         response: 200,
-        description: "Danh sách chuyến xe hợp lệ",
+        description: 'Danh sách chuyến xe hợp lệ',
         content: new OA\JsonContent(
             properties: [
-                new OA\Property(property: "success", type: "boolean", example: true),
-                new OA\Property(property: "data", type: "array", items: new OA\Items(type: "object")),
-                new OA\Property(property: "meta", type: "object")
+                new OA\Property(property: 'success', type: 'boolean', example: true),
+                new OA\Property(property: 'data', type: 'array', items: new OA\Items(type: 'object')),
+                new OA\Property(property: 'meta', type: 'object'),
             ]
         )
     )]
     public function search(Request $request): JsonResponse
     {
         $request->validate([
-            'from_city'  => ['required', 'string'],
-            'to_city'    => ['required', 'string'],
-            'date'       => ['required', 'date', 'after_or_equal:today'],
+            'from_city' => ['required', 'string'],
+            'to_city' => ['required', 'string'],
+            'date' => ['required', 'date', 'after_or_equal:today'],
             'passengers' => ['nullable', 'integer', 'min:1', 'max:4'],
-            'sort'       => ['nullable', 'in:price_asc,price_desc,depart_asc'],
+            'sort' => ['nullable', 'in:price_asc,price_desc,depart_asc'],
         ]);
 
         try {
@@ -55,11 +56,12 @@ class TripSearchController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data'    => TripSearchResource::collection(collect($trips)),
-                'meta'    => ['total' => count($trips)],
+                'data' => TripSearchResource::collection(collect($trips)),
+                'meta' => ['total' => count($trips)],
             ]);
         } catch (\Exception $e) {
             Log::error('Trip search failed', ['error' => $e->getMessage()]);
+
             return response()->json(['success' => false, 'message' => 'Có lỗi xảy ra khi tìm kiếm'], 500);
         }
     }
@@ -68,13 +70,13 @@ class TripSearchController extends Controller
     {
         $trip = $this->tripRepo->findById($id);
 
-        if (!$trip) {
+        if (! $trip) {
             return response()->json(['success' => false, 'message' => 'Chuyến đi không tồn tại'], 404);
         }
 
         return response()->json([
             'success' => true,
-            'data'    => new TripSearchResource($trip),
+            'data' => new TripSearchResource($trip),
         ]);
     }
 
@@ -82,16 +84,16 @@ class TripSearchController extends Controller
     {
         $trip = $this->tripRepo->findById($id);
 
-        if (!$trip) {
+        if (! $trip) {
             return response()->json(['success' => false, 'message' => 'Chuyến đi không tồn tại'], 404);
         }
 
-        $seats = $trip->seatMaps->map(fn($seat) => [
-            'id'        => $seat->id,
+        $seats = $trip->seatMaps->map(fn ($seat) => [
+            'id' => $seat->id,
             'seat_code' => $seat->seat_code,
             'seat_type' => $seat->seat_type->value,
-            'price'     => $seat->price,
-            'status'    => $seat->isLockExpired() ? 'available' : $seat->status->value,
+            'price' => $seat->price,
+            'status' => $seat->isLockExpired() ? 'available' : $seat->status->value,
         ]);
 
         return response()->json(['success' => true, 'data' => $seats]);
@@ -101,24 +103,24 @@ class TripSearchController extends Controller
     {
         $trip = $this->tripRepo->findByTrackingCode($trackingCode);
 
-        if (!$trip) {
+        if (! $trip) {
             return response()->json(['success' => false, 'message' => 'Không tìm thấy chuyến xe'], 404);
         }
 
         $location = null;
         if ($trip->isActive()) {
-            $location = app(\App\Services\TrackingService::class)->getLocation($trip->driver);
+            $location = app(TrackingService::class)->getLocation($trip->driver);
         }
 
         return response()->json([
             'success' => true,
-            'data'    => [
-                'trip_id'      => $trip->id,
-                'status'       => $trip->status->value,
-                'depart_at'    => $trip->depart_at->format('H:i d/m/Y'),
-                'driver_name'  => $trip->driver->user->full_name,
+            'data' => [
+                'trip_id' => $trip->id,
+                'status' => $trip->status->value,
+                'depart_at' => $trip->depart_at->format('H:i d/m/Y'),
+                'driver_name' => $trip->driver->user->full_name,
                 'plate_number' => $trip->vehicle->plate_number,
-                'location'     => $location,
+                'location' => $location,
             ],
         ]);
     }

@@ -19,6 +19,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FinanceController extends Controller
 {
@@ -140,7 +141,7 @@ class FinanceController extends Controller
         app(AuditLogService::class)->log(
             action: 'payout_operator',
             model: $operator,
-            description: "Đã quyết toán thành công " . number_format($payout->amount, 0, ',', '.') . "đ cho nhà xe: {$operator->company_name}",
+            description: 'Đã quyết toán thành công '.number_format($payout->amount, 0, ',', '.')."đ cho nhà xe: {$operator->company_name}",
             newValues: $payout->toArray()
         );
 
@@ -336,7 +337,7 @@ class FinanceController extends Controller
     }
 
     /** Xuất báo cáo CSV (không cần package): type=transactions|commissions. */
-    public function export(Request $request): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function export(Request $request): StreamedResponse
     {
         $type = $request->input('type') === 'commissions' ? 'commissions' : 'transactions';
 

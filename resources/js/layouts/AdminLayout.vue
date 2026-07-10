@@ -1,13 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { Toaster } from '@/components/ui/sonner';
 import { adminApi } from '@/api/admin.api';
-import {
-    useAdminNotifications
-    
-} from '@/composables/useAdminNotifications';
-import type {AdminNotification} from '@/composables/useAdminNotifications';
+import { Toaster } from '@/components/ui/sonner';
+import { useAdminNotifications } from '@/composables/useAdminNotifications';
+import type { AdminNotification } from '@/composables/useAdminNotifications';
 import { useCan } from '@/composables/useCan';
 import { useAdminAuthStore } from '@/stores/admin.auth.store';
 
@@ -93,17 +90,72 @@ onUnmounted(() => {
 });
 
 const navItems = [
-    { path: '/admin/dashboard', label: 'Tổng quan', icon: 'chart', permission: 'dashboard.view' },
-    { path: '/admin/operators', label: 'Nhà xe', icon: 'building', permission: 'operators.view' },
-    { path: '/admin/drivers', label: 'Tài xế', icon: 'user-check', permission: 'drivers.view' },
-    { path: '/admin/users', label: 'Người dùng', icon: 'users', permission: 'users.view' },
-    { path: '/admin/bookings', label: 'Đặt vé', icon: 'ticket', permission: 'bookings.view' },
-    { path: '/admin/trips', label: 'Chuyến đi', icon: 'map', permission: 'trips.view' },
-    { path: '/admin/finance', label: 'Tài chính', icon: 'cash', permission: 'finance.view' },
-    { path: '/admin/vouchers', label: 'Voucher', icon: 'tag', permission: 'vouchers.view' },
-    { path: '/admin/audit-logs', label: 'Nhật ký hệ thống', icon: 'history', permission: 'audit_logs.view' },
-    { path: '/admin/roles', label: 'Phân quyền', icon: 'shield', permission: 'admin_roles.view' },
-    { path: '/admin/staff', label: 'Nhân viên', icon: 'user-cog', permission: 'admin_staff.view' },
+    {
+        path: '/admin/dashboard',
+        label: 'Tổng quan',
+        icon: 'chart',
+        permission: 'dashboard.view',
+    },
+    {
+        path: '/admin/operators',
+        label: 'Nhà xe',
+        icon: 'building',
+        permission: 'operators.view',
+    },
+    {
+        path: '/admin/drivers',
+        label: 'Tài xế',
+        icon: 'user-check',
+        permission: 'drivers.view',
+    },
+    {
+        path: '/admin/users',
+        label: 'Người dùng',
+        icon: 'users',
+        permission: 'users.view',
+    },
+    {
+        path: '/admin/bookings',
+        label: 'Đặt vé',
+        icon: 'ticket',
+        permission: 'bookings.view',
+    },
+    {
+        path: '/admin/trips',
+        label: 'Chuyến đi',
+        icon: 'map',
+        permission: 'trips.view',
+    },
+    {
+        path: '/admin/finance',
+        label: 'Tài chính',
+        icon: 'cash',
+        permission: 'finance.view',
+    },
+    {
+        path: '/admin/vouchers',
+        label: 'Voucher',
+        icon: 'tag',
+        permission: 'vouchers.view',
+    },
+    {
+        path: '/admin/audit-logs',
+        label: 'Nhật ký hệ thống',
+        icon: 'history',
+        permission: 'audit_logs.view',
+    },
+    {
+        path: '/admin/roles',
+        label: 'Phân quyền',
+        icon: 'shield',
+        permission: 'admin_roles.view',
+    },
+    {
+        path: '/admin/staff',
+        label: 'Nhân viên',
+        icon: 'user-cog',
+        permission: 'admin_staff.view',
+    },
 ];
 
 function isActive(path: string) {
@@ -349,13 +401,14 @@ async function handleLogout() {
                         </span>
                         <!-- Chấm đỏ khi sidebar thu gọn -->
                         <span
-                            v-else-if="sidebarCollapsed && pendingCounts[item.path]"
-                            class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-gray-900"
+                            v-else-if="
+                                sidebarCollapsed && pendingCounts[item.path]
+                            "
+                            class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-gray-900"
                         />
                     </router-link>
                 </template>
             </nav>
-
         </aside>
 
         <!-- Main content -->
@@ -424,7 +477,8 @@ async function handleLogout() {
                             <div
                                 class="flex items-center justify-between border-b border-slate-100 px-4 py-3"
                             >
-                                <span class="text-sm font-semibold text-gray-800"
+                                <span
+                                    class="text-sm font-semibold text-gray-800"
                                     >Thông báo</span
                                 >
                                 <button
@@ -452,7 +506,9 @@ async function handleLogout() {
                                     <span
                                         class="mt-1.5 h-2 w-2 shrink-0 rounded-full"
                                         :class="
-                                            !n.is_read ? 'bg-red-500' : 'bg-transparent'
+                                            !n.is_read
+                                                ? 'bg-red-500'
+                                                : 'bg-transparent'
                                         "
                                     />
                                     <span class="min-w-0 flex-1">
@@ -467,9 +523,9 @@ async function handleLogout() {
                                         <span
                                             class="mt-0.5 block text-[10px] text-gray-400"
                                             >{{
-                                                new Date(n.sent_at).toLocaleString(
-                                                    'vi-VN',
-                                                )
+                                                new Date(
+                                                    n.sent_at,
+                                                ).toLocaleString('vi-VN')
                                             }}</span
                                         >
                                     </span>
@@ -482,10 +538,10 @@ async function handleLogout() {
                     <div class="relative" ref="dropdownRef">
                         <button
                             @click="profileDropdownOpen = !profileDropdownOpen"
-                            class="flex items-center gap-2 rounded-lg p-1.5 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-100 cursor-pointer"
+                            class="flex cursor-pointer items-center gap-2 rounded-lg p-1.5 transition-colors hover:bg-slate-100 focus:ring-2 focus:ring-slate-100 focus:outline-none"
                         >
                             <div
-                                class="flex h-8 w-8 items-center justify-center rounded-full bg-red-600 text-sm font-semibold text-white overflow-hidden"
+                                class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-red-600 text-sm font-semibold text-white"
                             >
                                 <img
                                     v-if="authStore.user?.avatar_url"
@@ -495,7 +551,9 @@ async function handleLogout() {
                                 />
                                 <span v-else>{{ adminInitial }}</span>
                             </div>
-                            <span class="hidden text-sm font-semibold text-gray-700 md:block">
+                            <span
+                                class="hidden text-sm font-semibold text-gray-700 md:block"
+                            >
                                 {{ adminName }}
                             </span>
                             <!-- Arrow icon -->
@@ -506,7 +564,12 @@ async function handleLogout() {
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
                             >
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M19 9l-7 7-7-7"
+                                />
                             </svg>
                         </button>
 
@@ -521,7 +584,7 @@ async function handleLogout() {
                         >
                             <div
                                 v-if="profileDropdownOpen"
-                                class="absolute right-0 mt-2 w-48 origin-top-right rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg ring-1 ring-black/5 focus:outline-none z-50"
+                                class="absolute right-0 z-50 mt-2 w-48 origin-top-right rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg ring-1 ring-black/5 focus:outline-none"
                             >
                                 <!-- Profile link -->
                                 <router-link
@@ -529,8 +592,18 @@ async function handleLogout() {
                                     @click="profileDropdownOpen = false"
                                     class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-slate-50"
                                 >
-                                    <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    <svg
+                                        class="h-4 w-4 text-gray-500"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                        />
                                     </svg>
                                     Trang cá nhân
                                 </router-link>
@@ -542,10 +615,20 @@ async function handleLogout() {
                                         profileDropdownOpen = false;
                                         handleLogout();
                                     "
-                                    class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50 text-left cursor-pointer"
+                                    class="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
                                 >
-                                    <svg class="h-4 w-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                    <svg
+                                        class="h-4 w-4 text-red-500"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                                        />
                                     </svg>
                                     Đăng xuất
                                 </button>

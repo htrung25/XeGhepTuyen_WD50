@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
 import { watchDebounced } from '@vueuse/core';
+import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { adminApi } from '@/api/admin.api';
 import { useCan } from '@/composables/useCan';
@@ -156,19 +156,49 @@ const detailLoading = ref(false);
 const detailError = ref('');
 
 const bookingStatusConfig: Record<string, { label: string; cls: string }> = {
-    pending: { label: 'Chờ thanh toán', cls: 'bg-amber-50 text-amber-700 border-amber-200' },
-    confirmed: { label: 'Đã xác nhận', cls: 'bg-blue-50 text-blue-700 border-blue-200' },
-    checked_in: { label: 'Đã lên xe', cls: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-    completed: { label: 'Hoàn thành', cls: 'bg-green-50 text-green-700 border-green-200' },
-    cancelled: { label: 'Đã huỷ', cls: 'bg-red-50 text-red-700 border-red-200' },
-    no_show: { label: 'Không lên xe', cls: 'bg-gray-100 text-gray-600 border-gray-200' },
+    pending: {
+        label: 'Chờ thanh toán',
+        cls: 'bg-amber-50 text-amber-700 border-amber-200',
+    },
+    confirmed: {
+        label: 'Đã xác nhận',
+        cls: 'bg-blue-50 text-blue-700 border-blue-200',
+    },
+    checked_in: {
+        label: 'Đã lên xe',
+        cls: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    },
+    completed: {
+        label: 'Hoàn thành',
+        cls: 'bg-green-50 text-green-700 border-green-200',
+    },
+    cancelled: {
+        label: 'Đã huỷ',
+        cls: 'bg-red-50 text-red-700 border-red-200',
+    },
+    no_show: {
+        label: 'Không lên xe',
+        cls: 'bg-gray-100 text-gray-600 border-gray-200',
+    },
 };
 
 const paymentStatusConfig: Record<string, { label: string; cls: string }> = {
-    unpaid: { label: 'Chưa trả', cls: 'bg-gray-100 text-gray-600 border-gray-200' },
-    paid: { label: 'Đã trả', cls: 'bg-green-50 text-green-700 border-green-200' },
-    refunded: { label: 'Đã hoàn', cls: 'bg-purple-50 text-purple-700 border-purple-200' },
-    partial_refund: { label: 'Hoàn 1 phần', cls: 'bg-purple-50 text-purple-700 border-purple-200' },
+    unpaid: {
+        label: 'Chưa trả',
+        cls: 'bg-gray-100 text-gray-600 border-gray-200',
+    },
+    paid: {
+        label: 'Đã trả',
+        cls: 'bg-green-50 text-green-700 border-green-200',
+    },
+    refunded: {
+        label: 'Đã hoàn',
+        cls: 'bg-purple-50 text-purple-700 border-purple-200',
+    },
+    partial_refund: {
+        label: 'Hoàn 1 phần',
+        cls: 'bg-purple-50 text-purple-700 border-purple-200',
+    },
 };
 
 const vehicleTypeLabels: Record<string, string> = {
@@ -476,9 +506,7 @@ onMounted(fetchTrips);
                                     class="flex items-center justify-center gap-1.5"
                                 >
                                     <button
-                                        @click="
-                                            openDetailModal(trip.id)
-                                        "
+                                        @click="openDetailModal(trip.id)"
                                         class="rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-100"
                                     >
                                         Chi tiết
@@ -628,36 +656,57 @@ onMounted(fetchTrips);
             >
                 <!-- Backdrop -->
                 <div
-                    class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity animate-fade-in"
+                    class="animate-fade-in absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
                     @click="detailModal = false"
                 />
 
                 <!-- Modal Container -->
                 <div
-                    class="relative flex h-[90vh] w-full max-w-6xl flex-col rounded-2xl bg-[#F7F9FB] shadow-2xl overflow-hidden transition-all"
+                    class="relative flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-[#F7F9FB] shadow-2xl transition-all"
                 >
                     <!-- Modal Header -->
-                    <div class="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
+                    <div
+                        class="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4"
+                    >
                         <div class="flex items-center gap-3">
-                            <span class="font-mono text-xs font-semibold text-gray-500">
-                                {{ detailTrip?.tracking_code || 'Trip Details' }}
+                            <span
+                                class="font-mono text-xs font-semibold text-gray-500"
+                            >
+                                {{
+                                    detailTrip?.tracking_code || 'Trip Details'
+                                }}
                             </span>
                             <span
                                 v-if="detailTrip"
                                 :class="[
-                                    'inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider',
-                                    statusConfig[detailTrip.status]?.cls || 'bg-gray-100 text-gray-700'
+                                    'inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-semibold tracking-wider uppercase',
+                                    statusConfig[detailTrip.status]?.cls ||
+                                        'bg-gray-100 text-gray-700',
                                 ]"
                             >
-                                {{ statusConfig[detailTrip.status]?.label || detailTrip.status }}
+                                {{
+                                    statusConfig[detailTrip.status]?.label ||
+                                    detailTrip.status
+                                }}
                             </span>
                         </div>
                         <button
                             @click="detailModal = false"
-                            class="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                            class="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-5 w-5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke-width="2"
+                                stroke="currentColor"
+                                class="h-5 w-5"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M6 18 18 6M6 6l12 12"
+                                />
                             </svg>
                         </button>
                     </div>
@@ -665,20 +714,49 @@ onMounted(fetchTrips);
                     <!-- Modal Body (Scrollable) -->
                     <div class="flex-1 overflow-y-auto p-6">
                         <!-- Loading State -->
-                        <div v-if="detailLoading" class="flex min-h-[400px] items-center justify-center">
+                        <div
+                            v-if="detailLoading"
+                            class="flex min-h-[400px] items-center justify-center"
+                        >
                             <div class="flex flex-col items-center gap-3">
-                                <div class="h-10 w-10 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" />
-                                <p class="text-sm font-medium text-gray-500 font-sans">Đang tải chi tiết chuyến đi...</p>
+                                <div
+                                    class="h-10 w-10 animate-spin rounded-full border-4 border-amber-500 border-t-transparent"
+                                />
+                                <p
+                                    class="font-sans text-sm font-medium text-gray-500"
+                                >
+                                    Đang tải chi tiết chuyến đi...
+                                </p>
                             </div>
                         </div>
 
                         <!-- Error State -->
-                        <div v-else-if="detailError" class="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mx-auto h-12 w-12 text-red-500">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 7.5h.008v.008H12v-.008Z" />
+                        <div
+                            v-else-if="detailError"
+                            class="rounded-xl border border-red-200 bg-red-50 p-6 text-center"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke-width="1.5"
+                                stroke="currentColor"
+                                class="mx-auto h-12 w-12 text-red-500"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 7.5h.008v.008H12v-.008Z"
+                                />
                             </svg>
-                            <h3 class="mt-4 text-lg font-semibold text-gray-900 font-sans">Không thể tải thông tin</h3>
-                            <p class="mt-2 text-sm text-red-700 font-sans">{{ detailError }}</p>
+                            <h3
+                                class="mt-4 font-sans text-lg font-semibold text-gray-900"
+                            >
+                                Không thể tải thông tin
+                            </h3>
+                            <p class="mt-2 font-sans text-sm text-red-700">
+                                {{ detailError }}
+                            </p>
                             <button
                                 @click="detailModal = false"
                                 class="mt-4 rounded-xl bg-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-300"
@@ -690,25 +768,41 @@ onMounted(fetchTrips);
                         <!-- Data Loaded -->
                         <div v-else-if="detailTrip" class="space-y-6">
                             <!-- Title Banner -->
-                            <div class="flex flex-col justify-between gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center">
+                            <div
+                                class="flex flex-col justify-between gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center"
+                            >
                                 <div>
-                                    <h2 class="text-xl font-bold text-gray-900 font-sans">
-                                        {{ detailTrip.route.origin_city }} ↔ {{ detailTrip.route.dest_city }}
+                                    <h2
+                                        class="font-sans text-xl font-bold text-gray-900"
+                                    >
+                                        {{ detailTrip.route.origin_city }} ↔
+                                        {{ detailTrip.route.dest_city }}
                                     </h2>
-                                    <p class="text-xs text-gray-400 font-sans">
-                                        Khởi hành: {{ fmtDateTime(detailTrip.depart_at) }}
+                                    <p class="font-sans text-xs text-gray-400">
+                                        Khởi hành:
+                                        {{ fmtDateTime(detailTrip.depart_at) }}
                                     </p>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <button
-                                        v-if="detailTrip.status === 'in_progress'"
-                                        @click="detailModal = false; router.push('/admin/trips/live')"
+                                        v-if="
+                                            detailTrip.status === 'in_progress'
+                                        "
+                                        @click="
+                                            detailModal = false;
+                                            router.push('/admin/trips/live');
+                                        "
                                         class="flex items-center gap-2 rounded-xl bg-green-600 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-green-700"
                                     >
                                         Theo dõi GPS
                                     </button>
                                     <button
-                                        v-if="['scheduled', 'in_progress'].includes(detailTrip.status)"
+                                        v-if="
+                                            [
+                                                'scheduled',
+                                                'in_progress',
+                                            ].includes(detailTrip.status)
+                                        "
                                         @click="openCancelModal(detailTrip)"
                                         class="rounded-xl border border-red-200 bg-red-50 px-3.5 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:bg-red-100"
                                     >
@@ -722,105 +816,233 @@ onMounted(fetchTrips);
                                 <!-- Left Section (2/3) -->
                                 <div class="space-y-6 lg:col-span-2">
                                     <!-- Info Card -->
-                                    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                                        <h3 class="mb-3 text-sm font-bold text-gray-900 font-sans">Thông tin hành trình</h3>
-                                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                    <div
+                                        class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+                                    >
+                                        <h3
+                                            class="mb-3 font-sans text-sm font-bold text-gray-900"
+                                        >
+                                            Thông tin hành trình
+                                        </h3>
+                                        <div
+                                            class="grid grid-cols-1 gap-4 sm:grid-cols-2"
+                                        >
                                             <div>
-                                                <p class="text-[10px] font-bold text-gray-400 uppercase font-sans">Tuyến đường</p>
-                                                <p class="mt-0.5 text-sm font-semibold text-gray-800 font-sans">
-                                                    {{ detailTrip.route.name || `${detailTrip.route.origin_city} → ${detailTrip.route.dest_city}` }}
+                                                <p
+                                                    class="font-sans text-[10px] font-bold text-gray-400 uppercase"
+                                                >
+                                                    Tuyến đường
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 font-sans text-sm font-semibold text-gray-800"
+                                                >
+                                                    {{
+                                                        detailTrip.route.name ||
+                                                        `${detailTrip.route.origin_city} → ${detailTrip.route.dest_city}`
+                                                    }}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p class="text-[10px] font-bold text-gray-400 uppercase font-sans">Giá vé</p>
-                                                <p class="mt-0.5 text-sm font-semibold text-amber-600 font-sans">
-                                                    {{ fmtCurrency(detailTrip.price) }}
+                                                <p
+                                                    class="font-sans text-[10px] font-bold text-gray-400 uppercase"
+                                                >
+                                                    Giá vé
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 font-sans text-sm font-semibold text-amber-600"
+                                                >
+                                                    {{
+                                                        fmtCurrency(
+                                                            detailTrip.price,
+                                                        )
+                                                    }}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p class="text-[10px] font-bold text-gray-400 uppercase font-sans">Giờ xuất phát</p>
-                                                <p class="mt-0.5 text-sm font-semibold text-gray-800 font-sans">
-                                                    {{ fmtDateTime(detailTrip.depart_at) }}
+                                                <p
+                                                    class="font-sans text-[10px] font-bold text-gray-400 uppercase"
+                                                >
+                                                    Giờ xuất phát
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 font-sans text-sm font-semibold text-gray-800"
+                                                >
+                                                    {{
+                                                        fmtDateTime(
+                                                            detailTrip.depart_at,
+                                                        )
+                                                    }}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p class="text-[10px] font-bold text-gray-400 uppercase font-sans">Giờ đến dự kiến</p>
-                                                <p class="mt-0.5 text-sm font-semibold text-gray-800 font-sans">
-                                                    {{ fmtDateTime(detailTrip.arrive_at) }}
+                                                <p
+                                                    class="font-sans text-[10px] font-bold text-gray-400 uppercase"
+                                                >
+                                                    Giờ đến dự kiến
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 font-sans text-sm font-semibold text-gray-800"
+                                                >
+                                                    {{
+                                                        fmtDateTime(
+                                                            detailTrip.arrive_at,
+                                                        )
+                                                    }}
                                                 </p>
                                             </div>
-                                            
+
                                             <!-- Actual times -->
                                             <div v-if="detailTrip.started_at">
-                                                <p class="text-[10px] font-bold text-gray-400 uppercase font-sans">Bắt đầu thực tế</p>
-                                                <p class="mt-0.5 text-sm font-semibold text-green-700 font-sans">
-                                                    {{ fmtDateTime(detailTrip.started_at) }}
+                                                <p
+                                                    class="font-sans text-[10px] font-bold text-gray-400 uppercase"
+                                                >
+                                                    Bắt đầu thực tế
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 font-sans text-sm font-semibold text-green-700"
+                                                >
+                                                    {{
+                                                        fmtDateTime(
+                                                            detailTrip.started_at,
+                                                        )
+                                                    }}
                                                 </p>
                                             </div>
                                             <div v-if="detailTrip.completed_at">
-                                                <p class="text-[10px] font-bold text-gray-400 uppercase font-sans">Hoàn thành thực tế</p>
-                                                <p class="mt-0.5 text-sm font-semibold text-blue-700 font-sans">
-                                                    {{ fmtDateTime(detailTrip.completed_at) }}
+                                                <p
+                                                    class="font-sans text-[10px] font-bold text-gray-400 uppercase"
+                                                >
+                                                    Hoàn thành thực tế
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 font-sans text-sm font-semibold text-blue-700"
+                                                >
+                                                    {{
+                                                        fmtDateTime(
+                                                            detailTrip.completed_at,
+                                                        )
+                                                    }}
                                                 </p>
                                             </div>
                                             <div v-if="detailTrip.cancelled_at">
-                                                <p class="text-[10px] font-bold text-gray-400 uppercase font-sans">Hủy chuyến lúc</p>
-                                                <p class="mt-0.5 text-sm font-semibold text-red-700 font-sans">
-                                                    {{ fmtDateTime(detailTrip.cancelled_at) }}
+                                                <p
+                                                    class="font-sans text-[10px] font-bold text-gray-400 uppercase"
+                                                >
+                                                    Hủy chuyến lúc
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 font-sans text-sm font-semibold text-red-700"
+                                                >
+                                                    {{
+                                                        fmtDateTime(
+                                                            detailTrip.cancelled_at,
+                                                        )
+                                                    }}
                                                 </p>
                                             </div>
                                         </div>
 
                                         <!-- Cancel Reason -->
-                                        <div v-if="detailTrip.status === 'cancelled' && detailTrip.cancel_reason" class="mt-4 rounded-lg bg-red-50 p-4 border border-red-100">
-                                            <h4 class="text-[10px] font-bold uppercase text-red-800 font-sans">Lý do hủy</h4>
-                                            <p class="mt-0.5 text-xs text-red-700 font-medium font-sans">
+                                        <div
+                                            v-if="
+                                                detailTrip.status ===
+                                                    'cancelled' &&
+                                                detailTrip.cancel_reason
+                                            "
+                                            class="mt-4 rounded-lg border border-red-100 bg-red-50 p-4"
+                                        >
+                                            <h4
+                                                class="font-sans text-[10px] font-bold text-red-800 uppercase"
+                                            >
+                                                Lý do hủy
+                                            </h4>
+                                            <p
+                                                class="mt-0.5 font-sans text-xs font-medium text-red-700"
+                                            >
                                                 {{ detailTrip.cancel_reason }}
                                             </p>
                                         </div>
 
                                         <!-- Notes -->
-                                        <div v-if="detailTrip.note" class="mt-4 border-t border-gray-100 pt-3">
-                                            <p class="text-[10px] font-bold text-gray-400 uppercase font-sans">Ghi chú chuyến đi</p>
-                                            <p class="mt-0.5 text-xs text-gray-700 italic font-sans">
+                                        <div
+                                            v-if="detailTrip.note"
+                                            class="mt-4 border-t border-gray-100 pt-3"
+                                        >
+                                            <p
+                                                class="font-sans text-[10px] font-bold text-gray-400 uppercase"
+                                            >
+                                                Ghi chú chuyến đi
+                                            </p>
+                                            <p
+                                                class="mt-0.5 font-sans text-xs text-gray-700 italic"
+                                            >
                                                 "{{ detailTrip.note }}"
                                             </p>
                                         </div>
                                     </div>
 
                                     <!-- Stops Timeline -->
-                                    <div v-if="detailTrip.route.stops && detailTrip.route.stops.length > 0" class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                                        <h3 class="mb-4 text-sm font-bold text-gray-900 font-sans">Lộ trình chi tiết</h3>
+                                    <div
+                                        v-if="
+                                            detailTrip.route.stops &&
+                                            detailTrip.route.stops.length > 0
+                                        "
+                                        class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+                                    >
+                                        <h3
+                                            class="mb-4 font-sans text-sm font-bold text-gray-900"
+                                        >
+                                            Lộ trình chi tiết
+                                        </h3>
                                         <div class="relative pl-6">
-                                            <div class="absolute bottom-1.5 left-2.5 top-1.5 w-0.5 bg-slate-200" />
                                             <div
-                                                v-for="(stop, sIdx) in detailTrip.route.stops"
+                                                class="absolute top-1.5 bottom-1.5 left-2.5 w-0.5 bg-slate-200"
+                                            />
+                                            <div
+                                                v-for="(
+                                                    stop, sIdx
+                                                ) in detailTrip.route.stops"
                                                 :key="stop.id"
                                                 class="relative mb-5 last:mb-0"
                                             >
                                                 <div
                                                     :class="[
-                                                        'absolute -left-[21px] top-1.5 h-3.5 w-3.5 rounded-full border-2 bg-white',
+                                                        'absolute top-1.5 -left-[21px] h-3.5 w-3.5 rounded-full border-2 bg-white',
                                                         sIdx === 0
                                                             ? 'border-green-500 ring-4 ring-green-50'
-                                                            : sIdx === detailTrip.route.stops.length - 1
-                                                            ? 'border-red-500 ring-4 ring-red-50'
-                                                            : 'border-slate-400'
+                                                            : sIdx ===
+                                                                detailTrip.route
+                                                                    .stops
+                                                                    .length -
+                                                                    1
+                                                              ? 'border-red-500 ring-4 ring-red-50'
+                                                              : 'border-slate-400',
                                                     ]"
                                                 />
                                                 <div>
-                                                    <div class="flex items-center gap-2">
-                                                        <h4 class="text-xs font-semibold text-gray-800 font-sans">
+                                                    <div
+                                                        class="flex items-center gap-2"
+                                                    >
+                                                        <h4
+                                                            class="font-sans text-xs font-semibold text-gray-800"
+                                                        >
                                                             {{ stop.stop_name }}
                                                         </h4>
                                                         <span
-                                                            v-if="stop.offset_minutes > 0"
-                                                            class="rounded bg-slate-100 px-1 py-0.2 text-[9px] font-medium text-gray-500 font-sans"
+                                                            v-if="
+                                                                stop.offset_minutes >
+                                                                0
+                                                            "
+                                                            class="py-0.2 rounded bg-slate-100 px-1 font-sans text-[9px] font-medium text-gray-500"
                                                         >
-                                                            +{{ stop.offset_minutes }}m
+                                                            +{{
+                                                                stop.offset_minutes
+                                                            }}m
                                                         </span>
                                                     </div>
-                                                    <p class="mt-0.5 text-[10px] text-gray-500 font-sans">
+                                                    <p
+                                                        class="mt-0.5 font-sans text-[10px] text-gray-500"
+                                                    >
                                                         {{ stop.address }}
                                                     </p>
                                                 </div>
@@ -829,84 +1051,200 @@ onMounted(fetchTrips);
                                     </div>
 
                                     <!-- Passengers List Table -->
-                                    <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                                        <div class="border-b border-gray-100 p-5">
-                                            <h3 class="text-sm font-bold text-gray-900 font-sans">Danh sách hành khách đặt vé</h3>
+                                    <div
+                                        class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+                                    >
+                                        <div
+                                            class="border-b border-gray-100 p-5"
+                                        >
+                                            <h3
+                                                class="font-sans text-sm font-bold text-gray-900"
+                                            >
+                                                Danh sách hành khách đặt vé
+                                            </h3>
                                         </div>
                                         <div class="overflow-x-auto">
-                                            <table class="w-full text-left text-xs border-collapse">
+                                            <table
+                                                class="w-full border-collapse text-left text-xs"
+                                            >
                                                 <thead>
-                                                    <tr class="border-b border-gray-200 bg-slate-50 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
-                                                        <th class="px-5 py-3">Mã vé</th>
-                                                        <th class="px-5 py-3">Hành khách</th>
-                                                        <th class="px-5 py-3 text-center">Số ghế</th>
-                                                        <th class="px-5 py-3">Điểm đón / trả</th>
-                                                        <th class="px-5 py-3 text-right">Tổng tiền</th>
-                                                        <th class="px-5 py-3 text-center">Trạng thái</th>
+                                                    <tr
+                                                        class="border-b border-gray-200 bg-slate-50 text-[10px] font-semibold tracking-wider text-gray-400 uppercase"
+                                                    >
+                                                        <th class="px-5 py-3">
+                                                            Mã vé
+                                                        </th>
+                                                        <th class="px-5 py-3">
+                                                            Hành khách
+                                                        </th>
+                                                        <th
+                                                            class="px-5 py-3 text-center"
+                                                        >
+                                                            Số ghế
+                                                        </th>
+                                                        <th class="px-5 py-3">
+                                                            Điểm đón / trả
+                                                        </th>
+                                                        <th
+                                                            class="px-5 py-3 text-right"
+                                                        >
+                                                            Tổng tiền
+                                                        </th>
+                                                        <th
+                                                            class="px-5 py-3 text-center"
+                                                        >
+                                                            Trạng thái
+                                                        </th>
                                                     </tr>
                                                 </thead>
-                                                <tbody class="divide-y divide-gray-100 bg-white">
-                                                    <tr v-if="!detailTrip.bookings || detailTrip.bookings.length === 0">
-                                                        <td colspan="6" class="px-5 py-8 text-center text-gray-400 font-sans">
-                                                            Chưa có đặt vé nào cho chuyến đi này.
+                                                <tbody
+                                                    class="divide-y divide-gray-100 bg-white"
+                                                >
+                                                    <tr
+                                                        v-if="
+                                                            !detailTrip.bookings ||
+                                                            detailTrip.bookings
+                                                                .length === 0
+                                                        "
+                                                    >
+                                                        <td
+                                                            colspan="6"
+                                                            class="px-5 py-8 text-center font-sans text-gray-400"
+                                                        >
+                                                            Chưa có đặt vé nào
+                                                            cho chuyến đi này.
                                                         </td>
                                                     </tr>
                                                     <tr
                                                         v-for="b in detailTrip.bookings"
                                                         :key="b.id"
-                                                        class="hover:bg-slate-50 transition-colors"
+                                                        class="transition-colors hover:bg-slate-50"
                                                     >
                                                         <td class="px-5 py-3.5">
-                                                            <p class="font-mono font-semibold text-gray-700">
-                                                                {{ b.booking_code }}
+                                                            <p
+                                                                class="font-mono font-semibold text-gray-700"
+                                                            >
+                                                                {{
+                                                                    b.booking_code
+                                                                }}
                                                             </p>
-                                                            <p class="text-[9px] text-gray-400">
-                                                                {{ fmtDateTime(b.created_at) }}
+                                                            <p
+                                                                class="text-[9px] text-gray-400"
+                                                            >
+                                                                {{
+                                                                    fmtDateTime(
+                                                                        b.created_at,
+                                                                    )
+                                                                }}
                                                             </p>
                                                         </td>
-                                                        <td class="px-5 py-3.5 text-gray-900">
-                                                            <p class="font-semibold font-sans">
-                                                                {{ b.contact_name }}
+                                                        <td
+                                                            class="px-5 py-3.5 text-gray-900"
+                                                        >
+                                                            <p
+                                                                class="font-sans font-semibold"
+                                                            >
+                                                                {{
+                                                                    b.contact_name
+                                                                }}
                                                             </p>
-                                                            <p class="text-[10px] text-gray-500 font-mono">
-                                                                {{ b.contact_phone }}
+                                                            <p
+                                                                class="font-mono text-[10px] text-gray-500"
+                                                            >
+                                                                {{
+                                                                    b.contact_phone
+                                                                }}
                                                             </p>
                                                         </td>
-                                                        <td class="px-5 py-3.5 text-center font-semibold text-gray-800">
-                                                            {{ b.passenger_count }}
+                                                        <td
+                                                            class="px-5 py-3.5 text-center font-semibold text-gray-800"
+                                                        >
+                                                            {{
+                                                                b.passenger_count
+                                                            }}
                                                         </td>
                                                         <td class="px-5 py-3.5">
-                                                            <div class="flex flex-col gap-0.5 max-w-[180px]">
-                                                                <p class="truncate text-[10px] text-gray-700 font-sans">
-                                                                    <span class="inline-block h-1.5 w-1.5 rounded-full bg-green-500 mr-1" />
-                                                                    Đón: {{ b.pickup_stop || 'N/A' }}
+                                                            <div
+                                                                class="flex max-w-[180px] flex-col gap-0.5"
+                                                            >
+                                                                <p
+                                                                    class="truncate font-sans text-[10px] text-gray-700"
+                                                                >
+                                                                    <span
+                                                                        class="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-green-500"
+                                                                    />
+                                                                    Đón:
+                                                                    {{
+                                                                        b.pickup_stop ||
+                                                                        'N/A'
+                                                                    }}
                                                                 </p>
-                                                                <p class="truncate text-[10px] text-gray-700 font-sans">
-                                                                    <span class="inline-block h-1.5 w-1.5 rounded-full bg-red-500 mr-1" />
-                                                                    Trả: {{ b.dropoff_stop || 'N/A' }}
+                                                                <p
+                                                                    class="truncate font-sans text-[10px] text-gray-700"
+                                                                >
+                                                                    <span
+                                                                        class="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-red-500"
+                                                                    />
+                                                                    Trả:
+                                                                    {{
+                                                                        b.dropoff_stop ||
+                                                                        'N/A'
+                                                                    }}
                                                                 </p>
                                                             </div>
                                                         </td>
-                                                        <td class="px-5 py-3.5 text-right font-semibold text-gray-900 font-mono">
-                                                            {{ fmtCurrency(b.final_amount) }}
+                                                        <td
+                                                            class="px-5 py-3.5 text-right font-mono font-semibold text-gray-900"
+                                                        >
+                                                            {{
+                                                                fmtCurrency(
+                                                                    b.final_amount,
+                                                                )
+                                                            }}
                                                         </td>
                                                         <td class="px-5 py-3.5">
-                                                            <div class="flex flex-col items-center gap-1">
+                                                            <div
+                                                                class="flex flex-col items-center gap-1"
+                                                            >
                                                                 <span
                                                                     :class="[
-                                                                        'inline-flex rounded-full px-2 py-0.5 text-[9px] font-semibold border',
-                                                                        bookingStatusConfig[b.booking_status]?.cls || 'bg-gray-100 text-gray-700'
+                                                                        'inline-flex rounded-full border px-2 py-0.5 text-[9px] font-semibold',
+                                                                        bookingStatusConfig[
+                                                                            b
+                                                                                .booking_status
+                                                                        ]
+                                                                            ?.cls ||
+                                                                            'bg-gray-100 text-gray-700',
                                                                     ]"
                                                                 >
-                                                                    {{ bookingStatusConfig[b.booking_status]?.label || b.booking_status }}
+                                                                    {{
+                                                                        bookingStatusConfig[
+                                                                            b
+                                                                                .booking_status
+                                                                        ]
+                                                                            ?.label ||
+                                                                        b.booking_status
+                                                                    }}
                                                                 </span>
                                                                 <span
                                                                     :class="[
-                                                                        'inline-flex rounded-full px-2 py-0.5 text-[9px] font-semibold border',
-                                                                        paymentStatusConfig[b.payment_status]?.cls || 'bg-gray-100 text-gray-700 border-gray-200'
+                                                                        'inline-flex rounded-full border px-2 py-0.5 text-[9px] font-semibold',
+                                                                        paymentStatusConfig[
+                                                                            b
+                                                                                .payment_status
+                                                                        ]
+                                                                            ?.cls ||
+                                                                            'border-gray-200 bg-gray-100 text-gray-700',
                                                                     ]"
                                                                 >
-                                                                    {{ paymentStatusConfig[b.payment_status]?.label || b.payment_status }}
+                                                                    {{
+                                                                        paymentStatusConfig[
+                                                                            b
+                                                                                .payment_status
+                                                                        ]
+                                                                            ?.label ||
+                                                                        b.payment_status
+                                                                    }}
                                                                 </span>
                                                             </div>
                                                         </td>
@@ -920,106 +1258,297 @@ onMounted(fetchTrips);
                                 <!-- Right Section (1/3) -->
                                 <div class="space-y-6">
                                     <!-- Stats Card -->
-                                    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                                        <h3 class="mb-3 text-sm font-bold text-gray-900 font-sans">Chỉ số chuyến đi</h3>
+                                    <div
+                                        class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+                                    >
+                                        <h3
+                                            class="mb-3 font-sans text-sm font-bold text-gray-900"
+                                        >
+                                            Chỉ số chuyến đi
+                                        </h3>
                                         <div class="grid grid-cols-2 gap-3">
-                                            <div class="rounded-lg bg-slate-50 p-2.5 border border-slate-100">
-                                                <p class="text-[9px] font-bold text-gray-400 uppercase font-sans">Lượt đặt vé</p>
-                                                <p class="mt-0.5 text-base font-bold text-gray-800 font-sans">
-                                                    {{ detailTrip.booking_count }}
+                                            <div
+                                                class="rounded-lg border border-slate-100 bg-slate-50 p-2.5"
+                                            >
+                                                <p
+                                                    class="font-sans text-[9px] font-bold text-gray-400 uppercase"
+                                                >
+                                                    Lượt đặt vé
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 font-sans text-base font-bold text-gray-800"
+                                                >
+                                                    {{
+                                                        detailTrip.booking_count
+                                                    }}
                                                 </p>
                                             </div>
-                                            <div class="rounded-lg bg-slate-50 p-2.5 border border-slate-100">
-                                                <p class="text-[9px] font-bold text-gray-400 uppercase font-sans">Hành khách</p>
-                                                <p class="mt-0.5 text-base font-bold text-gray-800 font-sans">
-                                                    {{ detailTrip.passengers_count }}
+                                            <div
+                                                class="rounded-lg border border-slate-100 bg-slate-50 p-2.5"
+                                            >
+                                                <p
+                                                    class="font-sans text-[9px] font-bold text-gray-400 uppercase"
+                                                >
+                                                    Hành khách
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 font-sans text-base font-bold text-gray-800"
+                                                >
+                                                    {{
+                                                        detailTrip.passengers_count
+                                                    }}
                                                 </p>
                                             </div>
-                                            <div class="rounded-lg bg-slate-50 p-2.5 border border-slate-100 col-span-2">
-                                                <p class="text-[9px] font-bold text-gray-400 uppercase font-sans">Ghế trống</p>
-                                                <p class="mt-0.5 text-sm font-bold text-gray-800 font-sans">
-                                                    {{ detailTrip.available_seats }} / {{ detailTrip.total_seats }} ghế
+                                            <div
+                                                class="col-span-2 rounded-lg border border-slate-100 bg-slate-50 p-2.5"
+                                            >
+                                                <p
+                                                    class="font-sans text-[9px] font-bold text-gray-400 uppercase"
+                                                >
+                                                    Ghế trống
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 font-sans text-sm font-bold text-gray-800"
+                                                >
+                                                    {{
+                                                        detailTrip.available_seats
+                                                    }}
+                                                    /
+                                                    {{
+                                                        detailTrip.total_seats
+                                                    }}
+                                                    ghế
                                                 </p>
                                             </div>
-                                            <div class="rounded-lg bg-slate-50 p-2.5 border border-slate-100 col-span-2">
-                                                <p class="text-[9px] font-bold text-gray-400 uppercase font-sans">Doanh thu</p>
-                                                <p class="mt-0.5 text-sm font-bold text-emerald-600 truncate font-mono">
-                                                    {{ fmtCurrency(detailTrip.revenue) }}
+                                            <div
+                                                class="col-span-2 rounded-lg border border-slate-100 bg-slate-50 p-2.5"
+                                            >
+                                                <p
+                                                    class="font-sans text-[9px] font-bold text-gray-400 uppercase"
+                                                >
+                                                    Doanh thu
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 truncate font-mono text-sm font-bold text-emerald-600"
+                                                >
+                                                    {{
+                                                        fmtCurrency(
+                                                            detailTrip.revenue,
+                                                        )
+                                                    }}
                                                 </p>
                                             </div>
                                         </div>
                                     </div>
 
                                     <!-- Driver Card -->
-                                    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                                        <h3 class="mb-3 text-sm font-bold text-gray-900 font-sans">Tài xế</h3>
-                                        <div v-if="detailTrip.driver" class="flex items-center gap-3">
-                                            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500 font-bold text-white shadow-sm ring-4 ring-amber-50 text-sm">
-                                                {{ getInitials(detailTrip.driver.full_name) }}
+                                    <div
+                                        class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+                                    >
+                                        <h3
+                                            class="mb-3 font-sans text-sm font-bold text-gray-900"
+                                        >
+                                            Tài xế
+                                        </h3>
+                                        <div
+                                            v-if="detailTrip.driver"
+                                            class="flex items-center gap-3"
+                                        >
+                                            <div
+                                                class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500 text-sm font-bold text-white shadow-sm ring-4 ring-amber-50"
+                                            >
+                                                {{
+                                                    getInitials(
+                                                        detailTrip.driver
+                                                            .full_name,
+                                                    )
+                                                }}
                                             </div>
                                             <div>
-                                                <h4 class="font-bold text-xs text-gray-900 font-sans">{{ detailTrip.driver.full_name }}</h4>
-                                                <p class="text-[10px] text-gray-500 font-semibold font-mono">{{ detailTrip.driver.phone }}</p>
-                                                <div class="mt-0.5 flex items-center gap-0.5">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3 w-3 text-amber-500">
-                                                        <path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.6 3.102-1.196 4.622c-.21.811.679 1.458 1.374 1.002L10 15.247l4.182 2.793c.695.456 1.585-.19 1.374-1.002l-1.196-4.622 3.6-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.83-4.401Z" clip-rule="evenodd" />
+                                                <h4
+                                                    class="font-sans text-xs font-bold text-gray-900"
+                                                >
+                                                    {{
+                                                        detailTrip.driver
+                                                            .full_name
+                                                    }}
+                                                </h4>
+                                                <p
+                                                    class="font-mono text-[10px] font-semibold text-gray-500"
+                                                >
+                                                    {{
+                                                        detailTrip.driver.phone
+                                                    }}
+                                                </p>
+                                                <div
+                                                    class="mt-0.5 flex items-center gap-0.5"
+                                                >
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        viewBox="0 0 20 20"
+                                                        fill="currentColor"
+                                                        class="h-3 w-3 text-amber-500"
+                                                    >
+                                                        <path
+                                                            fill-rule="evenodd"
+                                                            d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.6 3.102-1.196 4.622c-.21.811.679 1.458 1.374 1.002L10 15.247l4.182 2.793c.695.456 1.585-.19 1.374-1.002l-1.196-4.622 3.6-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.83-4.401Z"
+                                                            clip-rule="evenodd"
+                                                        />
                                                     </svg>
-                                                    <span class="text-[10px] font-semibold text-gray-600 font-sans">
-                                                        {{ detailTrip.driver.rating_avg != null ? Number(detailTrip.driver.rating_avg).toFixed(1) : '—' }}
+                                                    <span
+                                                        class="font-sans text-[10px] font-semibold text-gray-600"
+                                                    >
+                                                        {{
+                                                            detailTrip.driver
+                                                                .rating_avg !=
+                                                            null
+                                                                ? Number(
+                                                                      detailTrip
+                                                                          .driver
+                                                                          .rating_avg,
+                                                                  ).toFixed(1)
+                                                                : '—'
+                                                        }}
                                                     </span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div v-else class="text-center py-2 text-xs text-gray-400 italic font-sans">
+                                        <div
+                                            v-else
+                                            class="py-2 text-center font-sans text-xs text-gray-400 italic"
+                                        >
                                             Chưa phân công tài xế
                                         </div>
                                     </div>
 
                                     <!-- Vehicle Card -->
-                                    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                                        <h3 class="mb-3 text-sm font-bold text-gray-900 font-sans">Phương tiện</h3>
+                                    <div
+                                        class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+                                    >
+                                        <h3
+                                            class="mb-3 font-sans text-sm font-bold text-gray-900"
+                                        >
+                                            Phương tiện
+                                        </h3>
                                         <div class="space-y-2.5 text-xs">
-                                            <div class="flex items-center justify-between border-b border-gray-50 pb-1.5">
-                                                <span class="font-semibold text-gray-400 uppercase text-[9px] font-sans">Biển số</span>
-                                                <span class="rounded bg-slate-100 px-2 py-0.2 font-mono font-bold text-gray-700 border border-slate-200">
-                                                    {{ detailTrip.vehicle.plate_number }}
+                                            <div
+                                                class="flex items-center justify-between border-b border-gray-50 pb-1.5"
+                                            >
+                                                <span
+                                                    class="font-sans text-[9px] font-semibold text-gray-400 uppercase"
+                                                    >Biển số</span
+                                                >
+                                                <span
+                                                    class="py-0.2 rounded border border-slate-200 bg-slate-100 px-2 font-mono font-bold text-gray-700"
+                                                >
+                                                    {{
+                                                        detailTrip.vehicle
+                                                            .plate_number
+                                                    }}
                                                 </span>
                                             </div>
-                                            <div class="flex items-center justify-between border-b border-gray-50 pb-1.5">
-                                                <span class="font-semibold text-gray-400 uppercase text-[9px] font-sans">Loại xe</span>
-                                                <span class="font-bold text-gray-800 font-sans">
-                                                    {{ vehicleTypeLabels[detailTrip.vehicle.vehicle_type] || detailTrip.vehicle.vehicle_type }}
+                                            <div
+                                                class="flex items-center justify-between border-b border-gray-50 pb-1.5"
+                                            >
+                                                <span
+                                                    class="font-sans text-[9px] font-semibold text-gray-400 uppercase"
+                                                    >Loại xe</span
+                                                >
+                                                <span
+                                                    class="font-sans font-bold text-gray-800"
+                                                >
+                                                    {{
+                                                        vehicleTypeLabels[
+                                                            detailTrip.vehicle
+                                                                .vehicle_type
+                                                        ] ||
+                                                        detailTrip.vehicle
+                                                            .vehicle_type
+                                                    }}
                                                 </span>
                                             </div>
-                                            <div class="flex items-center justify-between border-b border-gray-50 pb-1.5">
-                                                <span class="font-semibold text-gray-400 uppercase text-[9px] font-sans">Số ghế</span>
-                                                <span class="font-bold text-gray-800 font-sans">
-                                                    {{ detailTrip.vehicle.seat_count }} ghế
+                                            <div
+                                                class="flex items-center justify-between border-b border-gray-50 pb-1.5"
+                                            >
+                                                <span
+                                                    class="font-sans text-[9px] font-semibold text-gray-400 uppercase"
+                                                    >Số ghế</span
+                                                >
+                                                <span
+                                                    class="font-sans font-bold text-gray-800"
+                                                >
+                                                    {{
+                                                        detailTrip.vehicle
+                                                            .seat_count
+                                                    }}
+                                                    ghế
                                                 </span>
                                             </div>
-                                            <div v-if="detailTrip.vehicle.brand" class="flex items-center justify-between">
-                                                <span class="font-semibold text-gray-400 uppercase text-[9px] font-sans">Hãng & Model</span>
-                                                <span class="font-bold text-gray-800 font-sans">
-                                                    {{ detailTrip.vehicle.brand }} {{ detailTrip.vehicle.model }}
+                                            <div
+                                                v-if="detailTrip.vehicle.brand"
+                                                class="flex items-center justify-between"
+                                            >
+                                                <span
+                                                    class="font-sans text-[9px] font-semibold text-gray-400 uppercase"
+                                                    >Hãng & Model</span
+                                                >
+                                                <span
+                                                    class="font-sans font-bold text-gray-800"
+                                                >
+                                                    {{
+                                                        detailTrip.vehicle.brand
+                                                    }}
+                                                    {{
+                                                        detailTrip.vehicle.model
+                                                    }}
                                                 </span>
                                             </div>
                                         </div>
                                     </div>
 
                                     <!-- Operator Card -->
-                                    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                                        <h3 class="mb-3 text-sm font-bold text-gray-900 font-sans">Nhà xe</h3>
+                                    <div
+                                        class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+                                    >
+                                        <h3
+                                            class="mb-3 font-sans text-sm font-bold text-gray-900"
+                                        >
+                                            Nhà xe
+                                        </h3>
                                         <div class="flex items-center gap-2.5">
-                                            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 font-bold border border-blue-100">
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3.75h.008v.008h-.008V3.75Zm0 2.25h.008v.008h-.008V6ZM18.75 8.25h.008v.008h-.008V8.25Zm-3 11.25h.008v.008h-.008v-.008Zm0-2.25h.008v.008h-.008V17.25Zm0-2.25h.008v.008h-.008v-.008ZM12.75 17.25h.008v.008h-.008V17.25Zm0-2.25h.008v.008h-.008v-.008ZM12.75 12h.008v.008h-.008V12Zm-9 5.25h.008v.008h-.008V17.25Zm0-2.25h.008v.008h-.008v-.008ZM3.75 12h.008v.008h-.008V12Zm0-2.25h.008v.008h-.008V9.75Zm3 7.25h.008v.008h-.008V17.25Zm0-2.25h.008v.008h-.008v-.008ZM6.75 12h.008v.008h-.008V12Zm0-2.25h.008v.008h-.008V9.75ZM6.75 7.5h.008v.008h-.008V7.5Zm0-2.25h.008v.008h-.008V5.25Zm3 12h.008v.008h-.008V17.25Zm0-2.25h.008v.008h-.008v-.008ZM9.75 12h.008v.008h-.008V12Zm0-2.25h.008v.008h-.008V9.75Zm0-2.25h.008v.008h-.008V7.5Zm0-2.25h.008v.008h-.008V5.25Z" />
+                                            <div
+                                                class="flex h-8 w-8 items-center justify-center rounded-lg border border-blue-100 bg-blue-50 font-bold text-blue-600"
+                                            >
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke-width="1.5"
+                                                    stroke="currentColor"
+                                                    class="h-4 w-4"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3.75h.008v.008h-.008V3.75Zm0 2.25h.008v.008h-.008V6ZM18.75 8.25h.008v.008h-.008V8.25Zm-3 11.25h.008v.008h-.008v-.008Zm0-2.25h.008v.008h-.008V17.25Zm0-2.25h.008v.008h-.008v-.008ZM12.75 17.25h.008v.008h-.008V17.25Zm0-2.25h.008v.008h-.008v-.008ZM12.75 12h.008v.008h-.008V12Zm-9 5.25h.008v.008h-.008V17.25Zm0-2.25h.008v.008h-.008v-.008ZM3.75 12h.008v.008h-.008V12Zm0-2.25h.008v.008h-.008V9.75Zm3 7.25h.008v.008h-.008V17.25Zm0-2.25h.008v.008h-.008v-.008ZM6.75 12h.008v.008h-.008V12Zm0-2.25h.008v.008h-.008V9.75ZM6.75 7.5h.008v.008h-.008V7.5Zm0-2.25h.008v.008h-.008V5.25Zm3 12h.008v.008h-.008V17.25Zm0-2.25h.008v.008h-.008v-.008ZM9.75 12h.008v.008h-.008V12Zm0-2.25h.008v.008h-.008V9.75Zm0-2.25h.008v.008h-.008V7.5Zm0-2.25h.008v.008h-.008V5.25Z"
+                                                    />
                                                 </svg>
                                             </div>
                                             <div>
-                                                <h4 class="font-bold text-xs text-gray-900 font-sans">
-                                                    {{ detailTrip.operator?.company_name || 'N/A' }}
+                                                <h4
+                                                    class="font-sans text-xs font-bold text-gray-900"
+                                                >
+                                                    {{
+                                                        detailTrip.operator
+                                                            ?.company_name ||
+                                                        'N/A'
+                                                    }}
                                                 </h4>
-                                                <p class="text-[9px] text-gray-400 font-semibold font-sans">Đối tác vận tải</p>
+                                                <p
+                                                    class="font-sans text-[9px] font-semibold text-gray-400"
+                                                >
+                                                    Đối tác vận tải
+                                                </p>
                                             </div>
                                         </div>
                                     </div>

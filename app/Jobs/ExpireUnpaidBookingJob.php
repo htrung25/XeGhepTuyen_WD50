@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 
 class ExpireUnpaidBookingJob implements ShouldQueue
 {
-    use Queueable, InteractsWithQueue, SerializesModels;
+    use InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 1;
 
@@ -31,7 +31,7 @@ class ExpireUnpaidBookingJob implements ShouldQueue
     {
         Log::error('ExpireUnpaidBookingJob thất bại', [
             'booking_id' => $this->booking->id,
-            'error'      => $e->getMessage(),
+            'error' => $e->getMessage(),
         ]);
     }
 }

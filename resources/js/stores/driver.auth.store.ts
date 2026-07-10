@@ -37,7 +37,9 @@ export const useDriverAuthStore = defineStore('driverAuth', () => {
     const isAuthenticated = computed(() => !!token.value);
 
     /** true = đang dùng mật khẩu tạm thời, bắt buộc đổi trước khi dùng app */
-    const mustChangePassword = computed(() => !!user.value?.must_change_password);
+    const mustChangePassword = computed(
+        () => !!user.value?.must_change_password,
+    );
 
     function setAuth(t: string, u: DriverUser, d: DriverInfo) {
         token.value = t;

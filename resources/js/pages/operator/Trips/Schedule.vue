@@ -63,8 +63,6 @@ const form = ref({
     note: '',
 });
 
-
-
 // Calendar view — tuần đang xem (điều hướng được sang tuần cũ/mới)
 const today = new Date();
 
@@ -333,7 +331,6 @@ const createTrip = async () => {
     setTimeout(() => (saveSuccess.value = false), 3000);
 };
 
-
 // Đổi tuần → tải lại chuyến của tuần đó
 watch(weekStart, () => load());
 
@@ -406,10 +403,10 @@ onMounted(() => load());
             </div>
         </div>
 
-        <div class="flex flex-col lg:flex-row gap-6">
+        <div class="flex flex-col gap-6 lg:flex-row">
             <!-- LEFT: Calendar -->
             <div
-                class="min-w-0 flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm flex flex-col h-[calc(100vh-180px)]"
+                class="flex h-[calc(100vh-180px)] min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
             >
                 <div
                     class="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-6 py-4"
@@ -459,17 +456,20 @@ onMounted(() => load());
                     />
                 </div>
 
-                <div v-else class="overflow-x-auto flex-1 min-h-0">
-                    <div class="grid grid-cols-7 divide-x divide-slate-100 min-w-[700px] h-full">
+                <div v-else class="min-h-0 flex-1 overflow-x-auto">
+                    <div
+                        class="grid h-full min-w-[700px] grid-cols-7 divide-x divide-slate-100"
+                    >
                         <div
                             v-for="day in weekDays"
                             :key="day.label"
-                            class="flex flex-col h-full"
+                            class="flex h-full flex-col"
                         >
                             <div
-                                class="border-b border-slate-100 px-2 py-2 text-center shrink-0"
+                                class="shrink-0 border-b border-slate-100 px-2 py-2 text-center"
                                 :class="
-                                    day.date.toDateString() === today.toDateString()
+                                    day.date.toDateString() ===
+                                    today.toDateString()
                                         ? 'bg-amber-50'
                                         : ''
                                 "
@@ -477,13 +477,13 @@ onMounted(() => load());
                                 <p class="text-xs font-bold text-slate-700">
                                     {{ day.label.split(',')[0] }}
                                 </p>
-                                <p class="mt-0.5 text-[10px] font-mono text-slate-400">
+                                <p
+                                    class="mt-0.5 font-mono text-[10px] text-slate-400"
+                                >
                                     {{ day.label.split(',')[1] }}
                                 </p>
                             </div>
-                            <div
-                                class="flex-1 overflow-y-auto space-y-1 p-1"
-                            >
+                            <div class="flex-1 space-y-1 overflow-y-auto p-1">
                                 <button
                                     v-for="trip in tripsForDay(day.date)"
                                     :key="trip.id"
@@ -528,7 +528,7 @@ onMounted(() => load());
             </div>
 
             <!-- RIGHT: Form panel -->
-            <div class="w-full lg:w-80 lg:flex-shrink-0 space-y-4">
+            <div class="w-full space-y-4 lg:w-80 lg:flex-shrink-0">
                 <!-- Success alert -->
                 <div
                     v-if="saveSuccess"

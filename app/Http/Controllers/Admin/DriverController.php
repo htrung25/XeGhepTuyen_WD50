@@ -6,8 +6,8 @@ use App\Enums\DriverStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Admin\DriverResource;
 use App\Models\Driver;
-use App\Services\DriverService;
 use App\Services\AuditLogService;
+use App\Services\DriverService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

@@ -54,22 +54,22 @@ class Booking extends Model
     protected function casts(): array
     {
         return [
-            'payment_method'  => PaymentMethod::class,
-            'payment_status'  => BookingPaymentStatus::class,
-            'booking_status'  => BookingStatus::class,
-            'expires_at'      => 'datetime',
-            'confirmed_at'    => 'datetime',
-            'checked_in_at'   => 'datetime',
-            'completed_at'    => 'datetime',
-            'cancelled_at'    => 'datetime',
-            'final_amount'    => 'integer',
-            'subtotal'        => 'integer',
+            'payment_method' => PaymentMethod::class,
+            'payment_status' => BookingPaymentStatus::class,
+            'booking_status' => BookingStatus::class,
+            'expires_at' => 'datetime',
+            'confirmed_at' => 'datetime',
+            'checked_in_at' => 'datetime',
+            'completed_at' => 'datetime',
+            'cancelled_at' => 'datetime',
+            'final_amount' => 'integer',
+            'subtotal' => 'integer',
             'discount_amount' => 'integer',
             'passenger_count' => 'integer',
-            'pickup_lat'      => 'float',
-            'pickup_lng'      => 'float',
-            'dropoff_lat'     => 'float',
-            'dropoff_lng'     => 'float',
+            'pickup_lat' => 'float',
+            'pickup_lng' => 'float',
+            'dropoff_lat' => 'float',
+            'dropoff_lng' => 'float',
         ];
     }
 
@@ -150,15 +150,15 @@ class Booking extends Model
     public function scopeExpired(Builder $query): Builder
     {
         return $query->where('expires_at', '<', now())
-                     ->where('payment_status', BookingPaymentStatus::Unpaid)
-                     ->where('booking_status', BookingStatus::Pending);
+            ->where('payment_status', BookingPaymentStatus::Unpaid)
+            ->where('booking_status', BookingStatus::Pending);
     }
 
     // ─── Accessors ────────────────────────────────────────────────────────────
 
     public function getFormattedAmountAttribute(): string
     {
-        return number_format($this->final_amount, 0, ',', '.') . 'đ';
+        return number_format($this->final_amount, 0, ',', '.').'đ';
     }
 
     // ─── Business Methods ─────────────────────────────────────────────────────
@@ -166,7 +166,7 @@ class Booking extends Model
     public function canCancel(): bool
     {
         return in_array($this->booking_status, [BookingStatus::Pending, BookingStatus::Confirmed])
-            && !$this->trip->isActive();
+            && ! $this->trip->isActive();
     }
 
     public function refundPercent(): int

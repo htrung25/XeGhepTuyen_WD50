@@ -6,8 +6,8 @@ use App\Enums\OperatorStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Admin\OperatorResource;
 use App\Models\Operator;
-use App\Services\OperatorAccountService;
 use App\Services\AuditLogService;
+use App\Services\OperatorAccountService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -28,8 +28,8 @@ class OperatorController extends Controller
                         ->orWhere('business_license', 'LIKE', "%{$search}%")
                         ->orWhereHas('user', function ($u) use ($search) {
                             $u->where('full_name', 'LIKE', "%{$search}%")
-                              ->orWhere('phone', 'LIKE', "%{$search}%")
-                              ->orWhere('email', 'LIKE', "%{$search}%");
+                                ->orWhere('phone', 'LIKE', "%{$search}%")
+                                ->orWhere('email', 'LIKE', "%{$search}%");
                         });
                 });
             })

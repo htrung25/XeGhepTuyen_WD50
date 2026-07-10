@@ -32,13 +32,13 @@ class Payment extends Model
     protected function casts(): array
     {
         return [
-            'method'           => PaymentMethod::class,
-            'status'           => PaymentStatus::class,
+            'method' => PaymentMethod::class,
+            'status' => PaymentStatus::class,
             'gateway_response' => 'array',
-            'amount'           => 'integer',
-            'refund_amount'    => 'integer',
-            'refunded_at'      => 'datetime',
-            'paid_at'          => 'datetime',
+            'amount' => 'integer',
+            'refund_amount' => 'integer',
+            'refunded_at' => 'datetime',
+            'paid_at' => 'datetime',
         ];
     }
 
@@ -63,6 +63,6 @@ class Payment extends Model
 
     public function getFormattedAmountAttribute(): string
     {
-        return number_format($this->amount, 0, ',', '.') . 'đ';
+        return number_format($this->amount, 0, ',', '.').'đ';
     }
 }

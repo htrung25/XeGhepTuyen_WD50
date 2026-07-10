@@ -12,9 +12,10 @@ use Illuminate\Support\Facades\Log;
 
 class ProcessRefundJob implements ShouldQueue
 {
-    use Queueable, InteractsWithQueue, SerializesModels;
+    use InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries   = 3;
+    public int $tries = 3;
+
     public int $backoff = 300;
 
     public function __construct(
@@ -32,9 +33,9 @@ class ProcessRefundJob implements ShouldQueue
     public function failed(\Throwable $e): void
     {
         Log::error('ProcessRefundJob thất bại', [
-            'booking_id'    => $this->booking->id,
+            'booking_id' => $this->booking->id,
             'refund_amount' => $this->refundAmount,
-            'error'         => $e->getMessage(),
+            'error' => $e->getMessage(),
         ]);
     }
 }

@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Enums\TripStatus;
 use App\Models\Trip;
 use App\Repositories\Contracts\TripRepositoryInterface;
+use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -24,8 +25,8 @@ class TripRepository implements TripRepositoryInterface
     public function findByTrackingCode(string $code): ?Trip
     {
         return Trip::with(['route', 'driver.user:id,full_name,phone', 'vehicle:id,plate_number'])
-                   ->where('tracking_code', $code)
-                   ->first();
+            ->where('tracking_code', $code)
+            ->first();
     }
 
     public function search(array $filters): Collection
@@ -36,18 +37,18 @@ class TripRepository implements TripRepositoryInterface
             'driver:id,user_id,rating_avg',
             'driver.user:id,full_name,avatar_url',
         ])
-        ->available($filters['passengers'] ?? 1);
+            ->available($filters['passengers'] ?? 1);
 
-        if (!empty($filters['from_city'])) {
-            $query->whereHas('route', fn($q) => $q->where('origin_city', $filters['from_city']));
+        if (! empty($filters['from_city'])) {
+            $query->whereHas('route', fn ($q) => $q->where('origin_city', $filters['from_city']));
         }
 
-        if (!empty($filters['to_city'])) {
-            $query->whereHas('route', fn($q) => $q->where('dest_city', $filters['to_city']));
+        if (! empty($filters['to_city'])) {
+            $query->whereHas('route', fn ($q) => $q->where('dest_city', $filters['to_city']));
         }
 
-        if (!empty($filters['date'])) {
-            $searchDate = \Carbon\Carbon::parse($filters['date']);
+        if (! empty($filters['date'])) {
+            $searchDate = Carbon::parse($filters['date']);
             if ($searchDate->isToday()) {
                 $query->where('depart_at', '<=', now()->addDay()->endOfDay());
             } else {
@@ -56,10 +57,10 @@ class TripRepository implements TripRepositoryInterface
         }
 
         $sort = $filters['sort'] ?? 'depart_asc';
-        match($sort) {
-            'price_asc'  => $query->orderBy('price'),
+        match ($sort) {
+            'price_asc' => $query->orderBy('price'),
             'price_desc' => $query->orderByDesc('price'),
-            default      => $query->orderBy('depart_at'),
+            default => $query->orderBy('depart_at'),
         };
 
         return $query->get();
@@ -75,11 +76,11 @@ class TripRepository implements TripRepositoryInterface
             'driver.user:id,full_name,avatar_url',
             'seatMaps',
         ])
-        ->whereIn('id', $ids)
-        ->get()
-        ->sortBy(fn($trip) => array_search($trip->id, $ids, true))
-        ->values()
-        ->all();
+            ->whereIn('id', $ids)
+            ->get()
+            ->sortBy(fn ($trip) => array_search($trip->id, $ids, true))
+            ->values()
+            ->all();
     }
 
     public function findByDriver(string $driverId, array $filters = []): Collection
@@ -91,11 +92,11 @@ class TripRepository implements TripRepositoryInterface
             'vehicle.operator.user:id,phone',
         ])->where('driver_id', $driverId);
 
-        if (!empty($filters['date'])) {
+        if (! empty($filters['date'])) {
             $query->whereDate('depart_at', $filters['date']);
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
@@ -105,21 +106,21 @@ class TripRepository implements TripRepositoryInterface
     public function findByOperator(string $operatorId, array $filters = []): LengthAwarePaginator
     {
         $query = Trip::with(['route', 'vehicle:id,plate_number,vehicle_type,seat_count', 'driver:id,user_id', 'driver.user:id,full_name'])
-                     ->whereHas('route', fn($q) => $q->where('operator_id', $operatorId));
+            ->whereHas('route', fn ($q) => $q->where('operator_id', $operatorId));
 
-        if (!empty($filters['date'])) {
+        if (! empty($filters['date'])) {
             $query->whereDate('depart_at', $filters['date']);
         }
 
         // Lọc theo khoảng ngày (lưới lịch tuần của operator dùng range này)
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('depart_at', '>=', $filters['date_from']);
         }
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('depart_at', '<=', $filters['date_to']);
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
@@ -137,40 +138,40 @@ class TripRepository implements TripRepositoryInterface
             'driver:id,user_id,rating_avg,is_online',
             'driver.user:id,full_name,phone',
         ])
-        ->withCount('bookings')
+            ->withCount('bookings')
         // Tổng số khách đã đặt = sum passenger_count của booking còn giữ chỗ
         // (mọi trạng thái trừ cancelled/no_show — khớp với available_seats đã trừ khi đặt)
-        ->withSum(['bookings as passengers_count' => fn ($q) => $q->whereNotIn(
-            'booking_status', ['cancelled', 'no_show']
-        )], 'passenger_count')
-        ->withSum(['bookings as completed_revenue' => fn ($q) => $q->where(
-            'booking_status', 'completed'
-        )], 'final_amount');
+            ->withSum(['bookings as passengers_count' => fn ($q) => $q->whereNotIn(
+                'booking_status', ['cancelled', 'no_show']
+            )], 'passenger_count')
+            ->withSum(['bookings as completed_revenue' => fn ($q) => $q->where(
+                'booking_status', 'completed'
+            )], 'final_amount');
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
-        if (!empty($filters['date'])) {
+        if (! empty($filters['date'])) {
             $query->whereDate('depart_at', $filters['date']);
         }
 
         // Khoảng ngày (bộ lọc admin trips)
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('depart_at', '>=', $filters['date_from']);
         }
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('depart_at', '<=', $filters['date_to']);
         }
 
         // Tìm theo mã chuyến (tracking_code) hoặc tên thành phố tuyến
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $term = $filters['search'];
             $query->where(function ($q) use ($term) {
                 $q->where('tracking_code', 'like', "%{$term}%")
-                  ->orWhereHas('route', fn ($r) => $r
-                      ->where('origin_city', 'like', "%{$term}%")
-                      ->orWhere('dest_city', 'like', "%{$term}%"));
+                    ->orWhereHas('route', fn ($r) => $r
+                        ->where('origin_city', 'like', "%{$term}%")
+                        ->orWhere('dest_city', 'like', "%{$term}%"));
             });
         }
 
@@ -190,9 +191,9 @@ class TripRepository implements TripRepositoryInterface
     public function getActiveTripsWithLocation(): Collection
     {
         return Trip::with(['driver', 'route'])
-                   ->where('status', TripStatus::InProgress)
-                   ->whereNotNull('driver_id')
-                   ->get();
+            ->where('status', TripStatus::InProgress)
+            ->whereNotNull('driver_id')
+            ->get();
     }
 
     public function findInProgress(): Collection
@@ -203,8 +204,8 @@ class TripRepository implements TripRepositoryInterface
             'driver:id,user_id,rating_avg,is_online,current_lat,current_lng',
             'driver.user:id,full_name,phone',
         ])
-        ->whereIn('status', [TripStatus::Boarding, TripStatus::InProgress])
-        ->orderBy('depart_at')
-        ->get();
+            ->whereIn('status', [TripStatus::Boarding, TripStatus::InProgress])
+            ->orderBy('depart_at')
+            ->get();
     }
 }

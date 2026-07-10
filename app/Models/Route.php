@@ -28,10 +28,10 @@ class Route extends Model
     protected function casts(): array
     {
         return [
-            'is_active'      => 'boolean',
-            'is_round_trip'  => 'boolean',
-            'base_price'     => 'integer',
-            'distance_km'    => 'integer',
+            'is_active' => 'boolean',
+            'is_round_trip' => 'boolean',
+            'base_price' => 'integer',
+            'distance_km' => 'integer',
             'est_duration_min' => 'integer',
         ];
     }
@@ -69,6 +69,6 @@ class Route extends Model
 
     public function canBeDeleted(): bool
     {
-        return !$this->trips()->whereIn('status', ['scheduled', 'boarding'])->exists();
+        return ! $this->trips()->whereIn('status', ['scheduled', 'boarding'])->exists();
     }
 }

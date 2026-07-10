@@ -6,12 +6,12 @@ use App\Models\Driver;
 use App\Models\Operator;
 use App\Models\Route;
 use App\Models\RouteStop;
+use App\Models\SeatMap;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\Vehicle;
-use App\Models\SeatMap;
-use App\Services\PaymentService;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\Sanctum;
 
 function setupSepayTestContext(): array
 {
@@ -19,16 +19,16 @@ function setupSepayTestContext(): array
     $operator = Operator::create([
         'user_id' => $opUser->id, 'company_name' => 'SePay Express', 'business_license' => 'GP-8888', 'status' => 'verified',
     ]);
-    
+
     $route = Route::create(['operator_id' => $operator->id, 'name' => 'Hà Nội - Hải Phòng', 'base_price' => 150000]);
-    
+
     RouteStop::create(['route_id' => $route->id, 'stop_name' => 'Bến xe Mỹ Đình', 'address' => 'Mỹ Đình, Hà Nội', 'lat' => 21.0285, 'lng' => 105.8544, 'stop_order' => 1]);
-    
+
     $vehicle = Vehicle::create([
         'operator_id' => $operator->id, 'plate_number' => '30A-88888',
         'brand' => 'Ford', 'model' => 'Transit', 'vehicle_type' => 'van_9', 'seat_count' => 9,
     ]);
-    
+
     $drvUser = User::factory()->create(['role' => UserRole::Driver]);
     $driver = Driver::create([
         'user_id' => $drvUser->id, 'operator_id' => $operator->id,
@@ -46,7 +46,7 @@ function setupSepayTestContext(): array
         'trip_id' => $trip->id,
         'seat_code' => 'A2',
         'price' => 150000,
-        'status' => 'available'
+        'status' => 'available',
     ]);
 
     $customer = User::factory()->create(['role' => UserRole::Customer]);
@@ -57,12 +57,12 @@ function setupSepayTestContext(): array
 it('initiates SePay VietQR payment info and processes callback webhook successfully', function () {
     [$trip, $seat, $customer] = setupSepayTestContext();
 
-    Laravel\Sanctum\Sanctum::actingAs($customer, ['*'], 'sanctum');
-    Laravel\Sanctum\Sanctum::actingAs($customer, ['*'], 'customer');
+    Sanctum::actingAs($customer, ['*'], 'sanctum');
+    Sanctum::actingAs($customer, ['*'], 'customer');
 
     // 1. Create booking
     $booking = Booking::create([
-        'booking_code' => 'XGBOOK' . rand(1000, 9999),
+        'booking_code' => 'XGBOOK'.rand(1000, 9999),
         'user_id' => $customer->id,
         'trip_id' => $trip->id,
         'pickup_address' => 'Mỹ Đình, Hà Nội',
@@ -100,8 +100,8 @@ it('initiates SePay VietQR payment info and processes callback webhook successfu
                 'acc_name',
                 'amount',
                 'code',
-            ]
-        ]
+            ],
+        ],
     ]);
 
     $gatewayOrderId = $initResponse->json('data.order_id');
@@ -109,9 +109,9 @@ it('initiates SePay VietQR payment info and processes callback webhook successfu
 
     // 3. Simulate SePay webhook callback
     $webhookToken = config('services.sepay.webhook_token');
-    
+
     $webhookResponse = $this->withHeaders([
-        'Authorization' => "Bearer {$webhookToken}"
+        'Authorization' => "Bearer {$webhookToken}",
     ])->postJson('/api/customer/payments/sepay/webhook', [
         'id' => 999999,
         'gateway' => 'MBBank',
@@ -134,11 +134,11 @@ it('initiates SePay VietQR payment info and processes callback webhook successfu
 
 it('rejects SePay webhook with invalid webhook token', function () {
     $webhookResponse = $this->withHeaders([
-        'Authorization' => "Bearer invalid_token_here"
+        'Authorization' => 'Bearer invalid_token_here',
     ])->postJson('/api/customer/payments/sepay/webhook', [
         'id' => 999999,
         'amountIn' => 150000,
-        'transactionContent' => "XEGHEP-ABC123XYZ",
+        'transactionContent' => 'XEGHEP-ABC123XYZ',
     ]);
 
     $webhookResponse->assertStatus(401);
@@ -147,12 +147,12 @@ it('rejects SePay webhook with invalid webhook token', function () {
 it('fails SePay webhook if payment amount is mismatched', function () {
     [$trip, $seat, $customer] = setupSepayTestContext();
 
-    Laravel\Sanctum\Sanctum::actingAs($customer, ['*'], 'sanctum');
-    Laravel\Sanctum\Sanctum::actingAs($customer, ['*'], 'customer');
+    Sanctum::actingAs($customer, ['*'], 'sanctum');
+    Sanctum::actingAs($customer, ['*'], 'customer');
 
     // Create booking
     $booking = Booking::create([
-        'booking_code' => 'XGBOOK' . rand(1000, 9999),
+        'booking_code' => 'XGBOOK'.rand(1000, 9999),
         'user_id' => $customer->id,
         'trip_id' => $trip->id,
         'pickup_address' => 'Mỹ Đình',
@@ -175,14 +175,14 @@ it('fails SePay webhook if payment amount is mismatched', function () {
         'booking_id' => $booking->id,
         'method' => 'vnpay',
     ]);
-    
+
     $gatewayOrderId = $initResponse->json('data.order_id');
 
     // Webhook with insufficient amount (e.g. 50,000 instead of 150,000)
     $webhookToken = config('services.sepay.webhook_token');
-    
+
     $webhookResponse = $this->withHeaders([
-        'Authorization' => "Bearer {$webhookToken}"
+        'Authorization' => "Bearer {$webhookToken}",
     ])->postJson('/api/customer/payments/sepay/webhook', [
         'id' => 888888,
         'amountIn' => 50000,

@@ -10,26 +10,26 @@ class BookingResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'              => $this->id,
-            'tracking_code'   => $this->booking_code,
-            'status'          => $this->mapStatus(),
-            'payment_status'  => $this->payment_status->value,
-            'passenger_name'  => $this->contact_name,
+            'id' => $this->id,
+            'tracking_code' => $this->booking_code,
+            'status' => $this->mapStatus(),
+            'payment_status' => $this->payment_status->value,
+            'passenger_name' => $this->contact_name,
             'passenger_phone' => $this->contact_phone,
             'passenger_count' => $this->passenger_count,
-            'total_amount'    => (int) $this->final_amount,
-            'seat_codes'      => $this->passengers->map(fn ($p) => $p->seatMap?->seat_code)->filter()->values(),
-            'pickup_stop'     => ['stop_name' => $this->pickupStop ? $this->pickupStop->stop_name : $this->pickup_address],
-            'dropoff_stop'    => ['stop_name' => $this->dropoffStop ? $this->dropoffStop->stop_name : $this->dropoff_address],
-            'trip'            => [
+            'total_amount' => (int) $this->final_amount,
+            'seat_codes' => $this->passengers->map(fn ($p) => $p->seatMap?->seat_code)->filter()->values(),
+            'pickup_stop' => ['stop_name' => $this->pickupStop ? $this->pickupStop->stop_name : $this->pickup_address],
+            'dropoff_stop' => ['stop_name' => $this->dropoffStop ? $this->dropoffStop->stop_name : $this->dropoff_address],
+            'trip' => [
                 'tracking_code' => $this->trip->tracking_code,
-                'depart_at'     => $this->trip->depart_at->format('Y-m-d H:i:s'),
-                'route'         => [
+                'depart_at' => $this->trip->depart_at->format('Y-m-d H:i:s'),
+                'route' => [
                     'origin_city' => $this->trip->route->origin_city,
-                    'dest_city'   => $this->trip->route->dest_city,
+                    'dest_city' => $this->trip->route->dest_city,
                 ],
             ],
-            'created_at'      => $this->created_at->format('Y-m-d H:i:s'),
+            'created_at' => $this->created_at->format('Y-m-d H:i:s'),
         ];
     }
 
@@ -39,11 +39,11 @@ class BookingResource extends JsonResource
     private function mapStatus(): string
     {
         return match ($this->booking_status->value) {
-            'pending'                  => 'pending_payment',
-            'confirmed', 'checked_in'  => 'confirmed',
-            'completed'                => 'completed',
-            'cancelled', 'no_show'     => 'cancelled',
-            default                    => $this->booking_status->value,
+            'pending' => 'pending_payment',
+            'confirmed', 'checked_in' => 'confirmed',
+            'completed' => 'completed',
+            'cancelled', 'no_show' => 'cancelled',
+            default => $this->booking_status->value,
         };
     }
 }

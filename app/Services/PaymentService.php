@@ -212,20 +212,20 @@ class PaymentService
         $bankAcc = config('services.sepay.bank_acc');
         $bankName = config('services.sepay.bank_name');
         $accName = config('services.sepay.acc_name');
-        $description = $payment->gateway_order_id; 
+        $description = $payment->gateway_order_id;
 
         $qrUrl = "https://qr.sepay.vn/img?acc={$bankAcc}&bank={$bankName}&amount={$payment->amount}&des={$description}&template=compact2";
 
         return [
-            'payment_url' => $qrUrl, 
-            'order_id'    => $payment->gateway_order_id,
-            'bank_info'   => [
+            'payment_url' => $qrUrl,
+            'order_id' => $payment->gateway_order_id,
+            'bank_info' => [
                 'bank_name' => $bankName,
-                'bank_acc'  => $bankAcc,
-                'acc_name'  => $accName,
-                'amount'    => $payment->amount,
-                'code'      => $description,
-            ]
+                'bank_acc' => $bankAcc,
+                'acc_name' => $accName,
+                'amount' => $payment->amount,
+                'code' => $description,
+            ],
         ];
     }
 
@@ -234,11 +234,13 @@ class PaymentService
         $content = $payload['transactionContent'] ?? '';
         if (empty($content)) {
             Log::warning('SePay Webhook: transactionContent rỗng');
+
             return false;
         }
 
-        if (!preg_match('/XEGHEP-[A-Z0-9]+/i', $content, $matches)) {
+        if (! preg_match('/XEGHEP-[A-Z0-9]+/i', $content, $matches)) {
             Log::warning('SePay Webhook: không tìm thấy mã giao dịch XEGHEP trong nội dung', ['content' => $content]);
+
             return false;
         }
 
@@ -253,8 +255,9 @@ class PaymentService
         ]);
 
         $payment = Payment::where('gateway_order_id', $orderId)->first();
-        if (!$payment) {
+        if (! $payment) {
             Log::warning('SePay Webhook: không tìm thấy giao dịch tương ứng trong DB', ['order_id' => $orderId]);
+
             return false;
         }
 

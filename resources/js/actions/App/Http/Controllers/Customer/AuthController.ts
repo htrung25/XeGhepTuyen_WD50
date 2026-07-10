@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Customer\AuthController::sendOtp
- * @see app/Http/Controllers/Customer/AuthController.php:60
+ * @see app/Http/Controllers/Customer/AuthController.php:61
  * @route '/api/customer/auth/send-otp'
  */
 export const sendOtp = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ sendOtp.definition = {
 
 /**
 * @see \App\Http\Controllers\Customer\AuthController::sendOtp
- * @see app/Http/Controllers/Customer/AuthController.php:60
+ * @see app/Http/Controllers/Customer/AuthController.php:61
  * @route '/api/customer/auth/send-otp'
  */
 sendOtp.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ sendOtp.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Customer\AuthController::sendOtp
- * @see app/Http/Controllers/Customer/AuthController.php:60
+ * @see app/Http/Controllers/Customer/AuthController.php:61
  * @route '/api/customer/auth/send-otp'
  */
 sendOtp.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -35,7 +35,7 @@ sendOtp.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Customer\AuthController::sendOtp
- * @see app/Http/Controllers/Customer/AuthController.php:60
+ * @see app/Http/Controllers/Customer/AuthController.php:61
  * @route '/api/customer/auth/send-otp'
  */
     const sendOtpForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -45,7 +45,7 @@ sendOtp.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Customer\AuthController::sendOtp
- * @see app/Http/Controllers/Customer/AuthController.php:60
+ * @see app/Http/Controllers/Customer/AuthController.php:61
  * @route '/api/customer/auth/send-otp'
  */
         sendOtpForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -56,7 +56,7 @@ sendOtp.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     sendOtp.form = sendOtpForm
 /**
 * @see \App\Http\Controllers\Customer\AuthController::verifyOtp
- * @see app/Http/Controllers/Customer/AuthController.php:84
+ * @see app/Http/Controllers/Customer/AuthController.php:86
  * @route '/api/customer/auth/verify-otp'
  */
 export const verifyOtp = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -71,7 +71,7 @@ verifyOtp.definition = {
 
 /**
 * @see \App\Http\Controllers\Customer\AuthController::verifyOtp
- * @see app/Http/Controllers/Customer/AuthController.php:84
+ * @see app/Http/Controllers/Customer/AuthController.php:86
  * @route '/api/customer/auth/verify-otp'
  */
 verifyOtp.url = (options?: RouteQueryOptions) => {
@@ -80,7 +80,7 @@ verifyOtp.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Customer\AuthController::verifyOtp
- * @see app/Http/Controllers/Customer/AuthController.php:84
+ * @see app/Http/Controllers/Customer/AuthController.php:86
  * @route '/api/customer/auth/verify-otp'
  */
 verifyOtp.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -90,7 +90,7 @@ verifyOtp.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Customer\AuthController::verifyOtp
- * @see app/Http/Controllers/Customer/AuthController.php:84
+ * @see app/Http/Controllers/Customer/AuthController.php:86
  * @route '/api/customer/auth/verify-otp'
  */
     const verifyOtpForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -100,7 +100,7 @@ verifyOtp.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Customer\AuthController::verifyOtp
- * @see app/Http/Controllers/Customer/AuthController.php:84
+ * @see app/Http/Controllers/Customer/AuthController.php:86
  * @route '/api/customer/auth/verify-otp'
  */
         verifyOtpForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -111,7 +111,7 @@ verifyOtp.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     verifyOtp.form = verifyOtpForm
 /**
 * @see \App\Http\Controllers\Customer\AuthController::register
- * @see app/Http/Controllers/Customer/AuthController.php:104
+ * @see app/Http/Controllers/Customer/AuthController.php:107
  * @route '/api/customer/auth/register'
  */
 export const register = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -126,7 +126,7 @@ register.definition = {
 
 /**
 * @see \App\Http\Controllers\Customer\AuthController::register
- * @see app/Http/Controllers/Customer/AuthController.php:104
+ * @see app/Http/Controllers/Customer/AuthController.php:107
  * @route '/api/customer/auth/register'
  */
 register.url = (options?: RouteQueryOptions) => {
@@ -135,7 +135,7 @@ register.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Customer\AuthController::register
- * @see app/Http/Controllers/Customer/AuthController.php:104
+ * @see app/Http/Controllers/Customer/AuthController.php:107
  * @route '/api/customer/auth/register'
  */
 register.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -145,7 +145,7 @@ register.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Customer\AuthController::register
- * @see app/Http/Controllers/Customer/AuthController.php:104
+ * @see app/Http/Controllers/Customer/AuthController.php:107
  * @route '/api/customer/auth/register'
  */
     const registerForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -155,7 +155,7 @@ register.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Customer\AuthController::register
- * @see app/Http/Controllers/Customer/AuthController.php:104
+ * @see app/Http/Controllers/Customer/AuthController.php:107
  * @route '/api/customer/auth/register'
  */
         registerForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -166,7 +166,7 @@ register.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     register.form = registerForm
 /**
 * @see \App\Http\Controllers\Customer\AuthController::login
- * @see app/Http/Controllers/Customer/AuthController.php:170
+ * @see app/Http/Controllers/Customer/AuthController.php:174
  * @route '/api/customer/auth/login'
  */
 export const login = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -181,7 +181,7 @@ login.definition = {
 
 /**
 * @see \App\Http\Controllers\Customer\AuthController::login
- * @see app/Http/Controllers/Customer/AuthController.php:170
+ * @see app/Http/Controllers/Customer/AuthController.php:174
  * @route '/api/customer/auth/login'
  */
 login.url = (options?: RouteQueryOptions) => {
@@ -190,7 +190,7 @@ login.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Customer\AuthController::login
- * @see app/Http/Controllers/Customer/AuthController.php:170
+ * @see app/Http/Controllers/Customer/AuthController.php:174
  * @route '/api/customer/auth/login'
  */
 login.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -200,7 +200,7 @@ login.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Customer\AuthController::login
- * @see app/Http/Controllers/Customer/AuthController.php:170
+ * @see app/Http/Controllers/Customer/AuthController.php:174
  * @route '/api/customer/auth/login'
  */
     const loginForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -210,7 +210,7 @@ login.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Customer\AuthController::login
- * @see app/Http/Controllers/Customer/AuthController.php:170
+ * @see app/Http/Controllers/Customer/AuthController.php:174
  * @route '/api/customer/auth/login'
  */
         loginForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -221,7 +221,7 @@ login.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     login.form = loginForm
 /**
 * @see \App\Http\Controllers\Customer\AuthController::me
- * @see app/Http/Controllers/Customer/AuthController.php:206
+ * @see app/Http/Controllers/Customer/AuthController.php:211
  * @route '/api/customer/auth/me'
  */
 export const me = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -236,7 +236,7 @@ me.definition = {
 
 /**
 * @see \App\Http\Controllers\Customer\AuthController::me
- * @see app/Http/Controllers/Customer/AuthController.php:206
+ * @see app/Http/Controllers/Customer/AuthController.php:211
  * @route '/api/customer/auth/me'
  */
 me.url = (options?: RouteQueryOptions) => {
@@ -245,7 +245,7 @@ me.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Customer\AuthController::me
- * @see app/Http/Controllers/Customer/AuthController.php:206
+ * @see app/Http/Controllers/Customer/AuthController.php:211
  * @route '/api/customer/auth/me'
  */
 me.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -254,7 +254,7 @@ me.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Customer\AuthController::me
- * @see app/Http/Controllers/Customer/AuthController.php:206
+ * @see app/Http/Controllers/Customer/AuthController.php:211
  * @route '/api/customer/auth/me'
  */
 me.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -264,7 +264,7 @@ me.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Customer\AuthController::me
- * @see app/Http/Controllers/Customer/AuthController.php:206
+ * @see app/Http/Controllers/Customer/AuthController.php:211
  * @route '/api/customer/auth/me'
  */
     const meForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -274,7 +274,7 @@ me.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Customer\AuthController::me
- * @see app/Http/Controllers/Customer/AuthController.php:206
+ * @see app/Http/Controllers/Customer/AuthController.php:211
  * @route '/api/customer/auth/me'
  */
         meForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -283,7 +283,7 @@ me.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Customer\AuthController::me
- * @see app/Http/Controllers/Customer/AuthController.php:206
+ * @see app/Http/Controllers/Customer/AuthController.php:211
  * @route '/api/customer/auth/me'
  */
         meForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -299,7 +299,7 @@ me.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     me.form = meForm
 /**
 * @see \App\Http\Controllers\Customer\AuthController::updateProfile
- * @see app/Http/Controllers/Customer/AuthController.php:214
+ * @see app/Http/Controllers/Customer/AuthController.php:219
  * @route '/api/customer/auth/profile'
  */
 export const updateProfile = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -314,7 +314,7 @@ updateProfile.definition = {
 
 /**
 * @see \App\Http\Controllers\Customer\AuthController::updateProfile
- * @see app/Http/Controllers/Customer/AuthController.php:214
+ * @see app/Http/Controllers/Customer/AuthController.php:219
  * @route '/api/customer/auth/profile'
  */
 updateProfile.url = (options?: RouteQueryOptions) => {
@@ -323,7 +323,7 @@ updateProfile.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Customer\AuthController::updateProfile
- * @see app/Http/Controllers/Customer/AuthController.php:214
+ * @see app/Http/Controllers/Customer/AuthController.php:219
  * @route '/api/customer/auth/profile'
  */
 updateProfile.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -333,7 +333,7 @@ updateProfile.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
 
     /**
 * @see \App\Http\Controllers\Customer\AuthController::updateProfile
- * @see app/Http/Controllers/Customer/AuthController.php:214
+ * @see app/Http/Controllers/Customer/AuthController.php:219
  * @route '/api/customer/auth/profile'
  */
     const updateProfileForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -348,7 +348,7 @@ updateProfile.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
 
             /**
 * @see \App\Http\Controllers\Customer\AuthController::updateProfile
- * @see app/Http/Controllers/Customer/AuthController.php:214
+ * @see app/Http/Controllers/Customer/AuthController.php:219
  * @route '/api/customer/auth/profile'
  */
         updateProfileForm.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -364,7 +364,7 @@ updateProfile.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
     updateProfile.form = updateProfileForm
 /**
 * @see \App\Http\Controllers\Customer\AuthController::changePassword
- * @see app/Http/Controllers/Customer/AuthController.php:238
+ * @see app/Http/Controllers/Customer/AuthController.php:243
  * @route '/api/customer/auth/change-password'
  */
 export const changePassword = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -379,7 +379,7 @@ changePassword.definition = {
 
 /**
 * @see \App\Http\Controllers\Customer\AuthController::changePassword
- * @see app/Http/Controllers/Customer/AuthController.php:238
+ * @see app/Http/Controllers/Customer/AuthController.php:243
  * @route '/api/customer/auth/change-password'
  */
 changePassword.url = (options?: RouteQueryOptions) => {
@@ -388,7 +388,7 @@ changePassword.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Customer\AuthController::changePassword
- * @see app/Http/Controllers/Customer/AuthController.php:238
+ * @see app/Http/Controllers/Customer/AuthController.php:243
  * @route '/api/customer/auth/change-password'
  */
 changePassword.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -398,7 +398,7 @@ changePassword.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => 
 
     /**
 * @see \App\Http\Controllers\Customer\AuthController::changePassword
- * @see app/Http/Controllers/Customer/AuthController.php:238
+ * @see app/Http/Controllers/Customer/AuthController.php:243
  * @route '/api/customer/auth/change-password'
  */
     const changePasswordForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -408,7 +408,7 @@ changePassword.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => 
 
             /**
 * @see \App\Http\Controllers\Customer\AuthController::changePassword
- * @see app/Http/Controllers/Customer/AuthController.php:238
+ * @see app/Http/Controllers/Customer/AuthController.php:243
  * @route '/api/customer/auth/change-password'
  */
         changePasswordForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -419,7 +419,7 @@ changePassword.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => 
     changePassword.form = changePasswordForm
 /**
 * @see \App\Http\Controllers\Customer\AuthController::logout
- * @see app/Http/Controllers/Customer/AuthController.php:200
+ * @see app/Http/Controllers/Customer/AuthController.php:204
  * @route '/api/customer/auth/logout'
  */
 export const logout = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -434,7 +434,7 @@ logout.definition = {
 
 /**
 * @see \App\Http\Controllers\Customer\AuthController::logout
- * @see app/Http/Controllers/Customer/AuthController.php:200
+ * @see app/Http/Controllers/Customer/AuthController.php:204
  * @route '/api/customer/auth/logout'
  */
 logout.url = (options?: RouteQueryOptions) => {
@@ -443,7 +443,7 @@ logout.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Customer\AuthController::logout
- * @see app/Http/Controllers/Customer/AuthController.php:200
+ * @see app/Http/Controllers/Customer/AuthController.php:204
  * @route '/api/customer/auth/logout'
  */
 logout.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -453,7 +453,7 @@ logout.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Customer\AuthController::logout
- * @see app/Http/Controllers/Customer/AuthController.php:200
+ * @see app/Http/Controllers/Customer/AuthController.php:204
  * @route '/api/customer/auth/logout'
  */
     const logoutForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -463,7 +463,7 @@ logout.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Customer\AuthController::logout
- * @see app/Http/Controllers/Customer/AuthController.php:200
+ * @see app/Http/Controllers/Customer/AuthController.php:204
  * @route '/api/customer/auth/logout'
  */
         logoutForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

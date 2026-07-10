@@ -15,8 +15,8 @@ class TrackingService
     public function updateLocation(Driver $driver, float $lat, float $lng): void
     {
         $driver->update([
-            'current_lat'         => $lat,
-            'current_lng'         => $lng,
+            'current_lat' => $lat,
+            'current_lng' => $lng,
             'location_updated_at' => now(),
         ]);
 
@@ -27,8 +27,8 @@ class TrackingService
         );
 
         $activeTrip = $driver->trips()
-                             ->whereIn('status', ['boarding', 'in_progress'])
-                             ->first();
+            ->whereIn('status', ['boarding', 'in_progress'])
+            ->first();
 
         if ($activeTrip) {
             $etaMinutes = $this->calculateEta($lat, $lng, $activeTrip);
@@ -39,30 +39,31 @@ class TrackingService
     public function getLocation(Driver $driver): ?array
     {
         $cached = Cache::get("driver_location:{$driver->id}");
+
         return $cached ? json_decode($cached, true) : null;
     }
 
     private function calculateEta(float $lat, float $lng, Trip $trip): ?int
     {
         $apiKey = config('services.google_maps.key');
-        if (!$apiKey) {
+        if (! $apiKey) {
             return null;
         }
 
         $nextBooking = $trip->bookings()
-                            ->whereIn('booking_status', ['confirmed'])
-                            ->first();
+            ->whereIn('booking_status', ['confirmed'])
+            ->first();
 
-        if (!$nextBooking || !$nextBooking->pickup_lat || !$nextBooking->pickup_lng) {
+        if (! $nextBooking || ! $nextBooking->pickup_lat || ! $nextBooking->pickup_lng) {
             return null;
         }
 
         try {
             $response = Http::get('https://maps.googleapis.com/maps/api/distancematrix/json', [
-                'origins'      => "{$lat},{$lng}",
+                'origins' => "{$lat},{$lng}",
                 'destinations' => "{$nextBooking->pickup_lat},{$nextBooking->pickup_lng}",
-                'key'          => $apiKey,
-                'mode'         => 'driving',
+                'key' => $apiKey,
+                'mode' => 'driving',
             ]);
 
             $data = $response->json();

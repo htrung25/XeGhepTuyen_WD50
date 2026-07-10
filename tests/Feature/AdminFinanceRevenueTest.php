@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Models\AdminRole;
 use App\Models\User;
 use Laravel\Sanctum\Sanctum;
 
@@ -44,7 +45,7 @@ it('kỳ không có chuyến trả về 0', function () {
 });
 
 it('chặn admin không có quyền finance.view xem báo cáo', function () {
-    $role = \App\Models\AdminRole::create([
+    $role = AdminRole::create([
         'name' => 'CSKH', 'slug' => 'cskh-no-finance',
         'permissions' => ['users.view'], 'is_super' => false,
     ]);

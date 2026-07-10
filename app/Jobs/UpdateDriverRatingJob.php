@@ -8,11 +8,12 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class UpdateDriverRatingJob implements ShouldQueue
 {
-    use Queueable, InteractsWithQueue, SerializesModels;
+    use InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
 
@@ -24,18 +25,18 @@ class UpdateDriverRatingJob implements ShouldQueue
     public function handle(): void
     {
         $driver = Driver::find($this->driverId);
-        if (!$driver) {
+        if (! $driver) {
             return;
         }
 
         $avgRating = Review::where('driver_id', $this->driverId)
-                           ->where('is_published', true)
-                           ->avg(\Illuminate\Support\Facades\DB::raw('(driver_rating + vehicle_rating + service_rating) / 3'));
+            ->where('is_published', true)
+            ->avg(DB::raw('(driver_rating + vehicle_rating + service_rating) / 3'));
 
         $totalTrips = Review::where('driver_id', $this->driverId)->count();
 
         $driver->update([
-            'rating_avg'  => round($avgRating ?? 5.00, 2),
+            'rating_avg' => round($avgRating ?? 5.00, 2),
             'total_trips' => $totalTrips,
         ]);
     }
@@ -44,7 +45,7 @@ class UpdateDriverRatingJob implements ShouldQueue
     {
         Log::error('UpdateDriverRatingJob thất bại', [
             'driver_id' => $this->driverId,
-            'error'     => $e->getMessage(),
+            'error' => $e->getMessage(),
         ]);
     }
 }

@@ -96,7 +96,11 @@ function startSepayPolling(bookingId: string) {
     if (sepayPollingInterval) clearInterval(sepayPollingInterval);
     sepayPollingInterval = setInterval(async () => {
         const { data } = await customerApi.getBooking(bookingId);
-        if (data && (data.payment_status === 'paid' || data.booking_status === 'confirmed')) {
+        if (
+            data &&
+            (data.payment_status === 'paid' ||
+                data.booking_status === 'confirmed')
+        ) {
             if (sepayPollingInterval) clearInterval(sepayPollingInterval);
             showSepayModal.value = false;
             router.push(`/booking/${bookingId}/confirmation`);
@@ -135,7 +139,8 @@ async function pay() {
             showSepayModal.value = true;
             startSepayPolling(bookingId);
         } else {
-            errorMsg.value = 'Không thể khởi tạo mã QR chuyển khoản. Vui lòng thử lại.';
+            errorMsg.value =
+                'Không thể khởi tạo mã QR chuyển khoản. Vui lòng thử lại.';
         }
         return;
     }
@@ -419,78 +424,138 @@ onUnmounted(() => {
             v-if="showSepayModal"
             class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
         >
-            <div class="relative w-full max-w-2xl bg-white rounded-2xl overflow-hidden shadow-2xl border border-slate-100 flex flex-col">
+            <div
+                class="relative flex w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-2xl"
+            >
                 <!-- Header -->
-                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                <div
+                    class="flex items-center justify-between border-b border-slate-100 px-6 py-4"
+                >
                     <div>
-                        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+                        <h3
+                            class="flex items-center gap-2 text-base font-bold text-slate-900"
+                        >
                             <span>🏦</span> Thanh toán chuyển khoản VietQR
                         </h3>
-                        <p class="text-xs text-slate-500 mt-0.5">Hệ thống ghi nhận giao dịch tự động trong 10-30 giây</p>
+                        <p class="mt-0.5 text-xs text-slate-500">
+                            Hệ thống ghi nhận giao dịch tự động trong 10-30 giây
+                        </p>
                     </div>
                     <button
                         type="button"
-                        class="text-slate-400 hover:text-slate-600 transition p-1"
+                        class="p-1 text-slate-400 transition hover:text-slate-600"
                         @click="showSepayModal = false"
                     >
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        <svg
+                            class="h-6 w-6"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M6 18L18 6M6 6l12 12"
+                            />
                         </svg>
                     </button>
                 </div>
 
                 <!-- Content -->
-                <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50/50">
+                <div
+                    class="grid grid-cols-1 gap-6 bg-slate-50/50 p-6 md:grid-cols-2"
+                >
                     <!-- Left: QR Code -->
-                    <div class="flex flex-col items-center justify-center bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                    <div
+                        class="flex flex-col items-center justify-center rounded-xl border border-slate-100 bg-white p-4 shadow-sm"
+                    >
                         <img
                             :src="sepayQrUrl"
                             alt="VietQR SePay"
-                            class="w-56 h-56 object-contain rounded-lg border border-slate-100 p-1"
+                            class="h-56 w-56 rounded-lg border border-slate-100 object-contain p-1"
                         />
-                        <p class="text-[11px] text-slate-500 text-center mt-3 leading-relaxed">
-                            Mở App Ngân hàng quét mã QR để điền nhanh mọi thông tin chuyển khoản
+                        <p
+                            class="mt-3 text-center text-[11px] leading-relaxed text-slate-500"
+                        >
+                            Mở App Ngân hàng quét mã QR để điền nhanh mọi thông
+                            tin chuyển khoản
                         </p>
                     </div>
 
                     <!-- Right: Bank Info details -->
                     <div class="space-y-4">
-                        <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm space-y-3">
-                            <div class="flex justify-between items-center text-sm border-b border-slate-100 pb-2">
+                        <div
+                            class="space-y-3 rounded-xl border border-slate-100 bg-white p-4 shadow-sm"
+                        >
+                            <div
+                                class="flex items-center justify-between border-b border-slate-100 pb-2 text-sm"
+                            >
                                 <span class="text-slate-500">Ngân hàng</span>
-                                <span class="font-bold text-slate-800">{{ sepayBankInfo?.bank_name }}</span>
+                                <span class="font-bold text-slate-800">{{
+                                    sepayBankInfo?.bank_name
+                                }}</span>
                             </div>
-                            
-                            <div class="flex justify-between items-center text-sm border-b border-slate-100 pb-2">
+
+                            <div
+                                class="flex items-center justify-between border-b border-slate-100 pb-2 text-sm"
+                            >
                                 <span class="text-slate-500">Số tài khoản</span>
-                                <div class="flex items-center gap-1.5 font-bold text-slate-800">
+                                <div
+                                    class="flex items-center gap-1.5 font-bold text-slate-800"
+                                >
                                     <span>{{ sepayBankInfo?.bank_acc }}</span>
-                                    <button 
-                                        @click="copyText(sepayBankInfo?.bank_acc)" 
-                                        class="text-xs text-green-600 hover:text-green-700 font-semibold"
+                                    <button
+                                        @click="
+                                            copyText(sepayBankInfo?.bank_acc)
+                                        "
+                                        class="text-xs font-semibold text-green-600 hover:text-green-700"
                                     >
                                         Sao chép
                                     </button>
                                 </div>
                             </div>
-                            
-                            <div class="flex justify-between items-center text-sm border-b border-slate-100 pb-2">
-                                <span class="text-slate-500">Chủ tài khoản</span>
-                                <span class="font-bold text-slate-800 uppercase">{{ sepayBankInfo?.acc_name }}</span>
+
+                            <div
+                                class="flex items-center justify-between border-b border-slate-100 pb-2 text-sm"
+                            >
+                                <span class="text-slate-500"
+                                    >Chủ tài khoản</span
+                                >
+                                <span
+                                    class="font-bold text-slate-800 uppercase"
+                                    >{{ sepayBankInfo?.acc_name }}</span
+                                >
                             </div>
-                            
-                            <div class="flex justify-between items-center text-sm border-b border-slate-100 pb-2">
-                                <span class="text-slate-500">Số tiền cần chuyển</span>
-                                <span class="font-bold text-green-600 text-base">{{ fmt(sepayBankInfo?.amount) }}</span>
+
+                            <div
+                                class="flex items-center justify-between border-b border-slate-100 pb-2 text-sm"
+                            >
+                                <span class="text-slate-500"
+                                    >Số tiền cần chuyển</span
+                                >
+                                <span
+                                    class="text-base font-bold text-green-600"
+                                    >{{ fmt(sepayBankInfo?.amount) }}</span
+                                >
                             </div>
-                            
-                            <div class="flex justify-between items-center text-sm">
-                                <span class="text-slate-500 font-medium">Nội dung bắt buộc</span>
-                                <div class="flex items-center gap-1.5 font-bold text-red-600">
-                                    <span class="font-mono bg-red-50 border border-red-200 px-2 py-0.5 rounded text-xs text-red-600 font-bold">{{ sepayBankInfo?.code }}</span>
-                                    <button 
-                                        @click="copyText(sepayBankInfo?.code)" 
-                                        class="text-xs text-green-600 hover:text-green-700 font-semibold"
+
+                            <div
+                                class="flex items-center justify-between text-sm"
+                            >
+                                <span class="font-medium text-slate-500"
+                                    >Nội dung bắt buộc</span
+                                >
+                                <div
+                                    class="flex items-center gap-1.5 font-bold text-red-600"
+                                >
+                                    <span
+                                        class="rounded border border-red-200 bg-red-50 px-2 py-0.5 font-mono text-xs font-bold text-red-600"
+                                        >{{ sepayBankInfo?.code }}</span
+                                    >
+                                    <button
+                                        @click="copyText(sepayBankInfo?.code)"
+                                        class="text-xs font-semibold text-green-600 hover:text-green-700"
                                     >
                                         Sao chép
                                     </button>
@@ -499,31 +564,44 @@ onUnmounted(() => {
                         </div>
 
                         <!-- Warning banner -->
-                        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 leading-relaxed">
-                            <strong>⚠️ Chú ý:</strong> Bạn cần nhập <strong>chính xác</strong> nội dung chuyển khoản ở trên để hệ thống tự động xác thực vé.
+                        <div
+                            class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-800"
+                        >
+                            <strong>⚠️ Chú ý:</strong> Bạn cần nhập
+                            <strong>chính xác</strong> nội dung chuyển khoản ở
+                            trên để hệ thống tự động xác thực vé.
                         </div>
                     </div>
                 </div>
 
                 <!-- Footer / Status checking -->
-                <div class="px-6 py-4 border-t border-slate-100 bg-white flex flex-col items-center gap-3">
-                    <div class="flex items-center gap-2 text-sm text-green-700 font-semibold">
-                        <div class="h-4 w-4 animate-spin rounded-full border-2 border-green-600 border-t-transparent shrink-0" />
+                <div
+                    class="flex flex-col items-center gap-3 border-t border-slate-100 bg-white px-6 py-4"
+                >
+                    <div
+                        class="flex items-center gap-2 text-sm font-semibold text-green-700"
+                    >
+                        <div
+                            class="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-green-600 border-t-transparent"
+                        />
                         <span>Đang chờ chuyển khoản...</span>
                     </div>
-                    
+
                     <button
                         type="button"
-                        class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl text-xs font-semibold transition"
+                        class="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
                         @click="showSepayModal = false"
                     >
                         Hủy & Chọn phương thức khác
                     </button>
                 </div>
             </div>
-            
+
             <!-- Copied Toast -->
-            <div v-if="isCopied" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-lg z-50">
+            <div
+                v-if="isCopied"
+                class="fixed bottom-10 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-lg"
+            >
                 Đã sao chép vào bộ nhớ tạm!
             </div>
         </div>

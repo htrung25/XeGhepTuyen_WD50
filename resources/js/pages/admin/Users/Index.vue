@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
 import { watchDebounced } from '@vueuse/core';
+import { ref, onMounted } from 'vue';
 import { adminApi } from '@/api/admin.api';
 import { useCan } from '@/composables/useCan';
 const { can } = useCan();
@@ -135,7 +135,10 @@ function fmtDateTime(d: string | null) {
 
 function fmtCurrency(val: number | null) {
     if (val === null || val === undefined) return '—';
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
+    return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+    }).format(val);
 }
 
 // Bộ lọc tự động: ô tìm kiếm debounce 350ms (tab trạng thái đã tự lọc khi đổi).
@@ -380,7 +383,9 @@ onMounted(fetchUsers);
                             </td>
                             <!-- Actions -->
                             <td class="px-4 py-3 text-center" @click.stop>
-                                <div class="flex items-center justify-center gap-2">
+                                <div
+                                    class="flex items-center justify-center gap-2"
+                                >
                                     <!-- View button -->
                                     <button
                                         @click="openDetailModal(user)"
@@ -391,7 +396,9 @@ onMounted(fetchUsers);
                                     </button>
                                     <!-- Ban -->
                                     <button
-                                        v-if="user.is_active && can('users.ban')"
+                                        v-if="
+                                            user.is_active && can('users.ban')
+                                        "
                                         @click="openBanModal(user)"
                                         class="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-100"
                                     >
@@ -399,7 +406,9 @@ onMounted(fetchUsers);
                                     </button>
                                     <!-- Unban -->
                                     <button
-                                        v-if="!user.is_active && can('users.ban')"
+                                        v-if="
+                                            !user.is_active && can('users.ban')
+                                        "
                                         @click="openUnbanModal(user)"
                                         class="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-600 transition-colors hover:bg-emerald-100"
                                     >
@@ -591,60 +600,106 @@ onMounted(fetchUsers);
                     @click="detailModal = false"
                 />
                 <div
-                    class="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden"
+                    class="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl"
                 >
                     <!-- Modal Header -->
-                    <div class="bg-gradient-to-r from-red-600 to-red-500 px-6 py-5 text-white">
+                    <div
+                        class="bg-gradient-to-r from-red-600 to-red-500 px-6 py-5 text-white"
+                    >
                         <div class="flex items-center justify-between">
-                            <h3 class="text-lg font-bold">Thông tin người dùng</h3>
+                            <h3 class="text-lg font-bold">
+                                Thông tin người dùng
+                            </h3>
                             <button
                                 @click="detailModal = false"
-                                class="rounded-full p-1 hover:bg-white/20 transition-colors"
+                                class="rounded-full p-1 transition-colors hover:bg-white/20"
                             >
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                <svg
+                                    class="h-5 w-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12"
+                                    />
                                 </svg>
                             </button>
                         </div>
                     </div>
 
                     <!-- Loading -->
-                    <div v-if="detailLoading" class="flex items-center justify-center py-12">
-                        <div class="h-8 w-8 animate-spin rounded-full border-2 border-red-600 border-t-transparent" />
+                    <div
+                        v-if="detailLoading"
+                        class="flex items-center justify-center py-12"
+                    >
+                        <div
+                            class="h-8 w-8 animate-spin rounded-full border-2 border-red-600 border-t-transparent"
+                        />
                     </div>
 
                     <!-- Content -->
                     <div v-else-if="detailUser" class="p-6">
                         <!-- Avatar + name -->
                         <div class="mb-6 flex items-center gap-4">
-                            <div class="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-red-100">
+                            <div
+                                class="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-red-100"
+                            >
                                 <img
                                     v-if="detailUser.avatar_url"
                                     :src="detailUser.avatar_url"
                                     class="h-16 w-16 rounded-full object-cover"
                                 />
-                                <span v-else class="text-2xl font-bold text-red-600">
-                                    {{ detailUser.full_name?.charAt(0)?.toUpperCase() }}
+                                <span
+                                    v-else
+                                    class="text-2xl font-bold text-red-600"
+                                >
+                                    {{
+                                        detailUser.full_name
+                                            ?.charAt(0)
+                                            ?.toUpperCase()
+                                    }}
                                 </span>
                             </div>
                             <div>
-                                <h4 class="text-lg font-bold text-gray-900">{{ detailUser.full_name }}</h4>
-                                <p class="font-mono text-xs text-gray-400">ID: {{ detailUser.id }}</p>
+                                <h4 class="text-lg font-bold text-gray-900">
+                                    {{ detailUser.full_name }}
+                                </h4>
+                                <p class="font-mono text-xs text-gray-400">
+                                    ID: {{ detailUser.id }}
+                                </p>
                                 <div class="mt-1 flex items-center gap-2">
                                     <span
                                         :class="[
                                             'inline-flex rounded-full px-2 py-0.5 text-xs font-semibold',
-                                            detailUser.is_active ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700',
+                                            detailUser.is_active
+                                                ? 'bg-green-50 text-green-700'
+                                                : 'bg-red-50 text-red-700',
                                         ]"
                                     >
-                                        {{ detailUser.is_active ? 'Hoạt động' : 'Bị khoá' }}
+                                        {{
+                                            detailUser.is_active
+                                                ? 'Hoạt động'
+                                                : 'Bị khoá'
+                                        }}
                                     </span>
                                     <span
                                         v-if="detailUser.is_verified"
                                         class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs text-blue-700"
                                     >
-                                        <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                        <svg
+                                            class="h-3 w-3"
+                                            fill="currentColor"
+                                            viewBox="0 0 20 20"
+                                        >
+                                            <path
+                                                fill-rule="evenodd"
+                                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                clip-rule="evenodd"
+                                            />
                                         </svg>
                                         Đã xác thực
                                     </span>
@@ -655,32 +710,79 @@ onMounted(fetchUsers);
                         <!-- Info grid -->
                         <div class="grid grid-cols-2 gap-4">
                             <div class="rounded-xl bg-gray-50 p-3">
-                                <p class="mb-0.5 text-xs font-medium text-gray-400 uppercase tracking-wide">Số điện thoại</p>
-                                <p class="text-sm font-medium text-gray-800">{{ detailUser.phone }}</p>
+                                <p
+                                    class="mb-0.5 text-xs font-medium tracking-wide text-gray-400 uppercase"
+                                >
+                                    Số điện thoại
+                                </p>
+                                <p class="text-sm font-medium text-gray-800">
+                                    {{ detailUser.phone }}
+                                </p>
                             </div>
                             <div class="rounded-xl bg-gray-50 p-3">
-                                <p class="mb-0.5 text-xs font-medium text-gray-400 uppercase tracking-wide">Email</p>
-                                <p class="text-sm font-medium text-gray-800">{{ detailUser.email ?? '—' }}</p>
+                                <p
+                                    class="mb-0.5 text-xs font-medium tracking-wide text-gray-400 uppercase"
+                                >
+                                    Email
+                                </p>
+                                <p class="text-sm font-medium text-gray-800">
+                                    {{ detailUser.email ?? '—' }}
+                                </p>
                             </div>
                             <div class="rounded-xl bg-gray-50 p-3">
-                                <p class="mb-0.5 text-xs font-medium text-gray-400 uppercase tracking-wide">Vai trò</p>
-                                <p class="text-sm font-medium text-gray-800 capitalize">{{ detailUser.role ?? '—' }}</p>
+                                <p
+                                    class="mb-0.5 text-xs font-medium tracking-wide text-gray-400 uppercase"
+                                >
+                                    Vai trò
+                                </p>
+                                <p
+                                    class="text-sm font-medium text-gray-800 capitalize"
+                                >
+                                    {{ detailUser.role ?? '—' }}
+                                </p>
                             </div>
                             <div class="rounded-xl bg-gray-50 p-3">
-                                <p class="mb-0.5 text-xs font-medium text-gray-400 uppercase tracking-wide">Số dư ví</p>
-                                <p class="text-sm font-semibold text-red-600">{{ fmtCurrency(detailUser.wallet_balance) }}</p>
+                                <p
+                                    class="mb-0.5 text-xs font-medium tracking-wide text-gray-400 uppercase"
+                                >
+                                    Số dư ví
+                                </p>
+                                <p class="text-sm font-semibold text-red-600">
+                                    {{ fmtCurrency(detailUser.wallet_balance) }}
+                                </p>
                             </div>
                             <div class="rounded-xl bg-gray-50 p-3">
-                                <p class="mb-0.5 text-xs font-medium text-gray-400 uppercase tracking-wide">Ngày tạo</p>
-                                <p class="text-sm font-medium text-gray-800">{{ fmtDate(detailUser.created_at) }}</p>
+                                <p
+                                    class="mb-0.5 text-xs font-medium tracking-wide text-gray-400 uppercase"
+                                >
+                                    Ngày tạo
+                                </p>
+                                <p class="text-sm font-medium text-gray-800">
+                                    {{ fmtDate(detailUser.created_at) }}
+                                </p>
                             </div>
                             <div class="rounded-xl bg-gray-50 p-3">
-                                <p class="mb-0.5 text-xs font-medium text-gray-400 uppercase tracking-wide">Đăng nhập lần cuối</p>
-                                <p class="text-sm font-medium text-gray-800">{{ fmtDateTime(detailUser.last_login_at) }}</p>
+                                <p
+                                    class="mb-0.5 text-xs font-medium tracking-wide text-gray-400 uppercase"
+                                >
+                                    Đăng nhập lần cuối
+                                </p>
+                                <p class="text-sm font-medium text-gray-800">
+                                    {{ fmtDateTime(detailUser.last_login_at) }}
+                                </p>
                             </div>
-                            <div v-if="detailUser.deleted_at" class="col-span-2 rounded-xl bg-red-50 p-3 border border-red-100">
-                                <p class="mb-0.5 text-xs font-medium text-red-400 uppercase tracking-wide">Ngày xoá</p>
-                                <p class="text-sm font-medium text-red-700">{{ fmtDateTime(detailUser.deleted_at) }}</p>
+                            <div
+                                v-if="detailUser.deleted_at"
+                                class="col-span-2 rounded-xl border border-red-100 bg-red-50 p-3"
+                            >
+                                <p
+                                    class="mb-0.5 text-xs font-medium tracking-wide text-red-400 uppercase"
+                                >
+                                    Ngày xoá
+                                </p>
+                                <p class="text-sm font-medium text-red-700">
+                                    {{ fmtDateTime(detailUser.deleted_at) }}
+                                </p>
                             </div>
                         </div>
 
@@ -694,14 +796,20 @@ onMounted(fetchUsers);
                             </button>
                             <button
                                 v-if="detailUser.is_active"
-                                @click="detailModal = false; openBanModal(detailUser)"
+                                @click="
+                                    detailModal = false;
+                                    openBanModal(detailUser);
+                                "
                                 class="rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
                             >
                                 Khoá tài khoản
                             </button>
                             <button
                                 v-else
-                                @click="detailModal = false; openUnbanModal(detailUser)"
+                                @click="
+                                    detailModal = false;
+                                    openUnbanModal(detailUser);
+                                "
                                 class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
                             >
                                 Mở khoá tài khoản

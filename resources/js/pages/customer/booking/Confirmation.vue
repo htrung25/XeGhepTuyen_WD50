@@ -197,24 +197,34 @@ onMounted(async () => {
                         <div class="flex items-start gap-2.5">
                             <span class="mt-0.5 text-blue-500">📍</span>
                             <div>
-                                <p class="text-xs text-gray-400 font-semibold">Điểm đón</p>
-                                <p class="font-bold text-slate-800 mt-0.5">
+                                <p class="text-xs font-semibold text-gray-400">
+                                    Điểm đón
+                                </p>
+                                <p class="mt-0.5 font-bold text-slate-800">
                                     {{ booking?.pickup_stop?.stop_name }}
                                 </p>
-                                <p class="text-xs text-gray-500 mt-0.5">
-                                    {{ booking?.pickup_address || booking?.pickup_stop?.address }}
+                                <p class="mt-0.5 text-xs text-gray-500">
+                                    {{
+                                        booking?.pickup_address ||
+                                        booking?.pickup_stop?.address
+                                    }}
                                 </p>
                             </div>
                         </div>
                         <div class="flex items-start gap-2.5">
                             <span class="mt-0.5 text-green-500">🏁</span>
                             <div>
-                                <p class="text-xs text-gray-400 font-semibold">Điểm trả</p>
-                                <p class="font-bold text-slate-800 mt-0.5">
+                                <p class="text-xs font-semibold text-gray-400">
+                                    Điểm trả
+                                </p>
+                                <p class="mt-0.5 font-bold text-slate-800">
                                     {{ booking?.dropoff_stop?.stop_name }}
                                 </p>
-                                <p class="text-xs text-gray-500 mt-0.5">
-                                    {{ booking?.dropoff_address || booking?.dropoff_stop?.address }}
+                                <p class="mt-0.5 text-xs text-gray-500">
+                                    {{
+                                        booking?.dropoff_address ||
+                                        booking?.dropoff_stop?.address
+                                    }}
                                 </p>
                             </div>
                         </div>

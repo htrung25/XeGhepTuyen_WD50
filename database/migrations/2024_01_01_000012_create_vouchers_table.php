@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('code', 20)->unique()->comment('Mã giảm giá');
             $table->uuid('operator_id')->nullable()->comment('NULL = áp dụng toàn sàn');
             $table->enum('discount_type', ['percent', 'fixed'])
-                  ->comment('percent=phần trăm, fixed=số tiền cố định');
+                ->comment('percent=phần trăm, fixed=số tiền cố định');
             $table->decimal('discount_value', 10, 2)->comment('Giá trị giảm (% hoặc đồng)');
             $table->decimal('min_order', 10, 0)->default(0)->comment('Giá trị đơn tối thiểu');
             $table->decimal('max_discount', 10, 0)->nullable()->comment('Giảm tối đa (dùng cho percent)');

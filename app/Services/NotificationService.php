@@ -21,8 +21,8 @@ class NotificationService
             $channels = [NotificationChannel::InApp, NotificationChannel::Sms];
         }
 
-        $title   = $data['title']   ?? $type->label();
-        $body    = $data['body']    ?? '';
+        $title = $data['title'] ?? $type->label();
+        $body = $data['body'] ?? '';
         $bookingId = $data['booking_id'] ?? null;
 
         foreach ($channels as $channel) {
@@ -34,24 +34,24 @@ class NotificationService
     private function saveToDb(User $user, NotificationType $type, string $title, string $body, NotificationChannel $channel, ?string $bookingId, array $data): void
     {
         Notification::create([
-            'user_id'    => $user->id,
+            'user_id' => $user->id,
             'booking_id' => $bookingId,
-            'type'       => $type,
-            'title'      => $title,
-            'body'       => $body,
-            'data'       => $data,
-            'channel'    => $channel,
-            'is_read'    => false,
+            'type' => $type,
+            'title' => $title,
+            'body' => $body,
+            'data' => $data,
+            'channel' => $channel,
+            'is_read' => false,
         ]);
     }
 
     private function dispatchJob(User $user, NotificationChannel $channel, string $message, array $data): void
     {
-        match($channel) {
-            NotificationChannel::Sms   => SendSmsNotificationJob::dispatch(
+        match ($channel) {
+            NotificationChannel::Sms => SendSmsNotificationJob::dispatch(
                 $user->phone, $message, $data['booking_id'] ?? null
             )->onQueue('notifications'),
-            NotificationChannel::Zalo  => SendZaloNotificationJob::dispatch(
+            NotificationChannel::Zalo => SendZaloNotificationJob::dispatch(
                 $user->zalo_user_id, $message, $data
             )->onQueue('notifications'),
             NotificationChannel::Email => $user->email ? SendEmailNotificationJob::dispatch(

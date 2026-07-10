@@ -27,14 +27,14 @@ return new class extends Migration
             $table->decimal('discount_amount', 10, 0)->default(0)->comment('Số tiền giảm giá');
             $table->decimal('final_amount', 10, 0)->comment('Số tiền cần thanh toán');
             $table->enum('payment_method', ['momo', 'vnpay', 'zalopay', 'wallet', 'cash'])
-                  ->default('momo')
-                  ->comment('Phương thức thanh toán');
+                ->default('momo')
+                ->comment('Phương thức thanh toán');
             $table->enum('payment_status', ['unpaid', 'paid', 'refunded', 'partial_refund'])
-                  ->default('unpaid')
-                  ->comment('unpaid=chưa TT, paid=đã TT, refunded=đã hoàn, partial_refund=hoàn một phần');
+                ->default('unpaid')
+                ->comment('unpaid=chưa TT, paid=đã TT, refunded=đã hoàn, partial_refund=hoàn một phần');
             $table->enum('booking_status', ['pending', 'confirmed', 'checked_in', 'completed', 'cancelled', 'no_show'])
-                  ->default('pending')
-                  ->comment('pending=chờ TT, confirmed=đã xác nhận, checked_in=đã lên xe, completed=hoàn thành, cancelled=đã hủy, no_show=không lên xe');
+                ->default('pending')
+                ->comment('pending=chờ TT, confirmed=đã xác nhận, checked_in=đã lên xe, completed=hoàn thành, cancelled=đã hủy, no_show=không lên xe');
             $table->string('qr_code', 500)->nullable()->comment('URL ảnh QR code');
             $table->string('qr_token', 100)->unique()->nullable()->comment('Token xác thực QR');
             $table->uuid('voucher_id')->nullable();

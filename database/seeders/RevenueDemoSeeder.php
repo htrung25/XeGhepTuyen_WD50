@@ -28,8 +28,9 @@ class RevenueDemoSeeder extends Seeder
     public function run(): void
     {
         $op = Operator::where('company_name', 'Nhà xe Hoàng Long')->first();
-        if (!$op) {
+        if (! $op) {
             $this->command->warn('Không tìm thấy nhà xe Hoàng Long. Chạy OperatorSeeder trước.');
+
             return;
         }
 
@@ -55,9 +56,9 @@ class RevenueDemoSeeder extends Seeder
             RouteStop::create(['route_id' => $route2->id, 'stop_name' => 'Mỹ Đình', 'address' => 'Hà Nội', 'lat' => 21.02, 'lng' => 105.78, 'stop_order' => 2, 'offset_minutes' => 120, 'is_pickup' => false, 'is_dropoff' => true]);
         }
 
-        $routes   = [$route1, $route2];
+        $routes = [$route1, $route2];
         $vehicles = Vehicle::where('operator_id', $op->id)->get()->values();
-        $drivers  = Driver::where('operator_id', $op->id)->get()->values();
+        $drivers = Driver::where('operator_id', $op->id)->get()->values();
         $customers = User::where('role', 'customer')->take(10)->get();
         if ($customers->isEmpty()) {
             $customers = collect([User::create([
@@ -68,17 +69,19 @@ class RevenueDemoSeeder extends Seeder
 
         $tripCount = 0;
         $bookCount = 0;
-        $totalRev  = 0;
+        $totalRev = 0;
 
         // ~12 chuyến completed rải đều từ đầu tháng tới hôm nay
         for ($i = 0; $i < 12; $i++) {
             $day = now()->startOfMonth()->addDays($i);
-            if ($day->isAfter(now())) break;
+            if ($day->isAfter(now())) {
+                break;
+            }
 
-            $route   = $routes[$i % 2];
+            $route = $routes[$i % 2];
             $vehicle = $vehicles[$i % $vehicles->count()];
-            $driver  = $drivers[$i % $drivers->count()];
-            $price   = (int) ($route->base_price ?? 130000);
+            $driver = $drivers[$i % $drivers->count()];
+            $price = (int) ($route->base_price ?? 130000);
 
             $departAt = $day->copy()->setTime(6 + ($i % 3) * 4, 0);
             $arriveAt = $departAt->copy()->addMinutes((int) $route->est_duration_min);
@@ -87,7 +90,7 @@ class RevenueDemoSeeder extends Seeder
                 'route_id' => $route->id, 'vehicle_id' => $vehicle->id, 'driver_id' => $driver->id,
                 'depart_at' => $departAt, 'arrive_at' => $arriveAt,
                 'available_seats' => $vehicle->seat_count, 'price' => $price,
-                'tracking_code' => 'RVD' . strtoupper(Str::random(6)),
+                'tracking_code' => 'RVD'.strtoupper(Str::random(6)),
                 'status' => TripStatus::Completed, 'started_at' => $departAt, 'completed_at' => $arriveAt,
             ]);
 
@@ -95,12 +98,12 @@ class RevenueDemoSeeder extends Seeder
             $seats = [];
             for ($s = 1; $s <= $vehicle->seat_count; $s++) {
                 $seats[] = SeatMap::create([
-                    'trip_id' => $trip->id, 'seat_code' => 'A' . str_pad($s, 2, '0', STR_PAD_LEFT),
+                    'trip_id' => $trip->id, 'seat_code' => 'A'.str_pad($s, 2, '0', STR_PAD_LEFT),
                     'seat_type' => SeatType::Standard, 'price' => $price, 'status' => SeatStatus::Booked,
                 ]);
             }
 
-            $pickup  = RouteStop::where('route_id', $route->id)->where('is_pickup', true)->first();
+            $pickup = RouteStop::where('route_id', $route->id)->where('is_pickup', true)->first();
             $dropoff = RouteStop::where('route_id', $route->id)->where('is_dropoff', true)->orderByDesc('stop_order')->first();
 
             // Lấp 50–90% ghế bằng các vé completed + paid
@@ -108,13 +111,13 @@ class RevenueDemoSeeder extends Seeder
             $seatIdx = 0;
 
             while ($seatIdx < $fill) {
-                $pax    = min(mt_rand(1, 3), $fill - $seatIdx);
-                $cust   = $customers[$bookCount % $customers->count()];
+                $pax = min(mt_rand(1, 3), $fill - $seatIdx);
+                $cust = $customers[$bookCount % $customers->count()];
                 $amount = $pax * $price;
 
                 $booking = Booking::create([
-                    'booking_code'   => 'RVD' . $departAt->format('ymd') . str_pad(++$bookCount, 4, '0', STR_PAD_LEFT),
-                    'user_id'        => $cust->id, 'trip_id' => $trip->id,
+                    'booking_code' => 'RVD'.$departAt->format('ymd').str_pad(++$bookCount, 4, '0', STR_PAD_LEFT),
+                    'user_id' => $cust->id, 'trip_id' => $trip->id,
                     'pickup_stop_id' => $pickup->id, 'dropoff_stop_id' => $dropoff->id,
                     'passenger_count' => $pax, 'contact_name' => $cust->full_name, 'contact_phone' => $cust->phone,
                     'subtotal' => $amount, 'final_amount' => $amount,
@@ -128,7 +131,7 @@ class RevenueDemoSeeder extends Seeder
                 for ($p = 0; $p < $pax; $p++) {
                     BookingPassenger::create([
                         'booking_id' => $booking->id, 'seat_map_id' => $seats[$seatIdx]->id,
-                        'full_name' => 'Khách ' . ($p + 1), 'is_primary' => $p === 0,
+                        'full_name' => 'Khách '.($p + 1), 'is_primary' => $p === 0,
                     ]);
                     $seatIdx++;
                 }
@@ -136,7 +139,7 @@ class RevenueDemoSeeder extends Seeder
                 Payment::create([
                     'booking_id' => $booking->id, 'user_id' => $cust->id, 'amount' => $amount,
                     'method' => PaymentMethod::Momo, 'status' => PaymentStatus::Success,
-                    'gateway_order_id' => 'DEMO-' . strtoupper(Str::random(8)), 'paid_at' => $departAt,
+                    'gateway_order_id' => 'DEMO-'.strtoupper(Str::random(8)), 'paid_at' => $departAt,
                 ]);
 
                 $totalRev += $amount;
@@ -146,6 +149,6 @@ class RevenueDemoSeeder extends Seeder
             $tripCount++;
         }
 
-        $this->command->info("RevenueDemoSeeder: {$tripCount} chuyến completed, {$bookCount} vé, doanh thu " . number_format($totalRev, 0, ',', '.') . 'đ');
+        $this->command->info("RevenueDemoSeeder: {$tripCount} chuyến completed, {$bookCount} vé, doanh thu ".number_format($totalRev, 0, ',', '.').'đ');
     }
 }

@@ -19,16 +19,16 @@ class CheckinController extends Controller
     public function checkin(Request $request): JsonResponse
     {
         $request->validate([
-            'qr_token'       => ['required', 'string'],
+            'qr_token' => ['required', 'string'],
             'cash_collected' => ['sometimes', 'boolean'],
         ]);
 
-        $driver  = auth('driver')->user()->driver;
+        $driver = auth('driver')->user()->driver;
         $booking = Booking::where('qr_token', $request->qr_token)
-                          ->with(['trip', 'user'])
-                          ->first();
+            ->with(['trip', 'user'])
+            ->first();
 
-        if (!$booking) {
+        if (! $booking) {
             return response()->json(['success' => false, 'message' => 'Mã QR không hợp lệ'], 404);
         }
 
@@ -51,10 +51,10 @@ class CheckinController extends Controller
         if ($cashDue && ! $request->boolean('cash_collected')) {
             return response()->json([
                 'success' => true,
-                'data'    => [
-                    'requires_cash'  => true,
-                    'amount_due'     => (int) $booking->final_amount,
-                    'booking_code'   => $booking->booking_code,
+                'data' => [
+                    'requires_cash' => true,
+                    'amount_due' => (int) $booking->final_amount,
+                    'booking_code' => $booking->booking_code,
                     'passenger_name' => $booking->contact_name,
                 ],
             ]);
@@ -68,7 +68,7 @@ class CheckinController extends Controller
 
             $booking->update([
                 'booking_status' => BookingStatus::CheckedIn,
-                'checked_in_at'  => now(),
+                'checked_in_at' => now(),
             ]);
 
             $booking->refresh()->load(['passengers.seatMap', 'pickupStop']);
@@ -76,23 +76,24 @@ class CheckinController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => $cashDue
-                    ? "Đã thu " . number_format($booking->final_amount, 0, ',', '.') . "đ & check-in: {$booking->contact_name}"
+                    ? 'Đã thu '.number_format($booking->final_amount, 0, ',', '.')."đ & check-in: {$booking->contact_name}"
                     : "Check-in thành công: {$booking->contact_name}",
-                'data'    => [
-                    'requires_cash'   => false,
-                    'booking_code'    => $booking->booking_code,
-                    'passenger_name'  => $booking->contact_name,
-                    'payment_status'  => $booking->payment_status->value,
-                    'cash_collected'  => $cashDue ? (int) $booking->final_amount : 0,
-                    'seat_codes'      => $booking->passengers->map(fn ($p) => $p->seatMap?->seat_code)->filter()->values(),
-                    'pickup_stop'     => [
+                'data' => [
+                    'requires_cash' => false,
+                    'booking_code' => $booking->booking_code,
+                    'passenger_name' => $booking->contact_name,
+                    'payment_status' => $booking->payment_status->value,
+                    'cash_collected' => $cashDue ? (int) $booking->final_amount : 0,
+                    'seat_codes' => $booking->passengers->map(fn ($p) => $p->seatMap?->seat_code)->filter()->values(),
+                    'pickup_stop' => [
                         'stop_name' => $booking->pickupStop ? $booking->pickupStop->stop_name : 'Điểm đón tùy chỉnh',
-                        'address'   => $booking->pickup_address,
+                        'address' => $booking->pickup_address,
                     ],
                 ],
             ]);
         } catch (\Exception $e) {
             Log::error('Checkin failed', ['error' => $e->getMessage(), 'qr_token' => $request->qr_token]);
+
             return response()->json(['success' => false, 'message' => 'Có lỗi xảy ra'], 500);
         }
     }
@@ -103,11 +104,11 @@ class CheckinController extends Controller
     public function absent(Request $request): JsonResponse
     {
         $request->validate([
-            'trip_id'    => ['required', 'uuid'],
+            'trip_id' => ['required', 'uuid'],
             'booking_id' => ['required', 'uuid'],
         ]);
 
-        $driver  = auth('driver')->user()->driver;
+        $driver = auth('driver')->user()->driver;
         $booking = Booking::with('trip')->find($request->booking_id);
 
         if (! $booking || $booking->trip_id !== $request->trip_id) {

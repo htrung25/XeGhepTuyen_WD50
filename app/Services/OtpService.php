@@ -7,8 +7,10 @@ use Illuminate\Support\Facades\Cache;
 
 class OtpService
 {
-    private const OTP_TTL       = 300;  // 5 phút
-    private const OTP_RATE_TTL  = 3600; // 1 giờ
+    private const OTP_TTL = 300;  // 5 phút
+
+    private const OTP_RATE_TTL = 3600; // 1 giờ
+
     private const OTP_MAX_TRIES = 5;
 
     public function send(string $phone): string
@@ -32,7 +34,7 @@ class OtpService
     {
         $stored = Cache::get("otp:{$phone}");
 
-        if (!$stored || $stored !== $otp) {
+        if (! $stored || $stored !== $otp) {
             throw new InvalidOtpException('Mã OTP không chính xác hoặc đã hết hạn');
         }
 
@@ -44,6 +46,7 @@ class OtpService
     public function getRemainingAttempts(string $phone): int
     {
         $count = (int) Cache::get("otp_count:{$phone}", 0);
+
         return max(0, self::OTP_MAX_TRIES - $count);
     }
 }

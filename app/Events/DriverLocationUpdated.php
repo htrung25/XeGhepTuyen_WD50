@@ -37,9 +37,9 @@ class DriverLocationUpdated implements ShouldBroadcastNow
     public function broadcastWith(): array
     {
         return [
-            'lat'         => $this->lat,
-            'lng'         => $this->lng,
-            'updated_at'  => now()->toIso8601String(),
+            'lat' => $this->lat,
+            'lng' => $this->lng,
+            'updated_at' => now()->toIso8601String(),
             'eta_minutes' => $this->etaMinutes,
         ];
     }

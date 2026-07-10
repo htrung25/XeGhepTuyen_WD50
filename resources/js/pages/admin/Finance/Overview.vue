@@ -179,9 +179,15 @@ const paymentMethodMap: Record<string, string> = {
 
 const paymentStatusMap: Record<string, { label: string; class: string }> = {
     pending: { label: 'Đang xử lý', class: 'bg-yellow-100 text-yellow-700' },
-    success: { label: 'Thành công', class: 'bg-green-100 text-green-700 font-semibold' },
+    success: {
+        label: 'Thành công',
+        class: 'bg-green-100 text-green-700 font-semibold',
+    },
     failed: { label: 'Thất bại', class: 'bg-red-100 text-red-700' },
-    refunded: { label: 'Đã hoàn tiền', class: 'bg-orange-100 text-orange-700 font-semibold' },
+    refunded: {
+        label: 'Đã hoàn tiền',
+        class: 'bg-orange-100 text-orange-700 font-semibold',
+    },
 };
 
 function fmt(v: number) {
@@ -351,10 +357,13 @@ async function confirmRefund() {
         return;
     }
     refundLoading.value = true;
-    const { error } = await adminApi.refundBooking(selectedTxn.value.booking_id, {
-        amount: refundAmount.value,
-        reason: refundReason.value.trim(),
-    });
+    const { error } = await adminApi.refundBooking(
+        selectedTxn.value.booking_id,
+        {
+            amount: refundAmount.value,
+            reason: refundReason.value.trim(),
+        },
+    );
     refundLoading.value = false;
     if (error) {
         alert(error);
@@ -368,7 +377,8 @@ async function confirmRefund() {
 watch(activeTab, (tab) => {
     if (tab === 'transactions' && !txnLoaded.value) loadTransactions();
     if (tab === 'report' && !reportLoaded.value) loadReport();
-    if (tab === 'commissions' && !payoutHistoryLoaded.value) loadPayoutHistory();
+    if (tab === 'commissions' && !payoutHistoryLoaded.value)
+        loadPayoutHistory();
     if (tab === 'refunds' && !refundsLoaded.value) loadRefunds();
     if (tab === 'anomalies' && !anomaliesLoaded.value) loadAnomalies();
 });
@@ -588,15 +598,16 @@ onMounted(loadData);
                     >
                 </div>
 
-                <div v-if="reportLoading" class="py-12 text-center text-gray-400">
+                <div
+                    v-if="reportLoading"
+                    class="py-12 text-center text-gray-400"
+                >
                     Đang tải báo cáo...
                 </div>
 
                 <template v-else-if="reportSummary">
                     <!-- KPI cards -->
-                    <div
-                        class="mb-5 grid grid-cols-2 gap-4 lg:grid-cols-4"
-                    >
+                    <div class="mb-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
                         <div
                             class="rounded-xl border border-slate-200 bg-white p-4"
                         >
@@ -688,12 +699,14 @@ onMounted(loadData);
                                 :key="d.date"
                                 class="flex shrink-0 flex-col items-center gap-1"
                             >
-                                <span class="text-[10px] text-gray-400">{{
-                                    Math.round(d.revenue / 1000)
-                                }}k</span>
+                                <span class="text-[10px] text-gray-400"
+                                    >{{ Math.round(d.revenue / 1000) }}k</span
+                                >
                                 <div
                                     class="w-6 rounded-t bg-red-400 transition-colors hover:bg-red-500"
-                                    :style="{ height: reportBarH(d.revenue) + 'px' }"
+                                    :style="{
+                                        height: reportBarH(d.revenue) + 'px',
+                                    }"
                                     :title="`${d.date}: ${fmt(d.revenue)}`"
                                 />
                                 <span class="text-[10px] text-gray-400">{{
@@ -712,17 +725,17 @@ onMounted(loadData);
                                 <thead class="bg-gray-50">
                                     <tr>
                                         <th
-                                            class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                                            class="px-4 py-3 text-left text-xs font-medium tracking-wide text-gray-500 uppercase"
                                         >
                                             Nhà xe
                                         </th>
                                         <th
-                                            class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500"
+                                            class="px-4 py-3 text-right text-xs font-medium tracking-wide text-gray-500 uppercase"
                                         >
                                             Doanh thu
                                         </th>
                                         <th
-                                            class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500"
+                                            class="px-4 py-3 text-right text-xs font-medium tracking-wide text-gray-500 uppercase"
                                         >
                                             Hoa hồng
                                         </th>
@@ -742,10 +755,14 @@ onMounted(loadData);
                                         :key="r.operator_name"
                                         class="hover:bg-slate-50"
                                     >
-                                        <td class="px-4 py-3 font-medium text-gray-900">
+                                        <td
+                                            class="px-4 py-3 font-medium text-gray-900"
+                                        >
                                             {{ r.operator_name }}
                                         </td>
-                                        <td class="px-4 py-3 text-right text-gray-900">
+                                        <td
+                                            class="px-4 py-3 text-right text-gray-900"
+                                        >
                                             {{ fmt(r.revenue) }}
                                         </td>
                                         <td
@@ -771,7 +788,7 @@ onMounted(loadData);
                         v-model="txnSearch"
                         type="text"
                         placeholder="Tìm mã vé, khách, SĐT..."
-                        class="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
+                        class="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-100 focus:outline-none"
                     />
                     <select
                         v-model="txnMethod"
@@ -878,7 +895,9 @@ onMounted(loadData);
                             <tbody class="divide-y divide-slate-100">
                                 <tr v-if="transactions.length === 0">
                                     <td
-                                        :colspan="can('finance.refund') ? 10 : 9"
+                                        :colspan="
+                                            can('finance.refund') ? 10 : 9
+                                        "
                                         class="px-4 py-12 text-center text-gray-400"
                                     >
                                         Không có giao dịch nào
@@ -894,7 +913,9 @@ onMounted(loadData);
                                     >
                                         {{ t.id.substring(0, 8) }}...
                                     </td>
-                                    <td class="px-4 py-3 font-medium text-gray-900">
+                                    <td
+                                        class="px-4 py-3 font-medium text-gray-900"
+                                    >
                                         {{ t.operator }}
                                     </td>
                                     <td class="px-4 py-3">
@@ -913,14 +934,19 @@ onMounted(loadData);
                                         </span>
                                     </td>
                                     <td class="px-4 py-3 text-gray-700">
-                                        {{ paymentMethodMap[t.method] || t.method }}
+                                        {{
+                                            paymentMethodMap[t.method] ||
+                                            t.method
+                                        }}
                                     </td>
                                     <td
                                         class="px-4 py-3 text-right font-semibold text-gray-900"
                                     >
                                         {{ fmt(t.amount) }}
                                     </td>
-                                    <td class="px-4 py-3 font-mono text-xs text-gray-600">
+                                    <td
+                                        class="px-4 py-3 font-mono text-xs text-gray-600"
+                                    >
                                         {{ t.booking_code }}
                                     </td>
                                     <td class="px-4 py-3 text-gray-700">
@@ -953,13 +979,20 @@ onMounted(loadData);
                                         class="px-4 py-3 text-center"
                                     >
                                         <button
-                                            v-if="t.status === 'success' && t.booking_id"
+                                            v-if="
+                                                t.status === 'success' &&
+                                                t.booking_id
+                                            "
                                             @click="openRefund(t)"
                                             class="rounded-lg border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-medium text-orange-700 transition-colors hover:bg-orange-100"
                                         >
                                             Hoàn tiền
                                         </button>
-                                        <span v-else class="text-xs text-gray-300">—</span>
+                                        <span
+                                            v-else
+                                            class="text-xs text-gray-300"
+                                            >—</span
+                                        >
                                     </td>
                                 </tr>
                             </tbody>
@@ -1119,7 +1152,10 @@ onMounted(loadData);
                                     </td>
                                     <td class="px-4 py-3 text-center">
                                         <button
-                                            v-if="c.status === 'pending' && can('finance.payout')"
+                                            v-if="
+                                                c.status === 'pending' &&
+                                                can('finance.payout')
+                                            "
                                             @click="openPayout(c)"
                                             class="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-700"
                                         >
@@ -1150,22 +1186,22 @@ onMounted(loadData);
                                 <thead class="bg-gray-50">
                                     <tr>
                                         <th
-                                            class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                                            class="px-4 py-3 text-left text-xs font-medium tracking-wide text-gray-500 uppercase"
                                         >
                                             Nhà xe
                                         </th>
                                         <th
-                                            class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500"
+                                            class="px-4 py-3 text-right text-xs font-medium tracking-wide text-gray-500 uppercase"
                                         >
                                             Số tiền
                                         </th>
                                         <th
-                                            class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                                            class="px-4 py-3 text-left text-xs font-medium tracking-wide text-gray-500 uppercase"
                                         >
                                             Ghi chú
                                         </th>
                                         <th
-                                            class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                                            class="px-4 py-3 text-left text-xs font-medium tracking-wide text-gray-500 uppercase"
                                         >
                                             Thời gian
                                         </th>
@@ -1185,7 +1221,9 @@ onMounted(loadData);
                                         :key="p.id"
                                         class="hover:bg-slate-50"
                                     >
-                                        <td class="px-4 py-3 font-medium text-gray-900">
+                                        <td
+                                            class="px-4 py-3 font-medium text-gray-900"
+                                        >
                                             {{ p.operator_name }}
                                         </td>
                                         <td
@@ -1196,7 +1234,9 @@ onMounted(loadData);
                                         <td class="px-4 py-3 text-gray-600">
                                             {{ p.note || '—' }}
                                         </td>
-                                        <td class="px-4 py-3 text-xs text-gray-500">
+                                        <td
+                                            class="px-4 py-3 text-xs text-gray-500"
+                                        >
                                             {{
                                                 p.processed_at
                                                     ? new Date(
@@ -1349,22 +1389,22 @@ onMounted(loadData);
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th
-                                        class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                                        class="px-4 py-3 text-left text-xs font-medium tracking-wide text-gray-500 uppercase"
                                     >
                                         SĐT liên hệ
                                     </th>
                                     <th
-                                        class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                                        class="px-4 py-3 text-left text-xs font-medium tracking-wide text-gray-500 uppercase"
                                     >
                                         Tên
                                     </th>
                                     <th
-                                        class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wide text-gray-500"
+                                        class="px-4 py-3 text-center text-xs font-medium tracking-wide text-gray-500 uppercase"
                                     >
                                         Số vé
                                     </th>
                                     <th
-                                        class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500"
+                                        class="px-4 py-3 text-right text-xs font-medium tracking-wide text-gray-500 uppercase"
                                     >
                                         Tổng giá trị
                                     </th>
@@ -1384,7 +1424,9 @@ onMounted(loadData);
                                     :key="a.contact_phone"
                                     class="hover:bg-slate-50"
                                 >
-                                    <td class="px-4 py-3 font-mono text-gray-700">
+                                    <td
+                                        class="px-4 py-3 font-mono text-gray-700"
+                                    >
                                         {{ a.contact_phone }}
                                     </td>
                                     <td class="px-4 py-3 text-gray-700">
@@ -1502,7 +1544,7 @@ onMounted(loadData);
                             type="number"
                             min="1"
                             :max="selectedTxn?.amount"
-                            class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
+                            class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-100 focus:outline-none"
                         />
                     </div>
                     <div>
@@ -1514,7 +1556,7 @@ onMounted(loadData);
                             v-model="refundReason"
                             rows="3"
                             placeholder="Nhập lý do hoàn tiền cho khách..."
-                            class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100"
+                            class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-100 focus:outline-none"
                         />
                     </div>
                 </div>
@@ -1539,7 +1581,11 @@ onMounted(loadData);
                         :disabled="refundLoading"
                         class="flex-1 rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-orange-700 disabled:opacity-60"
                     >
-                        {{ refundLoading ? 'Đang xử lý...' : 'Xác nhận hoàn tiền' }}
+                        {{
+                            refundLoading
+                                ? 'Đang xử lý...'
+                                : 'Xác nhận hoàn tiền'
+                        }}
                     </button>
                 </div>
             </div>

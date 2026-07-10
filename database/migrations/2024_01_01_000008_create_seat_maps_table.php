@@ -13,12 +13,12 @@ return new class extends Migration
             $table->foreignUuid('trip_id')->constrained()->cascadeOnDelete();
             $table->string('seat_code', 10)->comment('Mã ghế: A1, A2, B1...');
             $table->enum('seat_type', ['standard', 'vip'])
-                  ->default('standard')
-                  ->comment('standard=thường, vip=VIP');
+                ->default('standard')
+                ->comment('standard=thường, vip=VIP');
             $table->decimal('price', 10, 0)->comment('Giá ghế (đồng)');
             $table->enum('status', ['available', 'locked', 'booked', 'disabled'])
-                  ->default('available')
-                  ->comment('available=còn trống, locked=đang giữ, booked=đã đặt, disabled=hỏng');
+                ->default('available')
+                ->comment('available=còn trống, locked=đang giữ, booked=đã đặt, disabled=hỏng');
             $table->timestamp('locked_at')->nullable()->comment('Thời điểm bắt đầu lock ghế');
             $table->uuid('locked_by')->nullable()->comment('user_id đang giữ ghế');
 

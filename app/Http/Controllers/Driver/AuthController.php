@@ -78,12 +78,12 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Đăng nhập thành công',
             'data' => [
-                'token'  => $token,
-                'user'   => [
-                    'id'                   => $user->id,
-                    'full_name'            => $user->full_name,
-                    'phone'                => $user->phone,
-                    'avatar_url'           => $user->avatar_url,
+                'token' => $token,
+                'user' => [
+                    'id' => $user->id,
+                    'full_name' => $user->full_name,
+                    'phone' => $user->phone,
+                    'avatar_url' => $user->avatar_url,
                     'must_change_password' => (bool) $user->must_change_password,
                 ],
                 'driver' => ['id' => $driver->id, 'rating_avg' => $driver->rating_avg, 'status' => $driver->status->value],
@@ -203,13 +203,13 @@ class AuthController extends Controller
         }
 
         $user->update([
-            'password'             => Hash::make($request->input('new_password')),
+            'password' => Hash::make($request->input('new_password')),
             'must_change_password' => false,  // mật khẩu đã được đổi, bỏ cờ bắt buộc
         ]);
 
         return response()->json([
-            'success'              => true,
-            'message'             => 'Đổi mật khẩu thành công',
+            'success' => true,
+            'message' => 'Đổi mật khẩu thành công',
             'must_change_password' => false,
         ]);
     }

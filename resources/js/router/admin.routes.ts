@@ -46,7 +46,10 @@ export const adminRoutes: RouteRecordRaw[] = [
             {
                 path: 'trips/live',
                 component: () => import('@/pages/admin/Trips/LiveMap.vue'),
-                meta: { title: 'Chuyến đi trực tiếp', permission: 'trips.view' },
+                meta: {
+                    title: 'Chuyến đi trực tiếp',
+                    permission: 'trips.view',
+                },
             },
             {
                 path: 'finance',
@@ -61,7 +64,10 @@ export const adminRoutes: RouteRecordRaw[] = [
             {
                 path: 'audit-logs',
                 component: () => import('@/pages/admin/AuditLogs/Index.vue'),
-                meta: { title: 'Nhật ký hệ thống', permission: 'audit_logs.view' },
+                meta: {
+                    title: 'Nhật ký hệ thống',
+                    permission: 'audit_logs.view',
+                },
             },
             {
                 path: 'roles',

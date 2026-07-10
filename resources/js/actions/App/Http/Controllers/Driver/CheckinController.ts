@@ -56,7 +56,7 @@ checkin.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     checkin.form = checkinForm
 /**
 * @see \App\Http\Controllers\Driver\CheckinController::absent
- * @see app/Http/Controllers/Driver/CheckinController.php:103
+ * @see app/Http/Controllers/Driver/CheckinController.php:104
  * @route '/api/driver/checkin/absent'
  */
 export const absent = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -71,7 +71,7 @@ absent.definition = {
 
 /**
 * @see \App\Http\Controllers\Driver\CheckinController::absent
- * @see app/Http/Controllers/Driver/CheckinController.php:103
+ * @see app/Http/Controllers/Driver/CheckinController.php:104
  * @route '/api/driver/checkin/absent'
  */
 absent.url = (options?: RouteQueryOptions) => {
@@ -80,7 +80,7 @@ absent.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Driver\CheckinController::absent
- * @see app/Http/Controllers/Driver/CheckinController.php:103
+ * @see app/Http/Controllers/Driver/CheckinController.php:104
  * @route '/api/driver/checkin/absent'
  */
 absent.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -90,7 +90,7 @@ absent.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Driver\CheckinController::absent
- * @see app/Http/Controllers/Driver/CheckinController.php:103
+ * @see app/Http/Controllers/Driver/CheckinController.php:104
  * @route '/api/driver/checkin/absent'
  */
     const absentForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -100,7 +100,7 @@ absent.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Driver\CheckinController::absent
- * @see app/Http/Controllers/Driver/CheckinController.php:103
+ * @see app/Http/Controllers/Driver/CheckinController.php:104
  * @route '/api/driver/checkin/absent'
  */
         absentForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

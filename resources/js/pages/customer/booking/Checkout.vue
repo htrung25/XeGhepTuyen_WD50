@@ -2,9 +2,9 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { customerApi } from '@/api/customer.api';
+import LocationInput from '@/components/customer/LocationInput.vue';
 import { useCustomerStore } from '@/stores/customer.store';
 import type { RouteStop } from '@/stores/customer.store';
-import LocationInput from '@/components/customer/LocationInput.vue';
 
 const router = useRouter();
 const store = useCustomerStore();
@@ -37,21 +37,6 @@ const total = computed(() =>
 );
 const errors = ref<Record<string, string>>({});
 
-const hanoiStops = [
-    'Mỹ Đình',
-    'Cầu Giấy',
-    'Trung Hòa',
-    'Giải Phóng',
-    'Gia Lâm',
-];
-const haiphongStops = [
-    'An Dương',
-    'Cầu Rào',
-    'Lạch Tray',
-    'Trung tâm HP',
-    'Máy Tơ',
-];
-
 function fmt(v: number) {
     return new Intl.NumberFormat('vi-VN').format(v) + 'đ';
 }
@@ -65,7 +50,11 @@ function validate() {
             'Số điện thoại không hợp lệ (10 số, bắt đầu bằng 0)';
     if (!draft.pickup_address?.trim() || !draft.pickup_lat || !draft.pickup_lng)
         errors.value.pickup_address = 'Vui lòng chọn địa điểm đón';
-    if (!draft.dropoff_address?.trim() || !draft.dropoff_lat || !draft.dropoff_lng)
+    if (
+        !draft.dropoff_address?.trim() ||
+        !draft.dropoff_lat ||
+        !draft.dropoff_lng
+    )
         errors.value.dropoff_address = 'Vui lòng chọn địa điểm trả';
     return Object.keys(errors.value).length === 0;
 }
@@ -281,7 +270,7 @@ onUnmounted(() => {
                         Điểm đón &amp; trả
                     </h2>
                     <div class="space-y-4">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <!-- Điểm đón tự do -->
                             <LocationInput
                                 label="Điểm đón"
@@ -292,7 +281,7 @@ onUnmounted(() => {
                                 :error="errors.pickup_address"
                                 :city-bias="tripData?.route?.origin_city"
                             />
-                            
+
                             <!-- Điểm trả tự do -->
                             <LocationInput
                                 label="Điểm trả"
@@ -304,16 +293,21 @@ onUnmounted(() => {
                                 :city-bias="tripData?.route?.dest_city"
                             />
                         </div>
-                        
+
                         <div>
-                            <label class="mb-1.5 block text-sm font-semibold text-gray-700">
-                                Ghi chú thêm địa chỉ đón/trả <span class="font-normal text-gray-400">(không bắt buộc)</span>
+                            <label
+                                class="mb-1.5 block text-sm font-semibold text-gray-700"
+                            >
+                                Ghi chú thêm địa chỉ đón/trả
+                                <span class="font-normal text-gray-400"
+                                    >(không bắt buộc)</span
+                                >
                             </label>
                             <input
                                 v-model="draft.pickup_detail"
                                 type="text"
                                 placeholder="Số nhà, tên ngõ, hướng đi cụ thể..."
-                                class="h-12 w-full rounded-xl border border-gray-300 px-4 text-base placeholder-gray-400 focus:border-transparent focus:ring-2 focus:ring-green-500 focus:outline-none transition"
+                                class="h-12 w-full rounded-xl border border-gray-300 px-4 text-base placeholder-gray-400 transition focus:border-transparent focus:ring-2 focus:ring-green-500 focus:outline-none"
                             />
                         </div>
                     </div>

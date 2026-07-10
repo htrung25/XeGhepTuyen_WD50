@@ -75,13 +75,13 @@ class AutoResolveTripsCommand extends Command
                     $bookingService->finalizeOnTripComplete($trip);
                 } else { // Cancelled
                     $trip->bookings()
-                         ->whereIn('booking_status', [
-                             BookingStatus::Pending->value,
-                             BookingStatus::Confirmed->value,
-                             BookingStatus::CheckedIn->value,
-                         ])
-                         ->with('user')->get()
-                         ->each(fn (Booking $b) => $bookingService->cancelByOperator($b, 'Chuyến đã bị hủy', true));
+                        ->whereIn('booking_status', [
+                            BookingStatus::Pending->value,
+                            BookingStatus::Confirmed->value,
+                            BookingStatus::CheckedIn->value,
+                        ])
+                        ->with('user')->get()
+                        ->each(fn (Booking $b) => $bookingService->cancelByOperator($b, 'Chuyến đã bị hủy', true));
                 }
                 $orphanCount++;
             } catch (\Throwable $e) {

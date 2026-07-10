@@ -216,6 +216,5 @@ export const useCustomerStore = defineStore('customer', () => {
         updateTracking,
         setWallet,
         getLocalDateString,
-
     };
 });

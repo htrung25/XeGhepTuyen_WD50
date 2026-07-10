@@ -14,10 +14,10 @@ return new class extends Migration
             $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
             $table->decimal('amount', 10, 0)->comment('Số tiền thanh toán (đồng)');
             $table->enum('method', ['momo', 'vnpay', 'zalopay', 'wallet', 'cash'])
-                  ->comment('Phương thức thanh toán');
+                ->comment('Phương thức thanh toán');
             $table->enum('status', ['pending', 'success', 'failed', 'refunded'])
-                  ->default('pending')
-                  ->comment('pending=đang xử lý, success=thành công, failed=thất bại, refunded=đã hoàn');
+                ->default('pending')
+                ->comment('pending=đang xử lý, success=thành công, failed=thất bại, refunded=đã hoàn');
             $table->string('gateway_txn_id', 100)->nullable()->comment('Mã giao dịch từ cổng TT');
             $table->string('gateway_order_id', 100)->nullable()->comment('Order ID gửi lên cổng TT');
             $table->json('gateway_response')->nullable()->comment('Raw response từ cổng thanh toán');

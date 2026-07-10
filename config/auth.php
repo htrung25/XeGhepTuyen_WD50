@@ -39,27 +39,27 @@ return [
 
     'guards' => [
         'web' => [
-            'driver'   => 'session',
+            'driver' => 'session',
             'provider' => 'users',
         ],
 
         'customer' => [
-            'driver'   => 'sanctum',
+            'driver' => 'sanctum',
             'provider' => 'customers',
         ],
 
         'driver' => [
-            'driver'   => 'sanctum',
+            'driver' => 'sanctum',
             'provider' => 'drivers',
         ],
 
         'operator' => [
-            'driver'   => 'sanctum',
+            'driver' => 'sanctum',
             'provider' => 'operators',
         ],
 
         'admin' => [
-            'driver'   => 'sanctum',
+            'driver' => 'sanctum',
             'provider' => 'admins',
         ],
     ],
@@ -84,28 +84,28 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model'  => env('AUTH_MODEL', User::class),
+            'model' => env('AUTH_MODEL', User::class),
         ],
 
         // All 4 Sanctum guards share the User model; role is checked in controllers
         'customers' => [
             'driver' => 'eloquent',
-            'model'  => User::class,
+            'model' => User::class,
         ],
 
         'drivers' => [
             'driver' => 'eloquent',
-            'model'  => User::class,
+            'model' => User::class,
         ],
 
         'operators' => [
             'driver' => 'eloquent',
-            'model'  => User::class,
+            'model' => User::class,
         ],
 
         'admins' => [
             'driver' => 'eloquent',
-            'model'  => User::class,
+            'model' => User::class,
         ],
     ],
 

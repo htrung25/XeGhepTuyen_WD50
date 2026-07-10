@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::table('payments', function (Blueprint $table) {
             // Tài xế đã thu tiền mặt (chỉ dùng cho method=cash)
             $table->uuid('collected_by')->nullable()->after('paid_at')
-                  ->comment('driver_id thu tiền mặt (chỉ với thanh toán tiền mặt)');
+                ->comment('driver_id thu tiền mặt (chỉ với thanh toán tiền mặt)');
         });
     }
 

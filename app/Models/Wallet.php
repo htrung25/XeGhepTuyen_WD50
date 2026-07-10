@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\WalletTransactionType;
+use App\Exceptions\InsufficientBalanceException;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -26,9 +27,9 @@ class Wallet extends Model
     protected function casts(): array
     {
         return [
-            'balance'         => 'integer',
+            'balance' => 'integer',
             'pending_balance' => 'integer',
-            'updated_at'      => 'datetime',
+            'updated_at' => 'datetime',
         ];
     }
 
@@ -56,11 +57,11 @@ class Wallet extends Model
             $this->refresh();
 
             return $this->transactions()->create([
-                'type'          => $type,
-                'amount'        => $amount,
+                'type' => $type,
+                'amount' => $amount,
                 'balance_after' => $this->balance,
-                'description'   => $description,
-                'booking_id'    => $bookingId,
+                'description' => $description,
+                'booking_id' => $bookingId,
             ]);
         });
     }
@@ -68,13 +69,13 @@ class Wallet extends Model
     /**
      * Trừ tiền từ ví (thanh toán / rút tiền)
      *
-     * @throws \App\Exceptions\InsufficientBalanceException
+     * @throws InsufficientBalanceException
      */
     public function debit(int $amount, string $description, WalletTransactionType $type, ?string $bookingId = null): WalletTransaction
     {
         return DB::transaction(function () use ($amount, $description, $type, $bookingId) {
             if ($this->balance < $amount) {
-                throw new \App\Exceptions\InsufficientBalanceException(
+                throw new InsufficientBalanceException(
                     "Số dư ví không đủ. Cần {$amount}đ, hiện có {$this->balance}đ"
                 );
             }
@@ -83,17 +84,17 @@ class Wallet extends Model
             $this->refresh();
 
             return $this->transactions()->create([
-                'type'          => $type,
-                'amount'        => -$amount,
+                'type' => $type,
+                'amount' => -$amount,
                 'balance_after' => $this->balance,
-                'description'   => $description,
-                'booking_id'    => $bookingId,
+                'description' => $description,
+                'booking_id' => $bookingId,
             ]);
         });
     }
 
     public function getFormattedBalanceAttribute(): string
     {
-        return number_format($this->balance, 0, ',', '.') . 'đ';
+        return number_format($this->balance, 0, ',', '.').'đ';
     }
 }

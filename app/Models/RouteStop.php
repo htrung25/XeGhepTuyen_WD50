@@ -27,12 +27,12 @@ class RouteStop extends Model
     protected function casts(): array
     {
         return [
-            'lat'            => 'decimal:8',
-            'lng'            => 'decimal:8',
-            'stop_order'     => 'integer',
+            'lat' => 'decimal:8',
+            'lng' => 'decimal:8',
+            'stop_order' => 'integer',
             'offset_minutes' => 'integer',
-            'is_pickup'      => 'boolean',
-            'is_dropoff'     => 'boolean',
+            'is_pickup' => 'boolean',
+            'is_dropoff' => 'boolean',
         ];
     }
 

@@ -4,12 +4,12 @@ namespace App\Models;
 
 use App\Enums\VehicleStatus;
 use App\Enums\VehicleType;
-use App\Models\Driver;
-use App\Models\Trip;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Vehicle extends Model
@@ -36,12 +36,12 @@ class Vehicle extends Model
     protected function casts(): array
     {
         return [
-            'vehicle_type'         => VehicleType::class,
-            'status'               => VehicleStatus::class,
-            'amenities'            => 'array',
-            'registration_expiry'  => 'date',
-            'insurance_expiry'     => 'date',
-            'seat_count'           => 'integer',
+            'vehicle_type' => VehicleType::class,
+            'status' => VehicleStatus::class,
+            'amenities' => 'array',
+            'registration_expiry' => 'date',
+            'insurance_expiry' => 'date',
+            'seat_count' => 'integer',
         ];
     }
 
@@ -57,12 +57,12 @@ class Vehicle extends Model
         return $this->hasMany(Trip::class);
     }
 
-    public function assignedDriver(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function assignedDriver(): HasOne
     {
         return $this->hasOne(Driver::class, 'current_vehicle_id');
     }
 
-    public function activeDriver(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    public function activeDriver(): HasOneThrough
     {
         return $this->hasOneThrough(
             Driver::class,
@@ -72,7 +72,7 @@ class Vehicle extends Model
             'id',
             'driver_id'
         )->whereIn('trips.status', ['scheduled', 'boarding', 'in_progress'])
-         ->latest('trips.depart_at');
+            ->latest('trips.depart_at');
     }
 
     // ─── Scopes ───────────────────────────────────────────────────────────────
@@ -96,11 +96,11 @@ class Vehicle extends Model
 
     public function generateSeatCodes(): array
     {
-        return match($this->vehicle_type) {
-            VehicleType::Mpv7     => ['A1','A2','B1','B2','C1','C2','D1'],
-            VehicleType::Van9     => ['A1','A2','B1','B2','C1','C2','D1','D2','E1'],
-            VehicleType::Minibus16 => collect(range('A','D'))->flatMap(fn($r) => ["$r1","$r2","$r3","$r4"])->toArray(),
-            default               => ['A1','A2','B1','B2'],
+        return match ($this->vehicle_type) {
+            VehicleType::Mpv7 => ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'D1'],
+            VehicleType::Van9 => ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'D1', 'D2', 'E1'],
+            VehicleType::Minibus16 => collect(range('A', 'D'))->flatMap(fn ($r) => ["$r1", "$r2", "$r3", "$r4"])->toArray(),
+            default => ['A1', 'A2', 'B1', 'B2'],
         };
     }
 }

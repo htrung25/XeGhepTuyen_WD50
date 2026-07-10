@@ -1,10 +1,10 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Models\Driver;
 use App\Models\Operator;
 use App\Models\User;
 use App\Models\Vehicle;
-use App\Models\Driver;
 use Laravel\Sanctum\Sanctum;
 
 function makeAdminUser(): User
@@ -80,7 +80,7 @@ it('cho phép admin xem chi tiết thông tin nhà xe với đầy đủ thông 
     Sanctum::actingAs(makeAdminUser());
     $operator = makeFullOperator();
 
-    $response = $this->getJson('/api/admin/operators/' . $operator->id)
+    $response = $this->getJson('/api/admin/operators/'.$operator->id)
         ->assertOk()
         ->assertJsonPath('data.id', $operator->id)
         ->assertJsonPath('data.company_name', 'Nhà xe Sao Việt')
@@ -100,14 +100,14 @@ it('cho phép admin xem chi tiết thông tin nhà xe với đầy đủ thông 
 
 it('chặn người dùng không có vai trò admin truy cập chi tiết nhà xe', function () {
     $operator = makeFullOperator();
-    
+
     // Act as a normal customer
     $customer = User::factory()->create([
         'role' => UserRole::Customer,
     ]);
     Sanctum::actingAs($customer);
 
-    $this->getJson('/api/admin/operators/' . $operator->id)
+    $this->getJson('/api/admin/operators/'.$operator->id)
         ->assertForbidden();
 });
 

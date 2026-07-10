@@ -104,8 +104,10 @@ export const adminApi = {
         apiClient.send(login(), data),
     logout: () => apiClient.send(logout()),
     me: () => apiClient.send(me()),
-    updateProfile: (data: FormData) => apiClient.sendForm(adminUpdateProfile(), data),
-    changePassword: (data: unknown) => apiClient.send(adminChangePassword(), data),
+    updateProfile: (data: FormData) =>
+        apiClient.sendForm(adminUpdateProfile(), data),
+    changePassword: (data: unknown) =>
+        apiClient.send(adminChangePassword(), data),
 
     // Dashboard
     getDashboard: () => apiClient.send(dashboard()),
@@ -122,8 +124,7 @@ export const adminApi = {
         apiClient.send(operatorReject(id), data),
     suspendOperator: (id: string, data: { reason: string }) =>
         apiClient.send(operatorSuspend(id), data),
-    restoreOperator: (id: string) =>
-        apiClient.send(operatorRestore(id)),
+    restoreOperator: (id: string) => apiClient.send(operatorRestore(id)),
     resetOperatorPassword: (id: string) =>
         apiClient.send<{ phone: string }>(operatorResetPassword(id)),
 
@@ -153,12 +154,10 @@ export const adminApi = {
     // Users
     getUsers: (params?: Params) =>
         apiClient.send(usersIndex({ query: params as QueryParams })),
-    getUser: (id: string) =>
-        apiClient.send(userShow(id)),
+    getUser: (id: string) => apiClient.send(userShow(id)),
     banUser: (id: string, data: { reason: string }) =>
         apiClient.send(userBan(id), data),
-    unbanUser: (id: string) =>
-        apiClient.send(userUnban(id)),
+    unbanUser: (id: string) => apiClient.send(userUnban(id)),
 
     // Bookings
     getBookings: (params?: Params) =>
@@ -196,8 +195,10 @@ export const adminApi = {
             undefined,
             { blob: true },
         ),
-    refundBooking: (bookingId: string, data: { amount: number; reason: string }) =>
-        apiClient.send<{ amount: number }>(financeRefund(bookingId), data),
+    refundBooking: (
+        bookingId: string,
+        data: { amount: number; reason: string },
+    ) => apiClient.send<{ amount: number }>(financeRefund(bookingId), data),
 
     // Vouchers
     getVouchers: (params?: Params) =>
@@ -211,8 +212,7 @@ export const adminApi = {
     // Audit Logs
     getAuditLogs: (params?: Params) =>
         apiClient.send(auditLogsIndex({ query: params as QueryParams })),
-    getAuditLog: (id: string) =>
-        apiClient.send(auditLogShow(id)),
+    getAuditLog: (id: string) => apiClient.send(auditLogShow(id)),
 
     // Notifications
     getNotifications: (params?: Params) =>
@@ -244,7 +244,5 @@ export const adminApi = {
     banAdminStaff: (id: string) => apiClient.send(adminStaffBan(id)),
     unbanAdminStaff: (id: string) => apiClient.send(adminStaffUnban(id)),
     resetAdminStaffPassword: (id: string) =>
-        apiClient.send<{ temp_password: string }>(
-            adminStaffResetPassword(id),
-        ),
+        apiClient.send<{ temp_password: string }>(adminStaffResetPassword(id)),
 };

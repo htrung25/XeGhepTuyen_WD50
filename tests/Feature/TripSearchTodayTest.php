@@ -18,29 +18,29 @@ function setupSearchTodayTestContext(): array
         'business_license' => 'GP-7777',
         'status' => 'verified',
     ]);
-    
+
     $route = Route::create([
         'operator_id' => $operator->id,
         'name' => 'Hà Nội - Hải Phòng',
         'origin_city' => 'Hà Nội',
         'dest_city' => 'Hải Phòng',
-        'base_price' => 150000
+        'base_price' => 150000,
     ]);
-    
+
     $vehicle = Vehicle::create([
         'operator_id' => $operator->id,
-        'plate_number' => '30A-' . rand(10000, 99999),
+        'plate_number' => '30A-'.rand(10000, 99999),
         'brand' => 'Ford',
         'model' => 'Transit',
         'vehicle_type' => 'van_9',
         'seat_count' => 9,
     ]);
-    
+
     $drvUser = User::factory()->create(['role' => UserRole::Driver]);
     $driver = Driver::create([
         'user_id' => $drvUser->id,
         'operator_id' => $operator->id,
-        'license_number' => 'B2-' . rand(100000, 999999),
+        'license_number' => 'B2-'.rand(100000, 999999),
         'license_class' => 'B2',
         'license_expiry' => now()->addYears(3),
         'id_card_number' => '777777777777',
@@ -82,7 +82,7 @@ it('returns tomorrow early trips when searching for today late at night', functi
     ]);
 
     // Make request search for "today" (2026-07-10)
-    $response = $this->getJson('/api/public/trips?' . http_build_query([
+    $response = $this->getJson('/api/public/trips?'.http_build_query([
         'from_city' => 'Hà Nội',
         'to_city' => 'Hải Phòng',
         'date' => '2026-07-10',
@@ -91,9 +91,9 @@ it('returns tomorrow early trips when searching for today late at night', functi
 
     $response->assertStatus(200);
     $response->assertJsonPath('success', true);
-    
+
     $data = $response->json('data');
-    
+
     // Should return only Trip B (Trip A is too close, and Trip B departs tomorrow but falls within extended search range)
     expect($data)->toHaveCount(1);
     expect($data[0]['id'])->toBe($tripB->id);
@@ -135,7 +135,7 @@ it('strictly returns tomorrow trips when searching for tomorrow date', function 
     ]);
 
     // Make request search for "tomorrow" (2026-07-11)
-    $response = $this->getJson('/api/public/trips?' . http_build_query([
+    $response = $this->getJson('/api/public/trips?'.http_build_query([
         'from_city' => 'Hà Nội',
         'to_city' => 'Hải Phòng',
         'date' => '2026-07-11',
@@ -144,9 +144,9 @@ it('strictly returns tomorrow trips when searching for tomorrow date', function 
 
     $response->assertStatus(200);
     $response->assertJsonPath('success', true);
-    
+
     $data = $response->json('data');
-    
+
     // Should return only Trip A (date matches exactly 2026-07-11)
     expect($data)->toHaveCount(1);
     expect($data[0]['id'])->toBe($tripA->id);

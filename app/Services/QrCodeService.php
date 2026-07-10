@@ -14,13 +14,14 @@ use Illuminate\Support\Str;
 class QrCodeService
 {
     private const QR_DISK = 'public';
+
     private const QR_PATH = 'qrcodes';
 
     public function generate(Booking $booking): string
     {
-        $token   = $booking->qr_token ?? Str::random(32);
+        $token = $booking->qr_token ?? Str::random(32);
         $content = json_encode([
-            'token'        => $token,
+            'token' => $token,
             'booking_code' => $booking->booking_code,
         ]);
 
@@ -29,7 +30,7 @@ class QrCodeService
         // xung đột với fortify (cần bacon ^3.0).
         $renderer = new ImageRenderer(
             new RendererStyle(300, 1),
-            new ImagickImageBackEnd()
+            new ImagickImageBackEnd
         );
         $qrImage = (new Writer($renderer))->writeString(
             $content,
@@ -37,7 +38,7 @@ class QrCodeService
             ErrorCorrectionLevel::H()
         );
 
-        $path = self::QR_PATH . "/qr_{$booking->booking_code}.png";
+        $path = self::QR_PATH."/qr_{$booking->booking_code}.png";
         Storage::disk(self::QR_DISK)->put($path, $qrImage);
 
         return Storage::disk(self::QR_DISK)->url($path);

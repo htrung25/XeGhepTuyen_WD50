@@ -11,9 +11,10 @@ use Illuminate\Support\Facades\Log;
 
 class SendZaloNotificationJob implements ShouldQueue
 {
-    use Queueable, InteractsWithQueue, SerializesModels;
+    use InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries   = 3;
+    public int $tries = 3;
+
     public int $backoff = 60;
 
     public function __construct(
@@ -26,22 +27,22 @@ class SendZaloNotificationJob implements ShouldQueue
 
     public function handle(): void
     {
-        if (!$this->zaloUserId) {
+        if (! $this->zaloUserId) {
             return;
         }
 
         $accessToken = config('services.zalo.oa_access_token');
 
         $response = Http::withToken($accessToken)
-                        ->post('https://openapi.zalo.me/v2.0/oa/message', [
-                            'recipient' => ['user_id' => $this->zaloUserId],
-                            'message'   => ['text' => $this->message],
-                        ]);
+            ->post('https://openapi.zalo.me/v2.0/oa/message', [
+                'recipient' => ['user_id' => $this->zaloUserId],
+                'message' => ['text' => $this->message],
+            ]);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             Log::warning('Zalo OA gửi thất bại', [
                 'zalo_user_id' => $this->zaloUserId,
-                'error'        => $response->json('message'),
+                'error' => $response->json('message'),
             ]);
         }
     }
@@ -50,7 +51,7 @@ class SendZaloNotificationJob implements ShouldQueue
     {
         Log::error('SendZaloNotificationJob thất bại', [
             'zalo_user_id' => $this->zaloUserId,
-            'error'        => $e->getMessage(),
+            'error' => $e->getMessage(),
         ]);
     }
 }

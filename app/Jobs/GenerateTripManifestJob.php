@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Storage;
 
 class GenerateTripManifestJob implements ShouldQueue
 {
-    use Queueable, InteractsWithQueue, SerializesModels;
+    use InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
 
@@ -29,7 +29,7 @@ class GenerateTripManifestJob implements ShouldQueue
             'route',
             'vehicle',
             'driver.user',
-            'bookings' => fn($q) => $q->whereIn('booking_status', [
+            'bookings' => fn ($q) => $q->whereIn('booking_status', [
                 BookingStatus::Confirmed->value,
                 BookingStatus::CheckedIn->value,
             ])->with(['passengers', 'pickupStop', 'dropoffStop']),
@@ -47,7 +47,7 @@ class GenerateTripManifestJob implements ShouldQueue
     {
         Log::error('GenerateTripManifestJob thất bại', [
             'trip_id' => $this->trip->id,
-            'error'   => $e->getMessage(),
+            'error' => $e->getMessage(),
         ]);
     }
 }

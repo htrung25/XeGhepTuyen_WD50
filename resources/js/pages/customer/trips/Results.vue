@@ -385,10 +385,17 @@ onMounted(async () => {
                                         <div
                                             class="flex items-center gap-1.5 text-2xl font-bold text-gray-900 tabular-nums"
                                         >
-                                            <span>{{ fmtTime(trip.depart_at) }}</span>
-                                            <span 
-                                                v-if="isNextDay(trip.depart_at, store.searchParams.date)" 
-                                                class="inline-flex items-center rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 uppercase tracking-wide"
+                                            <span>{{
+                                                fmtTime(trip.depart_at)
+                                            }}</span>
+                                            <span
+                                                v-if="
+                                                    isNextDay(
+                                                        trip.depart_at,
+                                                        store.searchParams.date,
+                                                    )
+                                                "
+                                                class="inline-flex items-center rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-amber-700 uppercase"
                                             >
                                                 Ngày mai
                                             </span>

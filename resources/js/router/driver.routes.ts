@@ -80,9 +80,12 @@ export function setupDriverGuard(router: Router) {
         }
 
         // 4. Đã đổi mật khẩu mà cố vào /change-password → về dashboard
-        if (to.path === '/driver/change-password' && auth.isAuthenticated && !auth.mustChangePassword) {
+        if (
+            to.path === '/driver/change-password' &&
+            auth.isAuthenticated &&
+            !auth.mustChangePassword
+        ) {
             return { path: '/driver/dashboard' };
         }
     });
 }
-

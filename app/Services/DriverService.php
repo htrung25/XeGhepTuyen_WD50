@@ -74,18 +74,18 @@ class DriverService
         DB::transaction(function () use ($driver, $tempPassword) {
             $driver->update(['status' => DriverStatus::Verified, 'verified_at' => now()]);
             $driver->user->update([
-                'password'             => $tempPassword,
-                'is_active'            => true,
+                'password' => $tempPassword,
+                'is_active' => true,
                 'must_change_password' => true,   // bắt buộc đổi MK khi đăng nhập lần đầu
             ]);
         });
 
         // Log rõ ràng để dev xem mật khẩu tạm khi chưa cấu hình SMS thật.
         Log::info('[DEV] Tài xế được duyệt — thông tin đăng nhập tạm thời', [
-            'driver'        => $driver->user->full_name,
-            'phone'         => $driver->user->phone,
+            'driver' => $driver->user->full_name,
+            'phone' => $driver->user->phone,
             'temp_password' => $tempPassword,
-            'login_url'     => rtrim((string) config('app.url'), '/').'/driver/login',
+            'login_url' => rtrim((string) config('app.url'), '/').'/driver/login',
         ]);
 
         $this->sendCredentialsSms($driver->user, $tempPassword, $driver->operator?->company_name, approved: true);
@@ -102,16 +102,16 @@ class DriverService
     {
         $tempPassword = $this->generateTempPassword();
         $driver->user->update([
-            'password'             => $tempPassword,
+            'password' => $tempPassword,
             'must_change_password' => true,   // bắt buộc đổi MK khi đăng nhập lại
         ]);
 
         // Log rõ ràng để dev xem mật khẩu tạm khi chưa cấu hình SMS thật.
         Log::info('[DEV] Cấp lại mật khẩu tài xế', [
-            'driver'        => $driver->user->full_name,
-            'phone'         => $driver->user->phone,
+            'driver' => $driver->user->full_name,
+            'phone' => $driver->user->phone,
             'temp_password' => $tempPassword,
-            'login_url'     => rtrim((string) config('app.url'), '/').'/driver/login',
+            'login_url' => rtrim((string) config('app.url'), '/').'/driver/login',
         ]);
 
         $this->sendCredentialsSms($driver->user, $tempPassword, $driver->operator?->company_name, approved: false);

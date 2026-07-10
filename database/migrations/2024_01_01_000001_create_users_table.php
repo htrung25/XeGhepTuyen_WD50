@@ -15,8 +15,8 @@ return new class extends Migration
             $table->string('email', 100)->unique()->nullable();
             $table->string('password', 255);
             $table->enum('role', ['customer', 'driver', 'operator', 'admin'])
-                  ->default('customer')
-                  ->comment('customer=khách hàng, driver=tài xế, operator=nhà xe, admin=quản trị');
+                ->default('customer')
+                ->comment('customer=khách hàng, driver=tài xế, operator=nhà xe, admin=quản trị');
             $table->string('avatar_url', 500)->nullable();
             $table->string('zalo_user_id', 100)->nullable()->comment('Zalo OA binding');
             $table->string('fcm_token', 500)->nullable()->comment('Firebase FCM push token');

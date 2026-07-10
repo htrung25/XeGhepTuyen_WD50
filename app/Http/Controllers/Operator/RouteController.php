@@ -27,24 +27,24 @@ class RouteController extends Controller
         try {
             DB::transaction(function () use ($request, &$route) {
                 $route = Route::create([
-                    'route_code'      => $request->route_code,
-                    'origin_city'     => $request->origin_city,
-                    'dest_city'       => $request->dest_city,
-                    'distance_km'     => $request->distance_km,
-                    'duration_hours'  => $request->duration_hours,
-                    'description'     => $request->description,
+                    'route_code' => $request->route_code,
+                    'origin_city' => $request->origin_city,
+                    'dest_city' => $request->dest_city,
+                    'distance_km' => $request->distance_km,
+                    'duration_hours' => $request->duration_hours,
+                    'description' => $request->description,
                 ]);
 
                 foreach ($request->stops as $stop) {
                     RouteStop::create([
-                        'route_id'       => $route->id,
-                        'stop_name'      => $stop['stop_name'],
-                        'stop_address'   => $stop['stop_address'],
-                        'stop_order'     => $stop['stop_order'],
-                        'lat'            => $stop['lat'] ?? null,
-                        'lng'            => $stop['lng'] ?? null,
-                        'is_pickup'      => $stop['is_pickup'] ?? true,
-                        'is_dropoff'     => $stop['is_dropoff'] ?? true,
+                        'route_id' => $route->id,
+                        'stop_name' => $stop['stop_name'],
+                        'stop_address' => $stop['stop_address'],
+                        'stop_order' => $stop['stop_order'],
+                        'lat' => $stop['lat'] ?? null,
+                        'lng' => $stop['lng'] ?? null,
+                        'is_pickup' => $stop['is_pickup'] ?? true,
+                        'is_dropoff' => $stop['is_dropoff'] ?? true,
                     ]);
                 }
             });
@@ -52,6 +52,7 @@ class RouteController extends Controller
             return response()->json(['success' => true, 'message' => 'Tạo tuyến đường thành công', 'data' => $route->load('stops')], 201);
         } catch (\Exception $e) {
             Log::error('Route create failed', ['error' => $e->getMessage()]);
+
             return response()->json(['success' => false, 'message' => 'Có lỗi xảy ra'], 500);
         }
     }
@@ -60,7 +61,7 @@ class RouteController extends Controller
     {
         $route = Route::with('stops')->find($id);
 
-        if (!$route) {
+        if (! $route) {
             return response()->json(['success' => false, 'message' => 'Tuyến đường không tồn tại'], 404);
         }
 
@@ -71,11 +72,11 @@ class RouteController extends Controller
     {
         $route = Route::find($id);
 
-        if (!$route) {
+        if (! $route) {
             return response()->json(['success' => false, 'message' => 'Tuyến đường không tồn tại'], 404);
         }
 
-        if (!$route->canBeDeleted()) {
+        if (! $route->canBeDeleted()) {
             return response()->json(['success' => false, 'message' => 'Không thể cập nhật tuyến đang có chuyến lịch'], 422);
         }
 
@@ -88,11 +89,11 @@ class RouteController extends Controller
     {
         $route = Route::find($id);
 
-        if (!$route) {
+        if (! $route) {
             return response()->json(['success' => false, 'message' => 'Tuyến đường không tồn tại'], 404);
         }
 
-        if (!$route->canBeDeleted()) {
+        if (! $route->canBeDeleted()) {
             return response()->json(['success' => false, 'message' => 'Không thể xoá tuyến đang có chuyến lịch'], 422);
         }
 

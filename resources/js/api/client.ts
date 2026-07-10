@@ -55,10 +55,7 @@ http.interceptors.response.use(
 export const apiClient = {
     async get<T = any>(url: string, config = {}) {
         try {
-            const res = await http.get<any>(
-                url,
-                config,
-            );
+            const res = await http.get<any>(url, config);
             // `data` luôn là payload (mảng/đối tượng); `meta` (phân trang) là field
             // anh em — giữ shape tương thích với mọi trang đọc `data` trực tiếp.
             return {

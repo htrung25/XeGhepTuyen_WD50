@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { Toaster } from '@/components/ui/sonner';
 import { driverApi } from '@/api/driver.api';
+import { Toaster } from '@/components/ui/sonner';
 import { useDriverAuthStore } from '@/stores/driver.auth.store';
 
 const route = useRoute();
@@ -47,7 +47,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="flex h-screen bg-gray-100 overflow-hidden">
+    <div class="flex h-screen overflow-hidden bg-gray-100">
         <!-- ─── Sidebar ──────────────────────────────────────────── -->
         <aside
             :class="sidebarOpen ? 'w-60' : 'w-16'"
@@ -80,7 +80,7 @@ onUnmounted(() => {
             </div>
 
             <!-- Nav -->
-            <nav class="mt-2 flex-1 overflow-y-auto space-y-0.5 px-2 py-3">
+            <nav class="mt-2 flex-1 space-y-0.5 overflow-y-auto px-2 py-3">
                 <router-link
                     v-for="item in navItems"
                     :key="item.path"
@@ -208,10 +208,10 @@ onUnmounted(() => {
                     <div class="relative" ref="dropdownRef">
                         <button
                             @click="dropdownOpen = !dropdownOpen"
-                            class="flex items-center gap-2 rounded-lg p-1.5 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-100 cursor-pointer"
+                            class="flex cursor-pointer items-center gap-2 rounded-lg p-1.5 transition-colors hover:bg-slate-100 focus:ring-2 focus:ring-slate-100 focus:outline-none"
                         >
                             <div
-                                class="flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-sm font-semibold text-white overflow-hidden"
+                                class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-green-600 text-sm font-semibold text-white"
                             >
                                 <img
                                     v-if="auth.user?.avatar_url"
@@ -221,7 +221,9 @@ onUnmounted(() => {
                                 />
                                 <span v-else>{{ driverInitial }}</span>
                             </div>
-                            <span class="hidden text-sm font-semibold text-slate-700 md:block">
+                            <span
+                                class="hidden text-sm font-semibold text-slate-700 md:block"
+                            >
                                 {{ driverName }}
                             </span>
                             <!-- Arrow icon -->
@@ -232,7 +234,12 @@ onUnmounted(() => {
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
                             >
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M19 9l-7 7-7-7"
+                                />
                             </svg>
                         </button>
 
@@ -247,7 +254,7 @@ onUnmounted(() => {
                         >
                             <div
                                 v-if="dropdownOpen"
-                                class="absolute right-0 mt-2 w-48 origin-top-right rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg ring-1 ring-black/5 focus:outline-none z-50"
+                                class="absolute right-0 z-50 mt-2 w-48 origin-top-right rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg ring-1 ring-black/5 focus:outline-none"
                             >
                                 <!-- Profile link -->
                                 <router-link
@@ -255,8 +262,18 @@ onUnmounted(() => {
                                     @click="dropdownOpen = false"
                                     class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50"
                                 >
-                                    <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    <svg
+                                        class="h-4 w-4 text-slate-500"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                        />
                                     </svg>
                                     Hồ sơ cá nhân
                                 </router-link>
@@ -268,10 +285,20 @@ onUnmounted(() => {
                                         dropdownOpen = false;
                                         logout();
                                     "
-                                    class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50 text-left cursor-pointer"
+                                    class="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-red-600 transition-colors hover:bg-red-50"
                                 >
-                                    <svg class="h-4 w-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                    <svg
+                                        class="h-4 w-4 text-red-500"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                                        />
                                     </svg>
                                     Đăng xuất
                                 </button>

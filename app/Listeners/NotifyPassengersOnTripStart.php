@@ -14,10 +14,10 @@ class NotifyPassengersOnTripStart
 
     public function handle(TripStarted $event): void
     {
-        $trip     = $event->trip->load(['bookings.user', 'driver.user', 'vehicle']);
-        $driver   = $trip->driver->user->full_name;
-        $plate    = $trip->vehicle->plate_number;
-        $phone    = $trip->driver->user->phone;
+        $trip = $event->trip->load(['bookings.user', 'driver.user', 'vehicle']);
+        $driver = $trip->driver->user->full_name;
+        $plate = $trip->vehicle->plate_number;
+        $phone = $trip->driver->user->phone;
 
         $body = "[XeGhep] Chuyến của bạn đã xuất phát! Tài xế: {$driver} - {$phone}. Biển số: {$plate}";
 

@@ -26,8 +26,8 @@ return new class extends Migration
             $table->decimal('current_lng', 11, 8)->nullable()->comment('Kinh độ GPS hiện tại');
             $table->timestamp('location_updated_at')->nullable();
             $table->enum('status', ['pending', 'verified', 'suspended', 'rejected'])
-                  ->default('pending')
-                  ->comment('pending=chờ duyệt, verified=đã duyệt, suspended=đình chỉ, rejected=từ chối');
+                ->default('pending')
+                ->comment('pending=chờ duyệt, verified=đã duyệt, suspended=đình chỉ, rejected=từ chối');
             $table->timestamp('verified_at')->nullable();
             $table->timestamps();
             $table->softDeletes();

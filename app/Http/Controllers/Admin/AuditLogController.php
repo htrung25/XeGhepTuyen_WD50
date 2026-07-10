@@ -12,24 +12,24 @@ use OpenApi\Attributes as OA;
 class AuditLogController extends Controller
 {
     #[OA\Get(
-        path: "/api/admin/audit-logs",
-        summary: "Lấy danh sách nhật ký hoạt động (Audit Logs)",
-        tags: ["Admin Audit Logs"],
-        security: [["sanctum" => []]]
+        path: '/api/admin/audit-logs',
+        summary: 'Lấy danh sách nhật ký hoạt động (Audit Logs)',
+        tags: ['Admin Audit Logs'],
+        security: [['sanctum' => []]]
     )]
     #[OA\Response(
         response: 200,
-        description: "Danh sách nhật ký hoạt động",
+        description: 'Danh sách nhật ký hoạt động',
         content: new OA\JsonContent(
             properties: [
-                new OA\Property(property: "success", type: "boolean", example: true),
-                new OA\Property(property: "data", type: "array", items: new OA\Items(type: "object")),
-                new OA\Property(property: "meta", type: "object")
+                new OA\Property(property: 'success', type: 'boolean', example: true),
+                new OA\Property(property: 'data', type: 'array', items: new OA\Items(type: 'object')),
+                new OA\Property(property: 'meta', type: 'object'),
             ]
         )
     )]
-    #[OA\Response(response: 401, description: "Chưa xác thực")]
-    #[OA\Response(response: 403, description: "Không có quyền truy cập")]
+    #[OA\Response(response: 401, description: 'Chưa xác thực')]
+    #[OA\Response(response: 403, description: 'Không có quyền truy cập')]
     public function index(IndexAuditLogRequest $request): JsonResponse
     {
         $query = AuditLog::with('user');
@@ -47,23 +47,23 @@ class AuditLogController extends Controller
         }
 
         if ($request->date_from) {
-            $query->where('created_at', '>=', $request->date_from . ' 00:00:00');
+            $query->where('created_at', '>=', $request->date_from.' 00:00:00');
         }
         if ($request->date_to) {
-            $query->where('created_at', '<=', $request->date_to . ' 23:59:59');
+            $query->where('created_at', '<=', $request->date_to.' 23:59:59');
         }
 
         if ($request->search) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('action', 'LIKE', "%{$search}%")
-                  ->orWhere('description', 'LIKE', "%{$search}%")
-                  ->orWhere('model_id', 'LIKE', "%{$search}%")
-                  ->orWhereHas('user', function ($u) use ($search) {
-                      $u->where('full_name', 'LIKE', "%{$search}%")
-                        ->orWhere('phone', 'LIKE', "%{$search}%")
-                        ->orWhere('email', 'LIKE', "%{$search}%");
-                  });
+                    ->orWhere('description', 'LIKE', "%{$search}%")
+                    ->orWhere('model_id', 'LIKE', "%{$search}%")
+                    ->orWhereHas('user', function ($u) use ($search) {
+                        $u->where('full_name', 'LIKE', "%{$search}%")
+                            ->orWhere('phone', 'LIKE', "%{$search}%")
+                            ->orWhere('email', 'LIKE', "%{$search}%");
+                    });
             });
         }
 

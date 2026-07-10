@@ -43,14 +43,14 @@ class Driver extends Model
     protected function casts(): array
     {
         return [
-            'status'              => DriverStatus::class,
-            'license_expiry'      => 'date',
-            'verified_at'         => 'datetime',
+            'status' => DriverStatus::class,
+            'license_expiry' => 'date',
+            'verified_at' => 'datetime',
             'location_updated_at' => 'datetime',
-            'is_online'           => 'boolean',
-            'rating_avg'          => 'decimal:2',
-            'current_lat'         => 'decimal:8',
-            'current_lng'         => 'decimal:8',
+            'is_online' => 'boolean',
+            'rating_avg' => 'decimal:2',
+            'current_lat' => 'decimal:8',
+            'current_lng' => 'decimal:8',
         ];
     }
 
@@ -117,6 +117,6 @@ class Driver extends Model
 
     public function isLocationStale(): bool
     {
-        return !$this->location_updated_at || $this->location_updated_at->diffInSeconds() > 30;
+        return ! $this->location_updated_at || $this->location_updated_at->diffInSeconds() > 30;
     }
 }

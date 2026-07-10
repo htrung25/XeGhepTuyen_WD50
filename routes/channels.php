@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Broadcast;
 Broadcast::channel('trips.{tripId}', function ($user, string $tripId) {
     $trip = Trip::find($tripId);
 
-    if (!$trip) {
+    if (! $trip) {
         return false;
     }
 
@@ -25,9 +25,9 @@ Broadcast::channel('trips.{tripId}', function ($user, string $tripId) {
 
     // Khách có booking confirmed/checked_in cho chuyến này
     $hasBooking = Booking::where('trip_id', $tripId)
-                         ->where('user_id', $user->id)
-                         ->whereIn('booking_status', ['confirmed', 'checked_in'])
-                         ->exists();
+        ->where('user_id', $user->id)
+        ->whereIn('booking_status', ['confirmed', 'checked_in'])
+        ->exists();
 
     if ($hasBooking) {
         return ['id' => $user->id, 'name' => $user->full_name, 'role' => 'customer'];

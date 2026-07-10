@@ -10,39 +10,39 @@ class PassengerResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'booking_id'     => $this->id,
-            'booking_code'   => $this->booking_code,
+            'booking_id' => $this->id,
+            'booking_code' => $this->booking_code,
             'booking_status' => $this->booking_status->value,
-            'contact_name'   => $this->contact_name,
-            'contact_phone'  => $this->contact_phone,
-            'passenger_count'=> $this->passenger_count,
+            'contact_name' => $this->contact_name,
+            'contact_phone' => $this->contact_phone,
+            'passenger_count' => $this->passenger_count,
             'payment_method' => $this->payment_method?->value,
             'payment_status' => $this->payment_status?->value,
             // Số tiền tài xế cần thu (chỉ khi tiền mặt & chưa thanh toán)
-            'amount_due'     => ($this->payment_method?->value === 'cash'
+            'amount_due' => ($this->payment_method?->value === 'cash'
                 && $this->payment_status?->value === 'unpaid')
                 ? (int) $this->final_amount : 0,
-            'pickup_stop'    => [
-                'stop_name'    => $this->pickupStop ? $this->pickupStop->stop_name : 'Điểm đón tùy chỉnh',
+            'pickup_stop' => [
+                'stop_name' => $this->pickupStop ? $this->pickupStop->stop_name : 'Điểm đón tùy chỉnh',
                 'stop_address' => $this->pickup_address,
-                'address'      => $this->pickup_address,
-                'lat'          => (float) $this->pickup_lat,
-                'lng'          => (float) $this->pickup_lng,
+                'address' => $this->pickup_address,
+                'lat' => (float) $this->pickup_lat,
+                'lng' => (float) $this->pickup_lng,
             ],
-            'dropoff_stop'   => [
-                'stop_name'    => $this->dropoffStop ? $this->dropoffStop->stop_name : 'Điểm trả tùy chỉnh',
+            'dropoff_stop' => [
+                'stop_name' => $this->dropoffStop ? $this->dropoffStop->stop_name : 'Điểm trả tùy chỉnh',
                 'stop_address' => $this->dropoff_address,
-                'address'      => $this->dropoff_address,
-                'lat'          => (float) $this->dropoff_lat,
-                'lng'          => (float) $this->dropoff_lng,
+                'address' => $this->dropoff_address,
+                'lat' => (float) $this->dropoff_lat,
+                'lng' => (float) $this->dropoff_lng,
             ],
             'pickup_address' => $this->pickup_address,
-            'passengers'     => $this->passengers->map(fn($p) => [
+            'passengers' => $this->passengers->map(fn ($p) => [
                 'full_name' => $p->full_name,
                 'seat_code' => $p->seatMap?->seat_code,
             ]),
-            'checked_in'     => $this->booking_status->value === 'checked_in',
-            'qr_token'       => $this->qr_token,
+            'checked_in' => $this->booking_status->value === 'checked_in',
+            'qr_token' => $this->qr_token,
         ];
     }
 }

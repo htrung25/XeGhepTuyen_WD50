@@ -17,13 +17,13 @@ class AdminSeeder extends Seeder
         $admin = User::firstOrCreate(
             ['email' => 'admin@xeghep.vn'],
             [
-                'full_name'     => 'Super Admin',
-                'phone'         => '0900000000',
-                'password'      => Hash::make('Admin@123456'),
-                'role'          => UserRole::Admin,
+                'full_name' => 'Super Admin',
+                'phone' => '0900000000',
+                'password' => Hash::make('Admin@123456'),
+                'role' => UserRole::Admin,
                 'admin_role_id' => $superRole?->id,
-                'is_verified'   => true,
-                'is_active'     => true,
+                'is_verified' => true,
+                'is_active' => true,
             ]
         );
 

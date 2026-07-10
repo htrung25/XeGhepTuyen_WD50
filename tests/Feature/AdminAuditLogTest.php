@@ -4,6 +4,7 @@ use App\Enums\UserRole;
 use App\Models\AuditLog;
 use App\Models\Operator;
 use App\Models\User;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 
 function makeAuditLogAdminUser(): User
@@ -106,7 +107,7 @@ it('chan nguoi dung khong phai admin truy cap audit logs', function () {
 it('tra ve 404 khi xem audit log khong ton tai', function () {
     Sanctum::actingAs(makeAuditLogAdminUser());
 
-    $this->getJson('/api/admin/audit-logs/'.\Illuminate\Support\Str::uuid())
+    $this->getJson('/api/admin/audit-logs/'.Str::uuid())
         ->assertStatus(404)
         ->assertJsonPath('success', false);
 });

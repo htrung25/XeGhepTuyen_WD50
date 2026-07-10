@@ -2,9 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Enums\NotificationChannel;
-use App\Enums\NotificationType;
-use App\Models\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -14,9 +11,10 @@ use Illuminate\Support\Facades\Log;
 
 class SendSmsNotificationJob implements ShouldQueue
 {
-    use Queueable, InteractsWithQueue, SerializesModels;
+    use InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+
     public int $backoff = 60;
 
     public function __construct(
@@ -55,12 +53,12 @@ class SendSmsNotificationJob implements ShouldQueue
             'Content' => $this->message,
         ]);
 
-        if (!$response->successful() || ($response->json('CodeResult') ?? '') !== '100') {
+        if (! $response->successful() || ($response->json('CodeResult') ?? '') !== '100') {
             Log::warning('SMS gửi thất bại', [
                 'phone' => $this->phone,
                 'code' => $response->json('CodeResult'),
             ]);
-            $this->fail(new \RuntimeException('ESMS trả về lỗi: ' . $response->json('CodeResult')));
+            $this->fail(new \RuntimeException('ESMS trả về lỗi: '.$response->json('CodeResult')));
         }
     }
 

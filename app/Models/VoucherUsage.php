@@ -24,7 +24,7 @@ class VoucherUsage extends Model
     {
         return [
             'discount_applied' => 'integer',
-            'used_at'          => 'datetime',
+            'used_at' => 'datetime',
         ];
     }
 

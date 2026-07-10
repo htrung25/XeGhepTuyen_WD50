@@ -1,7 +1,6 @@
 <?php
 
 use App\Enums\DriverStatus;
-use App\Enums\TripStatus;
 use App\Enums\UserRole;
 use App\Models\Driver;
 use App\Models\Operator;
@@ -11,7 +10,6 @@ use App\Models\Trip;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Services\TripService;
-use Carbon\Carbon;
 
 function setupTripTestEntities(): array
 {
@@ -51,7 +49,7 @@ function setupTripTestEntities(): array
 
     $vehicle = Vehicle::create([
         'operator_id' => $operator->id,
-        'plate_number' => '29A-' . fake()->unique()->numerify('#####'),
+        'plate_number' => '29A-'.fake()->unique()->numerify('#####'),
         'brand' => 'Ford',
         'model' => 'Transit',
         'vehicle_type' => 'van_9',
@@ -62,7 +60,7 @@ function setupTripTestEntities(): array
     $driver = Driver::create([
         'user_id' => $drvUser->id,
         'operator_id' => $operator->id,
-        'license_number' => 'B2-' . fake()->unique()->numerify('######'),
+        'license_number' => 'B2-'.fake()->unique()->numerify('######'),
         'license_class' => 'D',
         'license_expiry' => now()->addYears(3),
         'id_card_number' => fake()->numerify('############'),
@@ -142,8 +140,8 @@ it('fails to create trip when driver is in different city (location mismatch)', 
 
     // Chuyến 2: HN -> HP (12:00 -> 14:30) -> Vị trí xuất phát HN không trùng với HP của chuyến trước
     $depart2 = now()->addDays(2)->setTime(12, 0);
-    
-    $this->expectException(\InvalidArgumentException::class);
+
+    $this->expectException(InvalidArgumentException::class);
     $this->expectExceptionMessage('Tài xế đang ở Hải Phòng sau chuyến trước, không thể xuất phát từ Hà Nội');
 
     $service->create([
@@ -174,7 +172,7 @@ it('fails to create trip when buffer time is less than 30 minutes', function () 
     // Chuyến 2: HP -> HN (11:59 -> 14:29) -> Giản cách 29 phút (thiếu 1 phút)
     $depart2 = now()->addDays(2)->setTime(11, 59);
 
-    $this->expectException(\InvalidArgumentException::class);
+    $this->expectException(InvalidArgumentException::class);
     $this->expectExceptionMessage('Thời gian nghỉ của tài xế giữa 2 chuyến phải tối thiểu 30 phút');
 
     $service->create([
@@ -219,7 +217,7 @@ it('fails to insert a trip between two existing trips if succeeding trip buffer 
     // Lỗi: Chuyến tiếp theo bắt đầu từ Hải Phòng nhưng chuyến chèn kết thúc tại Hà Nội!
     $depart2 = now()->addDays(2)->setTime(12, 0);
 
-    $this->expectException(\InvalidArgumentException::class);
+    $this->expectException(InvalidArgumentException::class);
     $this->expectExceptionMessage('Chuyến tiếp theo của tài xế bắt đầu từ Hải Phòng, nhưng chuyến này kết thúc tại Hà Nội');
 
     $service->create([

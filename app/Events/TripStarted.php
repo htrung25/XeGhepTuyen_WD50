@@ -3,7 +3,6 @@
 namespace App\Events;
 
 use App\Models\Trip;
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
@@ -29,8 +28,8 @@ class TripStarted implements ShouldBroadcastNow
     public function broadcastWith(): array
     {
         return [
-            'started_at'   => $this->trip->started_at?->toIso8601String(),
-            'driver_name'  => $this->trip->driver->user->full_name,
+            'started_at' => $this->trip->started_at?->toIso8601String(),
+            'driver_name' => $this->trip->driver->user->full_name,
             'plate_number' => $this->trip->vehicle->plate_number,
         ];
     }

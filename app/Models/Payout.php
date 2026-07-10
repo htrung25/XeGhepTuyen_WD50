@@ -23,7 +23,7 @@ class Payout extends Model
     protected function casts(): array
     {
         return [
-            'amount'       => 'integer',
+            'amount' => 'integer',
             'requested_at' => 'datetime',
             'processed_at' => 'datetime',
         ];

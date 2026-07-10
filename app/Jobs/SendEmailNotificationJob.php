@@ -4,7 +4,6 @@ namespace App\Jobs;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Mail\Mailable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
@@ -12,9 +11,10 @@ use Illuminate\Support\Facades\Mail;
 
 class SendEmailNotificationJob implements ShouldQueue
 {
-    use Queueable, InteractsWithQueue, SerializesModels;
+    use InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries   = 3;
+    public int $tries = 3;
+
     public int $backoff = 120;
 
     public function __construct(
@@ -30,8 +30,8 @@ class SendEmailNotificationJob implements ShouldQueue
     {
         Mail::html($this->body, function ($message) {
             $message->to($this->email)
-                    ->subject($this->subject)
-                    ->from(config('mail.from.address'), config('mail.from.name', 'XeGhep'));
+                ->subject($this->subject)
+                ->from(config('mail.from.address'), config('mail.from.name', 'XeGhep'));
         });
     }
 

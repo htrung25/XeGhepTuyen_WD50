@@ -37,8 +37,11 @@ export const driverApi = {
     logout: () => apiClient.send(logout()),
     me: () => apiClient.send(me()),
 
-    updateProfile: (data: { full_name?: string; email?: string; birth_date?: string | null }) =>
-        apiClient.send(updateProfile(), data),
+    updateProfile: (data: {
+        full_name?: string;
+        email?: string;
+        birth_date?: string | null;
+    }) => apiClient.send(updateProfile(), data),
     changePassword: (data: {
         old_password: string;
         new_password: string;

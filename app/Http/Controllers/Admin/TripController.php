@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Admin\LiveTripResource;
 use App\Http\Resources\Admin\TripResource;
 use App\Repositories\Contracts\TripRepositoryInterface;
-use App\Services\TripService;
 use App\Services\AuditLogService;
+use App\Services\TripService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -29,7 +29,7 @@ class TripController extends Controller
 
         app(AuditLogService::class)->log(
             action: 'auto_resolve_trips',
-            description: "Đã kích hoạt thủ công lệnh trips:auto-resolve xử lý các chuyến đi quá giờ"
+            description: 'Đã kích hoạt thủ công lệnh trips:auto-resolve xử lý các chuyến đi quá giờ'
         );
 
         return response()->json([

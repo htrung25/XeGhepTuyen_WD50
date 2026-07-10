@@ -11,8 +11,8 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::get('trips',            [TripSearchController::class, 'search']);
-Route::get('trips/{id}',       [TripSearchController::class, 'show']);
+Route::get('trips', [TripSearchController::class, 'search']);
+Route::get('trips/{id}', [TripSearchController::class, 'show']);
 Route::get('trips/{id}/seats', [TripSearchController::class, 'seats']);
 
 // Đăng ký trở thành đối tác nhà xe (lead — không cần đăng nhập)

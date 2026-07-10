@@ -104,15 +104,15 @@ async function saveProfile() {
     saveLoading.value = true;
     saveMsg.value = '';
     saveError.value = '';
-    
+
     const res = await driverApi.updateProfile({
         full_name: form.value.full_name,
         email: form.value.email,
         birth_date: form.value.birth_date || null,
     });
-    
+
     saveLoading.value = false;
-    
+
     if (res.error) {
         saveError.value = res.error;
         toast.error(res.error);
@@ -126,7 +126,7 @@ async function saveProfile() {
         } as any;
         auth.user = updated;
         localStorage.setItem('driver_user', JSON.stringify(updated));
-        
+
         saveMsg.value = 'Cập nhật thông tin thành công!';
         toast.success('Cập nhật thông tin thành công!');
         setTimeout(() => {
@@ -148,7 +148,7 @@ async function updatePassword() {
         toast.error('Mật khẩu phải có ít nhất 8 ký tự');
         return;
     }
-    
+
     pwLoading.value = true;
     const res = await driverApi.changePassword({
         old_password: pwForm.value.old_password,
@@ -156,12 +156,16 @@ async function updatePassword() {
         new_password_confirmation: pwForm.value.confirm_password,
     });
     pwLoading.value = false;
-    
+
     if (res.error) {
         pwError.value = res.error;
         toast.error(res.error);
     } else {
-        pwForm.value = { old_password: '', new_password: '', confirm_password: '' };
+        pwForm.value = {
+            old_password: '',
+            new_password: '',
+            confirm_password: '',
+        };
         pwMsg.value = 'Cập nhật mật khẩu thành công!';
         toast.success('Cập nhật mật khẩu thành công!');
         setTimeout(() => {

@@ -2,6 +2,7 @@
 
 use App\Enums\UserRole;
 use App\Models\User;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 
 /** Quản lý người dùng (admin): chỉ khóa KHÁCH HÀNG, atomic + thu hồi token. */
@@ -76,7 +77,7 @@ it('chặn mở khóa tài khoản đang hoạt động', function () {
 it('trả 404 code khi user không tồn tại', function () {
     actingAsUserAdmin();
 
-    $this->postJson('/api/admin/users/'.\Illuminate\Support\Str::uuid().'/ban', ['reason' => 'x'])
+    $this->postJson('/api/admin/users/'.Str::uuid().'/ban', ['reason' => 'x'])
         ->assertStatus(404)
         ->assertJsonPath('code', 'USER_NOT_FOUND');
 });

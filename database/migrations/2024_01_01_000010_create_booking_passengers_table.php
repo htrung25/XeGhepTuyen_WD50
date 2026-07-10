@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('full_name', 100)->comment('Họ tên hành khách');
             $table->string('phone', 15)->nullable();
             $table->enum('gender', ['male', 'female', 'other'])->nullable()
-                  ->comment('male=nam, female=nữ, other=khác');
+                ->comment('male=nam, female=nữ, other=khác');
             $table->boolean('is_primary')->default(false)->comment('Người đặt chính');
 
             $table->index('booking_id');

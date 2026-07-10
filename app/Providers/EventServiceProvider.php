@@ -5,7 +5,6 @@ namespace App\Providers;
 use App\Events\BookingCancelled;
 use App\Events\BookingConfirmed;
 use App\Events\DriverLocationUpdated;
-use App\Events\PaymentProcessed;
 use App\Events\TripCompleted;
 use App\Events\TripStarted;
 use App\Listeners\BroadcastDriverLocation;

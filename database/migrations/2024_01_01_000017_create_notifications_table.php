@@ -21,7 +21,7 @@ return new class extends Migration
             $table->text('body')->comment('Nội dung thông báo');
             $table->json('data')->nullable()->comment('Payload bổ sung');
             $table->enum('channel', ['push', 'sms', 'zalo', 'email', 'in_app'])
-                  ->comment('Kênh gửi thông báo');
+                ->comment('Kênh gửi thông báo');
             $table->boolean('is_read')->default(false);
             $table->timestamp('sent_at')->useCurrent();
 

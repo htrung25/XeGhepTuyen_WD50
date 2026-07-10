@@ -16,6 +16,7 @@ class Notification extends Model
     public $timestamps = false;
 
     const CREATED_AT = 'sent_at';
+
     const UPDATED_AT = null;
 
     protected $fillable = [
@@ -33,9 +34,9 @@ class Notification extends Model
     protected function casts(): array
     {
         return [
-            'type'    => NotificationType::class,
+            'type' => NotificationType::class,
             'channel' => NotificationChannel::class,
-            'data'    => 'array',
+            'data' => 'array',
             'is_read' => 'boolean',
             'sent_at' => 'datetime',
         ];

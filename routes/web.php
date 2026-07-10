@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 
 // Override Fortify: /login and /register serve the customer SPA
-Route::get('/login',    fn () => view('customer'))->name('login');
+Route::get('/login', fn () => view('customer'))->name('login');
 Route::get('/register', fn () => view('customer'));
 
 // Driver SPA
@@ -24,7 +24,7 @@ Route::get('/admin/{any?}', fn () => view('admin'))
 require __DIR__.'/settings.php';
 
 // Named stubs cho Wayfinder (Inertia scaffolding vẫn tham chiếu các tên này)
-Route::get('/',          fn () => view('customer'))->name('home');
+Route::get('/', fn () => view('customer'))->name('home');
 Route::get('/dashboard', fn () => view('customer'))->name('dashboard');
 
 // Customer SPA — catch-all (phải đặt CUỐI CÙNG, loại trừ /api/ để tránh chặn API routes)

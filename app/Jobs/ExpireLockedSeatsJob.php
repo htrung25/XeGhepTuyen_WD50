@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 
 class ExpireLockedSeatsJob implements ShouldQueue
 {
-    use Queueable, InteractsWithQueue, SerializesModels;
+    use InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
 
@@ -24,12 +24,12 @@ class ExpireLockedSeatsJob implements ShouldQueue
     public function handle(): void
     {
         $expired = SeatMap::where('status', SeatStatus::Locked)
-                          ->where('locked_at', '<', now()->subMinutes(10))
-                          ->update([
-                              'status'    => SeatStatus::Available,
-                              'locked_at' => null,
-                              'locked_by' => null,
-                          ]);
+            ->where('locked_at', '<', now()->subMinutes(10))
+            ->update([
+                'status' => SeatStatus::Available,
+                'locked_at' => null,
+                'locked_by' => null,
+            ]);
 
         Log::info("ExpireLockedSeatsJob: giải phóng {$expired} ghế hết hạn");
     }

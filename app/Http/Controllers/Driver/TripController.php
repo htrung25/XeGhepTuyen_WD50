@@ -25,28 +25,28 @@ class TripController extends Controller
         // Chỉ lọc theo ngày khi client gửi 'date' rõ ràng. Nếu không gửi (Schedule
         // tuần cần toàn bộ chuyến được phân công) thì trả tất cả, không giới hạn hôm nay.
         $resolvedDate = match (true) {
-            blank($request->date)         => null,
-            $request->date === 'today'    => today()->toDateString(),
-            default                       => $request->date,
+            blank($request->date) => null,
+            $request->date === 'today' => today()->toDateString(),
+            default => $request->date,
         };
 
         $trips = $this->tripRepo->findByDriver($driver->id, [
-            'date'   => $resolvedDate,
+            'date' => $resolvedDate,
             'status' => $request->status,
         ]);
 
         return response()->json([
             'success' => true,
-            'data'    => TripResource::collection($trips),
+            'data' => TripResource::collection($trips),
         ]);
     }
 
     public function show(string $id): JsonResponse
     {
-        $trip   = $this->tripRepo->findById($id);
+        $trip = $this->tripRepo->findById($id);
         $driver = auth('driver')->user()->driver;
 
-        if (!$trip || $trip->driver_id !== $driver->id) {
+        if (! $trip || $trip->driver_id !== $driver->id) {
             return response()->json(['success' => false, 'message' => 'Chuyến đi không tồn tại'], 404);
         }
 
@@ -55,10 +55,10 @@ class TripController extends Controller
 
     public function passengers(string $id): JsonResponse
     {
-        $trip   = $this->tripRepo->findById($id);
+        $trip = $this->tripRepo->findById($id);
         $driver = auth('driver')->user()->driver;
 
-        if (!$trip || $trip->driver_id !== $driver->id) {
+        if (! $trip || $trip->driver_id !== $driver->id) {
             return response()->json(['success' => false, 'message' => 'Chuyến đi không tồn tại'], 404);
         }
 
@@ -67,30 +67,30 @@ class TripController extends Controller
             ->with(['passengers.seatMap', 'pickupStop', 'dropoffStop'])
             ->get()
             ->flatMap(function ($booking) {
-                return $booking->passengers->map(fn($p) => [
-                    'id'              => $p->id,
-                    'booking_id'      => $booking->id,
-                    'passenger_name'  => $p->full_name,
+                return $booking->passengers->map(fn ($p) => [
+                    'id' => $p->id,
+                    'booking_id' => $booking->id,
+                    'passenger_name' => $p->full_name,
                     'passenger_phone' => $p->phone,
-                    'seat_codes'      => [$p->seatMap?->seat_code],
-                    'pickup_stop'     => [
+                    'seat_codes' => [$p->seatMap?->seat_code],
+                    'pickup_stop' => [
                         'stop_name' => $booking->pickupStop ? $booking->pickupStop->stop_name : 'Điểm đón tùy chỉnh',
-                        'address'   => $booking->pickup_address,
-                        'lat'       => (float) $booking->pickup_lat,
-                        'lng'       => (float) $booking->pickup_lng,
+                        'address' => $booking->pickup_address,
+                        'lat' => (float) $booking->pickup_lat,
+                        'lng' => (float) $booking->pickup_lng,
                     ],
-                    'dropoff_stop'    => [
+                    'dropoff_stop' => [
                         'stop_name' => $booking->dropoffStop ? $booking->dropoffStop->stop_name : 'Điểm trả tùy chỉnh',
-                        'address'   => $booking->dropoff_address,
-                        'lat'       => (float) $booking->dropoff_lat,
-                        'lng'       => (float) $booking->dropoff_lng,
+                        'address' => $booking->dropoff_address,
+                        'lat' => (float) $booking->dropoff_lat,
+                        'lng' => (float) $booking->dropoff_lng,
                     ],
-                    'booking_status'  => $booking->booking_status->value,
-                    'checked_in'      => $booking->booking_status->value === 'checked_in',
-                    'payment_method'  => $booking->payment_method?->value,
-                    'payment_status'  => $booking->payment_status->value,
+                    'booking_status' => $booking->booking_status->value,
+                    'checked_in' => $booking->booking_status->value === 'checked_in',
+                    'payment_method' => $booking->payment_method?->value,
+                    'payment_status' => $booking->payment_status->value,
                     // Tiền tài xế cần thu (chỉ tiền mặt & chưa thanh toán)
-                    'amount_due'      => ($booking->payment_method?->value === 'cash'
+                    'amount_due' => ($booking->payment_method?->value === 'cash'
                         && $booking->payment_status->value === 'unpaid')
                         ? (int) $booking->final_amount : 0,
                 ]);
@@ -98,16 +98,16 @@ class TripController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $passengers->values(),
+            'data' => $passengers->values(),
         ]);
     }
 
     public function start(string $id): JsonResponse
     {
-        $trip   = $this->tripRepo->findById($id);
+        $trip = $this->tripRepo->findById($id);
         $driver = auth('driver')->user()->driver;
 
-        if (!$trip || $trip->driver_id !== $driver->id) {
+        if (! $trip || $trip->driver_id !== $driver->id) {
             return response()->json(['success' => false, 'message' => 'Chuyến đi không tồn tại'], 404);
         }
 
@@ -117,19 +117,21 @@ class TripController extends Controller
 
         try {
             $this->tripService->startTrip($trip);
+
             return response()->json(['success' => true, 'message' => 'Chuyến đã bắt đầu']);
         } catch (\Exception $e) {
             Log::error('Trip start failed', ['error' => $e->getMessage(), 'trip' => $id]);
+
             return response()->json(['success' => false, 'message' => 'Có lỗi xảy ra'], 500);
         }
     }
 
     public function complete(string $id): JsonResponse
     {
-        $trip   = $this->tripRepo->findById($id);
+        $trip = $this->tripRepo->findById($id);
         $driver = auth('driver')->user()->driver;
 
-        if (!$trip || $trip->driver_id !== $driver->id) {
+        if (! $trip || $trip->driver_id !== $driver->id) {
             return response()->json(['success' => false, 'message' => 'Chuyến đi không tồn tại'], 404);
         }
 
@@ -139,9 +141,11 @@ class TripController extends Controller
 
         try {
             $this->tripService->completeTrip($trip);
+
             return response()->json(['success' => true, 'message' => 'Chuyến đã hoàn thành']);
         } catch (\Exception $e) {
             Log::error('Trip complete failed', ['error' => $e->getMessage(), 'trip' => $id]);
+
             return response()->json(['success' => false, 'message' => 'Có lỗi xảy ra'], 500);
         }
     }

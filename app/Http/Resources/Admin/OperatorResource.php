@@ -3,7 +3,6 @@
 namespace App\Http\Resources\Admin;
 
 use App\Http\Resources\Operator\VehicleResource;
-use App\Http\Resources\Admin\DriverResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

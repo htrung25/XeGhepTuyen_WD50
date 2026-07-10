@@ -15,41 +15,41 @@ class OperatorSeeder extends Seeder
     {
         $operatorData = [
             [
-                'user'     => [
+                'user' => [
                     'full_name' => 'Nhà xe Hoàng Long',
-                    'email'     => 'operator@hoanglongbus.vn',
-                    'phone'     => '0901234567',
-                    'password'  => Hash::make('Operator@123456'),
-                    'role'      => UserRole::Operator,
+                    'email' => 'operator@hoanglongbus.vn',
+                    'phone' => '0901234567',
+                    'password' => Hash::make('Operator@123456'),
+                    'role' => UserRole::Operator,
                     'is_verified' => true,
-                    'is_active'   => true,
+                    'is_active' => true,
                 ],
                 'operator' => [
-                    'company_name'     => 'Nhà xe Hoàng Long',
-                    'tax_code'         => '0123456789',
+                    'company_name' => 'Nhà xe Hoàng Long',
+                    'tax_code' => '0123456789',
                     'business_license' => 'GP-VCHK-001234',
-                    'status'           => OperatorStatus::Verified,
-                    'commission_rate'  => 5.00,
-                    'verified_at'      => now(),
+                    'status' => OperatorStatus::Verified,
+                    'commission_rate' => 5.00,
+                    'verified_at' => now(),
                 ],
             ],
             [
-                'user'     => [
+                'user' => [
                     'full_name' => 'Nhà xe Kumho Samco',
-                    'email'     => 'operator@kumhosamco.vn',
-                    'phone'     => '0912345678',
-                    'password'  => Hash::make('Operator@123456'),
-                    'role'      => UserRole::Operator,
+                    'email' => 'operator@kumhosamco.vn',
+                    'phone' => '0912345678',
+                    'password' => Hash::make('Operator@123456'),
+                    'role' => UserRole::Operator,
                     'is_verified' => true,
-                    'is_active'   => true,
+                    'is_active' => true,
                 ],
                 'operator' => [
-                    'company_name'     => 'Kumho Samco Express',
-                    'tax_code'         => '0987654321',
+                    'company_name' => 'Kumho Samco Express',
+                    'tax_code' => '0987654321',
                     'business_license' => 'GP-VCHK-009876',
-                    'status'           => OperatorStatus::Verified,
-                    'commission_rate'  => 5.00,
-                    'verified_at'      => now(),
+                    'status' => OperatorStatus::Verified,
+                    'commission_rate' => 5.00,
+                    'verified_at' => now(),
                 ],
             ],
         ];

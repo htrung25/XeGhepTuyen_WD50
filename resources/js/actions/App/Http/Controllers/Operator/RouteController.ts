@@ -134,7 +134,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     store.form = storeForm
 /**
 * @see \App\Http\Controllers\Operator\RouteController::show
- * @see app/Http/Controllers/Operator/RouteController.php:59
+ * @see app/Http/Controllers/Operator/RouteController.php:60
  * @route '/api/operator/routes/{id}'
  */
 export const show = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -149,7 +149,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Operator\RouteController::show
- * @see app/Http/Controllers/Operator/RouteController.php:59
+ * @see app/Http/Controllers/Operator/RouteController.php:60
  * @route '/api/operator/routes/{id}'
  */
 show.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -177,7 +177,7 @@ show.url = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\Operator\RouteController::show
- * @see app/Http/Controllers/Operator/RouteController.php:59
+ * @see app/Http/Controllers/Operator/RouteController.php:60
  * @route '/api/operator/routes/{id}'
  */
 show.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -186,7 +186,7 @@ show.get = (args: { id: string | number } | [id: string | number ] | string | nu
 })
 /**
 * @see \App\Http\Controllers\Operator\RouteController::show
- * @see app/Http/Controllers/Operator/RouteController.php:59
+ * @see app/Http/Controllers/Operator/RouteController.php:60
  * @route '/api/operator/routes/{id}'
  */
 show.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -196,7 +196,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
 
     /**
 * @see \App\Http\Controllers\Operator\RouteController::show
- * @see app/Http/Controllers/Operator/RouteController.php:59
+ * @see app/Http/Controllers/Operator/RouteController.php:60
  * @route '/api/operator/routes/{id}'
  */
     const showForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -206,7 +206,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
 
             /**
 * @see \App\Http\Controllers\Operator\RouteController::show
- * @see app/Http/Controllers/Operator/RouteController.php:59
+ * @see app/Http/Controllers/Operator/RouteController.php:60
  * @route '/api/operator/routes/{id}'
  */
         showForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -215,7 +215,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
         })
             /**
 * @see \App\Http\Controllers\Operator\RouteController::show
- * @see app/Http/Controllers/Operator/RouteController.php:59
+ * @see app/Http/Controllers/Operator/RouteController.php:60
  * @route '/api/operator/routes/{id}'
  */
         showForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -231,7 +231,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
     show.form = showForm
 /**
 * @see \App\Http\Controllers\Operator\RouteController::update
- * @see app/Http/Controllers/Operator/RouteController.php:70
+ * @see app/Http/Controllers/Operator/RouteController.php:71
  * @route '/api/operator/routes/{id}'
  */
 export const update = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -246,7 +246,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Operator\RouteController::update
- * @see app/Http/Controllers/Operator/RouteController.php:70
+ * @see app/Http/Controllers/Operator/RouteController.php:71
  * @route '/api/operator/routes/{id}'
  */
 update.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -274,7 +274,7 @@ update.url = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Http\Controllers\Operator\RouteController::update
- * @see app/Http/Controllers/Operator/RouteController.php:70
+ * @see app/Http/Controllers/Operator/RouteController.php:71
  * @route '/api/operator/routes/{id}'
  */
 update.put = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -284,7 +284,7 @@ update.put = (args: { id: string | number } | [id: string | number ] | string | 
 
     /**
 * @see \App\Http\Controllers\Operator\RouteController::update
- * @see app/Http/Controllers/Operator/RouteController.php:70
+ * @see app/Http/Controllers/Operator/RouteController.php:71
  * @route '/api/operator/routes/{id}'
  */
     const updateForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -299,7 +299,7 @@ update.put = (args: { id: string | number } | [id: string | number ] | string | 
 
             /**
 * @see \App\Http\Controllers\Operator\RouteController::update
- * @see app/Http/Controllers/Operator/RouteController.php:70
+ * @see app/Http/Controllers/Operator/RouteController.php:71
  * @route '/api/operator/routes/{id}'
  */
         updateForm.put = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -315,7 +315,7 @@ update.put = (args: { id: string | number } | [id: string | number ] | string | 
     update.form = updateForm
 /**
 * @see \App\Http\Controllers\Operator\RouteController::destroy
- * @see app/Http/Controllers/Operator/RouteController.php:87
+ * @see app/Http/Controllers/Operator/RouteController.php:88
  * @route '/api/operator/routes/{id}'
  */
 export const destroy = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -330,7 +330,7 @@ destroy.definition = {
 
 /**
 * @see \App\Http\Controllers\Operator\RouteController::destroy
- * @see app/Http/Controllers/Operator/RouteController.php:87
+ * @see app/Http/Controllers/Operator/RouteController.php:88
  * @route '/api/operator/routes/{id}'
  */
 destroy.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -358,7 +358,7 @@ destroy.url = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Http\Controllers\Operator\RouteController::destroy
- * @see app/Http/Controllers/Operator/RouteController.php:87
+ * @see app/Http/Controllers/Operator/RouteController.php:88
  * @route '/api/operator/routes/{id}'
  */
 destroy.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -368,7 +368,7 @@ destroy.delete = (args: { id: string | number } | [id: string | number ] | strin
 
     /**
 * @see \App\Http\Controllers\Operator\RouteController::destroy
- * @see app/Http/Controllers/Operator/RouteController.php:87
+ * @see app/Http/Controllers/Operator/RouteController.php:88
  * @route '/api/operator/routes/{id}'
  */
     const destroyForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -383,7 +383,7 @@ destroy.delete = (args: { id: string | number } | [id: string | number ] | strin
 
             /**
 * @see \App\Http\Controllers\Operator\RouteController::destroy
- * @see app/Http/Controllers/Operator/RouteController.php:87
+ * @see app/Http/Controllers/Operator/RouteController.php:88
  * @route '/api/operator/routes/{id}'
  */
         destroyForm.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

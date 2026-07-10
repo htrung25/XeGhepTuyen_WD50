@@ -13,6 +13,7 @@ class Review extends Model
     public $timestamps = false;
 
     const CREATED_AT = 'created_at';
+
     const UPDATED_AT = null;
 
     protected $fillable = [
@@ -30,11 +31,11 @@ class Review extends Model
     protected function casts(): array
     {
         return [
-            'driver_rating'  => 'integer',
+            'driver_rating' => 'integer',
             'vehicle_rating' => 'integer',
             'service_rating' => 'integer',
-            'is_published'   => 'boolean',
-            'created_at'     => 'datetime',
+            'is_published' => 'boolean',
+            'created_at' => 'datetime',
         ];
     }
 

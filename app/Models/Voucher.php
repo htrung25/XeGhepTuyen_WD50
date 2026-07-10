@@ -30,15 +30,15 @@ class Voucher extends Model
     protected function casts(): array
     {
         return [
-            'discount_type'  => DiscountType::class,
+            'discount_type' => DiscountType::class,
             'discount_value' => 'decimal:2',
-            'min_order'      => 'integer',
-            'max_discount'   => 'integer',
-            'usage_limit'    => 'integer',
-            'used_count'     => 'integer',
-            'valid_from'     => 'datetime',
-            'valid_until'    => 'datetime',
-            'is_active'      => 'boolean',
+            'min_order' => 'integer',
+            'max_discount' => 'integer',
+            'usage_limit' => 'integer',
+            'used_count' => 'integer',
+            'valid_from' => 'datetime',
+            'valid_until' => 'datetime',
+            'is_active' => 'boolean',
         ];
     }
 
@@ -59,9 +59,9 @@ class Voucher extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true)
-                     ->where('valid_from', '<=', now())
-                     ->where('valid_until', '>=', now())
-                     ->whereColumn('used_count', '<', 'usage_limit');
+            ->where('valid_from', '<=', now())
+            ->where('valid_until', '>=', now())
+            ->whereColumn('used_count', '<', 'usage_limit');
     }
 
     // ─── Business Methods ─────────────────────────────────────────────────────
@@ -81,6 +81,7 @@ class Voucher extends Model
 
         if ($this->discount_type === DiscountType::Percent) {
             $discount = (int) ($subtotal * $this->discount_value / 100);
+
             return $this->max_discount ? min($discount, $this->max_discount) : $discount;
         }
 

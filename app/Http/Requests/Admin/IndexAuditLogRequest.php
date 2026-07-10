@@ -21,13 +21,13 @@ class IndexAuditLogRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id'    => ['nullable', 'uuid'],
-            'action'     => ['nullable', 'string', 'max:255'],
+            'user_id' => ['nullable', 'uuid'],
+            'action' => ['nullable', 'string', 'max:255'],
             'model_type' => ['nullable', 'string', 'max:255'],
-            'date_from'  => ['nullable', 'date_format:Y-m-d'],
-            'date_to'    => ['nullable', 'date_format:Y-m-d'],
-            'search'     => ['nullable', 'string', 'max:255'],
-            'per_page'   => ['nullable', 'integer', 'min:1', 'max:100'],
+            'date_from' => ['nullable', 'date_format:Y-m-d'],
+            'date_to' => ['nullable', 'date_format:Y-m-d'],
+            'search' => ['nullable', 'string', 'max:255'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ];
     }
 }

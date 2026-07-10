@@ -30,12 +30,12 @@ class BookingController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => BookingResource::collection($bookings),
-            'meta'    => [
+            'data' => BookingResource::collection($bookings),
+            'meta' => [
                 'current_page' => $bookings->currentPage(),
-                'per_page'     => $bookings->perPage(),
-                'total'        => $bookings->total(),
-                'last_page'    => $bookings->lastPage(),
+                'per_page' => $bookings->perPage(),
+                'total' => $bookings->total(),
+                'last_page' => $bookings->lastPage(),
             ],
         ]);
     }
@@ -44,7 +44,7 @@ class BookingController extends Controller
     {
         $booking = $this->bookingRepo->findById($id);
 
-        if (!$booking || $booking->user_id !== auth('customer')->id()) {
+        if (! $booking || $booking->user_id !== auth('customer')->id()) {
             return response()->json(['success' => false, 'message' => 'Vé không tồn tại'], 404);
         }
 
@@ -68,6 +68,7 @@ class BookingController extends Controller
             return response()->json(['success' => false, 'message' => $e->getMessage(), 'code' => 'SEAT_NOT_AVAILABLE'], 422);
         } catch (\Exception $e) {
             Log::error('LockSeats failed', ['error' => $e->getMessage(), 'user' => auth('customer')->id()]);
+
             return response()->json(['success' => false, 'message' => 'Có lỗi xảy ra, vui lòng thử lại'], 500);
         }
     }
@@ -83,7 +84,7 @@ class BookingController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Đặt vé thành công',
-                'data'    => new BookingResource($booking->load(['passengers', 'pickupStop', 'trip.route'])),
+                'data' => new BookingResource($booking->load(['passengers', 'pickupStop', 'trip.route'])),
             ], 201);
         } catch (SeatNotAvailableException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage(), 'code' => 'SEAT_NOT_AVAILABLE'], 422);
@@ -93,6 +94,7 @@ class BookingController extends Controller
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         } catch (\Exception $e) {
             Log::error('Booking create failed', ['error' => $e->getMessage(), 'user' => auth('customer')->id()]);
+
             return response()->json(['success' => false, 'message' => 'Có lỗi xảy ra, vui lòng thử lại sau'], 500);
         }
     }
@@ -101,7 +103,7 @@ class BookingController extends Controller
     {
         $booking = $this->bookingRepo->findById($id);
 
-        if (!$booking || $booking->user_id !== auth('customer')->id()) {
+        if (! $booking || $booking->user_id !== auth('customer')->id()) {
             return response()->json(['success' => false, 'message' => 'Vé không tồn tại'], 404);
         }
 
@@ -111,10 +113,10 @@ class BookingController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Hủy vé thành công',
-                'data'    => [
+                'data' => [
                     'refund_percent' => $result['refund_percent'],
-                    'refund_amount'  => $result['refund_amount'],
-                    'refund_note'    => $result['refund_amount'] > 0
+                    'refund_amount' => $result['refund_amount'],
+                    'refund_note' => $result['refund_amount'] > 0
                         ? 'Tiền hoàn sẽ về ví trong 3-5 ngày làm việc'
                         : 'Không có hoàn tiền',
                 ],
@@ -123,6 +125,7 @@ class BookingController extends Controller
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         } catch (\Exception $e) {
             Log::error('Booking cancel failed', ['error' => $e->getMessage(), 'booking' => $id]);
+
             return response()->json(['success' => false, 'message' => 'Có lỗi xảy ra, vui lòng thử lại'], 500);
         }
     }
@@ -131,13 +134,13 @@ class BookingController extends Controller
     {
         $booking = $this->bookingRepo->findById($id);
 
-        if (!$booking || $booking->user_id !== auth('customer')->id()) {
+        if (! $booking || $booking->user_id !== auth('customer')->id()) {
             return response()->json(['success' => false, 'message' => 'Vé không tồn tại'], 404);
         }
 
         return response()->json([
             'success' => true,
-            'data'    => ['qr_code' => $booking->qr_code],
+            'data' => ['qr_code' => $booking->qr_code],
         ]);
     }
 }

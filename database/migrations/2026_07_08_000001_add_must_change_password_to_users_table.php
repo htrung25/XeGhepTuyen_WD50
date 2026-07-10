@@ -10,9 +10,9 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->boolean('must_change_password')
-                  ->default(false)
-                  ->after('last_login_at')
-                  ->comment('true = tài khoản đang dùng mật khẩu tạm thời, bắt buộc đổi khi đăng nhập');
+                ->default(false)
+                ->after('last_login_at')
+                ->comment('true = tài khoản đang dùng mật khẩu tạm thời, bắt buộc đổi khi đăng nhập');
         });
     }
 
