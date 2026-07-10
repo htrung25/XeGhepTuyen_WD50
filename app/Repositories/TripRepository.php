@@ -47,7 +47,12 @@ class TripRepository implements TripRepositoryInterface
         }
 
         if (!empty($filters['date'])) {
-            $query->whereDate('depart_at', $filters['date']);
+            $searchDate = \Carbon\Carbon::parse($filters['date']);
+            if ($searchDate->isToday()) {
+                $query->where('depart_at', '<=', now()->addDay()->endOfDay());
+            } else {
+                $query->whereDate('depart_at', $filters['date']);
+            }
         }
 
         $sort = $filters['sort'] ?? 'depart_asc';

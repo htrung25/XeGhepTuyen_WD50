@@ -9,6 +9,7 @@ use App\Models\Trip;
 use App\Services\AdminNotificationService;
 use App\Services\SettlementService;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -88,7 +89,7 @@ class RevenueController extends Controller
     }
 
     /** Tính khối số liệu tổng quan doanh thu cho một kỳ (dùng chung cho cache-aside ở summary). */
-    private function buildSummary(string $operatorId, float $rate, Carbon $from, Carbon $to, string $period): array
+    private function buildSummary(string $operatorId, float $rate, CarbonInterface $from, CarbonInterface $to, string $period): array
     {
         $tripIds = $this->operatorTripIds($operatorId, $from, $to);
 

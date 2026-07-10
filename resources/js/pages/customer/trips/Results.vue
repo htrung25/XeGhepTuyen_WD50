@@ -97,6 +97,13 @@ function resetFilters() {
     sortBy.value = 'depart_asc';
 }
 
+function isNextDay(departAtIso: string, searchDateStr: string) {
+    if (!departAtIso || !searchDateStr) return false;
+    const depDate = new Date(departAtIso.replace(' ', 'T')).toDateString();
+    const sDate = new Date(searchDateStr).toDateString();
+    return depDate !== sDate;
+}
+
 onMounted(async () => {
     const p = store.searchParams;
     if (!p.from_city || !p.to_city) {
@@ -376,9 +383,15 @@ onMounted(async () => {
                                 <div class="min-w-0 flex-1">
                                     <div class="mb-2 flex items-center gap-4">
                                         <div
-                                            class="text-2xl font-bold text-gray-900 tabular-nums"
+                                            class="flex items-center gap-1.5 text-2xl font-bold text-gray-900 tabular-nums"
                                         >
-                                            {{ fmtTime(trip.depart_at) }}
+                                            <span>{{ fmtTime(trip.depart_at) }}</span>
+                                            <span 
+                                                v-if="isNextDay(trip.depart_at, store.searchParams.date)" 
+                                                class="inline-flex items-center rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 uppercase tracking-wide"
+                                            >
+                                                Ngày mai
+                                            </span>
                                         </div>
                                         <div
                                             class="flex flex-1 items-center gap-2"

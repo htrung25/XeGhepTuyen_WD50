@@ -21,3 +21,14 @@ it('summary đồng bộ SettlementService + có cash_collected/settlement', fun
         ->assertJsonPath('data.cash_collected', 150000)   // tiền mặt nhà xe giữ
         ->assertJsonPath('data.settlement', 120000);      // online_net(135k) − cash_commission(15k)
 });
+
+it('summary works for period=today (reproducing the CarbonImmutable bug)', function () {
+    $operator = makeOperatorWithRevenue(online: 1, cash: 0);
+    $headers = ['Authorization' => 'Bearer '.$operator->user->createToken('operator_token')->plainTextToken];
+
+    // Clear cache first to force buildSummary execution
+    Illuminate\Support\Facades\Cache::forget("operator:{$operator->id}:revenue:summary:today");
+
+    $this->getJson('/api/operator/revenue/summary?period=today', $headers)
+        ->assertOk();
+});
