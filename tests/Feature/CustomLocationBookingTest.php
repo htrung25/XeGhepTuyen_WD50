@@ -104,4 +104,9 @@ it('allows customer to book a trip using custom pickup and dropoff coordinates',
     $detailResponse->assertJsonPath('data.pickup_stop.address', 'Số 10 Phạm Hùng, Cầu Giấy, Hà Nội');
     $detailResponse->assertJsonPath('data.dropoff_stop.stop_name', 'Điểm trả tùy chỉnh');
     $detailResponse->assertJsonPath('data.dropoff_stop.address', 'Số 20 Lạch Tray, Ngô Quyền, Hải Phòng');
+    
+    // Verify QR code and URL are present and identical
+    expect($booking->fresh()->qr_code)->not->toBeNull();
+    $detailResponse->assertJsonPath('data.qr_code', $booking->fresh()->qr_code);
+    $detailResponse->assertJsonPath('data.qr_url', $booking->fresh()->qr_code);
 });
