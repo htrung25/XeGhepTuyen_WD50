@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Operator;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * R5: daily/byRoute/byDriver gộp bằng Collection (bỏ raw SQL). R6: validate kỳ custom.
@@ -51,4 +52,14 @@ it('kỳ custom thiếu from_date → 422', function () {
 
     $this->getJson('/api/operator/revenue/summary?period=custom', opHeaders($operator))
         ->assertStatus(422);
+});
+
+it('summary kỳ cố định (month) lấy từ cache-aside Redis', function () {
+    $operator = makeOperatorWithRevenue(online: 1, cash: 0);
+    // Seed cache giá trị giả → endpoint trả đúng giá trị cached (không tính lại).
+    Cache::put("operator:{$operator->id}:revenue:summary:month", ['gross_revenue' => 777, 'period' => 'month'], 60);
+
+    $this->getJson('/api/operator/revenue/summary?period=month', opHeaders($operator))
+        ->assertOk()
+        ->assertJsonPath('data.gross_revenue', 777);
 });

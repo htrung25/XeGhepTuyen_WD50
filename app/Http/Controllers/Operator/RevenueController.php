@@ -11,6 +11,7 @@ use App\Services\SettlementService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class RevenueController extends Controller
@@ -73,49 +74,56 @@ class RevenueController extends Controller
         [$from, $to, $period] = $this->resolvePeriod($request);
         $rate = (float) $operator->commission_rate;
 
-        $tripIds = $this->operatorTripIds($operator->id, $from, $to);
+        // Cache-aside cho kỳ cố định (today/week/month) — chấp nhận cũ tối đa 60s. Kỳ custom
+        // (báo cáo ad-hoc, khoảng ngày tuỳ ý) tính trực tiếp để không sinh vô số key.
+        $data = $period === 'custom'
+            ? $this->buildSummary($operator->id, $rate, $from, $to, $period)
+            : Cache::remember(
+                "operator:{$operator->id}:revenue:summary:{$period}",
+                60,
+                fn () => $this->buildSummary($operator->id, $rate, $from, $to, $period),
+            );
 
-        // Số tiền lấy từ SettlementService — NGUỒN TÍNH DUY NHẤT (đối soát online/cash),
-        // khớp tuyệt đối với trang quyết toán/payout.
-        $s = $this->settlementService->forOperator($operator->id, $rate, $tripIds);
+        return response()->json(['success' => true, 'data' => $data]);
+    }
+
+    /** Tính khối số liệu tổng quan doanh thu cho một kỳ (dùng chung cho cache-aside ở summary). */
+    private function buildSummary(string $operatorId, float $rate, Carbon $from, Carbon $to, string $period): array
+    {
+        $tripIds = $this->operatorTripIds($operatorId, $from, $to);
+
+        // Số tiền lấy từ SettlementService — NGUỒN TÍNH DUY NHẤT (đối soát online/cash).
+        $s = $this->settlementService->forOperator($operatorId, $rate, $tripIds);
         $grossRevenue = $s['gross'];
         $commission = $s['commission'];
         $netRevenue = $grossRevenue - $commission; // doanh thu ròng = gross − hoa hồng (PRD F-O06)
 
-        // Chuyến đã hoàn thành trong kỳ
         $completedTrips = Trip::whereIn('id', $tripIds)->where('status', 'completed')
             ->with('vehicle:id,seat_count')->get();
-        $totalTrips = $completedTrips->count();
 
         // Vé thực nhận đều nằm trên chuyến đã hoàn thành → lấy MỘT lần, dùng cho cả số vé lẫn Σ khách.
         $realized = $this->realizedBookings($completedTrips->pluck('id'))->get(['id', 'passenger_count']);
-        $totalBookings = $realized->count();
         $totalPax = (int) $realized->sum('passenger_count');
 
-        // Tỷ lệ lấp đầy THẬT = Σ khách / Σ ghế (cộng ghế THEO TỪNG CHUYẾN — 1 xe chạy
-        // nhiều chuyến thì mỗi chuyến là một lượt sức chứa riêng) × 100
+        // Tỷ lệ lấp đầy THẬT = Σ khách / Σ ghế (cộng ghế THEO TỪNG CHUYẾN).
         $totalSeats = (int) $completedTrips->sum(fn ($t) => $t->vehicle->seat_count ?? 0);
         $occupancy = $totalSeats > 0 ? round($totalPax / $totalSeats * 100, 1) : 0;
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'period' => $period,
-                'from' => $from->format('Y-m-d'),
-                'to' => $to->format('Y-m-d'),
-                'total_trips' => $totalTrips,
-                'total_bookings' => $totalBookings,
-                'gross_revenue' => $grossRevenue,
-                'commission' => $commission,
-                'commission_rate' => $rate,
-                'net_revenue' => $netRevenue,
-                // Tiền mặt nhà xe đã tự thu (ngoài nền tảng) vs số nền tảng sẽ chuyển/đối soát
-                // kỳ này — giúp phân biệt "doanh thu ròng" với "số thực nhận từ nền tảng".
-                'cash_collected' => $s['cash_gross'],
-                'settlement' => $s['settlement'],
-                'avg_occupancy' => $occupancy,
-            ],
-        ]);
+        return [
+            'period' => $period,
+            'from' => $from->format('Y-m-d'),
+            'to' => $to->format('Y-m-d'),
+            'total_trips' => $completedTrips->count(),
+            'total_bookings' => $realized->count(),
+            'gross_revenue' => $grossRevenue,
+            'commission' => $commission,
+            'commission_rate' => $rate,
+            'net_revenue' => $netRevenue,
+            // Tiền mặt nhà xe đã tự thu (ngoài nền tảng) vs số nền tảng sẽ chuyển/đối soát kỳ này.
+            'cash_collected' => $s['cash_gross'],
+            'settlement' => $s['settlement'],
+            'avg_occupancy' => $occupancy,
+        ];
     }
 
     public function daily(Request $request): JsonResponse

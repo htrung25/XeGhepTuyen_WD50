@@ -21,6 +21,9 @@ use Illuminate\Support\Str;
 
 class TripService
 {
+    /** Bộ đếm "thế hệ" cache tìm chuyến — tăng khi TẬP chuyến đổi (tạo/hủy) để cache cũ tự hết hiệu lực. */
+    private const SEARCH_GEN_KEY = 'trips:search:gen';
+
     public function __construct(
         private readonly TripRepositoryInterface $tripRepo,
         private readonly BookingService $bookingService,
@@ -30,7 +33,9 @@ class TripService
     {
         // NOTE: không cache Eloquent model (cache store = database sẽ serialize model
         // và unserialize lỗi "incomplete object"). Cache danh sách ID thay thế.
-        $cacheKey = 'trips:search:'.md5(serialize($filters));
+        // Gắn "thế hệ" vào key: khi tập chuyến đổi (flushSearchCache) → key mới, cache cũ bỏ qua.
+        $gen = Cache::get(self::SEARCH_GEN_KEY, 0);
+        $cacheKey = 'trips:search:'.$gen.':'.md5(serialize($filters));
 
         $ids = Cache::remember($cacheKey, now()->addMinutes(2), function () use ($filters) {
             return $this->tripRepo->search($filters)->pluck('id')->all();
@@ -41,6 +46,12 @@ class TripService
         }
 
         return $this->tripRepo->findManyForSearch($ids);
+    }
+
+    /** Vô hiệu hoá cache tìm chuyến (gọi khi tạo/hủy chuyến — tập kết quả thay đổi). */
+    private function flushSearchCache(): void
+    {
+        Cache::increment(self::SEARCH_GEN_KEY);
     }
 
     public function create(array $data): Trip
@@ -170,6 +181,7 @@ class TripService
         ]));
 
         $this->generateSeatMap($trip, $vehicle);
+        $this->flushSearchCache(); // chuyến mới xuất hiện trong kết quả tìm ngay (không chờ TTL 2')
 
         return $trip;
     }
@@ -299,6 +311,9 @@ class TripService
                 $this->bookingService->cancelByOperator($booking, $reason, $compensate);
             }
         });
+
+        $this->flushSearchCache(); // chuyến bị hủy biến mất khỏi kết quả tìm ngay
+
     }
 
     private function generateSeatMap(Trip $trip, Vehicle $vehicle): void
