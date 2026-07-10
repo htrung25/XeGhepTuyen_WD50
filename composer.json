@@ -10,6 +10,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "aws/aws-sdk-php": "^3.388",
         "bacon/bacon-qr-code": "^3.0",
         "darkaonline/l5-swagger": "^11.1",
         "dedoc/scramble": "^0.13.30",
