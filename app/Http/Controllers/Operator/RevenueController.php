@@ -27,6 +27,14 @@ class RevenueController extends Controller
     {
         $period = $request->get('period', 'month');
 
+        // Kỳ custom: bắt buộc from_date/to_date hợp lệ (tránh Carbon::parse ném 500).
+        if ($period === 'custom') {
+            $request->validate([
+                'from_date' => ['required', 'date'],
+                'to_date' => ['required', 'date', 'after_or_equal:from_date'],
+            ]);
+        }
+
         [$from, $to] = match ($period) {
             'today' => [today(), today()->endOfDay()],
             'week' => [now()->startOfWeek(), now()->endOfWeek()],
@@ -73,17 +81,20 @@ class RevenueController extends Controller
         $grossRevenue = $s['gross'];
         $commission = $s['commission'];
         $netRevenue = $grossRevenue - $commission; // doanh thu ròng = gross − hoa hồng (PRD F-O06)
-        $totalBookings = (int) $this->realizedBookings($tripIds)->count();
 
         // Chuyến đã hoàn thành trong kỳ
         $completedTrips = Trip::whereIn('id', $tripIds)->where('status', 'completed')
             ->with('vehicle:id,seat_count')->get();
         $totalTrips = $completedTrips->count();
 
+        // Vé thực nhận đều nằm trên chuyến đã hoàn thành → lấy MỘT lần, dùng cho cả số vé lẫn Σ khách.
+        $realized = $this->realizedBookings($completedTrips->pluck('id'))->get(['id', 'passenger_count']);
+        $totalBookings = $realized->count();
+        $totalPax = (int) $realized->sum('passenger_count');
+
         // Tỷ lệ lấp đầy THẬT = Σ khách / Σ ghế (cộng ghế THEO TỪNG CHUYẾN — 1 xe chạy
         // nhiều chuyến thì mỗi chuyến là một lượt sức chứa riêng) × 100
         $totalSeats = (int) $completedTrips->sum(fn ($t) => $t->vehicle->seat_count ?? 0);
-        $totalPax = (int) $this->realizedBookings($completedTrips->pluck('id'))->sum('passenger_count');
         $occupancy = $totalSeats > 0 ? round($totalPax / $totalSeats * 100, 1) : 0;
 
         return response()->json([
@@ -113,18 +124,18 @@ class RevenueController extends Controller
         [$from, $to] = $this->resolvePeriod($request);
         $tripIds = $this->operatorTripIds($operator->id, $from, $to);
 
-        // Nhóm theo NGÀY CHẠY (trips.depart_at) — đồng bộ với summary
+        // Nhóm theo NGÀY CHẠY (trips.depart_at) bằng Collection — không dùng raw SQL.
         $daily = $this->realizedBookings($tripIds)
-            ->join('trips', 'bookings.trip_id', '=', 'trips.id')
-            ->selectRaw('DATE(trips.depart_at) as date, COUNT(*) as total_bookings, SUM(bookings.final_amount) as revenue')
-            ->groupByRaw('DATE(trips.depart_at)')
-            ->orderBy('date')
-            ->get()
-            ->map(fn ($r) => [
-                'date' => $r->date,
-                'total_bookings' => (int) $r->total_bookings,
-                'revenue' => (int) $r->revenue,
-            ]);
+            ->with('trip:id,depart_at')
+            ->get(['id', 'trip_id', 'final_amount'])
+            ->groupBy(fn ($b) => $b->trip->depart_at->toDateString())
+            ->map(fn ($g, $date) => [
+                'date' => $date,
+                'total_bookings' => $g->count(),
+                'revenue' => (int) $g->sum('final_amount'),
+            ])
+            ->sortKeys()
+            ->values();
 
         return response()->json(['success' => true, 'data' => $daily]);
     }
@@ -135,19 +146,22 @@ class RevenueController extends Controller
         [$from, $to] = $this->resolvePeriod($request);
         $tripIds = $this->operatorTripIds($operator->id, $from, $to);
 
+        // Gộp theo tuyến bằng Collection — không dùng raw SQL.
         $rows = $this->realizedBookings($tripIds)
-            ->join('trips', 'bookings.trip_id', '=', 'trips.id')
-            ->join('routes', 'trips.route_id', '=', 'routes.id')
-            ->selectRaw('routes.id as route_id, routes.origin_city, routes.dest_city,
-                         COUNT(*) as total_bookings, SUM(bookings.final_amount) as revenue')
-            ->groupBy('routes.id', 'routes.origin_city', 'routes.dest_city')
-            ->orderByDesc('revenue')
-            ->get()
-            ->map(fn ($r) => [
-                'name' => "{$r->origin_city} → {$r->dest_city}",
-                'total_bookings' => (int) $r->total_bookings,
-                'revenue' => (int) $r->revenue,
-            ]);
+            ->with('trip.route')
+            ->get(['id', 'trip_id', 'final_amount'])
+            ->groupBy(fn ($b) => $b->trip->route_id)
+            ->map(function ($g) {
+                $route = $g->first()->trip->route;
+
+                return [
+                    'name' => "{$route->origin_city} → {$route->dest_city}",
+                    'total_bookings' => $g->count(),
+                    'revenue' => (int) $g->sum('final_amount'),
+                ];
+            })
+            ->sortByDesc('revenue')
+            ->values();
 
         return response()->json(['success' => true, 'data' => $rows]);
     }
@@ -158,19 +172,18 @@ class RevenueController extends Controller
         [$from, $to] = $this->resolvePeriod($request);
         $tripIds = $this->operatorTripIds($operator->id, $from, $to);
 
+        // Gộp theo tài xế bằng Collection — không dùng raw SQL.
         $rows = $this->realizedBookings($tripIds)
-            ->join('trips', 'bookings.trip_id', '=', 'trips.id')
-            ->join('drivers', 'trips.driver_id', '=', 'drivers.id')
-            ->join('users', 'drivers.user_id', '=', 'users.id')
-            ->selectRaw('users.full_name as name, COUNT(*) as total_bookings, SUM(bookings.final_amount) as revenue')
-            ->groupBy('drivers.id', 'users.full_name')
-            ->orderByDesc('revenue')
-            ->get()
-            ->map(fn ($r) => [
-                'name' => $r->name,
-                'total_bookings' => (int) $r->total_bookings,
-                'revenue' => (int) $r->revenue,
-            ]);
+            ->with('trip.driver.user')
+            ->get(['id', 'trip_id', 'final_amount'])
+            ->groupBy(fn ($b) => $b->trip->driver_id)
+            ->map(fn ($g) => [
+                'name' => $g->first()->trip->driver->user->full_name,
+                'total_bookings' => $g->count(),
+                'revenue' => (int) $g->sum('final_amount'),
+            ])
+            ->sortByDesc('revenue')
+            ->values();
 
         return response()->json(['success' => true, 'data' => $rows]);
     }
