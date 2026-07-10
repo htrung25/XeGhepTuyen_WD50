@@ -17,17 +17,14 @@ let map: any = null;
 let driverMarker: any = null;
 let echoChannel: any = null;
 
-const stops = [
-    { label: 'Mỹ Đình', status: 'done', time: '06:05' },
-    { label: 'Cầu Giấy', status: 'current', time: '~06:15', you: true },
-    { label: 'Gia Lâm', status: 'upcoming', time: '~06:35' },
-    {
-        label: 'Trung tâm HP',
-        status: 'upcoming',
-        time: '~08:00',
-        destination: true,
-    },
-];
+interface TimelineStop {
+    label: string;
+    status: 'done' | 'current' | 'upcoming';
+    time: string;
+    you?: boolean;
+    destination?: boolean;
+}
+const stops = ref<TimelineStop[]>([]);
 
 function initMap(lat: number, lng: number) {
     if (!(window as any).google || !mapRef.value) return;
@@ -98,10 +95,19 @@ onMounted(async () => {
     }
     tracking.value = data;
 
+    // Timeline lộ trình từ BE: giờ đã qua giữ nguyên, giờ dự kiến thêm "~"
+    stops.value = (data?.stops ?? []).map((s: any) => ({
+        label: s.name,
+        status: s.status,
+        time: s.status === 'done' ? s.time : `~${s.time}`,
+        you: s.is_your_pickup,
+        destination: s.is_your_dropoff,
+    }));
+
     if (data?.driver_lat && data?.driver_lng) {
         driverLat.value = data.driver_lat;
         driverLng.value = data.driver_lng;
-        etaMinutes.value = data.eta_minutes;
+        etaMinutes.value = data.eta_minutes ?? null;
         lastUpdate.value = new Date().toLocaleTimeString('vi-VN', {
             hour: '2-digit',
             minute: '2-digit',
@@ -290,6 +296,7 @@ onUnmounted(() => {
 
                 <!-- Stop timeline -->
                 <div
+                    v-if="stops.length"
                     class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
                 >
                     <h3 class="mb-4 text-sm font-semibold text-gray-900">
