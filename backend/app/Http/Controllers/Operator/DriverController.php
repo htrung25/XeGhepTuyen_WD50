@@ -38,7 +38,7 @@ class DriverController extends Controller
     {
         $validated = $request->validate([
             'full_name' => ['required', 'string', 'min:2', 'max:100'],
-            'phone' => ['required', 'regex:/^(0[3|5|7|8|9])+([0-9]{8})$/', 'unique:users,phone'],
+            'phone' => ['required', 'regex:/^(0[35789])[0-9]{8}$/', 'unique:users,phone'],
             'email' => ['nullable', 'email', 'max:100', 'unique:users,email'],
             'license_number' => ['required', 'string', 'max:20', 'unique:drivers,license_number'],
             'license_class' => ['required', 'in:B2,C,D,E'],
