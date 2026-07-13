@@ -28,14 +28,14 @@ class PaymentController extends Controller
             'method' => ['required', 'in:momo,vnpay,zalopay,wallet,cash'],
         ]);
 
-        $booking = Booking::findOrFail($request->booking_id);
+        $booking = Booking::findOrFail($request->input('booking_id'));
 
         if ($booking->user_id !== auth('customer')->id()) {
             return response()->json(['success' => false, 'message' => 'Không có quyền truy cập'], 403);
         }
 
         try {
-            $result = $this->paymentService->initiate($booking, PaymentMethod::from($request->method));
+            $result = $this->paymentService->initiate($booking, PaymentMethod::from($request->input('method')));
 
             return response()->json([
                 'success' => true,
@@ -47,7 +47,7 @@ class PaymentController extends Controller
         } catch (InsufficientBalanceException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage(), 'code' => 'INSUFFICIENT_BALANCE'], 422);
         } catch (\Exception $e) {
-            Log::error('Payment initiate failed', ['error' => $e->getMessage(), 'booking' => $request->booking_id]);
+            Log::error('Payment initiate failed', ['error' => $e->getMessage(), 'booking' => $request->input('booking_id')]);
 
             return response()->json(['success' => false, 'message' => 'Không thể khởi tạo thanh toán, vui lòng thử lại'], 500);
         }
