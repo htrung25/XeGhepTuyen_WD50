@@ -104,6 +104,14 @@ onMounted(async () => {
     seats.value = seatsRes.data ?? [];
     tripInfo.value = tripRes.data ?? null;
 
+    if (store.bookingDraft.trip_id === tripId) {
+        const draftSeatCodes = store.bookingDraft.seat_codes ?? [];
+        selected.value = draftSeatCodes.filter((code) => {
+            const seat = seats.value.find((s) => s.seat_code === code);
+            return seat && seat.status === 'available';
+        });
+    }
+
     // WebSocket real-time seat updates
     if ((window as any).Echo) {
         echoChannel = (window as any).Echo.channel(`trips.${tripId}`).listen(

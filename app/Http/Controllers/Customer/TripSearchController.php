@@ -88,12 +88,15 @@ class TripSearchController extends Controller
             return response()->json(['success' => false, 'message' => 'Chuyến đi không tồn tại'], 404);
         }
 
+        $customerId = auth('customer')->id();
         $seats = $trip->seatMaps->map(fn ($seat) => [
             'id' => $seat->id,
             'seat_code' => $seat->seat_code,
             'seat_type' => $seat->seat_type->value,
             'price' => $seat->price,
-            'status' => $seat->isLockExpired() ? 'available' : $seat->status->value,
+            'status' => ($seat->status === \App\Enums\SeatStatus::Locked && $seat->locked_by === $customerId && !$seat->isLockExpired())
+                ? 'available'
+                : ($seat->isLockExpired() ? 'available' : $seat->status->value),
         ]);
 
         return response()->json(['success' => true, 'data' => $seats]);

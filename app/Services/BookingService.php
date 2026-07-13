@@ -291,6 +291,15 @@ class BookingService
     public function lockSeats(array $seatIds, string $userId, string $tripId): void
     {
         DB::transaction(function () use ($seatIds, $userId, $tripId) {
+            // Giải phóng toàn bộ ghế cũ đang được giữ bởi user này (tránh treo ghế rác và tự chặn chính mình)
+            SeatMap::where('locked_by', $userId)
+                ->where('status', SeatStatus::Locked)
+                ->update([
+                    'status' => SeatStatus::Available,
+                    'locked_at' => null,
+                    'locked_by' => null,
+                ]);
+
             $seats = SeatMap::whereIn('id', $seatIds)
                 ->where('trip_id', $tripId)
                 ->lockForUpdate()
