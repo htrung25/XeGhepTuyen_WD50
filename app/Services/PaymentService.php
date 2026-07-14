@@ -33,6 +33,12 @@ class PaymentService
             throw new BookingExpiredException;
         }
 
+        // Chỉ vé đang CHỜ mới được thanh toán. Chặn thanh toán lại vé đã xác nhận/
+        // đã thanh toán/đã hủy/hoàn tất → tránh tạo payment trùng, đặc biệt ví bị TRỪ 2 lần.
+        if ($booking->booking_status !== BookingStatus::Pending) {
+            throw new \InvalidArgumentException('Vé này không ở trạng thái chờ thanh toán');
+        }
+
         // Chuyến đã khởi hành → không cho thanh toán/confirm (tránh tạo vé "mồ côi")
         if ($booking->trip->depart_at->isPast()) {
             throw new \InvalidArgumentException('Chuyến đã khởi hành, không thể thanh toán vé này');

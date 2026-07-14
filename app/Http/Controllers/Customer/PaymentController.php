@@ -31,7 +31,7 @@ class PaymentController extends Controller
         $booking = Booking::findOrFail($request->input('booking_id'));
 
         if ($booking->user_id !== auth('customer')->id()) {
-            return response()->json(['success' => false, 'message' => 'Không có quyền truy cập'], 403);
+            return response()->json(['success' => false, 'message' => 'Không có quyền truy cập', 'code' => 'FORBIDDEN'], 403);
         }
 
         try {
@@ -46,6 +46,9 @@ class PaymentController extends Controller
             return response()->json(['success' => false, 'message' => $e->getMessage(), 'code' => 'BOOKING_EXPIRED'], 422);
         } catch (InsufficientBalanceException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage(), 'code' => 'INSUFFICIENT_BALANCE'], 422);
+        } catch (\InvalidArgumentException $e) {
+            // Vé không ở trạng thái chờ / chuyến đã khởi hành / phương thức không hỗ trợ
+            return response()->json(['success' => false, 'message' => $e->getMessage(), 'code' => 'PAYMENT_NOT_ALLOWED'], 422);
         } catch (\Exception $e) {
             Log::error('Payment initiate failed', ['error' => $e->getMessage(), 'booking' => $request->input('booking_id')]);
 

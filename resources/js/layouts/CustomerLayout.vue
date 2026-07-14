@@ -14,6 +14,7 @@ const mobileMenu = ref(false);
 const navLinks = [
     { label: 'Trang chủ', path: '/home' },
     { label: 'Lịch trình', path: '/bookings' },
+    { label: 'Hỗ trợ', path: '/support' },
     { label: 'Về chúng tôi', path: '#about' },
 ];
 

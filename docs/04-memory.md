@@ -826,8 +826,40 @@ Note     : Còn AuthenticationTest + SecurityTest (settings/password) là starte
            chạy test (che mất :memory:). 4 lỗi TS có sẵn ở LiveMap.vue/TripDetail.vue không
            chặn vite build (build không type-check).
 
-**Template để AI Agent ghi lỗi:**
-```
+### 2026-07-13 — Lỗi: Truy cập thuộc tính protected trong PaymentController
+File     : app/Http/Controllers/Customer/PaymentController.php
+Vấn đề   : Cố gắng truy cập thuộc tính động `$request->method` bị static analyzer báo lỗi vi phạm do trùng tên với thuộc tính `protected $method` của lớp cha Symfony Request.
+Giải pháp: Chuyển đổi toàn bộ việc đọc thuộc tính động sang phương thức chuẩn của Laravel: `$request->input('method')` và `$request->input('booking_id')`.
+Note     : Tránh truy cập thuộc tính động trùng tên với các phương thức/thuộc tính nội bộ của Request như `method`, `user`, `routes`... Hãy dùng `$request->input(...)`.
+
+### 2026-07-13 — Lỗi: Sập API đặt vé (lỗi 500) khi deploy lên Laravel Cloud do thiếu Imagick
+File     : app/Services/QrCodeService.php
+Vấn đề   : `QrCodeService` sử dụng `ImagickImageBackEnd` để vẽ ảnh QR code PNG. Môi trường production của Laravel Cloud không cài sẵn extension PHP `imagick` của hệ thống, dẫn đến lỗi fatal `Class 'Imagick' not found` gây sập request (500) khi người dùng hoàn tất thông tin đặt vé.
+Giải pháp: Thay thế `ImagickImageBackEnd` bằng `SvgImageBackEnd` (thuần PHP, không có dependency hệ thống). Định dạng file QR code chuyển sang `.svg` nhẹ và sắc nét hơn.
+
+### 2026-07-13 — Lỗi: Kẹt giao diện sơ đồ ghế (deadlock) khi Back từ Checkout về SeatPicker
+File     : app/Http/Controllers/Customer/TripSearchController.php, app/Services/BookingService.php, resources/js/pages/customer/trips/SeatPicker.vue
+Vấn đề   :
+           1. Khi người dùng nhấn Quay lại từ màn hình Checkout, giỏ hàng tạm được giữ nhưng mảng `selected` bị xóa sạch. Ghế đã khóa trong DB vẫn ghi nhận của họ nhưng API sơ đồ ghế trả về trạng thái `'locked'`. Giao diện hiển thị ghế màu vàng và bị vô hiệu hóa, khiến họ không thể chọn lại ghế mình đang giữ.
+           2. Khi gọi lại `lockSeats` cho các ghế cũ đang giữ, hệ thống ném ra lỗi "Ghế không còn trống" do tự chặn chính mình.
+           3. Đổi ghế hoặc đổi chuyến xe không tự động giải phóng ghế cũ gây treo chiếm dụng ghế.
+Giải pháp:
+           1. API trả về trạng thái `'available'` đối với các ghế do chính user hiện tại đang giữ khóa (khóa chưa hết hạn).
+           2. Hàm `lockSeats` tự động giải phóng toàn bộ ghế đang giữ của user trước khi thực hiện khóa mới (giải quyết cả việc treo ghế rác lẫn lỗi re-lock).
+           3. Frontend `SeatPicker.vue` khôi phục lại mảng `selected` từ `store.bookingDraft.seat_codes` lúc khởi tạo trang.
+Test     : tests/Feature/SeatLockingBugFixTest.php
+
+### 2026-07-10 — Lỗi: Operator bị mất kết nối dữ liệu Dashboard & Doanh thu
+File     : app/Http/Controllers/Operator/RevenueController.php, tests/Feature/RevenueSummaryTest.php
+Vấn đề   : `period=today` sử dụng các hàm ngày của Laravel 11 trả về đối tượng kiểu `CarbonImmutable`, trong khi signature của hàm `buildSummary()` yêu cầu bắt buộc nhận `Carbon\Carbon` (Mutable). Điều này gây ra lỗi `TypeError` sập API (500) khi nhà xe tải trang dashboard.
+Giải pháp: Thay đổi type hint trong signature của `buildSummary()` thành `\Carbon\CarbonInterface` (được triển khai bởi cả `Carbon` và `CarbonImmutable`).
+Test     : tests/Feature/RevenueSummaryTest.php
+
+### 2026-07-10 — Lỗi: Không thể tìm thấy vé xe khi đặt muộn vào đêm khuya (23-24h)
+File     : app/Repositories/TripRepository.php, resources/js/pages/customer/trips/Results.vue, tests/Feature/TripSearchTodayTest.php
+Vấn đề   : Khi người dùng tìm vé đi "Hôm nay" vào lúc đêm muộn (ví dụ 23h30), hệ thống chỉ lọc chính xác ngày (`whereDate('depart_at', today)`). Kết hợp với ràng buộc lead time > 30 phút, toàn bộ các chuyến hôm nay đều quá hạn đặt, trả về 0 kết quả và che giấu các chuyến rạng sáng mai chỉ cách đó 1-2 tiếng.
+Giải pháp: Khi tìm kiếm ngày "Hôm nay" (`isToday()`), mở rộng phạm vi truy vấn đến hết ngày mai (`now()->addDay()->endOfDay()`). Trên giao diện `Results.vue`, bổ sung huy hiệu màu cam "Ngày mai" bên cạnh giờ khởi hành để tránh gây nhầm lẫn cho khách hàng.
+Test     : tests/Feature/TripSearchTodayTest.php
 
 **Template để AI Agent ghi lỗi:**
 ```

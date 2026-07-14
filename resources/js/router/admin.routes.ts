@@ -84,6 +84,16 @@ export const adminRoutes: RouteRecordRaw[] = [
                 component: () => import('@/pages/admin/Profile.vue'),
                 meta: { title: 'Thông tin cá nhân' },
             },
+            {
+                path: 'support',
+                component: () => import('@/pages/admin/Support/Index.vue'),
+                meta: { title: 'Hỗ trợ khách hàng', permission: 'support.view' },
+            },
+            {
+                path: 'support/:id',
+                component: () => import('@/pages/admin/Support/Detail.vue'),
+                meta: { title: 'Chi tiết ticket', permission: 'support.view' },
+            },
         ],
     },
 ];

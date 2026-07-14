@@ -77,6 +77,16 @@ export const customerRoutes: RouteRecordRaw[] = [
                 component: () => import('@/pages/customer/Profile.vue'),
                 meta: { requiresAuth: true },
             },
+            {
+                path: 'support',
+                component: () => import('@/pages/customer/support/Index.vue'),
+                meta: { requiresAuth: true },
+            },
+            {
+                path: 'support/:id',
+                component: () => import('@/pages/customer/support/Detail.vue'),
+                meta: { requiresAuth: true },
+            },
         ],
     },
     { path: '/:pathMatch(.*)*', redirect: '/home' },
