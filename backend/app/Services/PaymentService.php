@@ -7,6 +7,7 @@ use App\Enums\BookingStatusEnum;
 use App\Enums\NotificationTypeEnum;
 use App\Enums\PaymentMethodEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\TripStatusEnum;
 use App\Events\BookingConfirmedEvent;
 use App\Events\PaymentProcessedEvent;
 use App\Exceptions\BookingExpiredException;
@@ -52,8 +53,11 @@ class PaymentService
                 throw new \InvalidArgumentException('Vé này không ở trạng thái chờ thanh toán');
             }
 
-            // Chuyến đã khởi hành → không cho thanh toán/confirm (tránh tạo vé "mồ côi")
-            if ($trip->depart_at->isPast()) {
+            // Chuyến đã khởi hành → không cho thanh toán/confirm (tránh tạo vé "mồ côi").
+            // Tài xế có thể bấm "bắt đầu chuyến" SỚM hơn depart_at (startTrip không giới hạn
+            // thời gian) nên chỉ check depart_at->isPast() là chưa đủ — phải check cả status
+            // thực tế của chuyến, vì booking có thể được tạo TỪ TRƯỚC lúc chuyến còn Scheduled.
+            if ($trip->status !== TripStatusEnum::Scheduled || $trip->depart_at->isPast()) {
                 throw new \InvalidArgumentException('Chuyến đã khởi hành, không thể thanh toán vé này');
             }
 
