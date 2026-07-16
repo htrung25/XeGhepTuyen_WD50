@@ -1314,9 +1314,7 @@ onMounted(fetchTrips);
                                                         detailTrip.available_seats
                                                     }}
                                                     /
-                                                    {{
-                                                        detailTrip.total_seats
-                                                    }}
+                                                    {{ detailTrip.total_seats }}
                                                     ghế
                                                 </p>
                                             </div>

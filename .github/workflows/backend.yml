@@ -1,4 +1,4 @@
-name: tests
+name: backend
 
 on:
   push:
@@ -6,19 +6,45 @@ on:
       - develop
       - main
       - master
-      - workos
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
   pull_request:
     branches:
       - develop
       - main
       - master
-      - workos
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
 
 permissions:
   contents: read
 
+defaults:
+  run:
+    working-directory: backend
+
 jobs:
-  ci:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@7c071dfe9dc99bdf297fa79cb49ea005b9fcadbc # v2
+        with:
+          php-version: '8.4'
+
+      - name: Install Dependencies
+        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+      - name: Run Pint
+        run: composer lint:check
+
+  tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -37,14 +63,6 @@ jobs:
           tools: composer:v2
           coverage: xdebug
 
-      - name: Setup Node
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-        with:
-          node-version: '22'
-
-      - name: Install Node Dependencies
-        run: npm i
-
       - name: Install Dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
@@ -53,9 +71,6 @@ jobs:
 
       - name: Generate Application Key
         run: php artisan key:generate
-
-      - name: Build Assets
-        run: npm run build
 
       - name: Tests
         run: ./vendor/bin/pest
