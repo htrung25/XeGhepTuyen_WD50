@@ -1,11 +1,18 @@
 import axios from 'axios';
 import { toast } from 'vue-sonner';
 
-// Origin của backend Laravel (không kèm /api). Local: http://localhost:8000,
-// production: https://api.<domain>. Route Wayfinder đã chứa sẵn path /api/...
-// nên chỉ cần ghép origin (xem apiClient.send bên dưới).
-export const API_ORIGIN =
-    import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
+// Origin của backend Laravel (không kèm /api). Biến môi trường luôn được ưu
+// tiên; fallback production giữ bản deploy Vercel kết nối đúng Laravel Cloud
+// ngay cả khi VITE_API_BASE_URL chưa được khai báo trên project.
+const DEFAULT_API_ORIGIN = import.meta.env.PROD
+    ? 'https://api-xegheptuyen-production-qdbif7.laravel.cloud'
+    : 'http://localhost:8000';
+
+export const API_ORIGIN = (
+    import.meta.env.VITE_API_BASE_URL || DEFAULT_API_ORIGIN
+)
+    .replace(/\/+$/, '')
+    .replace(/\/api$/, '');
 
 const http = axios.create({
     baseURL: `${API_ORIGIN}/api`,
