@@ -34,7 +34,7 @@ async function handleLogin() {
 </script>
 
 <template>
-    <div class="flex min-h-screen">
+    <div class="flex min-h-dvh">
         <!-- ─── Left panel (ẩn trên mobile) ──────────────────────────────── -->
         <div
             class="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-blue-800 via-blue-700 to-blue-500 p-12 lg:flex lg:w-1/2"
@@ -300,7 +300,9 @@ async function handleLogin() {
         </div>
 
         <!-- ─── Right panel — form ────────────────────────────────────────── -->
-        <div class="flex flex-1 items-center justify-center bg-gray-50 p-6">
+        <div
+            class="flex flex-1 items-center justify-center bg-gray-50 p-4 sm:p-6"
+        >
             <div class="w-full max-w-md">
                 <!-- Logo (chỉ hiện trên mobile khi left panel ẩn) -->
                 <div
@@ -326,7 +328,7 @@ async function handleLogin() {
 
                 <!-- Card -->
                 <div
-                    class="rounded-2xl border border-gray-100 bg-white p-8 shadow-sm"
+                    class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-8"
                 >
                     <div class="mb-7">
                         <h1 class="text-2xl font-bold text-gray-900">
@@ -440,7 +442,11 @@ async function handleLogin() {
                                 <button
                                     type="button"
                                     @click="showPw = !showPw"
-                                    class="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 transition-colors hover:text-gray-600"
+                                    class="absolute top-1/2 right-1 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-gray-400 transition-colors hover:text-gray-600 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                                    :aria-label="
+                                        showPw ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'
+                                    "
+                                    :aria-pressed="showPw"
                                 >
                                     <svg
                                         v-if="!showPw"

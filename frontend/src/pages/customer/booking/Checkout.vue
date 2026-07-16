@@ -144,7 +144,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="mx-auto max-w-5xl px-6 py-8">
+    <div class="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
         <!-- Step indicator -->
         <div class="mb-8 flex items-center justify-center gap-2">
             <div
@@ -196,7 +196,10 @@ onUnmounted(() => {
             />
         </div>
 
-        <div v-else class="grid grid-cols-[1fr_340px] gap-8">
+        <div
+            v-else
+            class="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px] lg:gap-8"
+        >
             <!-- ─── LEFT: Form ─────────────────────────────── -->
             <div class="space-y-5">
                 <!-- Contact info -->
@@ -206,7 +209,7 @@ onUnmounted(() => {
                     <h2 class="mb-4 font-semibold text-gray-900">
                         Thông tin liên hệ
                     </h2>
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
                             <label
                                 class="mb-1.5 block text-sm font-medium text-gray-700"
@@ -338,7 +341,7 @@ onUnmounted(() => {
                     <h2 class="mb-4 font-semibold text-gray-900">
                         Mã giảm giá
                     </h2>
-                    <div class="flex gap-3">
+                    <div class="flex flex-col gap-3 sm:flex-row">
                         <input
                             v-model="draft.voucher_code"
                             type="text"
@@ -371,7 +374,7 @@ onUnmounted(() => {
             </div>
 
             <!-- ─── RIGHT: Order Summary ────────────────────── -->
-            <div class="sticky top-20">
+            <div class="lg:sticky lg:top-20">
                 <div
                     class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
                 >
