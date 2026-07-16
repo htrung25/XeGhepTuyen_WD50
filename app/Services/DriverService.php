@@ -8,6 +8,7 @@ use App\Jobs\SendSmsNotificationJob;
 use App\Models\Driver;
 use App\Models\Operator;
 use App\Models\User;
+use DomainException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -71,9 +72,18 @@ class DriverService
     {
         $tempPassword = $this->generateTempPassword();
 
+        // Lock the driver row and re-check status inside the transaction so two
+        // admins approving at the same time can't both pass the guard (TOCTOU)
+        // and each issue a password + SMS + audit log.
         DB::transaction(function () use ($driver, $tempPassword) {
-            $driver->update(['status' => DriverStatus::Verified, 'verified_at' => now()]);
-            $driver->user->update([
+            $locked = Driver::whereKey($driver->getKey())->lockForUpdate()->firstOrFail();
+
+            if ($locked->status !== DriverStatus::Pending) {
+                throw new DomainException('Tài xế này không ở trạng thái chờ duyệt');
+            }
+
+            $locked->update(['status' => DriverStatus::Verified, 'verified_at' => now()]);
+            $locked->user->update([
                 'password' => $tempPassword,
                 'is_active' => true,
                 'must_change_password' => true,   // bắt buộc đổi MK khi đăng nhập lần đầu
