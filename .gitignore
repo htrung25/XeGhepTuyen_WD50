@@ -1,34 +1,21 @@
-/.phpunit.cache
-/bootstrap/ssr
-/node_modules
-/public/build
-/public/fonts-manifest.dev.json
-/public/hot
-/public/storage
-/storage/*.key
-/storage/pail
-/vendor
+# macOS
 .DS_Store
-.env
-.env.backup
-.env.production
-.phpactor.json
-.phpunit.result.cache
-Homestead.json
-Homestead.yaml
-npm-debug.log
-yarn-error.log
-/auth.json
+
+# IDE
 /.fleet
 /.idea
 /.nova
 /.vscode
 /.zed
+.phpactor.json
 
+# Logs
+npm-debug.log
+yarn-error.log
+
+# Node (tooling tạm ở root — sẽ chuyển vào frontend/)
+/node_modules
+
+# Misc
+dump.rdb
 testsprite_tests/tmp/config.json
-
-# Playwright
-/test-results
-/playwright-report
-/blob-report
-/playwright/.cache
