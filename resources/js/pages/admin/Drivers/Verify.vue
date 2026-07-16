@@ -12,6 +12,7 @@ interface DriverDoc {
     photo_url: string;
     operator_name: string;
     status: string;
+    reject_reason?: string | null;
     created_at: string;
     documents: {
         id_card_front?: string;
@@ -26,7 +27,7 @@ interface DriverDoc {
 const drivers = ref<DriverDoc[]>([]);
 const isLoading = ref(true);
 const errorMsg = ref('');
-type TabKey = 'all' | 'pending' | 'verified' | 'suspended';
+type TabKey = 'all' | 'pending' | 'verified' | 'suspended' | 'rejected';
 
 const activeTab = ref<TabKey>('pending');
 const search = ref('');
@@ -48,6 +49,7 @@ const tabs: { key: TabKey; label: string }[] = [
     { key: 'pending', label: 'Chờ duyệt' },
     { key: 'verified', label: 'Đã duyệt' },
     { key: 'suspended', label: 'Đình chỉ' },
+    { key: 'rejected', label: 'Đã từ chối' },
 ];
 
 const statusMap: Record<string, { label: string; class: string }> = {
@@ -534,6 +536,22 @@ onMounted(loadDrivers);
                                 </svg>
                                 Hạng phù hợp
                             </span>
+                        </div>
+
+                        <div
+                            v-if="d.status === 'rejected' && d.reject_reason"
+                            class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3"
+                        >
+                            <p
+                                class="text-xs font-semibold tracking-wide text-red-700 uppercase"
+                            >
+                                Lý do từ chối
+                            </p>
+                            <p
+                                class="mt-1 text-sm break-words whitespace-pre-wrap text-red-800"
+                            >
+                                {{ d.reject_reason }}
+                            </p>
                         </div>
                     </div>
 
