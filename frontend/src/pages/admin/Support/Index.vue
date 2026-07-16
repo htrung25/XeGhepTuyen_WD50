@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { watchDebounced } from '@vueuse/core';
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { watchDebounced } from '@vueuse/core';
 
 const router = useRouter();
 

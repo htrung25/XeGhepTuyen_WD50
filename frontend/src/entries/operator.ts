@@ -1,3 +1,4 @@
+import '../css/app.css';
 import { createPinia } from 'pinia';
 import { createApp } from 'vue';
 import OperatorApp from '@/OperatorApp.vue';

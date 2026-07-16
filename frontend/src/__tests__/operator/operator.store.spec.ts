@@ -35,6 +35,7 @@ describe('useOperatorStore', () => {
         const trips = [makeTrip('1', '2026-06-20 06:00:00')];
         vi.mocked(operatorApi.getTrips).mockResolvedValue({
             data: trips,
+            meta: null,
             message: null,
             error: null,
         });

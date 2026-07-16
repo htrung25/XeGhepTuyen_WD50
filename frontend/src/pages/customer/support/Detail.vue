@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRouter } from 'vue-router';
 import { useCustomerAuthStore } from '@/stores/customer.auth.store';
 
-const route = useRoute();
 const router = useRouter();
 const auth = useCustomerAuthStore();
 
@@ -33,7 +32,6 @@ interface SupportTicket {
 }
 
 // ─── State ─────────────────────────────────────────────────────────────────
-const ticketId = computed(() => route.params.id as string);
 const ticket = ref<SupportTicket | null>(null);
 const loading = ref(true);
 const replyText = ref('');

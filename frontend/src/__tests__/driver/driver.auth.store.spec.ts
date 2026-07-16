@@ -8,9 +8,11 @@ const user = {
     phone: '0923456789',
     email: null,
     avatar_url: null,
+    birth_date: null,
     rating_avg: 4.8,
     total_trips: 120,
     is_verified: true,
+    must_change_password: false,
 };
 
 const driverInfo = {

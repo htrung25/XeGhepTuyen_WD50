@@ -54,7 +54,11 @@ describe('apiClient envelope handling', () => {
 
         const res = await apiClient.get('/admin/finance/summary');
 
-        expect(res).toEqual({ data: { total_revenue: 999 }, error: null });
+        expect(res).toEqual({
+            data: { total_revenue: 999 },
+            meta: null,
+            error: null,
+        });
     });
 
     it('returns the server message on POST success alongside data', async () => {

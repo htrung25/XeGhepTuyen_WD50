@@ -29,6 +29,7 @@ describe('useAdminStore', () => {
     it('fetchDashboard maps data.stats into state and toggles isLoading', async () => {
         vi.mocked(adminApi.getDashboard).mockResolvedValue({
             data: { stats },
+            meta: null,
             message: null,
             error: null,
         });
@@ -54,6 +55,7 @@ describe('useAdminStore', () => {
         ];
         vi.mocked(adminApi.getOperators).mockResolvedValue({
             data: operators,
+            meta: null,
             message: null,
             error: null,
         });
@@ -70,6 +72,7 @@ describe('useAdminStore', () => {
     it('decrement helpers reduce the pending counters without going below zero', async () => {
         vi.mocked(adminApi.getDashboard).mockResolvedValue({
             data: { stats: { ...stats, pending_operators: 1 } },
+            meta: null,
             message: null,
             error: null,
         });

@@ -1,8 +1,14 @@
 import axios from 'axios';
 import { toast } from 'vue-sonner';
 
+// Origin của backend Laravel (không kèm /api). Local: http://localhost:8000,
+// production: https://api.<domain>. Route Wayfinder đã chứa sẵn path /api/...
+// nên chỉ cần ghép origin (xem apiClient.send bên dưới).
+export const API_ORIGIN =
+    import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
+
 const http = axios.create({
-    baseURL: '/api',
+    baseURL: `${API_ORIGIN}/api`,
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
 });
 
@@ -144,8 +150,8 @@ export const apiClient = {
 
     // ─── Wayfinder-driven requests ───────────────────────────────────────────
     // Accept a generated route object ({ url, method }); route.url already holds
-    // the full `/api/...` path, so we override the instance baseURL to '' to
-    // avoid a double `/api/api` prefix. Same envelope/401 handling as above.
+    // the full `/api/...` path, so we override the instance baseURL to API_ORIGIN
+    // to avoid a double `/api/api` prefix. Same envelope/401 handling as above.
     async send<T = any>(
         route: { url: string; method: string },
         payload?: unknown,
@@ -160,7 +166,7 @@ export const apiClient = {
             const res = await http.request<any>({
                 url: route.url,
                 method: route.method,
-                baseURL: '',
+                baseURL: API_ORIGIN,
                 ...(payload !== undefined ? { data: payload } : {}),
                 ...(opts?.blob ? { responseType: 'blob' as const } : {}),
             });
@@ -199,7 +205,7 @@ export const apiClient = {
                 success: boolean;
                 data: T;
                 message?: string;
-            }>(route.url, formData, { baseURL: '' });
+            }>(route.url, formData, { baseURL: API_ORIGIN });
             return {
                 data: res.data?.data ?? null,
                 message: res.data?.message ?? null,

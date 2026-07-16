@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { useCustomerAuthStore } from '@/stores/customer.auth.store';
 
 const router = useRouter();
-const auth = useCustomerAuthStore();
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed';

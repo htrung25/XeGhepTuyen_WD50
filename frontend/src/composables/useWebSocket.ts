@@ -1,6 +1,7 @@
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 import { onUnmounted } from 'vue';
+import { API_ORIGIN } from '@/api/client';
 
 declare global {
     interface Window {
@@ -41,7 +42,7 @@ function getEcho(): Echo<'reverb'> | null {
         wssPort: Number(port),
         forceTLS: scheme === 'https',
         enabledTransports: ['ws', 'wss'],
-        authEndpoint: '/api/broadcasting/auth',
+        authEndpoint: `${API_ORIGIN}/api/broadcasting/auth`,
         auth: {
             headers: {
                 Authorization: `Bearer ${
