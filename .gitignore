@@ -32,3 +32,4 @@ testsprite_tests/tmp/config.json
 /playwright-report
 /blob-report
 /playwright/.cache
+dump.rdb
