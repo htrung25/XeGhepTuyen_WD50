@@ -140,7 +140,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="mx-auto max-w-5xl px-6 py-8">
+    <div class="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
         <!-- Breadcrumb -->
         <nav class="mb-6 flex items-center gap-2 text-sm text-gray-500">
             <router-link
@@ -182,7 +182,10 @@ onUnmounted(() => {
             </button>
         </div>
 
-        <div v-else class="grid grid-cols-[1fr_340px] gap-8">
+        <div
+            v-else
+            class="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px] lg:gap-8"
+        >
             <!-- ─── LEFT: Trip info + Seat map ────────────── -->
             <div class="space-y-6">
                 <!-- Trip info card -->
@@ -356,7 +359,7 @@ onUnmounted(() => {
             </div>
 
             <!-- ─── RIGHT: Order Summary ───────────────────── -->
-            <div class="sticky top-20">
+            <div class="lg:sticky lg:top-20">
                 <div
                     class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
                 >

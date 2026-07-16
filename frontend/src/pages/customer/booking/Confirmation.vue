@@ -52,7 +52,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="mx-auto max-w-5xl px-6 py-12">
+    <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
         <!-- Loading -->
         <div v-if="isLoading" class="flex justify-center py-20">
             <div
@@ -320,7 +320,7 @@ onMounted(async () => {
             </div>
 
             <!-- Bottom actions -->
-            <div class="mt-8 flex gap-4">
+            <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:gap-4">
                 <router-link
                     v-if="booking?.id"
                     :to="`/customer/bookings/${booking.id}/track`"

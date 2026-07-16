@@ -181,7 +181,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="mx-auto max-w-5xl px-6 py-8">
+    <div class="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
         <!-- Step indicator -->
         <div class="mb-8 flex items-center justify-center gap-2">
             <div
@@ -224,7 +224,7 @@ onUnmounted(() => {
             </div>
         </div>
 
-        <div class="grid grid-cols-[1fr_340px] gap-8">
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px] lg:gap-8">
             <!-- ─── LEFT: Payment Methods ──────────────────── -->
             <div class="space-y-4">
                 <h2 class="text-lg font-bold text-gray-900">
@@ -353,7 +353,7 @@ onUnmounted(() => {
             </div>
 
             <!-- ─── RIGHT: Order Summary ────────────────────── -->
-            <div class="sticky top-20">
+            <div class="lg:sticky lg:top-20">
                 <div
                     class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
                 >

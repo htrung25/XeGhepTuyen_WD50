@@ -126,7 +126,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="mx-auto max-w-5xl px-6 py-8">
+    <div class="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
         <!-- Title row -->
         <div class="mb-6 flex items-center justify-between">
             <div>
@@ -169,7 +169,7 @@ onUnmounted(() => {
             </router-link>
         </div>
 
-        <div v-else class="grid grid-cols-[1fr_340px] gap-6">
+        <div v-else class="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
             <!-- ─── LEFT: Map ──────────────────────────────── -->
             <div class="space-y-4">
                 <!-- Map container -->

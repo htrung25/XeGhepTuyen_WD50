@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { customerApi } from '@/api/customer.api';
 import { useCustomerAuthStore } from '@/stores/customer.auth.store';
@@ -28,17 +28,24 @@ async function logout() {
     auth.logout();
     router.push('/login');
 }
+
+watch(
+    () => route.fullPath,
+    () => {
+        mobileMenu.value = false;
+    },
+);
 </script>
 
 <template>
-    <div class="flex min-h-screen flex-col bg-slate-50">
+    <div class="flex min-h-dvh flex-col bg-slate-50">
         <!-- ─── Desktop Header ───────────────────────────────────── -->
         <header
             v-if="!hideHeader"
             class="sticky top-0 z-50 border-b border-slate-200 bg-white shadow-sm"
         >
             <div
-                class="mx-auto flex h-16 max-w-7xl items-center justify-between px-6"
+                class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6"
             >
                 <!-- Logo -->
                 <router-link
@@ -59,9 +66,12 @@ async function logout() {
                         </svg>
                     </div>
                     <span
-                        class="text-base font-extrabold text-slate-950 sm:text-lg"
+                        class="text-sm font-extrabold text-slate-950 sm:text-lg"
                     >
-                        Xe ghép tuyến <span class="text-blue-600">FGroup</span>
+                        Xe ghép tuyến
+                        <span class="hidden text-blue-600 min-[360px]:inline"
+                            >FGroup</span
+                        >
                     </span>
                 </router-link>
 
@@ -110,9 +120,9 @@ async function logout() {
                         >
                             Vé của tôi
                         </router-link>
-                        <div
-                            class="flex cursor-pointer items-center gap-2"
-                            @click="router.push('/profile')"
+                        <router-link
+                            to="/profile"
+                            class="flex items-center gap-2 rounded-lg px-2 py-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
                         >
                             <div
                                 class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100"
@@ -124,7 +134,7 @@ async function logout() {
                             <span class="text-sm font-medium text-gray-700">{{
                                 auth.user?.full_name?.split(' ').pop()
                             }}</span>
-                        </div>
+                        </router-link>
                         <button
                             @click="logout"
                             class="px-2 py-1 text-sm text-gray-500 transition-colors hover:text-red-500"
@@ -152,9 +162,13 @@ async function logout() {
                 <button
                     @click="mobileMenu = !mobileMenu"
                     type="button"
-                    aria-label="Mở menu điều hướng"
+                    :aria-label="
+                        mobileMenu
+                            ? 'Đóng menu điều hướng'
+                            : 'Mở menu điều hướng'
+                    "
                     :aria-expanded="mobileMenu"
-                    class="rounded-lg p-2 hover:bg-gray-100 md:hidden"
+                    class="flex size-11 items-center justify-center rounded-lg hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 md:hidden"
                 >
                     <svg
                         class="h-5 w-5 text-gray-600"
@@ -175,36 +189,60 @@ async function logout() {
             <!-- Mobile menu dropdown -->
             <div
                 v-if="mobileMenu"
-                class="space-y-1 border-t border-gray-100 bg-white px-4 py-3 md:hidden"
+                class="space-y-1 border-t border-gray-100 bg-white px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden"
             >
                 <router-link
                     v-for="link in navLinks"
                     :key="link.path"
                     :to="link.path"
                     @click="mobileMenu = false"
-                    class="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    :class="[
+                        'flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-medium',
+                        isActive(link.path)
+                            ? 'bg-blue-50 text-blue-700'
+                            : 'text-gray-700 hover:bg-gray-50',
+                    ]"
                 >
                     {{ link.label }}
                 </router-link>
                 <router-link
                     to="/partner"
                     @click="mobileMenu = false"
-                    class="block rounded-lg px-3 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50"
+                    class="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50"
                 >
                     Trở thành đối tác
                 </router-link>
-                <div class="flex gap-2 border-t border-gray-100 pt-2">
+                <template v-if="auth.isAuthenticated">
+                    <router-link
+                        to="/profile"
+                        class="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    >
+                        Hồ sơ của tôi
+                    </router-link>
+                    <router-link
+                        to="/bookings"
+                        class="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    >
+                        Vé của tôi
+                    </router-link>
+                    <button
+                        type="button"
+                        class="flex min-h-11 w-full items-center rounded-lg border-t border-gray-100 px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50"
+                        @click="logout"
+                    >
+                        Đăng xuất
+                    </button>
+                </template>
+                <div v-else class="flex gap-2 border-t border-gray-100 pt-2">
                     <router-link
                         to="/login"
-                        @click="mobileMenu = false"
-                        class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-center text-sm font-medium"
+                        class="flex min-h-11 flex-1 items-center justify-center rounded-lg border border-gray-300 px-3 py-2 text-center text-sm font-medium"
                     >
                         Đăng nhập
                     </router-link>
                     <router-link
                         to="/register"
-                        @click="mobileMenu = false"
-                        class="flex-1 rounded-lg bg-blue-600 px-3 py-2 text-center text-sm font-medium text-white"
+                        class="flex min-h-11 flex-1 items-center justify-center rounded-lg bg-blue-600 px-3 py-2 text-center text-sm font-medium text-white"
                     >
                         Đăng ký
                     </router-link>
@@ -222,7 +260,7 @@ async function logout() {
             v-if="!hideHeader"
             class="mt-auto bg-gray-900 py-12 text-gray-300"
         >
-            <div class="mx-auto max-w-7xl px-6">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6">
                 <div class="mb-8 grid grid-cols-1 gap-8 md:grid-cols-4">
                     <div class="md:col-span-2">
                         <div class="mb-3 flex items-center gap-2">

@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import { customerApi } from '@/api/customer.api';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 
 type BookingTab = 'upcoming' | 'past' | 'cancelled';
 interface Booking {
@@ -110,17 +118,23 @@ onMounted(() => loadBookings('upcoming'));
 </script>
 
 <template>
-    <div class="mx-auto max-w-5xl px-6 py-8">
+    <div class="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
         <h1 class="mb-6 text-2xl font-bold text-gray-900">Vé của tôi</h1>
 
         <!-- Tabs -->
-        <div class="mb-6 flex gap-0 border-b border-gray-200">
+        <div
+            class="mb-6 flex overflow-x-auto border-b border-gray-200"
+            role="tablist"
+            aria-label="Lọc lịch sử đặt vé"
+        >
             <button
                 v-for="tab in tabs"
                 :key="tab.key"
+                role="tab"
+                :aria-selected="activeTab === tab.key"
                 @click="activeTab = tab.key"
                 :class="[
-                    '-mb-px border-b-2 px-6 py-3 text-sm font-semibold transition-colors',
+                    '-mb-px min-h-11 shrink-0 border-b-2 px-4 py-3 text-sm font-semibold transition-colors sm:px-6',
                     activeTab === tab.key
                         ? tab.color + ' bg-white'
                         : 'border-transparent text-gray-500 hover:text-gray-700',
@@ -211,7 +225,9 @@ onMounted(() => loadBookings('upcoming'));
                 :key="b.id"
                 class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:shadow-md"
             >
-                <div class="flex items-start gap-5">
+                <div
+                    class="flex flex-col items-start gap-4 sm:flex-row sm:gap-5"
+                >
                     <!-- Left: code + status -->
                     <div class="w-36 shrink-0 border-r border-gray-100 pr-5">
                         <p
@@ -335,7 +351,8 @@ onMounted(() => loadBookings('upcoming'));
                 <button
                     @click="loadBookings(activeTab, currentPage - 1)"
                     :disabled="currentPage <= 1"
-                    class="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 transition-colors hover:bg-gray-50 disabled:opacity-40"
+                    aria-label="Trang trước"
+                    class="flex size-11 items-center justify-center rounded-lg border border-gray-300 transition-colors hover:bg-gray-50 disabled:opacity-40"
                 >
                     ‹
                 </button>
@@ -345,37 +362,47 @@ onMounted(() => loadBookings('upcoming'));
                 <button
                     @click="loadBookings(activeTab, currentPage + 1)"
                     :disabled="currentPage >= totalPages"
-                    class="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 transition-colors hover:bg-gray-50 disabled:opacity-40"
+                    aria-label="Trang sau"
+                    class="flex size-11 items-center justify-center rounded-lg border border-gray-300 transition-colors hover:bg-gray-50 disabled:opacity-40"
                 >
                     ›
                 </button>
             </div>
         </div>
 
-        <!-- Cancel confirmation modal -->
-        <div
-            v-if="cancelTarget"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        <Dialog
+            :open="cancelTarget !== null"
+            @update:open="(open) => !open && (cancelTarget = null)"
         >
-            <div class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
-                <h3 class="mb-2 text-lg font-bold text-gray-900">
-                    Xác nhận hủy vé
-                </h3>
-                <p class="mb-6 text-sm text-gray-600">
-                    Bạn chắc chắn muốn hủy vé này? Tiền hoàn sẽ được xử lý theo
-                    chính sách hoàn tiền của XeGhep.vn.
-                </p>
-                <div class="flex gap-3">
+            <DialogContent
+                class="max-h-[calc(100dvh-2rem)] max-w-sm overflow-y-auto pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+                :show-close-button="!cancelLoading"
+            >
+                <DialogHeader>
+                    <DialogTitle class="text-balance"
+                        >Xác nhận hủy vé</DialogTitle
+                    >
+                    <DialogDescription class="text-pretty text-gray-600">
+                        Bạn chắc chắn muốn hủy vé này? Tiền hoàn sẽ được xử lý
+                        theo chính sách hoàn tiền của XeGhep.vn.
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter
+                    class="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2"
+                >
                     <button
+                        type="button"
                         @click="cancelTarget = null"
-                        class="flex-1 rounded-xl border border-gray-300 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                        :disabled="cancelLoading"
+                        class="min-h-11 rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
                     >
                         Không, giữ vé
                     </button>
                     <button
+                        type="button"
                         @click="cancelBooking"
                         :disabled="cancelLoading"
-                        class="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-60"
+                        class="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-60"
                     >
                         <div
                             v-if="cancelLoading"
@@ -385,8 +412,8 @@ onMounted(() => loadBookings('upcoming'));
                             cancelLoading ? 'Đang hủy...' : 'Hủy vé'
                         }}</span>
                     </button>
-                </div>
-            </div>
-        </div>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </div>
 </template>

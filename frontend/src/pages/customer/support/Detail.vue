@@ -206,7 +206,7 @@ onMounted(() => loadTicket());
 </script>
 
 <template>
-    <div class="min-h-screen bg-slate-50 pb-16">
+    <div class="min-h-dvh bg-slate-50 pb-16">
         <!-- Breadcrumb -->
         <div class="flex items-center gap-2 px-4 py-4 text-sm">
             <button

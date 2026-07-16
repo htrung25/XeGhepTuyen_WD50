@@ -114,7 +114,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="mx-auto max-w-5xl px-6 py-8">
+    <div class="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
         <h1 class="mb-6 text-2xl font-bold text-gray-900">Tài khoản của tôi</h1>
 
         <!-- Loading -->
@@ -124,7 +124,10 @@ onMounted(async () => {
             />
         </div>
 
-        <div v-else class="grid grid-cols-[280px_1fr] gap-8">
+        <div
+            v-else
+            class="grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr] lg:gap-8"
+        >
             <!-- ─── LEFT: Sidebar menu ─────────────────────── -->
             <aside>
                 <!-- User card -->
@@ -194,7 +197,7 @@ onMounted(async () => {
                             Thông tin cá nhân
                         </h2>
 
-                        <div class="mb-4 grid grid-cols-2 gap-4">
+                        <div class="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <label
                                     class="mb-1.5 block text-sm font-medium text-gray-700"
@@ -266,7 +269,9 @@ onMounted(async () => {
                     </div>
 
                     <!-- Stats row -->
-                    <div class="grid grid-cols-3 gap-4">
+                    <div
+                        class="grid grid-cols-1 gap-3 min-[360px]:grid-cols-3 sm:gap-4"
+                    >
                         <div
                             v-for="stat in [
                                 {

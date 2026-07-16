@@ -127,7 +127,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="mx-auto max-w-7xl px-6 py-8">
+    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
         <!-- Page title row -->
         <div class="mb-6 flex items-center justify-between">
             <div>
@@ -158,7 +158,7 @@ onMounted(async () => {
             </router-link>
         </div>
 
-        <div class="flex gap-6">
+        <div class="flex flex-col gap-6 lg:flex-row">
             <!-- ─── LEFT SIDEBAR: Filters ─────────────────── -->
             <aside class="w-64 shrink-0">
                 <div
