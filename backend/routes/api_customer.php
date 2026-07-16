@@ -5,6 +5,7 @@ use App\Http\Controllers\Customer\BookingController;
 use App\Http\Controllers\Customer\NotificationController;
 use App\Http\Controllers\Customer\PaymentController;
 use App\Http\Controllers\Customer\ReviewController;
+use App\Http\Controllers\Customer\SupportController;
 use App\Http\Controllers\Customer\TrackingController;
 use App\Http\Controllers\Customer\TripSearchController;
 use App\Http\Controllers\Customer\VoucherController;
@@ -73,4 +74,11 @@ Route::middleware(['auth:sanctum', 'role:customer'])->group(function () {
     Route::get('notifications', [NotificationController::class, 'index']);
     Route::put('notifications/{id}/read', [NotificationController::class, 'markRead']);
     Route::put('notifications/read-all', [NotificationController::class, 'markAllRead']);
+
+    // Support tickets
+    Route::get('support/tickets', [SupportController::class, 'index']);
+    Route::post('support/tickets', [SupportController::class, 'store']);
+    Route::get('support/tickets/{id}', [SupportController::class, 'show']);
+    Route::post('support/tickets/{id}/reply', [SupportController::class, 'reply']);
+    Route::post('support/tickets/{id}/close', [SupportController::class, 'close']);
 });

@@ -121,6 +121,6 @@ class SupportTicketService
             $seq = ((int) substr($last, 3)) + 1;
         }
 
-        return 'TK-' . str_pad((string) $seq, 6, '0', STR_PAD_LEFT);
+        return 'TK-'.str_pad((string) $seq, 6, '0', STR_PAD_LEFT);
     }
 }

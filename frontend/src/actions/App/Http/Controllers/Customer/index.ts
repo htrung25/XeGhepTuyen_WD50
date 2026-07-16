@@ -7,6 +7,7 @@ import WalletController from './WalletController'
 import VoucherController from './VoucherController'
 import ReviewController from './ReviewController'
 import NotificationController from './NotificationController'
+import SupportController from './SupportController'
 
 const Customer = {
     TripSearchController: Object.assign(TripSearchController, TripSearchController),
@@ -18,6 +19,7 @@ const Customer = {
     VoucherController: Object.assign(VoucherController, VoucherController),
     ReviewController: Object.assign(ReviewController, ReviewController),
     NotificationController: Object.assign(NotificationController, NotificationController),
+    SupportController: Object.assign(SupportController, SupportController),
 }
 
 export default Customer

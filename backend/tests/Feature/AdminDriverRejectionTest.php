@@ -81,4 +81,3 @@ it('không cho từ chối lại tài xế không còn ở trạng thái chờ d
     'đình chỉ' => DriverStatus::Suspended,
     'đã từ chối' => DriverStatus::Rejected,
 ]);
-

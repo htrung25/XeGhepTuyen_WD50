@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Customer;
 
+use App\Enums\SeatStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Customer\TripSearchResource;
 use App\Repositories\Contracts\TripRepositoryInterface;
@@ -94,7 +95,7 @@ class TripSearchController extends Controller
             'seat_code' => $seat->seat_code,
             'seat_type' => $seat->seat_type->value,
             'price' => $seat->price,
-            'status' => ($seat->status === \App\Enums\SeatStatus::Locked && $seat->locked_by === $customerId && !$seat->isLockExpired())
+            'status' => ($seat->status === SeatStatus::Locked && $seat->locked_by === $customerId && ! $seat->isLockExpired())
                 ? 'available'
                 : ($seat->isLockExpired() ? 'available' : $seat->status->value),
         ]);

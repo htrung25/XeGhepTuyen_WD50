@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\OperatorController;
 use App\Http\Controllers\Admin\PartnerApplicationController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\SupportController;
 use App\Http\Controllers\Admin\TripController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VoucherController;
@@ -125,4 +126,13 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('admin-staff/{id}/ban', [AdminStaffController::class, 'ban'])->middleware('permission:admin_staff.manage');
     Route::post('admin-staff/{id}/unban', [AdminStaffController::class, 'unban'])->middleware('permission:admin_staff.manage');
     Route::post('admin-staff/{id}/reset-password', [AdminStaffController::class, 'resetPassword'])->middleware('permission:admin_staff.manage');
+
+    // Support tickets — AdminPermission chưa có key support.*, tạm thời chỉ
+    // cô lập bằng role:admin của group (mọi admin đều xử lý được ticket)
+    Route::get('support/tickets', [SupportController::class, 'index']);
+    Route::get('support/tickets/{id}', [SupportController::class, 'show']);
+    Route::post('support/tickets/{id}/reply', [SupportController::class, 'reply']);
+    Route::post('support/tickets/{id}/assign', [SupportController::class, 'assign']);
+    Route::post('support/tickets/{id}/resolve', [SupportController::class, 'resolve']);
+    Route::post('support/tickets/{id}/close', [SupportController::class, 'close']);
 });

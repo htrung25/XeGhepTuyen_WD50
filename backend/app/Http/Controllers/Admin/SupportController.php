@@ -84,7 +84,7 @@ class SupportController extends Controller
             'user:id,full_name,phone,email',
             'messages' => function ($query) {
                 $query->orderBy('created_at', 'asc');
-            }
+            },
         ])->findOrFail($id);
 
         return response()->json([

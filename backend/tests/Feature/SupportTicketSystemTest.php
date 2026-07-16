@@ -5,25 +5,27 @@ use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Enums\UserRole;
 use App\Models\Booking;
+use App\Models\Driver;
 use App\Models\Operator;
 use App\Models\Route;
+use App\Models\RouteStop;
 use App\Models\SupportTicket;
+use App\Models\Trip;
 use App\Models\User;
 use App\Models\Vehicle;
-use App\Models\Driver;
 use Laravel\Sanctum\Sanctum;
 
 function setupSupportTestContext(): array
 {
     $customer = User::factory()->create(['role' => UserRole::Customer]);
     $admin = User::factory()->create(['role' => UserRole::Admin, 'admin_role_id' => superAdminRole()->id]);
-    
+
     // Create a booking for the customer to test booking association
     $opUser = User::factory()->create(['role' => UserRole::Operator]);
     $operator = Operator::create([
         'user_id' => $opUser->id,
         'company_name' => 'Xe Ghep Support Test Company',
-        'business_license' => 'GP-' . rand(1000, 9999),
+        'business_license' => 'GP-'.rand(1000, 9999),
         'status' => 'verified',
     ]);
     $route = Route::create([
@@ -31,11 +33,11 @@ function setupSupportTestContext(): array
         'name' => 'Hà Nội - Hải Phòng',
         'origin_city' => 'Hà Nội',
         'dest_city' => 'Hải Phòng',
-        'base_price' => 150000
+        'base_price' => 150000,
     ]);
     $vehicle = Vehicle::create([
         'operator_id' => $operator->id,
-        'plate_number' => '30A-' . rand(10000, 99999),
+        'plate_number' => '30A-'.rand(10000, 99999),
         'brand' => 'Ford',
         'model' => 'Transit',
         'vehicle_type' => 'van_9',
@@ -45,13 +47,13 @@ function setupSupportTestContext(): array
     $driver = Driver::create([
         'user_id' => $drvUser->id,
         'operator_id' => $operator->id,
-        'license_number' => 'B2-' . rand(100000, 999999),
+        'license_number' => 'B2-'.rand(100000, 999999),
         'license_class' => 'B2',
         'license_expiry' => now()->addYears(3),
         'id_card_number' => '999999999999',
         'status' => 'verified',
     ]);
-    $trip = \App\Models\Trip::create([
+    $trip = Trip::create([
         'route_id' => $route->id,
         'vehicle_id' => $vehicle->id,
         'driver_id' => $driver->id,
@@ -61,8 +63,8 @@ function setupSupportTestContext(): array
         'price' => 150000,
         'status' => 'scheduled',
     ]);
-    
-    $stop1 = \App\Models\RouteStop::create([
+
+    $stop1 = RouteStop::create([
         'route_id' => $route->id,
         'stop_name' => 'Mỹ Đình',
         'address' => 'Hà Nội',
@@ -72,7 +74,7 @@ function setupSupportTestContext(): array
         'is_pickup' => true,
         'is_dropoff' => false,
     ]);
-    $stop2 = \App\Models\RouteStop::create([
+    $stop2 = RouteStop::create([
         'route_id' => $route->id,
         'stop_name' => 'An Dương',
         'address' => 'Hải Phòng',
@@ -84,7 +86,7 @@ function setupSupportTestContext(): array
     ]);
 
     $booking = Booking::create([
-        'booking_code' => 'XG-' . rand(100000, 999999),
+        'booking_code' => 'XG-'.rand(100000, 999999),
         'user_id' => $customer->id,
         'trip_id' => $trip->id,
         'pickup_stop_id' => $stop1->id,
@@ -103,7 +105,7 @@ function setupSupportTestContext(): array
 
 it('allows customer to create a support ticket with a start message', function () {
     [$customer, $admin, $booking] = setupSupportTestContext();
-    
+
     Sanctum::actingAs($customer);
     auth()->guard('customer')->setUser($customer);
 
@@ -154,7 +156,7 @@ it('prevents customer from linking ticket to a booking owned by someone else', f
 
 it('allows customer to view and reply to their own support ticket', function () {
     [$customer, $admin] = setupSupportTestContext();
-    
+
     Sanctum::actingAs($customer);
     auth()->guard('customer')->setUser($customer);
 

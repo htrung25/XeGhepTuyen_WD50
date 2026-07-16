@@ -12,6 +12,7 @@ import VoucherController from './VoucherController'
 import AuditLogController from './AuditLogController'
 import RoleController from './RoleController'
 import AdminStaffController from './AdminStaffController'
+import SupportController from './SupportController'
 
 const Admin = {
     AuthController: Object.assign(AuthController, AuthController),
@@ -28,6 +29,7 @@ const Admin = {
     AuditLogController: Object.assign(AuditLogController, AuditLogController),
     RoleController: Object.assign(RoleController, RoleController),
     AdminStaffController: Object.assign(AdminStaffController, AdminStaffController),
+    SupportController: Object.assign(SupportController, SupportController),
 }
 
 export default Admin
