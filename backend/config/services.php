@@ -60,7 +60,7 @@ return [
         'access_key' => env('MOMO_ACCESS_KEY'),
         'secret_key' => env('MOMO_SECRET_KEY'),
         'endpoint' => env('MOMO_ENDPOINT', 'https://test-payment.momo.vn/v2/gateway/api/create'),
-        'redirect_url' => env('MOMO_REDIRECT_URL', env('APP_URL').'/payment/momo/return'),
+        'redirect_url' => env('MOMO_REDIRECT_URL', env('FRONTEND_URL', env('APP_URL')).'/payment/momo/return'),
         'notify_url' => env('MOMO_NOTIFY_URL', env('APP_URL').'/api/customer/payments/momo/callback'),
     ],
 
@@ -70,7 +70,7 @@ return [
         'hash_secret' => env('VNPAY_HASH_SECRET'),
         'url' => env('VNPAY_URL', 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'),
         'api_url' => env('VNPAY_API_URL', 'https://sandbox.vnpayment.vn/merchant_webapi/api/transaction'),
-        'return_url' => env('VNPAY_RETURN_URL', env('APP_URL').'/payment/vnpay/return'),
+        'return_url' => env('VNPAY_RETURN_URL', env('FRONTEND_URL', env('APP_URL')).'/payment/vnpay/return'),
         'notify_url' => env('VNPAY_NOTIFY_URL', env('APP_URL').'/api/customer/payments/vnpay/callback'),
     ],
 

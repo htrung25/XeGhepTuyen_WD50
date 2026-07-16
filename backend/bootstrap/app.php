@@ -15,7 +15,6 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
-        channels: __DIR__.'/../routes/channels.php',
         health: '/up',
         then: function () {
             Route::middleware(['api', 'throttle:60,1'])
@@ -38,6 +37,13 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->prefix('api/admin')
                 ->group(base_path('routes/api_admin.php'));
         },
+    )
+    // FE gọi POST /api/broadcasting/auth với Bearer token (xem useWebSocket.ts)
+    // nên route auth private channel phải nằm dưới prefix api + auth:sanctum,
+    // không dùng web/session mặc định.
+    ->withBroadcasting(
+        __DIR__.'/../routes/channels.php',
+        ['prefix' => 'api', 'middleware' => ['api', 'auth:sanctum']],
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // Tin proxy (ngrok/reverse proxy) để nhận diện đúng scheme HTTPS từ X-Forwarded-*.

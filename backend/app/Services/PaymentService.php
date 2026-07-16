@@ -185,7 +185,8 @@ class PaymentService
         $partnerCode = config('services.momo.partner_code');
         $accessKey = config('services.momo.access_key');
         $secretKey = config('services.momo.secret_key');
-        $redirectUrl = config('app.url').'/payment/momo/return';
+        // Trang kết quả thanh toán nằm ở frontend (Vercel), không phải API origin.
+        $redirectUrl = config('services.momo.redirect_url');
         $ipnUrl = config('app.url').'/api/public/payments/momo/callback';
 
         $rawHash = "accessKey={$accessKey}&amount={$payment->amount}&extraData=&ipnUrl={$ipnUrl}&orderId={$payment->gateway_order_id}&orderInfo=Vé xe {$booking->booking_code}&partnerCode={$partnerCode}&redirectUrl={$redirectUrl}&requestId={$payment->id}&requestType=captureWallet";

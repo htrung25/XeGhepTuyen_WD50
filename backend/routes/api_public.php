@@ -11,6 +11,12 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
+// Health check — frontend/monitoring xác nhận API sống (ngoài /up của framework)
+Route::get('health', fn () => response()->json([
+    'success' => true,
+    'message' => 'API is running',
+]));
+
 Route::get('trips', [TripSearchController::class, 'search']);
 Route::get('trips/{id}', [TripSearchController::class, 'show']);
 Route::get('trips/{id}/seats', [TripSearchController::class, 'seats']);
