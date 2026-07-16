@@ -35,7 +35,7 @@ async function logout() {
         <!-- ─── Desktop Header ───────────────────────────────────── -->
         <header
             v-if="!hideHeader"
-            class="sticky top-0 z-50 border-b border-gray-200 bg-white shadow-sm"
+            class="sticky top-0 z-50 border-b border-slate-200 bg-white shadow-sm"
         >
             <div
                 class="mx-auto flex h-16 max-w-7xl items-center justify-between px-6"
@@ -43,13 +43,13 @@ async function logout() {
                 <!-- Logo -->
                 <router-link
                     to="/home"
-                    class="flex shrink-0 items-center gap-2"
+                    class="flex shrink-0 items-center gap-2.5"
                 >
                     <div
-                        class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600"
+                        class="flex size-9 items-center justify-center rounded-xl bg-blue-600"
                     >
                         <svg
-                            class="h-5 w-5 text-white"
+                            class="size-5 text-white"
                             fill="currentColor"
                             viewBox="0 0 20 20"
                         >
@@ -58,9 +58,11 @@ async function logout() {
                             />
                         </svg>
                     </div>
-                    <span class="text-lg font-bold tracking-tight text-gray-900"
-                        >XeGhep<span class="text-blue-600">.vn</span></span
+                    <span
+                        class="text-base font-extrabold text-slate-950 sm:text-lg"
                     >
+                        Xe ghép tuyến <span class="text-blue-600">FGroup</span>
+                    </span>
                 </router-link>
 
                 <!-- Desktop Nav -->
@@ -149,6 +151,9 @@ async function logout() {
                 <!-- Mobile menu button -->
                 <button
                     @click="mobileMenu = !mobileMenu"
+                    type="button"
+                    aria-label="Mở menu điều hướng"
+                    :aria-expanded="mobileMenu"
                     class="rounded-lg p-2 hover:bg-gray-100 md:hidden"
                 >
                     <svg
@@ -222,10 +227,10 @@ async function logout() {
                     <div class="md:col-span-2">
                         <div class="mb-3 flex items-center gap-2">
                             <div
-                                class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600"
+                                class="flex size-8 items-center justify-center rounded-lg bg-blue-600"
                             >
                                 <svg
-                                    class="h-4 w-4 text-white"
+                                    class="size-4 text-white"
                                     fill="currentColor"
                                     viewBox="0 0 20 20"
                                 >
@@ -235,9 +240,8 @@ async function logout() {
                                 </svg>
                             </div>
                             <span class="text-lg font-bold text-white"
-                                >XeGhep<span class="text-blue-400"
-                                    >.vn</span
-                                ></span
+                                >Xe ghép tuyến
+                                <span class="text-blue-400">FGroup</span></span
                             >
                         </div>
                         <p
@@ -281,7 +285,7 @@ async function logout() {
                                 <a
                                     href="#"
                                     class="transition-colors hover:text-white"
-                                    >Ví XeGhep</a
+                                    >Ví FGroup</a
                                 >
                             </li>
                         </ul>
@@ -326,7 +330,7 @@ async function logout() {
                     class="flex flex-col items-center justify-between gap-3 border-t border-gray-800 pt-6 md:flex-row"
                 >
                     <p class="text-xs text-gray-500">
-                        © 2024 XeGhep.vn. Tất cả quyền được bảo lưu.
+                        © 2026 Xe ghép tuyến FGroup. Tất cả quyền được bảo lưu.
                     </p>
                     <div class="flex gap-4 text-xs text-gray-500">
                         <a href="#" class="transition-colors hover:text-white"

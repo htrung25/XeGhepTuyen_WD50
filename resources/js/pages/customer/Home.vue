@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useCustomerStore } from '@/stores/customer.store';
 
@@ -18,43 +18,43 @@ const popularRoutes = ref([
         from: 'Hà Nội',
         to: 'Hải Phòng',
         price: 120000,
-        duration: '~2.5 giờ',
-        desc: 'Tuyến phổ biến nhất',
+        duration: '2 giờ 30 phút',
         trips: 48,
+        tag: 'Phổ biến',
     },
     {
         from: 'Hải Phòng',
         to: 'Hà Nội',
         price: 120000,
-        duration: '~2.5 giờ',
-        desc: 'Chiều ngược lại',
+        duration: '2 giờ 30 phút',
         trips: 45,
+        tag: 'Linh hoạt',
     },
     {
         from: 'Hà Nội',
         to: 'Hải Phòng',
         price: 150000,
-        duration: '~2 giờ',
-        desc: 'Xe VIP 7 chỗ',
+        duration: '2 giờ',
         trips: 12,
+        tag: 'VIP 7 chỗ',
     },
 ]);
 
 const features = [
     {
-        icon: '📍',
-        title: 'Đón tận nơi',
-        desc: 'Chọn từ 10+ điểm đón cố định trên tuyến, nhập địa chỉ cụ thể để tài xế tìm dễ hơn.',
+        number: '01',
+        title: 'Đón trả tận nơi',
+        desc: 'Chủ động chọn điểm đón phù hợp, không cần mất thời gian di chuyển ra bến.',
     },
     {
-        icon: '📡',
-        title: 'Theo dõi GPS',
-        desc: 'Xem vị trí xe real-time trên bản đồ, biết chính xác xe đến điểm đón sau bao nhiêu phút.',
+        number: '02',
+        title: 'Theo dõi hành trình',
+        desc: 'Cập nhật vị trí xe theo thời gian thực để bạn luôn an tâm và đúng giờ.',
     },
     {
-        icon: '💳',
-        title: 'Thanh toán online',
-        desc: 'Thanh toán qua MoMo, VNPay hoặc ví XeGhep. Nhận vé QR điện tử ngay lập tức.',
+        number: '03',
+        title: 'Đặt chỗ nhanh chóng',
+        desc: 'Chọn chuyến, thanh toán và nhận vé điện tử chỉ trong vài thao tác đơn giản.',
     },
 ];
 
@@ -87,8 +87,8 @@ function searchPopular(from: string, to: string) {
     search();
 }
 
-function fmt(v: number) {
-    return new Intl.NumberFormat('vi-VN').format(v) + 'đ';
+function fmt(value: number) {
+    return new Intl.NumberFormat('vi-VN').format(value) + 'đ';
 }
 
 onMounted(() => {
@@ -97,170 +97,223 @@ onMounted(() => {
 </script>
 
 <template>
-    <div>
-        <!-- ─── Hero Section ─────────────────────────────────────── -->
-        <section
-            class="relative overflow-hidden bg-gradient-to-br from-blue-700 via-blue-600 to-blue-800 py-20"
-        >
-            <!-- Background decoration -->
-            <div class="absolute inset-0 opacity-10">
-                <div
-                    class="absolute top-10 left-10 h-40 w-40 rounded-full bg-white blur-3xl"
-                />
-                <div
-                    class="absolute right-20 bottom-10 h-60 w-60 rounded-full bg-blue-300 blur-3xl"
-                />
-            </div>
-
-            <div class="relative mx-auto max-w-5xl px-6">
-                <!-- Hero text -->
-                <div class="mb-10 text-center">
-                    <h1
-                        class="mb-4 text-4xl leading-tight font-bold text-white md:text-5xl"
+    <div class="overflow-hidden bg-white text-slate-950">
+        <section class="relative border-b border-sky-100 bg-sky-50">
+            <div class="absolute inset-x-0 top-0 h-1 bg-blue-600" />
+            <div
+                class="mx-auto grid max-w-7xl items-center gap-12 px-5 py-14 sm:px-6 lg:grid-cols-[1.05fr_.95fr] lg:px-8 lg:py-20"
+            >
+                <div class="relative z-10">
+                    <div
+                        class="mb-6 inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white px-3 py-1.5 text-sm font-semibold text-blue-700 shadow-sm"
                     >
-                        Đặt xe ghép<br />
-                        <span class="text-blue-200">Hà Nội ↔ Hải Phòng</span>
+                        <span class="size-2 rounded-full bg-emerald-500" />
+                        Tuyến Hà Nội – Hải Phòng mỗi ngày
+                    </div>
+                    <h1
+                        class="max-w-3xl text-4xl leading-tight font-extrabold text-balance sm:text-5xl lg:text-6xl"
+                    >
+                        Đi chung tuyến,<br />
+                        <span class="text-blue-600">nhẹ mọi hành trình.</span>
                     </h1>
-                    <p class="mx-auto max-w-lg text-lg text-blue-100">
-                        Đón tận nơi · Theo dõi GPS real-time · Thanh toán điện
-                        tử
+                    <p
+                        class="mt-6 max-w-xl text-base leading-7 text-pretty text-slate-600 sm:text-lg"
+                    >
+                        Xe ghép tuyến FGroup đưa bạn đến đúng nơi, đúng giờ với
+                        trải nghiệm đặt chỗ minh bạch và tiện lợi hơn.
                     </p>
+                    <div
+                        class="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm font-medium text-slate-700"
+                    >
+                        <span class="flex items-center gap-2"
+                            ><span
+                                class="flex size-5 items-center justify-center rounded-full bg-emerald-100 text-xs text-emerald-700"
+                                >✓</span
+                            >Đón tận nơi</span
+                        >
+                        <span class="flex items-center gap-2"
+                            ><span
+                                class="flex size-5 items-center justify-center rounded-full bg-emerald-100 text-xs text-emerald-700"
+                                >✓</span
+                            >Giá rõ ràng</span
+                        >
+                        <span class="flex items-center gap-2"
+                            ><span
+                                class="flex size-5 items-center justify-center rounded-full bg-emerald-100 text-xs text-emerald-700"
+                                >✓</span
+                            >Theo dõi GPS</span
+                        >
+                    </div>
                 </div>
 
-                <!-- Search Card -->
-                <div
-                    class="mx-auto max-w-2xl rounded-2xl bg-white p-6 shadow-2xl md:p-8"
-                >
-                    <!-- Trip type tabs -->
+                <div class="relative mx-auto w-full max-w-xl lg:mx-0">
                     <div
-                        class="mb-6 flex w-fit gap-1 rounded-xl bg-gray-100 p-1"
+                        class="absolute -top-7 -right-5 hidden rounded-2xl bg-amber-300 px-5 py-3 font-bold text-slate-900 shadow-lg sm:block"
                     >
-                        <button
-                            v-for="tab in [
-                                { key: 'one_way', label: 'Một chiều' },
-                                { key: 'round_trip', label: 'Khứ hồi' },
-                            ]"
-                            :key="tab.key"
-                            @click="tripType = tab.key as any"
-                            :class="[
-                                'rounded-lg px-5 py-2 text-sm font-medium transition-all',
-                                tripType === tab.key
-                                    ? 'bg-white font-semibold text-blue-600 shadow-sm'
-                                    : 'text-gray-500 hover:text-gray-700',
-                            ]"
-                        >
-                            {{ tab.label }}
-                        </button>
+                        Từ 120.000đ/chuyến
                     </div>
-
-                    <!-- From / To row -->
                     <div
-                        class="mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3"
+                        class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xl sm:p-7"
                     >
                         <div
-                            class="rounded-xl border border-gray-200 bg-gray-50 p-3 transition-colors hover:border-blue-300"
+                            class="mb-6 flex items-center justify-between gap-4"
                         >
-                            <label
-                                class="mb-1 block text-xs font-medium text-gray-500"
-                                >Điểm đi</label
+                            <div>
+                                <p class="text-sm font-semibold text-blue-600">
+                                    Bắt đầu hành trình
+                                </p>
+                                <h2 class="mt-1 text-xl font-bold text-balance">
+                                    Bạn muốn đi đâu?
+                                </h2>
+                            </div>
+                            <div
+                                class="flex rounded-xl bg-slate-100 p-1"
+                                aria-label="Loại chuyến đi"
                             >
-                            <select
-                                v-model="fromCity"
-                                class="w-full cursor-pointer appearance-none bg-transparent text-sm font-semibold text-gray-900 focus:outline-none"
-                            >
-                                <option value="Hà Nội">Hà Nội</option>
-                                <option value="Hải Phòng">Hải Phòng</option>
-                            </select>
-                        </div>
-
-                        <button
-                            @click="swapCities"
-                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-blue-200 bg-blue-50 transition-colors hover:bg-blue-100"
-                        >
-                            <svg
-                                class="h-4 w-4 text-blue-600"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2.5"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                                />
-                            </svg>
-                        </button>
-
-                        <div
-                            class="rounded-xl border border-gray-200 bg-gray-50 p-3 transition-colors hover:border-blue-300"
-                        >
-                            <label
-                                class="mb-1 block text-xs font-medium text-gray-500"
-                                >Điểm đến</label
-                            >
-                            <select
-                                v-model="toCity"
-                                class="w-full cursor-pointer appearance-none bg-transparent text-sm font-semibold text-gray-900 focus:outline-none"
-                            >
-                                <option value="Hà Nội">Hà Nội</option>
-                                <option value="Hải Phòng">Hải Phòng</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Date + Passengers + Button -->
-                    <div class="grid grid-cols-[1fr_auto_auto] items-end gap-3">
-                        <div
-                            class="rounded-xl border border-gray-200 bg-gray-50 p-3 transition-colors hover:border-blue-300"
-                        >
-                            <label
-                                class="mb-1 block text-xs font-medium text-gray-500"
-                                >Ngày đi</label
-                            >
-                            <input
-                                v-model="travelDate"
-                                type="date"
-                                :min="minDate"
-                                class="w-full cursor-pointer bg-transparent text-sm font-semibold text-gray-900 focus:outline-none"
-                            />
-                        </div>
-
-                        <div
-                            class="rounded-xl border border-gray-200 bg-gray-50 p-3"
-                        >
-                            <label
-                                class="mb-1 block text-xs font-medium text-gray-500"
-                                >Hành khách</label
-                            >
-                            <div class="flex items-center gap-2">
                                 <button
-                                    @click="adjustPassengers(-1)"
-                                    :disabled="passengers <= 1"
-                                    class="flex h-6 w-6 items-center justify-center rounded-full border border-gray-300 text-sm font-bold text-gray-600 transition-colors hover:border-blue-400 disabled:opacity-40"
+                                    v-for="tab in [
+                                        { key: 'one_way', label: 'Một chiều' },
+                                        { key: 'round_trip', label: 'Khứ hồi' },
+                                    ]"
+                                    :key="tab.key"
+                                    type="button"
+                                    :aria-pressed="tripType === tab.key"
+                                    :class="[
+                                        'rounded-lg px-3 py-2 text-xs font-semibold transition-colors duration-150',
+                                        tripType === tab.key
+                                            ? 'bg-white text-blue-700 shadow-sm'
+                                            : 'text-slate-500 hover:text-slate-800',
+                                    ]"
+                                    @click="
+                                        tripType = tab.key as
+                                            | 'one_way'
+                                            | 'round_trip'
+                                    "
                                 >
-                                    −
-                                </button>
-                                <span
-                                    class="w-4 text-center text-sm font-bold text-gray-900"
-                                    >{{ passengers }}</span
-                                >
-                                <button
-                                    @click="adjustPassengers(1)"
-                                    :disabled="passengers >= 4"
-                                    class="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white transition-colors hover:bg-blue-700 disabled:opacity-40"
-                                >
-                                    +
+                                    {{ tab.label }}
                                 </button>
                             </div>
                         </div>
 
+                        <div class="relative grid gap-3 sm:grid-cols-2">
+                            <label
+                                class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100"
+                            >
+                                <span
+                                    class="block text-xs font-semibold text-slate-500"
+                                    >Điểm đi</span
+                                >
+                                <select
+                                    v-model="fromCity"
+                                    class="mt-1 w-full cursor-pointer bg-transparent text-base font-bold outline-none"
+                                >
+                                    <option>Hà Nội</option>
+                                    <option>Hải Phòng</option>
+                                </select>
+                            </label>
+                            <button
+                                type="button"
+                                aria-label="Đổi điểm đi và điểm đến"
+                                class="absolute top-1/2 left-1/2 z-10 hidden size-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-blue-200 bg-white text-blue-600 shadow-sm transition-transform duration-150 hover:scale-105 sm:flex"
+                                @click="swapCities"
+                            >
+                                <svg
+                                    class="size-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2.5"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M7 7h11m0 0-3-3m3 3-3 3M17 17H6m0 0 3 3m-3-3 3-3"
+                                    />
+                                </svg>
+                            </button>
+                            <label
+                                class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100"
+                            >
+                                <span
+                                    class="block text-xs font-semibold text-slate-500"
+                                    >Điểm đến</span
+                                >
+                                <select
+                                    v-model="toCity"
+                                    class="mt-1 w-full cursor-pointer bg-transparent text-base font-bold outline-none"
+                                >
+                                    <option>Hà Nội</option>
+                                    <option>Hải Phòng</option>
+                                </select>
+                            </label>
+                        </div>
+
                         <button
-                            @click="search"
-                            class="flex h-full min-h-[64px] items-center gap-2 rounded-xl bg-blue-600 px-8 text-sm font-bold whitespace-nowrap text-white shadow-lg shadow-blue-200 transition-colors hover:bg-blue-700"
+                            type="button"
+                            class="mx-auto my-2 flex size-9 items-center justify-center rounded-full border border-blue-200 bg-white text-blue-600 sm:hidden"
+                            aria-label="Đổi điểm đi và điểm đến"
+                            @click="swapCities"
                         >
+                            ⇅
+                        </button>
+
+                        <div class="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr]">
+                            <label
+                                class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100"
+                            >
+                                <span
+                                    class="block text-xs font-semibold text-slate-500"
+                                    >Ngày khởi hành</span
+                                >
+                                <input
+                                    v-model="travelDate"
+                                    type="date"
+                                    :min="minDate"
+                                    class="mt-1 w-full bg-transparent text-sm font-bold outline-none"
+                                />
+                            </label>
+                            <div
+                                class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+                            >
+                                <div>
+                                    <span
+                                        class="block text-xs font-semibold text-slate-500"
+                                        >Hành khách</span
+                                    ><span class="mt-1 block text-sm font-bold"
+                                        >{{ passengers }} người</span
+                                    >
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        aria-label="Giảm số hành khách"
+                                        :disabled="passengers <= 1"
+                                        class="flex size-8 items-center justify-center rounded-full border border-slate-300 bg-white font-bold disabled:opacity-40"
+                                        @click="adjustPassengers(-1)"
+                                    >
+                                        −
+                                    </button>
+                                    <button
+                                        type="button"
+                                        aria-label="Tăng số hành khách"
+                                        :disabled="passengers >= 4"
+                                        class="flex size-8 items-center justify-center rounded-full bg-blue-600 font-bold text-white disabled:opacity-40"
+                                        @click="adjustPassengers(1)"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="mt-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 font-bold text-white shadow-lg transition-colors duration-150 hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                            @click="search"
+                        >
+                            Tìm chuyến phù hợp
                             <svg
-                                class="h-4 w-4"
+                                class="size-5"
                                 fill="none"
                                 stroke="currentColor"
                                 stroke-width="2.5"
@@ -269,126 +322,194 @@ onMounted(() => {
                                 <path
                                     stroke-linecap="round"
                                     stroke-linejoin="round"
-                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                    d="m9 18 6-6-6-6"
                                 />
                             </svg>
-                            Tìm chuyến
                         </button>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- ─── Features ─────────────────────────────────────────── -->
-        <section class="bg-white py-16">
-            <div class="mx-auto max-w-5xl px-6">
-                <h2 class="mb-10 text-center text-2xl font-bold text-gray-900">
-                    Tại sao chọn XeGhep.vn?
-                </h2>
-                <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
-                    <div
-                        v-for="f in features"
-                        :key="f.title"
-                        class="group rounded-2xl bg-gray-50 p-6 text-center transition-colors hover:bg-blue-50"
+        <section class="border-b border-slate-100 bg-white py-8">
+            <div
+                class="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-5 text-center sm:px-6 md:grid-cols-4 lg:px-8"
+            >
+                <div>
+                    <p
+                        class="text-2xl font-extrabold text-blue-600 tabular-nums"
                     >
-                        <div class="mb-4 text-4xl">{{ f.icon }}</div>
-                        <h3
-                            class="mb-2 font-bold text-gray-900 transition-colors group-hover:text-blue-700"
-                        >
-                            {{ f.title }}
-                        </h3>
-                        <p class="text-sm leading-relaxed text-gray-500">
-                            {{ f.desc }}
-                        </p>
-                    </div>
+                        60+
+                    </p>
+                    <p class="mt-1 text-sm text-slate-500">chuyến mỗi ngày</p>
+                </div>
+                <div>
+                    <p
+                        class="text-2xl font-extrabold text-blue-600 tabular-nums"
+                    >
+                        15 phút
+                    </p>
+                    <p class="mt-1 text-sm text-slate-500">mỗi khung giờ</p>
+                </div>
+                <div>
+                    <p
+                        class="text-2xl font-extrabold text-blue-600 tabular-nums"
+                    >
+                        4.9/5
+                    </p>
+                    <p class="mt-1 text-sm text-slate-500">
+                        đánh giá hành khách
+                    </p>
+                </div>
+                <div>
+                    <p
+                        class="text-2xl font-extrabold text-blue-600 tabular-nums"
+                    >
+                        24/7
+                    </p>
+                    <p class="mt-1 text-sm text-slate-500">hỗ trợ tận tâm</p>
                 </div>
             </div>
         </section>
 
-        <!-- ─── Popular Routes ────────────────────────────────────── -->
-        <section class="bg-slate-50 py-16">
-            <div class="mx-auto max-w-5xl px-6">
-                <div class="mb-8 flex items-center justify-between">
-                    <h2 class="text-2xl font-bold text-gray-900">
-                        Chuyến phổ biến
+        <section class="bg-white py-16 sm:py-20">
+            <div class="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+                <div class="mb-10 max-w-2xl">
+                    <p class="text-sm font-bold text-blue-600">
+                        TRẢI NGHIỆM KHÁC BIỆT
+                    </p>
+                    <h2
+                        class="mt-3 text-3xl font-extrabold text-balance sm:text-4xl"
+                    >
+                        Chuyến đi nhẹ nhàng ngay từ lúc đặt xe
                     </h2>
+                    <p class="mt-4 leading-7 text-pretty text-slate-600">
+                        Mọi chi tiết được thiết kế để hành trình liên tỉnh của
+                        bạn thuận tiện, chủ động và an tâm hơn.
+                    </p>
+                </div>
+                <div class="grid gap-5 md:grid-cols-3">
+                    <article
+                        v-for="feature in features"
+                        :key="feature.number"
+                        class="rounded-3xl border border-slate-200 p-6 transition-colors duration-150 hover:border-blue-300 hover:bg-sky-50"
+                    >
+                        <span
+                            class="flex size-11 items-center justify-center rounded-2xl bg-blue-600 text-sm font-extrabold text-white"
+                            >{{ feature.number }}</span
+                        >
+                        <h3 class="mt-6 text-xl font-bold">
+                            {{ feature.title }}
+                        </h3>
+                        <p
+                            class="mt-3 text-sm leading-6 text-pretty text-slate-600"
+                        >
+                            {{ feature.desc }}
+                        </p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-slate-50 py-16 sm:py-20">
+            <div class="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+                <div class="mb-9 flex items-end justify-between gap-4">
+                    <div>
+                        <p class="text-sm font-bold text-blue-600">
+                            LỊCH TRÌNH NỔI BẬT
+                        </p>
+                        <h2 class="mt-2 text-3xl font-extrabold text-balance">
+                            Chọn chuyến, lên đường
+                        </h2>
+                    </div>
                     <router-link
                         to="/search"
-                        class="text-sm font-medium text-blue-600 hover:underline"
+                        class="hidden text-sm font-bold text-blue-600 hover:underline sm:block"
+                        >Xem tất cả chuyến →</router-link
                     >
-                        Xem tất cả →
-                    </router-link>
                 </div>
-
-                <!-- Skeletons -->
-                <div
-                    v-if="loadingPopular"
-                    class="grid grid-cols-1 gap-5 md:grid-cols-3"
-                >
+                <div v-if="loadingPopular" class="grid gap-5 md:grid-cols-3">
                     <div
-                        v-for="i in 3"
-                        :key="i"
-                        class="h-40 animate-pulse rounded-2xl bg-white p-5"
+                        v-for="item in 3"
+                        :key="item"
+                        class="h-56 animate-pulse rounded-3xl border border-slate-200 bg-white p-6"
                     >
-                        <div class="mb-3 h-5 w-3/4 rounded bg-gray-200" />
-                        <div class="mb-2 h-3 w-1/2 rounded bg-gray-100" />
-                        <div class="mt-6 h-8 rounded bg-gray-100" />
+                        <div class="h-5 w-24 rounded bg-slate-200" />
+                        <div class="mt-7 h-7 w-full rounded bg-slate-100" />
+                        <div class="mt-4 h-12 w-full rounded bg-slate-100" />
                     </div>
                 </div>
-
-                <div v-else class="grid grid-cols-1 gap-5 md:grid-cols-3">
-                    <div
-                        v-for="r in popularRoutes"
-                        :key="r.from + r.to + r.desc"
-                        class="group cursor-pointer rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-all hover:border-blue-200 hover:shadow-md"
-                        @click="searchPopular(r.from, r.to)"
+                <div v-else class="grid gap-5 md:grid-cols-3">
+                    <button
+                        v-for="routeItem in popularRoutes"
+                        :key="routeItem.from + routeItem.to + routeItem.tag"
+                        type="button"
+                        class="group rounded-3xl border border-slate-200 bg-white p-6 text-left shadow-sm transition-transform duration-150 hover:-translate-y-1 hover:border-blue-300 hover:shadow-md"
+                        @click="searchPopular(routeItem.from, routeItem.to)"
                     >
-                        <div class="mb-2 flex items-center justify-between">
+                        <div class="flex items-center justify-between">
                             <span
-                                class="text-base font-bold text-gray-900 transition-colors group-hover:text-blue-700"
+                                class="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800"
+                                >{{ routeItem.tag }}</span
+                            ><span class="text-sm font-bold text-blue-600"
+                                >Từ {{ fmt(routeItem.price) }}</span
                             >
-                                {{ r.from }} → {{ r.to }}
-                            </span>
-                            <span
-                                class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-600"
-                            >
-                                {{ fmt(r.price) }}
-                            </span>
                         </div>
-                        <p class="mb-1 text-xs text-gray-400">
-                            {{ r.duration }}
-                        </p>
-                        <p class="text-xs text-gray-500">{{ r.desc }}</p>
                         <div
-                            class="mt-4 flex items-center justify-between border-t border-gray-100 pt-4"
+                            class="mt-7 flex items-center gap-3 text-lg font-extrabold"
                         >
-                            <span class="text-xs text-gray-400"
-                                >{{ r.trips }} chuyến/ngày</span
+                            <span>{{ routeItem.from }}</span
+                            ><span
+                                class="h-px flex-1 border-t border-dashed border-slate-300"
+                            /><svg
+                                class="size-5 shrink-0 text-blue-600"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                viewBox="0 0 24 24"
                             >
-                            <span
-                                class="text-xs font-medium text-blue-600 group-hover:underline"
-                                >Xem chuyến →</span
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M5 12h14m-4-4 4 4-4 4"
+                                /></svg
+                            ><span>{{ routeItem.to }}</span>
+                        </div>
+                        <div
+                            class="mt-7 flex items-center justify-between border-t border-slate-100 pt-4 text-sm text-slate-500"
+                        >
+                            <span>{{ routeItem.duration }}</span
+                            ><span class="tabular-nums"
+                                >{{ routeItem.trips }} chuyến/ngày</span
                             >
                         </div>
-                    </div>
+                    </button>
                 </div>
             </div>
         </section>
 
-        <!-- ─── CTA Banner ────────────────────────────────────────── -->
-        <section class="bg-blue-600 py-16">
-            <div class="mx-auto max-w-5xl px-6 text-center">
-                <h2 class="mb-4 text-2xl font-bold text-white md:text-3xl">
-                    Sẵn sàng lên đường?
-                </h2>
-                <p class="mx-auto mb-8 max-w-md text-blue-100">
-                    Đặt vé ngay hôm nay, được đón tận nơi, không cần ra bến xe.
-                </p>
+        <section class="bg-blue-700 py-14 text-white">
+            <div
+                class="mx-auto flex max-w-7xl flex-col items-start justify-between gap-7 px-5 sm:px-6 md:flex-row md:items-center lg:px-8"
+            >
+                <div>
+                    <p class="text-sm font-bold text-blue-200">
+                        SẴN SÀNG LÊN ĐƯỜNG?
+                    </p>
+                    <h2 class="mt-2 text-3xl font-extrabold text-balance">
+                        Để FGroup lo phần đường còn lại.
+                    </h2>
+                    <p class="mt-3 text-pretty text-blue-100">
+                        Chọn lịch trình phù hợp và giữ chỗ cho chuyến đi hôm
+                        nay.
+                    </p>
+                </div>
                 <button
+                    type="button"
+                    class="shrink-0 rounded-2xl bg-amber-300 px-7 py-4 font-extrabold text-slate-950 shadow-lg transition-transform duration-150 hover:-translate-y-0.5"
                     @click="search"
-                    class="rounded-xl bg-white px-8 py-4 text-sm font-bold text-blue-700 shadow-lg transition-colors hover:bg-blue-50"
                 >
-                    Tìm chuyến ngay
+                    Tìm chuyến ngay →
                 </button>
             </div>
         </section>

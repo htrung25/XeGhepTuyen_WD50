@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#2563EB">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>XeGhep — Đặt vé xe liên tỉnh</title>
+    <title>Xe ghép tuyến FGroup — Đặt xe liên tỉnh</title>
     @vite(['resources/css/app.css', 'resources/js/entries/customer.ts'])
 </head>
 <body class="antialiased">
