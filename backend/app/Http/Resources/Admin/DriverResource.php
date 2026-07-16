@@ -16,6 +16,7 @@ class DriverResource extends JsonResource
             'photo_url' => $this->user->avatar_url,
             'operator_name' => $this->operator->company_name,
             'status' => $this->status->value,
+            'reject_reason' => $this->reject_reason,
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),
             'documents' => [
                 'id_card_front' => $this->id_card_front_url,

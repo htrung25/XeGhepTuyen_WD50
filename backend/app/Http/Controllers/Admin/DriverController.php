@@ -8,6 +8,7 @@ use App\Http\Resources\Admin\DriverResource;
 use App\Models\Driver;
 use App\Services\AuditLogService;
 use App\Services\DriverService;
+use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -56,7 +57,13 @@ class DriverController extends Controller
 
         // Duyệt + cấp mật khẩu đăng nhập mới + gửi SMS cho tài xế.
         // KHÔNG trả mật khẩu về cho admin — chỉ tài xế nhận qua SMS (bảo đảm quyền lợi tài xế).
-        $this->driverService->approveAndIssueCredentials($driver);
+        // Guard + update are locked inside the service transaction; a concurrent
+        // approval that loses the race throws and is reported as 422 here.
+        try {
+            $this->driverService->approveAndIssueCredentials($driver);
+        } catch (DomainException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
 
         app(AuditLogService::class)->log(
             action: 'approve_driver',
@@ -84,8 +91,9 @@ class DriverController extends Controller
             return response()->json(['success' => false, 'message' => 'Tài xế không tồn tại'], 404);
         }
 
-        // Chỉ tài xế đang hoạt động mới đăng nhập được — reset MK cho pending/rejected/suspended
-        // vô nghĩa (họ bị gating chặn đăng nhập). Chặn để tránh gửi SMS + cấp MK thừa.
+        // Only an active driver can log in, so resetting the password for a
+        // pending/rejected/suspended driver (blocked by gating) is pointless and
+        // would issue a password + SMS for nothing.
         if ($driver->status !== DriverStatus::Verified) {
             return response()->json(['success' => false, 'message' => 'Chỉ có thể cấp lại mật khẩu cho tài xế đang hoạt động'], 422);
         }
@@ -110,13 +118,15 @@ class DriverController extends Controller
     {
         $request->validate(['reason' => ['required', 'string', 'max:500']]);
 
-        // Eager-load user: audit log đọc $driver->user (FK user_id NOT NULL — luôn có user).
+        // Eager-load user: the audit log reads $driver->user (FK user_id is NOT NULL).
         $driver = Driver::with('user')->find($id);
 
         if (! $driver) {
             return response()->json(['success' => false, 'message' => 'Tài xế không tồn tại'], 404);
         }
 
+        // Only pending applications can be rejected. Rejecting a verified/suspended
+        // driver would flip status to Rejected without clearing is_active (half state).
         if ($driver->status !== DriverStatus::Pending) {
             return response()->json(['success' => false, 'message' => 'Chỉ có thể từ chối hồ sơ tài xế đang chờ duyệt'], 422);
         }
@@ -137,20 +147,22 @@ class DriverController extends Controller
 
     public function suspend(string $id): JsonResponse
     {
-        // Eager-load user: audit log + update is_active đọc $driver->user (FK user_id NOT NULL).
+        // Eager-load user: audit log + is_active update read $driver->user (FK user_id NOT NULL).
         $driver = Driver::with('user')->find($id);
 
         if (! $driver) {
             return response()->json(['success' => false, 'message' => 'Tài xế không tồn tại'], 404);
         }
 
+        // Only an active (verified) driver can be suspended. Suspending a
+        // pending/rejected profile (never active) or an already-suspended one is invalid.
         if ($driver->status !== DriverStatus::Verified) {
             return response()->json(['success' => false, 'message' => 'Chỉ có thể đình chỉ tài xế đang hoạt động'], 422);
         }
 
         $oldStatus = $driver->status->value;
-        // Bọc 2 update (drivers + users) trong 1 transaction: tránh lệch trạng thái
-        // (driver bị đình chỉ nhưng user vẫn active) nếu lỗi giữa chừng.
+        // Wrap both writes (drivers + users) in one transaction so a mid-way
+        // failure can't leave the driver suspended while the user stays active.
         DB::transaction(function () use ($driver) {
             $driver->update(['status' => DriverStatus::Suspended]);
             $driver->user()->update(['is_active' => false]);
