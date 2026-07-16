@@ -2,6 +2,14 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { customerApi } from '@/api/customer.api';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { useCustomerStore } from '@/stores/customer.store';
 import type { TripResult } from '@/stores/customer.store';
 
@@ -15,6 +23,14 @@ const errorMsg = ref('');
 const filterTime = ref<string[]>([]);
 const filterType = ref<string[]>([]);
 const sortBy = ref<'depart_asc' | 'price_asc' | 'seats_desc'>('depart_asc');
+const showMobileFilters = ref(false);
+
+const activeFilterCount = computed(
+    () =>
+        filterTime.value.length +
+        filterType.value.length +
+        (sortBy.value === 'depart_asc' ? 0 : 1),
+);
 
 const timeOptions = [
     { key: 'morning', label: 'Sáng (05–12h)' },
@@ -129,13 +145,17 @@ onMounted(async () => {
 <template>
     <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
         <!-- Page title row -->
-        <div class="mb-6 flex items-center justify-between">
-            <div>
-                <h1 class="text-xl font-bold text-gray-900">
+        <div
+            class="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-center sm:justify-between"
+        >
+            <div class="min-w-0">
+                <h1
+                    class="text-xl font-bold text-balance text-gray-900 sm:text-2xl"
+                >
                     {{ store.searchParams.from_city }} →
                     {{ store.searchParams.to_city }}
                 </h1>
-                <p class="mt-0.5 text-sm text-gray-500">
+                <p class="mt-1 text-sm text-pretty text-gray-500">
                     {{
                         new Date(store.searchParams.date).toLocaleDateString(
                             'vi-VN',
@@ -152,7 +172,7 @@ onMounted(async () => {
             </div>
             <router-link
                 to="/home"
-                class="rounded-lg border border-blue-200 px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 hover:underline"
+                class="inline-flex min-h-11 items-center justify-center self-start rounded-lg border border-blue-200 px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 sm:self-auto"
             >
                 ← Thay đổi tìm kiếm
             </router-link>
@@ -160,7 +180,7 @@ onMounted(async () => {
 
         <div class="flex flex-col gap-6 lg:flex-row">
             <!-- ─── LEFT SIDEBAR: Filters ─────────────────── -->
-            <aside class="w-64 shrink-0">
+            <aside class="hidden w-64 shrink-0 lg:block">
                 <div
                     class="sticky top-20 rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
                 >
@@ -260,6 +280,35 @@ onMounted(async () => {
 
             <!-- ─── RIGHT MAIN: Trip List ─────────────────── -->
             <div class="min-w-0 flex-1">
+                <button
+                    type="button"
+                    class="mb-4 flex min-h-12 w-full items-center justify-between rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-900 shadow-sm transition-colors hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none lg:hidden"
+                    aria-haspopup="dialog"
+                    @click="showMobileFilters = true"
+                >
+                    <span class="flex items-center gap-2">
+                        <svg
+                            class="size-5 text-blue-600"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            aria-hidden="true"
+                        >
+                            <path d="M4 6h16M7 12h10M10 18h4" />
+                        </svg>
+                        Bộ lọc và sắp xếp
+                    </span>
+                    <span
+                        v-if="activeFilterCount"
+                        class="flex size-6 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white tabular-nums"
+                    >
+                        {{ activeFilterCount }}
+                    </span>
+                    <span v-else class="text-xs font-medium text-gray-500"
+                        >Tùy chọn</span
+                    >
+                </button>
                 <!-- Result count -->
                 <p class="mb-4 text-sm font-medium text-gray-500">
                     <template v-if="!isLoading">
@@ -535,5 +584,149 @@ onMounted(async () => {
                 </div>
             </div>
         </div>
+
+        <Dialog v-model:open="showMobileFilters">
+            <DialogContent
+                class="top-auto bottom-0 left-0 max-h-[90dvh] max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-t-2xl rounded-b-none border-x-0 border-b-0 p-0 lg:hidden"
+                :show-close-button="false"
+            >
+                <DialogHeader
+                    class="border-b border-gray-200 px-4 py-4 text-left"
+                >
+                    <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <DialogTitle class="text-lg text-balance"
+                                >Bộ lọc chuyến đi</DialogTitle
+                            >
+                            <DialogDescription class="mt-1 text-sm text-pretty">
+                                Chọn điều kiện phù hợp với hành trình của bạn
+                            </DialogDescription>
+                        </div>
+                        <button
+                            type="button"
+                            class="flex size-11 shrink-0 items-center justify-center rounded-full text-2xl text-gray-500 hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                            aria-label="Đóng bộ lọc"
+                            @click="showMobileFilters = false"
+                        >
+                            ×
+                        </button>
+                    </div>
+                </DialogHeader>
+
+                <div class="overflow-y-auto px-4 py-5">
+                    <fieldset>
+                        <legend
+                            class="mb-2 text-sm font-semibold text-gray-900"
+                        >
+                            Giờ xuất phát
+                        </legend>
+                        <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                            <label
+                                v-for="opt in timeOptions"
+                                :key="opt.key"
+                                class="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border border-gray-200 px-3 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50"
+                            >
+                                <input
+                                    v-model="filterTime"
+                                    type="checkbox"
+                                    :value="opt.key"
+                                    class="size-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <span
+                                    class="text-sm font-medium text-gray-700"
+                                    >{{ opt.label }}</span
+                                >
+                            </label>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="mt-6">
+                        <legend
+                            class="mb-2 text-sm font-semibold text-gray-900"
+                        >
+                            Loại xe
+                        </legend>
+                        <div class="grid grid-cols-3 gap-2">
+                            <label
+                                v-for="opt in typeOptions"
+                                :key="opt.key"
+                                class="flex min-h-12 cursor-pointer items-center justify-center rounded-xl border border-gray-200 px-2 text-center has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50"
+                            >
+                                <input
+                                    v-model="filterType"
+                                    type="checkbox"
+                                    :value="opt.key"
+                                    class="sr-only"
+                                />
+                                <span
+                                    class="text-sm font-medium text-gray-700"
+                                    >{{ opt.label }}</span
+                                >
+                            </label>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="mt-6">
+                        <legend
+                            class="mb-2 text-sm font-semibold text-gray-900"
+                        >
+                            Sắp xếp
+                        </legend>
+                        <div class="space-y-2">
+                            <label
+                                v-for="opt in [
+                                    {
+                                        key: 'depart_asc',
+                                        label: 'Giờ đi sớm nhất',
+                                    },
+                                    {
+                                        key: 'price_asc',
+                                        label: 'Giá thấp nhất',
+                                    },
+                                    {
+                                        key: 'seats_desc',
+                                        label: 'Nhiều chỗ nhất',
+                                    },
+                                ]"
+                                :key="opt.key"
+                                class="flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border border-gray-200 px-3 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50"
+                            >
+                                <input
+                                    v-model="sortBy"
+                                    type="radio"
+                                    name="mobile-sort"
+                                    :value="opt.key"
+                                    class="size-5 border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <span
+                                    class="text-sm font-medium text-gray-700"
+                                    >{{ opt.label }}</span
+                                >
+                            </label>
+                        </div>
+                    </fieldset>
+                </div>
+
+                <DialogFooter
+                    class="grid grid-cols-[auto_1fr] gap-3 border-t border-gray-200 bg-white px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+                >
+                    <button
+                        type="button"
+                        class="min-h-12 rounded-xl px-4 text-sm font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-40"
+                        :disabled="activeFilterCount === 0"
+                        @click="resetFilters"
+                    >
+                        Đặt lại
+                    </button>
+                    <button
+                        type="button"
+                        class="min-h-12 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white hover:bg-blue-700"
+                        @click="showMobileFilters = false"
+                    >
+                        Xem {{ filtered.length }} chuyến
+                    </button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </div>
 </template>
