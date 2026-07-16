@@ -30,6 +30,7 @@ class Driver extends Model
         'current_lat',
         'current_lng',
         'location_updated_at',
+        'reject_reason',
         'status',
         'verified_at',
     ];
