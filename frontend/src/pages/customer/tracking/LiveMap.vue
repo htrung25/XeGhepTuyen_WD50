@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { customerApi } from '@/api/customer.api';
+import MapboxMap from '@/components/MapboxMap.vue';
+import type { MapMarker } from '@/components/MapboxMap.vue';
 
 const route = useRoute();
 const bookingId = route.params.id as string;
@@ -12,10 +14,20 @@ const driverLat = ref<number | null>(null);
 const driverLng = ref<number | null>(null);
 const etaMinutes = ref<number | null>(null);
 const lastUpdate = ref<string | null>(null);
-const mapRef = ref<HTMLElement | null>(null);
-let map: any = null;
-let driverMarker: any = null;
 let echoChannel: any = null;
+
+const mapMarkers = computed<MapMarker[]>(() => {
+    if (driverLat.value === null || driverLng.value === null) return [];
+    return [
+        {
+            id: String(tracking.value?.trip_id ?? bookingId),
+            lat: driverLat.value,
+            lng: driverLng.value,
+            color: '#2563eb',
+            label: 'Vị trí xe hiện tại',
+        },
+    ];
+});
 
 interface TimelineStop {
     label: string;
@@ -25,39 +37,6 @@ interface TimelineStop {
     destination?: boolean;
 }
 const stops = ref<TimelineStop[]>([]);
-
-function initMap(lat: number, lng: number) {
-    if (!(window as any).google || !mapRef.value) return;
-    const google = (window as any).google;
-    map = new google.maps.Map(mapRef.value, {
-        center: { lat, lng },
-        zoom: 12,
-        styles: [{ featureType: 'poi', stylers: [{ visibility: 'off' }] }],
-    });
-    driverMarker = new google.maps.Marker({
-        position: { lat, lng },
-        map,
-        title: 'Xe đang chạy',
-        icon: {
-            url:
-                'data:image/svg+xml,' +
-                encodeURIComponent(
-                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#2563EB" width="32" height="32"><circle cx="12" cy="12" r="10" fill="#2563EB"/><text x="12" y="16" text-anchor="middle" fill="white" font-size="12">🚐</text></svg>',
-                ),
-            scaledSize: new google.maps.Size(40, 40),
-        },
-    });
-}
-
-function updateMapMarker(lat: number, lng: number) {
-    if (!map || !driverMarker) {
-        initMap(lat, lng);
-        return;
-    }
-    const pos = { lat, lng };
-    driverMarker.setPosition(pos);
-    map.panTo(pos);
-}
 
 function setupWebSocket(tripId: string) {
     if (!(window as any).Echo) return;
@@ -72,7 +51,6 @@ function setupWebSocket(tripId: string) {
                 minute: '2-digit',
                 hour12: false,
             });
-            updateMapMarker(e.lat, e.lng);
         },
     );
 }
@@ -113,7 +91,6 @@ onMounted(async () => {
             minute: '2-digit',
             hour12: false,
         });
-        initMap(data.driver_lat, data.driver_lng);
     }
 
     if (data?.trip_id) setupWebSocket(data.trip_id);
@@ -176,11 +153,17 @@ onUnmounted(() => {
                 <div
                     class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
                 >
-                    <div ref="mapRef" class="h-[500px] w-full bg-slate-100">
+                    <div class="relative h-[500px] w-full bg-slate-100">
+                        <MapboxMap
+                            v-if="driverLat !== null && driverLng !== null"
+                            :markers="mapMarkers"
+                            :center="[driverLng, driverLat]"
+                            :zoom="12"
+                        />
                         <!-- Fallback while map loads -->
                         <div
                             v-if="!driverLat"
-                            class="flex h-full w-full flex-col items-center justify-center text-gray-400"
+                            class="absolute inset-0 flex h-full w-full flex-col items-center justify-center text-gray-400"
                         >
                             <div class="mb-3 text-5xl">🗺️</div>
                             <p class="text-sm font-medium">

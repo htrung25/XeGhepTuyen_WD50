@@ -2,6 +2,8 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { driverApi } from '@/api/driver.api';
+import MapboxMap from '@/components/MapboxMap.vue';
+import type { MapMarker } from '@/components/MapboxMap.vue';
 import { useDriverStore } from '@/stores/driver.store';
 
 const route = useRoute();
@@ -20,9 +22,15 @@ const currentPos = ref({ lat: 21.0285, lng: 105.8542 }); // default Hanoi
 
 let locationInterval: ReturnType<typeof setInterval> | null = null;
 let watchId: number | null = null;
-let mapInstance: any = null;
-let driverMarker: any = null;
-let mapRef: HTMLElement | null = null;
+const mapMarkers = computed<MapMarker[]>(() => [
+    {
+        id: tripId,
+        lat: currentPos.value.lat,
+        lng: currentPos.value.lng,
+        color: '#16a34a',
+        label: 'Vị trí của bạn',
+    },
+]);
 
 const nextPassenger = computed(() => {
     return (
@@ -58,42 +66,8 @@ function openGoogleMaps() {
     );
 }
 
-function initMap() {
-    if (!(window as any).google || !mapRef) return;
-    const google = (window as any).google;
-    mapInstance = new google.maps.Map(mapRef, {
-        center: currentPos.value,
-        zoom: 13,
-        mapTypeControl: false,
-        fullscreenControl: false,
-        streetViewControl: false,
-        styles: [{ featureType: 'poi', stylers: [{ visibility: 'off' }] }],
-    });
-    driverMarker = new google.maps.Marker({
-        position: currentPos.value,
-        map: mapInstance,
-        title: 'Vị trí của bạn',
-        icon: {
-            url:
-                'data:image/svg+xml,' +
-                encodeURIComponent(
-                    '<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">' +
-                        '<circle cx="18" cy="18" r="16" fill="#16A34A" stroke="white" stroke-width="3"/>' +
-                        '<text x="18" y="23" text-anchor="middle" fill="white" font-size="14">🚐</text>' +
-                        '</svg>',
-                ),
-            scaledSize: new google.maps.Size(36, 36),
-            anchor: new google.maps.Point(18, 18),
-        },
-    });
-}
-
 function updateMapPosition(lat: number, lng: number) {
     currentPos.value = { lat, lng };
-    if (mapInstance && driverMarker) {
-        driverMarker.setPosition({ lat, lng });
-        mapInstance.panTo({ lat, lng });
-    }
 }
 
 async function sendLocation(lat: number, lng: number) {
@@ -142,11 +116,6 @@ onMounted(async () => {
     isLoading.value = true;
     await loadData();
     isLoading.value = false;
-    // Init map after DOM ready
-    setTimeout(() => {
-        mapRef = document.getElementById('nav-map');
-        initMap();
-    }, 100);
     startTracking();
 });
 
@@ -240,21 +209,20 @@ onUnmounted(() => {
                 <div
                     class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
                 >
-                    <div id="nav-map" class="h-[560px] w-full bg-slate-100">
-                        <!-- Fallback when Google Maps not available -->
+                    <div class="relative h-[560px] w-full bg-slate-100">
+                        <MapboxMap
+                            :markers="mapMarkers"
+                            :center="[currentPos.lng, currentPos.lat]"
+                            :zoom="13"
+                        />
                         <div
-                            class="flex h-full w-full flex-col items-center justify-center text-gray-400"
+                            class="pointer-events-none absolute bottom-4 left-4 rounded-lg bg-white/90 px-3 py-2 shadow-sm"
                         >
-                            <div class="mb-4 animate-bounce text-6xl">🚐</div>
-                            <p class="mb-1 font-semibold text-gray-600">
-                                Đang điều hướng GPS
-                            </p>
-                            <p class="font-mono text-sm text-green-600">
+                            <p
+                                class="font-mono text-xs font-medium text-green-700"
+                            >
                                 {{ currentPos.lat.toFixed(5) }},
                                 {{ currentPos.lng.toFixed(5) }}
-                            </p>
-                            <p class="mt-2 text-xs text-gray-400">
-                                Cập nhật mỗi 15 giây
                             </p>
                         </div>
                     </div>

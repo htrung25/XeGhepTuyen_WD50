@@ -34,6 +34,7 @@ const mapContainer = ref<HTMLElement | null>(null);
 const currentMapAddress = ref('');
 const currentMapCoords = ref<[number, number] | null>(null); // [lng, lat]
 const isResolvingAddress = ref(false);
+const mapError = ref('');
 let mapInstance: mapboxgl.Map | null = null;
 
 // Coordinate biases
@@ -130,6 +131,9 @@ async function reverseGeocode(lng: number, lat: number) {
 // Initialize Map
 function openMapModal() {
     isMapModalOpen.value = true;
+    mapError.value = token
+        ? ''
+        : 'Chưa cấu hình VITE_MAPBOX_TOKEN cho frontend.';
     currentMapAddress.value =
         props.modelValue || 'Đang lấy vị trí tâm bản đồ...';
 
@@ -145,23 +149,37 @@ function openMapModal() {
 
     nextTick(() => {
         if (!token || !mapContainer.value) return;
-        mapboxgl.accessToken = token;
-
-        mapInstance = new mapboxgl.Map({
-            container: mapContainer.value,
-            style: 'mapbox://styles/mapbox/streets-v12',
-            center: initialCoords,
-            zoom: 15,
-        });
+        try {
+            mapboxgl.accessToken = token.trim();
+            mapInstance = new mapboxgl.Map({
+                container: mapContainer.value,
+                style: 'mapbox://styles/mapbox/streets-v12',
+                center: initialCoords,
+                zoom: 15,
+            });
+        } catch (error) {
+            console.error('Mapbox initialization error:', error);
+            mapError.value = 'Không thể khởi tạo bản đồ trên thiết bị này.';
+            return;
+        }
 
         mapInstance.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
         mapInstance.on('load', () => {
+            mapError.value = '';
             if (props.lng && props.lat) {
                 reverseGeocode(props.lng, props.lat);
             } else {
                 const center = mapInstance!.getCenter();
                 reverseGeocode(center.lng, center.lat);
+            }
+        });
+
+        mapInstance.on('error', (event) => {
+            console.error('Mapbox error:', event.error);
+            if (!mapInstance?.loaded()) {
+                mapError.value =
+                    'Không thể tải bản đồ. Vui lòng kiểm tra Mapbox token và giới hạn URL.';
             }
         });
 
@@ -343,6 +361,13 @@ function handleClickOutside() {
                         ref="mapContainer"
                         class="absolute inset-0 h-full w-full"
                     />
+                    <div
+                        v-if="mapError"
+                        role="alert"
+                        class="absolute inset-0 z-20 flex items-center justify-center bg-slate-100 px-6 text-center text-sm font-medium text-red-600"
+                    >
+                        {{ mapError }}
+                    </div>
 
                     <!-- Fixed Target Pin in center (Grab-style) -->
                     <div

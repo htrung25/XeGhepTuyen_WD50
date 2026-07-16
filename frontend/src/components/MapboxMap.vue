@@ -26,9 +26,10 @@ const props = withDefaults(
 
 const emit = defineEmits<{ (e: 'select', id: string): void }>();
 
-const token = import.meta.env.VITE_MAPBOX_TOKEN as string | undefined;
-const hasToken = !!token;
+const token = (import.meta.env.VITE_MAPBOX_TOKEN as string | undefined)?.trim();
+const hasToken = Boolean(token);
 const container = ref<HTMLElement | null>(null);
+const mapError = ref('');
 let map: mapboxgl.Map | null = null;
 let loaded = false;
 let markerObjs: mapboxgl.Marker[] = [];
@@ -75,19 +76,33 @@ function renderMarkers() {
 
 onMounted(() => {
     if (!hasToken || !container.value) return;
-    mapboxgl.accessToken = token as string;
-    map = new mapboxgl.Map({
-        container: container.value,
-        style: 'mapbox://styles/mapbox/streets-v12',
-        center: props.center,
-        zoom: props.zoom,
-    });
-    map.addControl(new mapboxgl.NavigationControl(), 'top-right');
-    map.on('load', () => {
-        loaded = true;
-        map?.resize();
-        renderMarkers();
-    });
+    try {
+        mapboxgl.accessToken = token as string;
+        map = new mapboxgl.Map({
+            container: container.value,
+            style: 'mapbox://styles/mapbox/streets-v12',
+            center: props.center,
+            zoom: props.zoom,
+        });
+        map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+        map.on('load', () => {
+            loaded = true;
+            mapError.value = '';
+            map?.resize();
+            renderMarkers();
+        });
+        map.on('error', (event) => {
+            console.error('Mapbox error:', event.error);
+            if (!loaded) {
+                mapError.value =
+                    'Không thể tải bản đồ. Vui lòng kiểm tra Mapbox token và giới hạn URL.';
+            }
+        });
+    } catch (error) {
+        console.error('Mapbox initialization error:', error);
+        mapError.value = 'Không thể khởi tạo bản đồ trên thiết bị này.';
+        return;
+    }
 
     // Container đổi kích thước (grid/flex layout, mở sidebar, resize cửa sổ) →
     // gọi resize() để canvas Mapbox không bị vỡ/xám.
@@ -115,5 +130,12 @@ onUnmounted(() => {
             Chưa cấu hình bản đồ (thiếu VITE_MAPBOX_TOKEN)
         </div>
         <div v-else ref="container" class="h-full w-full" />
+        <div
+            v-if="mapError"
+            role="alert"
+            class="absolute inset-0 flex items-center justify-center bg-slate-100 px-6 text-center text-sm font-medium text-red-600"
+        >
+            {{ mapError }}
+        </div>
     </div>
 </template>
