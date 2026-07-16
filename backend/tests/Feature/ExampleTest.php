@@ -1,7 +1,10 @@
 <?php
 
 test('returns a successful response', function () {
-    $response = $this->get(route('home'));
+    $response = $this->getJson('/api/public/health');
 
-    $response->assertOk();
+    $response->assertOk()->assertJson([
+        'success' => true,
+        'message' => 'API is running',
+    ]);
 });

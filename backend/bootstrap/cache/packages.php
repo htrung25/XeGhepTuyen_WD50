@@ -17,25 +17,11 @@
       0 => 'Dedoc\\Scramble\\ScrambleServiceProvider',
     ),
   ),
-  'inertiajs/inertia-laravel' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'Inertia\\ServiceProvider',
-    ),
-  ),
   'laravel/boost' => 
   array (
     'providers' => 
     array (
       0 => 'Laravel\\Boost\\BoostServiceProvider',
-    ),
-  ),
-  'laravel/fortify' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'Laravel\\Fortify\\FortifyServiceProvider',
     ),
   ),
   'laravel/mcp' => 
@@ -61,13 +47,6 @@
     'providers' => 
     array (
       0 => 'Laravel\\Pao\\Laravel\\ServiceProvider',
-    ),
-  ),
-  'laravel/passkeys' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'Laravel\\Passkeys\\PasskeysServiceProvider',
     ),
   ),
   'laravel/reverb' => 

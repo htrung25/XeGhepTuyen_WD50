@@ -2,12 +2,9 @@
 
 use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\EnsureUserRole;
-use App\Http\Middleware\HandleAppearance;
-use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -49,8 +46,6 @@ return Application::configure(basePath: dirname(__DIR__))
         // Tin proxy (ngrok/reverse proxy) để nhận diện đúng scheme HTTPS từ X-Forwarded-*.
         $middleware->trustProxies(at: '*');
 
-        $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
-
         // Chặn truy cập chéo portal sau khi auth:sanctum xác thực token.
         // `permission` kiểm tra quyền chi tiết của admin (RBAC).
         $middleware->alias([
@@ -58,11 +53,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => EnsurePermission::class,
         ]);
 
-        $middleware->web(append: [
-            HandleAppearance::class,
-            HandleInertiaRequests::class,
-            AddLinkHeadersForPreloadedAssets::class,
-        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

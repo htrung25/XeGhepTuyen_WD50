@@ -40,7 +40,6 @@
         "vue-tsc": "^2.2.4"
     },
     "dependencies": {
-        "@inertiajs/vue3": "^3.0.0",
         "@lucide/vue": "^1.17.0",
         "@vueuse/core": "^12.8.2",
         "axios": "^1.17.0",
