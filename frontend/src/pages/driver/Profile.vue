@@ -609,26 +609,26 @@ onMounted(async () => {
                             class="hidden"
                             @change="uploadDocument"
                         />
-                        <table class="w-full text-sm">
+                        <table class="w-full min-w-[560px] text-sm">
                             <thead>
                                 <tr class="border-b border-gray-100 bg-gray-50">
                                     <th
-                                        class="px-5 py-3 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase"
+                                        class="px-5 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap text-gray-500 uppercase"
                                     >
                                         Loại giấy tờ
                                     </th>
                                     <th
-                                        class="px-5 py-3 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase"
+                                        class="px-5 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap text-gray-500 uppercase"
                                     >
                                         Trạng thái
                                     </th>
                                     <th
-                                        class="px-5 py-3 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase"
+                                        class="px-5 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap text-gray-500 uppercase"
                                     >
                                         Ngày hết hạn
                                     </th>
                                     <th
-                                        class="px-5 py-3 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase"
+                                        class="px-5 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap text-gray-500 uppercase"
                                     >
                                         Hành động
                                     </th>
@@ -641,14 +641,14 @@ onMounted(async () => {
                                     class="transition-colors hover:bg-gray-50"
                                 >
                                     <td
-                                        class="px-5 py-3.5 font-medium text-gray-800"
+                                        class="px-5 py-3.5 font-medium whitespace-nowrap text-gray-800"
                                     >
                                         {{ doc.label }}
                                     </td>
                                     <td class="px-5 py-3.5">
                                         <span
                                             :class="[
-                                                'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium',
+                                                'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap',
                                                 docStatus(doc).cls,
                                             ]"
                                         >
@@ -656,7 +656,9 @@ onMounted(async () => {
                                             {{ docStatus(doc).label }}
                                         </span>
                                     </td>
-                                    <td class="px-5 py-3.5 text-gray-500">
+                                    <td
+                                        class="px-5 py-3.5 whitespace-nowrap text-gray-500"
+                                    >
                                         {{
                                             doc.expires_at
                                                 ? new Date(
