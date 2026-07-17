@@ -13,7 +13,6 @@
         "aws/aws-sdk-php": "^3.388",
         "bacon/bacon-qr-code": "^3.0",
         "darkaonline/l5-swagger": "^11.1",
-        "dedoc/scramble": "^0.13.30",
         "doctrine/annotations": "^2.0",
         "laravel/chisel": "^0.1.0",
         "laravel/framework": "^13.7",
@@ -69,15 +68,16 @@
             "@php artisan wayfinder:generate --with-form --path=../frontend/src"
         ],
         "swagger": [
-            "@php artisan scramble:export",
-            "@php -r \"copy('api.json', 'storage/api-docs/api-docs.json');\""
+            "@php artisan l5-swagger:generate",
+            "@php artisan openapi:check-coverage"
         ],
         "lint:check": [
             "pint --parallel --test"
         ],
         "ci:check": [
             "Composer\\Config::disableProcessTimeout",
-            "@test"
+            "@test",
+            "@swagger"
         ],
         "test": [
             "@php artisan config:clear --ansi",

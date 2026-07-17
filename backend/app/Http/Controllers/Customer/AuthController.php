@@ -11,53 +11,16 @@ use App\Http\Requests\Customer\SendOtpRequest;
 use App\Jobs\SendSmsNotificationJob;
 use App\Models\User;
 use App\Services\OtpService;
-use Dedoc\Scramble\Attributes\BodyParameter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use OpenApi\Attributes as OA;
 
 class AuthController extends Controller
 {
     public function __construct(private readonly OtpService $otpService) {}
 
-    #[OA\Post(
-        path: '/api/customer/auth/send-otp',
-        summary: 'Gửi OTP xác thực số điện thoại',
-        tags: ['Customer Auth']
-    )]
-    #[OA\RequestBody(
-        required: true,
-        content: new OA\JsonContent(
-            required: ['phone'],
-            properties: [
-                new OA\Property(property: 'phone', type: 'string', example: '0900000000', description: 'Số điện thoại Việt Nam'),
-            ]
-        )
-    )]
-    #[OA\Response(
-        response: 200,
-        description: 'Gửi OTP thành công',
-        content: new OA\JsonContent(
-            properties: [
-                new OA\Property(property: 'success', type: 'boolean', example: true),
-                new OA\Property(property: 'message', type: 'string', example: 'Mã OTP đã được gửi đến số điện thoại của bạn'),
-            ]
-        )
-    )]
-    #[OA\Response(
-        response: 429,
-        description: 'Quá nhiều yêu cầu OTP',
-        content: new OA\JsonContent(
-            properties: [
-                new OA\Property(property: 'success', type: 'boolean', example: false),
-                new OA\Property(property: 'message', type: 'string', example: 'Vui lòng đợi trước khi gửi lại OTP'),
-            ]
-        )
-    )]
-    #[BodyParameter('phone', 'Số điện thoại Việt Nam nhận mã OTP.', required: true, type: 'string', example: '0900000000')]
     public function sendOtp(SendOtpRequest $request): JsonResponse
     {
         try {
@@ -81,8 +44,6 @@ class AuthController extends Controller
         }
     }
 
-    #[BodyParameter('phone', 'Số điện thoại đã nhận mã OTP.', required: true, type: 'string', example: '0900000000')]
-    #[BodyParameter('otp', 'Mã OTP gồm 6 chữ số.', required: true, type: 'string', example: '123456')]
     public function verifyOtp(Request $request): JsonResponse
     {
         $request->validate([
@@ -99,11 +60,6 @@ class AuthController extends Controller
         }
     }
 
-    #[BodyParameter('phone', 'Số điện thoại đăng ký.', required: true, type: 'string', example: '0912345678')]
-    #[BodyParameter('full_name', 'Họ và tên khách hàng.', required: true, type: 'string', example: 'Nguyễn Văn A')]
-    #[BodyParameter('email', 'Địa chỉ email liên hệ (Không bắt buộc).', required: false, type: 'string', example: 'nguyenvana@gmail.com')]
-    #[BodyParameter('password', 'Mật khẩu đăng nhập tối thiểu 6 ký tự.', required: true, type: 'string', example: '123456')]
-    #[BodyParameter('password_confirmation', 'Nhập lại mật khẩu để xác nhận.', required: true, type: 'string', example: '123456')]
     public function register(RegisterRequest $request): JsonResponse
     {
         try {
@@ -130,47 +86,6 @@ class AuthController extends Controller
         }
     }
 
-    #[OA\Post(
-        path: '/api/customer/auth/login',
-        summary: 'Đăng nhập tài khoản khách hàng',
-        tags: ['Customer Auth']
-    )]
-    #[OA\RequestBody(
-        required: true,
-        content: new OA\JsonContent(
-            required: ['phone', 'password'],
-            properties: [
-                new OA\Property(property: 'phone', type: 'string', example: '0900000000'),
-                new OA\Property(property: 'password', type: 'string', example: '123456'),
-            ]
-        )
-    )]
-    #[OA\Response(
-        response: 200,
-        description: 'Đăng nhập thành công',
-        content: new OA\JsonContent(
-            properties: [
-                new OA\Property(property: 'success', type: 'boolean', example: true),
-                new OA\Property(property: 'message', type: 'string', example: 'Đăng nhập thành công'),
-                new OA\Property(property: 'data', type: 'object', properties: [
-                    new OA\Property(property: 'token', type: 'string', example: '1|AbcDeFg...'),
-                    new OA\Property(property: 'user', type: 'object'),
-                ]),
-            ]
-        )
-    )]
-    #[OA\Response(
-        response: 401,
-        description: 'Sai số điện thoại hoặc mật khẩu',
-        content: new OA\JsonContent(
-            properties: [
-                new OA\Property(property: 'success', type: 'boolean', example: false),
-                new OA\Property(property: 'message', type: 'string', example: 'Số điện thoại hoặc mật khẩu không đúng'),
-            ]
-        )
-    )]
-    #[BodyParameter('phone', 'Số điện thoại đăng nhập của khách hàng.', required: true, type: 'string', example: '0900000000')]
-    #[BodyParameter('password', 'Mật khẩu đăng nhập.', required: true, type: 'string', example: '123456')]
     public function login(LoginRequest $request): JsonResponse
     {
         $user = User::where('phone', $request->phone)

@@ -1,7 +1,9 @@
 <?php
 
+use App\SwaggerProcessors\LaravelRouteProcessor;
 use L5Swagger\CustomGeneratorInterface;
 use L5Swagger\Generator;
+use OpenApi\Processors\BuildPaths;
 use OpenApi\scan;
 
 return [
@@ -58,7 +60,7 @@ return [
             /*
              * Route for accessing parsed swagger annotations.
              */
-            'docs' => 'docs',
+            'docs' => 'api/documentation',
 
             /*
              * Route for Oauth2 authentication callback.
@@ -159,8 +161,10 @@ return [
              * @see scan
              */
             'processors' => [
-                // \App\SwaggerProcessors\SchemaQueryParameter::class,
-                // ['class' => \App\SwaggerProcessors\Custom::class, 'after' => \OpenApi\Processors\AugmentSchemas::class],
+                [
+                    'class' => LaravelRouteProcessor::class,
+                    'after' => BuildPaths::class,
+                ],
             ],
 
             /**

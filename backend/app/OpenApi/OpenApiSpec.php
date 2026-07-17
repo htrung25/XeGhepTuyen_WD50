@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\OpenApi;
 
 use OpenApi\Attributes as OA;
 
@@ -13,6 +13,10 @@ use OpenApi\Attributes as OA;
     url: 'http://localhost:8000',
     description: 'Local Development API Server'
 )]
+#[OA\Server(
+    url: 'https://api-xegheptuyen-production-qdbif7.laravel.cloud',
+    description: 'Production API Server'
+)]
 #[OA\SecurityScheme(
     securityScheme: 'sanctum',
     type: 'http',
@@ -20,7 +24,7 @@ use OpenApi\Attributes as OA;
     bearerFormat: 'JWT',
     description: 'Nhập token Sanctum của bạn'
 )]
-class OpenApi
+final class OpenApiSpec
 {
-    // Lớp rỗng dùng chứa attributes OpenAPI chung cho dự án.
+    // OpenAPI root metadata is isolated from HTTP controllers.
 }
