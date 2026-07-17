@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\AuditLog;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request;
 
 class AuditLogService
@@ -28,19 +30,32 @@ class AuditLogService
         ?Model $model = null,
         ?string $description = null,
         ?array $oldValues = null,
-        ?array $newValues = null
-    ): AuditLog {
-        return AuditLog::create([
-            'user_id' => Auth::id(),
-            'action' => $action,
-            'model_type' => $model ? get_class($model) : null,
-            'model_id' => $model ? $model->getKey() : null,
-            'description' => $description,
-            'old_values' => $this->redactSensitiveValues($oldValues),
-            'new_values' => $this->redactSensitiveValues($newValues),
-            'ip_address' => Request::ip(),
-            'user_agent' => Request::userAgent(),
-        ]);
+        ?array $newValues = null,
+        ?User $actor = null,
+    ): ?AuditLog {
+        try {
+            return AuditLog::create([
+                'user_id' => $actor?->getKey() ?? Auth::id(),
+                'action' => $action,
+                'model_type' => $model ? get_class($model) : null,
+                'model_id' => $model ? $model->getKey() : null,
+                'description' => $description,
+                'old_values' => $this->redactSensitiveValues($oldValues),
+                'new_values' => $this->redactSensitiveValues($newValues),
+                'ip_address' => Request::ip(),
+                'user_agent' => Request::userAgent(),
+            ]);
+        } catch (\Throwable $exception) {
+            Log::error('Unable to write audit log', [
+                'action' => $action,
+                'model_type' => $model ? get_class($model) : null,
+                'model_id' => $model?->getKey(),
+                'actor_id' => $actor?->getKey() ?? Auth::id(),
+                'error' => $exception->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     /**

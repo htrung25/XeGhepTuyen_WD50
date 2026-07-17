@@ -51,6 +51,10 @@ enum AdminPermission: string
     // Nhật ký hệ thống
     case AuditLogsView = 'audit_logs.view';
 
+    // Hỗ trợ khách hàng
+    case SupportTicketsView = 'support_tickets.view';
+    case SupportTicketsManage = 'support_tickets.manage';
+
     // Phân quyền (vai trò)
     case AdminRolesView = 'admin_roles.view';
     case AdminRolesManage = 'admin_roles.manage';
@@ -85,6 +89,8 @@ enum AdminPermission: string
             self::VouchersView => 'Xem danh sách voucher',
             self::VouchersManage => 'Tạo/sửa/xóa voucher',
             self::AuditLogsView => 'Xem nhật ký hệ thống',
+            self::SupportTicketsView => 'Xem yêu cầu hỗ trợ',
+            self::SupportTicketsManage => 'Xử lý yêu cầu hỗ trợ',
             self::AdminRolesView => 'Xem vai trò phân quyền',
             self::AdminRolesManage => 'Tạo/sửa/xóa vai trò',
             self::AdminStaffView => 'Xem nhân viên admin',
@@ -121,6 +127,8 @@ enum AdminPermission: string
             self::VouchersView,
             self::VouchersManage => 'Voucher',
             self::AuditLogsView => 'Nhật ký hệ thống',
+            self::SupportTicketsView,
+            self::SupportTicketsManage => 'Hỗ trợ khách hàng',
             self::AdminRolesView,
             self::AdminRolesManage => 'Phân quyền',
             self::AdminStaffView,

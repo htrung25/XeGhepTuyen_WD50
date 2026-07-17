@@ -4,6 +4,7 @@ use App\Enums\TicketCategory;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Enums\UserRole;
+use App\Models\AdminRole;
 use App\Models\Booking;
 use App\Models\Driver;
 use App\Models\Operator;
@@ -228,6 +229,12 @@ it('allows admin to reply to a support ticket, changing its status to in_progres
     $response = $this->postJson("/api/admin/support/tickets/{$ticket->id}/reply", [
         'body' => 'Chào bạn, chúng tôi đang kiểm tra yêu cầu của bạn.',
     ]);
+
+    $this->assertDatabaseHas('audit_logs', [
+        'user_id' => $admin->id,
+        'action' => 'reply_support_ticket',
+        'model_id' => $ticket->id,
+    ]);
     $response->assertOk();
 
     $this->assertDatabaseHas('support_messages', [
@@ -283,4 +290,54 @@ it('allows admin to list, search, filter tickets, and retrieve statistics', func
     $responseSearch->assertOk()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.ticket_code', 'TK-000006');
+});
+
+it('ghi audit khi admin phân công, giải quyết và đóng ticket', function () {
+    [$customer, $admin] = setupSupportTestContext();
+    $assignee = User::factory()->create([
+        'role' => UserRole::Admin,
+        'admin_role_id' => superAdminRole()->id,
+    ]);
+    $ticket = SupportTicket::create([
+        'ticket_code' => 'TK-000007',
+        'user_id' => $customer->id,
+        'subject' => 'Cần hỗ trợ audit workflow',
+        'category' => TicketCategory::Other,
+        'status' => TicketStatus::Open,
+    ]);
+
+    Sanctum::actingAs($admin);
+    auth()->guard('admin')->setUser($admin);
+
+    $this->postJson("/api/admin/support/tickets/{$ticket->id}/assign", [
+        'assigned_to' => $assignee->id,
+    ])->assertOk();
+    $this->postJson("/api/admin/support/tickets/{$ticket->id}/resolve")->assertOk();
+    $this->postJson("/api/admin/support/tickets/{$ticket->id}/close")->assertOk();
+
+    foreach (['assign_support_ticket', 'resolve_support_ticket', 'close_support_ticket'] as $action) {
+        $this->assertDatabaseHas('audit_logs', [
+            'user_id' => $admin->id,
+            'action' => $action,
+            'model_id' => $ticket->id,
+        ]);
+    }
+});
+
+it('chặn admin không có quyền support ticket', function () {
+    $role = AdminRole::create([
+        'name' => 'Không có quyền hỗ trợ',
+        'slug' => 'no-support-access',
+        'permissions' => ['dashboard.view'],
+        'is_super' => false,
+    ]);
+    $admin = User::factory()->create([
+        'role' => UserRole::Admin,
+        'admin_role_id' => $role->id,
+    ]);
+
+    Sanctum::actingAs($admin);
+
+    $this->getJson('/api/admin/support/tickets')->assertForbidden();
+    $this->postJson('/api/admin/support/tickets/00000000-0000-0000-0000-000000000000/close')->assertForbidden();
 });

@@ -17,6 +17,7 @@ class PartnerApplicationController extends Controller
     public function __construct(
         private readonly PartnerApplicationService $applicationService,
         private readonly PartnerApplicationRepositoryInterface $applicationRepo,
+        private readonly AuditLogService $auditLog,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -48,6 +49,8 @@ class PartnerApplicationController extends Controller
             return response()->json(['success' => false, 'message' => 'Không tìm thấy đơn đăng ký'], 404);
         }
 
+        $oldStatus = $application->status->value;
+
         try {
             $operator = $this->applicationService->approve(
                 $application,
@@ -55,11 +58,11 @@ class PartnerApplicationController extends Controller
                 $request->user(),
             );
 
-            app(AuditLogService::class)->log(
+            $this->auditLog->log(
                 action: 'approve_partner_application',
                 model: $application,
                 description: "Đã duyệt đơn đăng ký đối tác thành công: {$application->company_name}. Tỷ lệ hoa hồng: ".($validated['commission_rate'] ?? 10).'%',
-                oldValues: ['status' => $application->status],
+                oldValues: ['status' => $oldStatus],
                 newValues: ['status' => 'approved', 'operator_id' => $operator->id]
             );
 
@@ -90,14 +93,16 @@ class PartnerApplicationController extends Controller
             return response()->json(['success' => false, 'message' => 'Không tìm thấy đơn đăng ký'], 404);
         }
 
+        $oldStatus = $application->status->value;
+
         try {
             $this->applicationService->reject($application, $validated['reason'], $request->user());
 
-            app(AuditLogService::class)->log(
+            $this->auditLog->log(
                 action: 'reject_partner_application',
                 model: $application,
                 description: "Đã từ chối đơn đăng ký đối tác: {$application->company_name}. Lý do: {$validated['reason']}",
-                oldValues: ['status' => $application->status],
+                oldValues: ['status' => $oldStatus],
                 newValues: ['status' => 'rejected', 'note' => $validated['reason']]
             );
 
