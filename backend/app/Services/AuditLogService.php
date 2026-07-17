@@ -9,6 +9,17 @@ use Illuminate\Support\Facades\Request;
 
 class AuditLogService
 {
+    private const SENSITIVE_KEYS = [
+        'password',
+        'password_confirmation',
+        'token',
+        'access_token',
+        'refresh_token',
+        'otp',
+        'secret',
+        'api_key',
+    ];
+
     /**
      * Write an audit log entry for admin actions.
      */
@@ -25,10 +36,35 @@ class AuditLogService
             'model_type' => $model ? get_class($model) : null,
             'model_id' => $model ? $model->getKey() : null,
             'description' => $description,
-            'old_values' => $oldValues,
-            'new_values' => $newValues,
+            'old_values' => $this->redactSensitiveValues($oldValues),
+            'new_values' => $this->redactSensitiveValues($newValues),
             'ip_address' => Request::ip(),
             'user_agent' => Request::userAgent(),
         ]);
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $values
+     * @return array<string, mixed>|null
+     */
+    private function redactSensitiveValues(?array $values): ?array
+    {
+        if ($values === null) {
+            return null;
+        }
+
+        foreach ($values as $key => $value) {
+            if (in_array(strtolower((string) $key), self::SENSITIVE_KEYS, true)) {
+                $values[$key] = '[REDACTED]';
+
+                continue;
+            }
+
+            if (is_array($value)) {
+                $values[$key] = $this->redactSensitiveValues($value);
+            }
+        }
+
+        return $values;
     }
 }

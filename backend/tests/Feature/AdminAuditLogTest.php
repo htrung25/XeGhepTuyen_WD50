@@ -4,6 +4,7 @@ use App\Enums\UserRole;
 use App\Models\AuditLog;
 use App\Models\Operator;
 use App\Models\User;
+use App\Services\AuditLogService;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 
@@ -135,4 +136,36 @@ it('loc audit logs theo khoang ngay', function () {
         ->assertOk()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.description', 'Log moi');
+});
+
+it('tu choi khoang ngay nguoc va page khong hop le', function () {
+    Sanctum::actingAs(makeAuditLogAdminUser());
+
+    $this->getJson('/api/admin/audit-logs?date_from=2026-06-30&date_to=2026-06-01')
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('date_to');
+
+    $this->getJson('/api/admin/audit-logs?page=0')
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('page');
+});
+
+it('an du lieu nhay cam truoc khi ghi audit log', function () {
+    $admin = makeAuditLogAdminUser();
+    Sanctum::actingAs($admin);
+
+    $log = app(AuditLogService::class)->log(
+        action: 'security_test',
+        newValues: [
+            'email' => 'admin@example.com',
+            'password' => 'plain-secret',
+            'nested' => ['access_token' => 'token-secret'],
+        ]
+    );
+
+    expect($log->new_values)->toMatchArray([
+        'email' => 'admin@example.com',
+        'password' => '[REDACTED]',
+        'nested' => ['access_token' => '[REDACTED]'],
+    ]);
 });
