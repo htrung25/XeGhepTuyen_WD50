@@ -92,7 +92,7 @@ class Driver extends Model
         return $query->where('status', DriverStatusEnum::Pending);
     }
 
-    public function scopeVerified($query)
+    public function scopeVerified(Builder $query): Builder
     {
         return $query->where('status', DriverStatusEnum::Verified);
     }
