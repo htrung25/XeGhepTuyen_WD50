@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use App\Enums\TicketCategory;
-use App\Enums\TicketPriority;
-use App\Enums\TicketStatus;
+use App\Enums\TicketCategoryEnum;
+use App\Enums\TicketPriorityEnum;
+use App\Enums\TicketStatusEnum;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -30,9 +30,9 @@ class SupportTicket extends Model
     protected function casts(): array
     {
         return [
-            'category' => TicketCategory::class,
-            'status' => TicketStatus::class,
-            'priority' => TicketPriority::class,
+            'category' => TicketCategoryEnum::class,
+            'status' => TicketStatusEnum::class,
+            'priority' => TicketPriorityEnum::class,
             'resolved_at' => 'datetime',
             'closed_at' => 'datetime',
         ];

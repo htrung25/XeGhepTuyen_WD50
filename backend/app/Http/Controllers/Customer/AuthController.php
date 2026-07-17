@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Customer;
 
-use App\Enums\UserRole;
+use App\Enums\UserRoleEnum;
 use App\Exceptions\InvalidOtpException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\LoginRequest;
@@ -68,7 +68,7 @@ class AuthController extends Controller
                 'phone' => $request->phone,
                 'email' => $request->email,
                 'password' => $request->password,
-                'role' => UserRole::Customer,
+                'role' => UserRoleEnum::Customer,
                 'is_verified' => true,
             ]);
 
@@ -89,7 +89,7 @@ class AuthController extends Controller
     public function login(LoginRequest $request): JsonResponse
     {
         $user = User::where('phone', $request->phone)
-            ->where('role', UserRole::Customer)
+            ->where('role', UserRoleEnum::Customer)
             ->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {

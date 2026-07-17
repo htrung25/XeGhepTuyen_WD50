@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Driver;
 
-use App\Enums\TripStatus;
+use App\Enums\TripStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Driver\TripResource;
 use App\Repositories\Contracts\TripRepositoryInterface;
@@ -111,7 +111,7 @@ class TripController extends Controller
             return response()->json(['success' => false, 'message' => 'Chuyến đi không tồn tại'], 404);
         }
 
-        if ($trip->status !== TripStatus::Boarding && $trip->status !== TripStatus::Scheduled) {
+        if ($trip->status !== TripStatusEnum::Boarding && $trip->status !== TripStatusEnum::Scheduled) {
             return response()->json(['success' => false, 'message' => 'Không thể bắt đầu chuyến này'], 422);
         }
 
@@ -135,7 +135,7 @@ class TripController extends Controller
             return response()->json(['success' => false, 'message' => 'Chuyến đi không tồn tại'], 404);
         }
 
-        if ($trip->status !== TripStatus::InProgress) {
+        if ($trip->status !== TripStatusEnum::InProgress) {
             return response()->json(['success' => false, 'message' => 'Chuyến chưa được bắt đầu'], 422);
         }
 

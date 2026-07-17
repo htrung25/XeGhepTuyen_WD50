@@ -2,13 +2,13 @@
 
 namespace Database\Seeders;
 
-use App\Enums\DriverStatus;
-use App\Enums\SeatStatus;
-use App\Enums\SeatType;
-use App\Enums\TripStatus;
-use App\Enums\UserRole;
-use App\Enums\VehicleStatus;
-use App\Enums\VehicleType;
+use App\Enums\DriverStatusEnum;
+use App\Enums\SeatStatusEnum;
+use App\Enums\SeatTypeEnum;
+use App\Enums\TripStatusEnum;
+use App\Enums\UserRoleEnum;
+use App\Enums\VehicleStatusEnum;
+use App\Enums\VehicleTypeEnum;
 use App\Models\Driver;
 use App\Models\Operator;
 use App\Models\Route;
@@ -69,7 +69,7 @@ class TripSeeder extends Seeder
             [
                 'operator_id' => $operator->id,
                 'plate_number' => '29A-12345',
-                'vehicle_type' => VehicleType::Van9,
+                'vehicle_type' => VehicleTypeEnum::Van9,
                 'brand' => 'Ford',
                 'model' => 'Transit',
                 'year' => 2023,
@@ -77,7 +77,7 @@ class TripSeeder extends Seeder
                 'seat_count' => 9,
                 'registration_expiry' => now()->addYear(),
                 'amenities' => ['wifi', 'usb', 'điều_hoà'],
-                'status' => VehicleStatus::Active,
+                'status' => VehicleStatusEnum::Active,
             ]
         );
 
@@ -86,7 +86,7 @@ class TripSeeder extends Seeder
             [
                 'operator_id' => $operator->id,
                 'plate_number' => '29B-67890',
-                'vehicle_type' => VehicleType::Minibus16,
+                'vehicle_type' => VehicleTypeEnum::Minibus16,
                 'brand' => 'Hyundai',
                 'model' => 'Solati',
                 'year' => 2022,
@@ -94,7 +94,7 @@ class TripSeeder extends Seeder
                 'seat_count' => 12,
                 'registration_expiry' => now()->addYear(),
                 'amenities' => ['wifi', 'usb', 'điều_hoà', 'cửa_sổ_panoramic'],
-                'status' => VehicleStatus::Active,
+                'status' => VehicleStatusEnum::Active,
             ]
         );
 
@@ -105,7 +105,7 @@ class TripSeeder extends Seeder
                 'full_name' => 'Nguyễn Văn Tài',
                 'email' => 'driver1@xeghep.vn',
                 'password' => Hash::make('Driver@123456'),
-                'role' => UserRole::Driver,
+                'role' => UserRoleEnum::Driver,
                 'is_verified' => true,
                 'is_active' => true,
             ]
@@ -123,7 +123,7 @@ class TripSeeder extends Seeder
                 'id_card_front_url' => null,
                 'id_card_back_url' => null,
                 'license_front_url' => null,
-                'status' => DriverStatus::Verified,
+                'status' => DriverStatusEnum::Verified,
                 'rating_avg' => 4.8,
                 'total_trips' => 150,
                 'verified_at' => now(),
@@ -136,7 +136,7 @@ class TripSeeder extends Seeder
                 'full_name' => 'Trần Văn Nam',
                 'email' => 'driver2@xeghep.vn',
                 'password' => Hash::make('Driver@123456'),
-                'role' => UserRole::Driver,
+                'role' => UserRoleEnum::Driver,
                 'is_verified' => true,
                 'is_active' => true,
             ]
@@ -154,7 +154,7 @@ class TripSeeder extends Seeder
                 'id_card_front_url' => null,
                 'id_card_back_url' => null,
                 'license_front_url' => null,
-                'status' => DriverStatus::Verified,
+                'status' => DriverStatusEnum::Verified,
                 'rating_avg' => 4.7,
                 'total_trips' => 80,
                 'verified_at' => now(),
@@ -189,7 +189,7 @@ class TripSeeder extends Seeder
                         'arrive_at' => $arriveAt,
                         'price' => 120000,
                         'available_seats' => $seats,
-                        'status' => TripStatus::Scheduled,
+                        'status' => TripStatusEnum::Scheduled,
                     ]
                 );
 
@@ -199,9 +199,9 @@ class TripSeeder extends Seeder
                         SeatMap::create([
                             'trip_id' => $trip->id,
                             'seat_code' => 'A'.str_pad($seat, 2, '0', STR_PAD_LEFT),
-                            'seat_type' => SeatType::Standard,
+                            'seat_type' => SeatTypeEnum::Standard,
                             'price' => 120000,
-                            'status' => SeatStatus::Available,
+                            'status' => SeatStatusEnum::Available,
                         ]);
                     }
                 }

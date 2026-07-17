@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\UserRole;
+use App\Enums\UserRoleEnum;
 use App\Models\AdminRole;
 use App\Models\Booking;
 use App\Models\Driver;
@@ -61,7 +61,7 @@ expect()->extend('toBeOne', function () {
  */
 function makeOperatorWithRevenue(int $online, int $cash, int $amount = 150000): Operator
 {
-    $opUser = User::factory()->create(['role' => UserRole::Operator]);
+    $opUser = User::factory()->create(['role' => UserRoleEnum::Operator]);
     $operator = Operator::create([
         'user_id' => $opUser->id, 'company_name' => 'NX', 'business_license' => 'GP',
         'commission_rate' => 10, 'status' => 'verified',
@@ -73,7 +73,7 @@ function makeOperatorWithRevenue(int $online, int $cash, int $amount = 150000): 
         'brand' => 'Ford', 'model' => 'Transit', 'vehicle_type' => 'van_9', 'seat_count' => 9,
     ]);
     $driver = Driver::create([
-        'user_id' => User::factory()->create(['role' => UserRole::Driver])->id, 'operator_id' => $operator->id,
+        'user_id' => User::factory()->create(['role' => UserRoleEnum::Driver])->id, 'operator_id' => $operator->id,
         'license_number' => 'B2-'.fake()->unique()->numerify('######'), 'license_class' => 'B2',
         'license_expiry' => now()->addYears(3), 'id_card_number' => fake()->numerify('############'), 'status' => 'verified',
     ]);
@@ -86,7 +86,7 @@ function makeOperatorWithRevenue(int $online, int $cash, int $amount = 150000): 
     $mk = function (string $method) use ($trip, $stop, $amount) {
         Booking::create([
             'booking_code' => 'HNHP'.now()->format('ymd').fake()->unique()->numerify('####'),
-            'user_id' => User::factory()->create(['role' => UserRole::Customer])->id, 'trip_id' => $trip->id,
+            'user_id' => User::factory()->create(['role' => UserRoleEnum::Customer])->id, 'trip_id' => $trip->id,
             'pickup_stop_id' => $stop->id, 'dropoff_stop_id' => $stop->id, 'passenger_count' => 1,
             'contact_name' => 'A', 'contact_phone' => '0900000000', 'subtotal' => $amount, 'final_amount' => $amount,
             'payment_method' => $method, 'payment_status' => 'paid', 'booking_status' => 'completed', 'qr_token' => Str::random(32),

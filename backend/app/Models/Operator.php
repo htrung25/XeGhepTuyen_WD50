@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\OperatorStatus;
+use App\Enums\OperatorStatusEnum;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -34,7 +34,7 @@ class Operator extends Model
     protected function casts(): array
     {
         return [
-            'status' => OperatorStatus::class,
+            'status' => OperatorStatusEnum::class,
             'verified_at' => 'datetime',
             'commission_rate' => 'decimal:2',
         ];
@@ -79,23 +79,23 @@ class Operator extends Model
 
     public function scopePending($query)
     {
-        return $query->where('status', OperatorStatus::Pending);
+        return $query->where('status', OperatorStatusEnum::Pending);
     }
 
     public function scopeVerified($query)
     {
-        return $query->where('status', OperatorStatus::Verified);
+        return $query->where('status', OperatorStatusEnum::Verified);
     }
 
     public function scopeActive($query)
     {
-        return $query->where('status', OperatorStatus::Verified);
+        return $query->where('status', OperatorStatusEnum::Verified);
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
     public function isVerified(): bool
     {
-        return $this->status === OperatorStatus::Verified;
+        return $this->status === OperatorStatusEnum::Verified;
     }
 }

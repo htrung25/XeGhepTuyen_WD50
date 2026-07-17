@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\DiscountType;
+use App\Enums\DiscountTypeEnum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -30,7 +30,7 @@ class Voucher extends Model
     protected function casts(): array
     {
         return [
-            'discount_type' => DiscountType::class,
+            'discount_type' => DiscountTypeEnum::class,
             'discount_value' => 'decimal:2',
             'min_order' => 'integer',
             'max_discount' => 'integer',
@@ -79,7 +79,7 @@ class Voucher extends Model
             return 0;
         }
 
-        if ($this->discount_type === DiscountType::Percent) {
+        if ($this->discount_type === DiscountTypeEnum::Percent) {
             $discount = (int) ($subtotal * $this->discount_value / 100);
 
             return $this->max_discount ? min($discount, $this->max_discount) : $discount;

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\UserRole;
+use App\Enums\UserRoleEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\LoginRequest;
 use App\Models\User;
@@ -21,7 +21,7 @@ class AuthController extends Controller
     public function login(LoginRequest $request): JsonResponse
     {
         $user = User::where('email', $request->email)
-            ->where('role', UserRole::Admin)
+            ->where('role', UserRoleEnum::Admin)
             ->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {

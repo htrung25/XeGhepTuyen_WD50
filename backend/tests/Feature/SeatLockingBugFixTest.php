@@ -1,8 +1,8 @@
 <?php
 
-use App\Enums\SeatStatus;
-use App\Enums\SeatType;
-use App\Enums\UserRole;
+use App\Enums\SeatStatusEnum;
+use App\Enums\SeatTypeEnum;
+use App\Enums\UserRoleEnum;
 use App\Models\Driver;
 use App\Models\Operator;
 use App\Models\Route;
@@ -15,7 +15,7 @@ use Laravel\Sanctum\Sanctum;
 
 function setupSeatLockTestContext(): array
 {
-    $opUser = User::factory()->create(['role' => UserRole::Operator]);
+    $opUser = User::factory()->create(['role' => UserRoleEnum::Operator]);
     $operator = Operator::create([
         'user_id' => $opUser->id,
         'company_name' => 'Xe Ghep Test Company',
@@ -40,7 +40,7 @@ function setupSeatLockTestContext(): array
         'seat_count' => 9,
     ]);
 
-    $drvUser = User::factory()->create(['role' => UserRole::Driver]);
+    $drvUser = User::factory()->create(['role' => UserRoleEnum::Driver]);
     $driver = Driver::create([
         'user_id' => $drvUser->id,
         'operator_id' => $operator->id,
@@ -69,9 +69,9 @@ function setupSeatLockTestContext(): array
         $seats[] = SeatMap::create([
             'trip_id' => $trip->id,
             'seat_code' => $code,
-            'seat_type' => SeatType::Standard,
+            'seat_type' => SeatTypeEnum::Standard,
             'price' => 150000,
-            'status' => SeatStatus::Available,
+            'status' => SeatStatusEnum::Available,
         ]);
     }
 
@@ -80,7 +80,7 @@ function setupSeatLockTestContext(): array
 
 it('allows customer to lock seats and re-lock the same seats without error', function () {
     [$trip, $seats] = setupSeatLockTestContext();
-    $customer = User::factory()->create(['role' => UserRole::Customer]);
+    $customer = User::factory()->create(['role' => UserRoleEnum::Customer]);
 
     $bookingService = app(BookingService::class);
     $seatIds = [$seats[0]->id, $seats[1]->id]; // A1, A2
@@ -89,42 +89,42 @@ it('allows customer to lock seats and re-lock the same seats without error', fun
     $bookingService->lockSeats($seatIds, $customer->id, $trip->id);
 
     // Verify in DB
-    expect(SeatMap::find($seats[0]->id)->status)->toBe(SeatStatus::Locked);
+    expect(SeatMap::find($seats[0]->id)->status)->toBe(SeatStatusEnum::Locked);
     expect(SeatMap::find($seats[0]->id)->locked_by)->toBe($customer->id);
 
     // Second lock (re-lock same seats) should succeed without exceptions
     $bookingService->lockSeats($seatIds, $customer->id, $trip->id);
 
-    expect(SeatMap::find($seats[0]->id)->status)->toBe(SeatStatus::Locked);
+    expect(SeatMap::find($seats[0]->id)->status)->toBe(SeatStatusEnum::Locked);
     expect(SeatMap::find($seats[0]->id)->locked_by)->toBe($customer->id);
 });
 
 it('automatically releases old locks when customer locks new seats', function () {
     [$trip, $seats] = setupSeatLockTestContext();
-    $customer = User::factory()->create(['role' => UserRole::Customer]);
+    $customer = User::factory()->create(['role' => UserRoleEnum::Customer]);
 
     $bookingService = app(BookingService::class);
 
     // Lock A1, A2
     $bookingService->lockSeats([$seats[0]->id, $seats[1]->id], $customer->id, $trip->id);
-    expect(SeatMap::find($seats[0]->id)->status)->toBe(SeatStatus::Locked);
+    expect(SeatMap::find($seats[0]->id)->status)->toBe(SeatStatusEnum::Locked);
 
     // Lock B1, B2 instead
     $bookingService->lockSeats([$seats[2]->id, $seats[3]->id], $customer->id, $trip->id);
 
     // Old seats A1, A2 must be released
-    expect(SeatMap::find($seats[0]->id)->status)->toBe(SeatStatus::Available);
+    expect(SeatMap::find($seats[0]->id)->status)->toBe(SeatStatusEnum::Available);
     expect(SeatMap::find($seats[0]->id)->locked_by)->toBeNull();
 
     // New seats B1, B2 must be locked
-    expect(SeatMap::find($seats[2]->id)->status)->toBe(SeatStatus::Locked);
+    expect(SeatMap::find($seats[2]->id)->status)->toBe(SeatStatusEnum::Locked);
     expect(SeatMap::find($seats[2]->id)->locked_by)->toBe($customer->id);
 });
 
 it('returns available status for seats locked by the current customer but locked for others', function () {
     [$trip, $seats] = setupSeatLockTestContext();
-    $customer1 = User::factory()->create(['role' => UserRole::Customer]);
-    $customer2 = User::factory()->create(['role' => UserRole::Customer]);
+    $customer1 = User::factory()->create(['role' => UserRoleEnum::Customer]);
+    $customer2 = User::factory()->create(['role' => UserRoleEnum::Customer]);
 
     $bookingService = app(BookingService::class);
 

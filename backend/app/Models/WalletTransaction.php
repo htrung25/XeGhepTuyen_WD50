@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\WalletTransactionType;
+use App\Enums\WalletTransactionTypeEnum;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -29,7 +29,7 @@ class WalletTransaction extends Model
     protected function casts(): array
     {
         return [
-            'type' => WalletTransactionType::class,
+            'type' => WalletTransactionTypeEnum::class,
             'amount' => 'integer',
             'balance_after' => 'integer',
             'created_at' => 'datetime',

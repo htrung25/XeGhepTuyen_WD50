@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\PartnerApplicationStatus;
+use App\Enums\PartnerApplicationStatusEnum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -33,7 +33,7 @@ class PartnerApplication extends Model
     protected function casts(): array
     {
         return [
-            'status' => PartnerApplicationStatus::class,
+            'status' => PartnerApplicationStatusEnum::class,
             'fleet_images' => 'array',
             'fleet_breakdown' => 'array',
             'vehicle_count' => 'integer',
@@ -57,7 +57,7 @@ class PartnerApplication extends Model
 
     public function scopePending(Builder $query): Builder
     {
-        return $query->where('status', PartnerApplicationStatus::Pending);
+        return $query->where('status', PartnerApplicationStatusEnum::Pending);
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
@@ -65,8 +65,8 @@ class PartnerApplication extends Model
     public function canApprove(): bool
     {
         return in_array($this->status, [
-            PartnerApplicationStatus::Pending,
-            PartnerApplicationStatus::Contacted,
+            PartnerApplicationStatusEnum::Pending,
+            PartnerApplicationStatusEnum::Contacted,
         ], true);
     }
 

@@ -2,39 +2,39 @@
 
 namespace App\Providers;
 
-use App\Events\BookingCancelled;
-use App\Events\BookingConfirmed;
-use App\Events\DriverLocationUpdated;
-use App\Events\TripCompleted;
-use App\Events\TripStarted;
-use App\Listeners\BroadcastDriverLocation;
-use App\Listeners\NotifyPassengersOnTripStart;
-use App\Listeners\SendBookingCancellationNotification;
-use App\Listeners\SendBookingConfirmationNotification;
-use App\Listeners\UpdateDriverRatingOnTripComplete;
+use App\Events\BookingCancelledEvent;
+use App\Events\BookingConfirmedEvent;
+use App\Events\DriverLocationUpdatedEvent;
+use App\Events\TripCompletedEvent;
+use App\Events\TripStartedEvent;
+use App\Listeners\BroadcastDriverLocationListener;
+use App\Listeners\NotifyPassengersOnTripStartListener;
+use App\Listeners\SendBookingCancellationNotificationListener;
+use App\Listeners\SendBookingConfirmationNotificationListener;
+use App\Listeners\UpdateDriverRatingOnTripCompleteListener;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
 {
     protected $listen = [
-        BookingConfirmed::class => [
-            SendBookingConfirmationNotification::class,
+        BookingConfirmedEvent::class => [
+            SendBookingConfirmationNotificationListener::class,
         ],
 
-        BookingCancelled::class => [
-            SendBookingCancellationNotification::class,
+        BookingCancelledEvent::class => [
+            SendBookingCancellationNotificationListener::class,
         ],
 
-        TripStarted::class => [
-            NotifyPassengersOnTripStart::class,
+        TripStartedEvent::class => [
+            NotifyPassengersOnTripStartListener::class,
         ],
 
-        TripCompleted::class => [
-            UpdateDriverRatingOnTripComplete::class,
+        TripCompletedEvent::class => [
+            UpdateDriverRatingOnTripCompleteListener::class,
         ],
 
-        DriverLocationUpdated::class => [
-            BroadcastDriverLocation::class,
+        DriverLocationUpdatedEvent::class => [
+            BroadcastDriverLocationListener::class,
         ],
     ];
 }

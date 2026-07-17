@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\AdminPermission;
+use App\Enums\AdminPermissionEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreRoleRequest;
 use App\Http\Requests\Admin\UpdateRoleRequest;
@@ -19,7 +19,7 @@ class RoleController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => AdminPermission::catalog(),
+            'data' => AdminPermissionEnum::catalog(),
         ]);
     }
 

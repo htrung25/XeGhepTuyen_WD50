@@ -2,7 +2,7 @@
 
 namespace App\Repositories;
 
-use App\Enums\TripStatus;
+use App\Enums\TripStatusEnum;
 use App\Models\Trip;
 use App\Repositories\Contracts\TripRepositoryInterface;
 use Carbon\Carbon;
@@ -191,7 +191,7 @@ class TripRepository implements TripRepositoryInterface
     public function getActiveTripsWithLocation(): Collection
     {
         return Trip::with(['driver', 'route'])
-            ->where('status', TripStatus::InProgress)
+            ->where('status', TripStatusEnum::InProgress)
             ->whereNotNull('driver_id')
             ->get();
     }
@@ -204,7 +204,7 @@ class TripRepository implements TripRepositoryInterface
             'driver:id,user_id,rating_avg,is_online,current_lat,current_lng',
             'driver.user:id,full_name,phone',
         ])
-            ->whereIn('status', [TripStatus::Boarding, TripStatus::InProgress])
+            ->whereIn('status', [TripStatusEnum::Boarding, TripStatusEnum::InProgress])
             ->orderBy('depart_at')
             ->get();
     }

@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Enums\UserRole;
+use App\Enums\UserRoleEnum;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -30,7 +30,7 @@ class UserFactory extends Factory
             'phone' => fake()->unique()->numerify('09########'),
             'email' => fake()->unique()->safeEmail(),
             'password' => static::$password ??= Hash::make('password'),
-            'role' => UserRole::Customer,
+            'role' => UserRoleEnum::Customer,
             'is_verified' => true,
             'is_active' => true,
         ];
@@ -48,16 +48,16 @@ class UserFactory extends Factory
 
     public function admin(): static
     {
-        return $this->state(fn (array $attributes) => ['role' => UserRole::Admin]);
+        return $this->state(fn (array $attributes) => ['role' => UserRoleEnum::Admin]);
     }
 
     public function driver(): static
     {
-        return $this->state(fn (array $attributes) => ['role' => UserRole::Driver]);
+        return $this->state(fn (array $attributes) => ['role' => UserRoleEnum::Driver]);
     }
 
     public function operator(): static
     {
-        return $this->state(fn (array $attributes) => ['role' => UserRole::Operator]);
+        return $this->state(fn (array $attributes) => ['role' => UserRoleEnum::Operator]);
     }
 }

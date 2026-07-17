@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Enums\NotificationChannel;
-use App\Enums\NotificationType;
-use App\Enums\UserRole;
+use App\Enums\NotificationChannelEnum;
+use App\Enums\NotificationTypeEnum;
+use App\Enums\UserRoleEnum;
 use App\Models\Notification;
 use App\Models\User;
 
@@ -20,7 +20,7 @@ class AdminNotificationService
     public function notify(string $permission, string $title, string $body, array $data = []): void
     {
         $admins = User::query()
-            ->where('role', UserRole::Admin)
+            ->where('role', UserRoleEnum::Admin)
             ->where('is_active', true)
             ->with('adminRole')
             ->get()
@@ -29,11 +29,11 @@ class AdminNotificationService
         foreach ($admins as $admin) {
             Notification::create([
                 'user_id' => $admin->id,
-                'type' => NotificationType::System,
+                'type' => NotificationTypeEnum::System,
                 'title' => $title,
                 'body' => $body,
                 'data' => $data,
-                'channel' => NotificationChannel::InApp,
+                'channel' => NotificationChannelEnum::InApp,
                 'is_read' => false,
                 'sent_at' => now(),
             ]);

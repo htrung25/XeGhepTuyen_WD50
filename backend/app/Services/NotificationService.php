@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Enums\NotificationChannel;
-use App\Enums\NotificationType;
+use App\Enums\NotificationChannelEnum;
+use App\Enums\NotificationTypeEnum;
 use App\Jobs\SendEmailNotificationJob;
 use App\Jobs\SendSmsNotificationJob;
 use App\Jobs\SendZaloNotificationJob;
@@ -15,10 +15,10 @@ class NotificationService
     /**
      * Gửi thông báo qua các kênh — luôn dispatch Job, không gọi API trực tiếp
      */
-    public function send(User $user, NotificationType $type, array $data, array $channels = []): void
+    public function send(User $user, NotificationTypeEnum $type, array $data, array $channels = []): void
     {
         if (empty($channels)) {
-            $channels = [NotificationChannel::InApp, NotificationChannel::Sms];
+            $channels = [NotificationChannelEnum::InApp, NotificationChannelEnum::Sms];
         }
 
         $title = $data['title'] ?? $type->label();
@@ -31,7 +31,7 @@ class NotificationService
         }
     }
 
-    private function saveToDb(User $user, NotificationType $type, string $title, string $body, NotificationChannel $channel, ?string $bookingId, array $data): void
+    private function saveToDb(User $user, NotificationTypeEnum $type, string $title, string $body, NotificationChannelEnum $channel, ?string $bookingId, array $data): void
     {
         Notification::create([
             'user_id' => $user->id,
@@ -45,16 +45,16 @@ class NotificationService
         ]);
     }
 
-    private function dispatchJob(User $user, NotificationChannel $channel, string $message, array $data): void
+    private function dispatchJob(User $user, NotificationChannelEnum $channel, string $message, array $data): void
     {
         match ($channel) {
-            NotificationChannel::Sms => SendSmsNotificationJob::dispatch(
+            NotificationChannelEnum::Sms => SendSmsNotificationJob::dispatch(
                 $user->phone, $message, $data['booking_id'] ?? null
             )->onQueue('notifications'),
-            NotificationChannel::Zalo => SendZaloNotificationJob::dispatch(
+            NotificationChannelEnum::Zalo => SendZaloNotificationJob::dispatch(
                 $user->zalo_user_id, $message, $data
             )->onQueue('notifications'),
-            NotificationChannel::Email => $user->email ? SendEmailNotificationJob::dispatch(
+            NotificationChannelEnum::Email => $user->email ? SendEmailNotificationJob::dispatch(
                 $user->email, $data['title'] ?? '', $message, $data
             )->onQueue('notifications') : null,
             default => null,

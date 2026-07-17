@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Customer;
 
-use App\Enums\TicketCategory;
+use App\Enums\TicketCategoryEnum;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
 
@@ -17,7 +17,7 @@ class CreateTicketRequest extends FormRequest
     {
         return [
             'subject' => ['required', 'string', 'min:5', 'max:255'],
-            'category' => ['required', new Enum(TicketCategory::class)],
+            'category' => ['required', new Enum(TicketCategoryEnum::class)],
             'booking_code' => [
                 'nullable',
                 'string',

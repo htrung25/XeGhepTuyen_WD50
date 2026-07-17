@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources\Customer;
 
-use App\Enums\SeatStatus;
+use App\Enums\SeatStatusEnum;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -34,7 +34,7 @@ class TripSearchResource extends JsonResource
                 'rating_avg' => (float) $this->driver->rating_avg,
                 'total_trips' => (int) $this->driver->total_trips,
             ] : null,
-            'available_seats' => $this->seatMaps->where('status', SeatStatus::Available)->count(),
+            'available_seats' => $this->seatMaps->where('status', SeatStatusEnum::Available)->count(),
             'total_seats' => $this->vehicle->seat_count,
             'pickup_stops' => $this->route->stops->where('is_pickup', true)->values()->map(fn ($s) => [
                 'id' => $s->id,

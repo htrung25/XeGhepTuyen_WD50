@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\UserRole;
+use App\Enums\UserRoleEnum;
 use App\Models\Booking;
 use App\Models\Driver;
 use App\Models\Operator;
@@ -18,7 +18,7 @@ use Illuminate\Support\Str;
  */
 function makeTripForCompletion(): Trip
 {
-    $opUser = User::factory()->create(['role' => UserRole::Operator]);
+    $opUser = User::factory()->create(['role' => UserRoleEnum::Operator]);
     $operator = Operator::create([
         'user_id' => $opUser->id, 'company_name' => 'NX', 'business_license' => 'GP', 'status' => 'verified',
     ]);
@@ -28,7 +28,7 @@ function makeTripForCompletion(): Trip
         'operator_id' => $operator->id, 'plate_number' => '30A-'.fake()->unique()->numerify('#####'),
         'brand' => 'Ford', 'model' => 'Transit', 'vehicle_type' => 'van_9', 'seat_count' => 9,
     ]);
-    $drvUser = User::factory()->create(['role' => UserRole::Driver]);
+    $drvUser = User::factory()->create(['role' => UserRoleEnum::Driver]);
     $driver = Driver::create([
         'user_id' => $drvUser->id, 'operator_id' => $operator->id,
         'license_number' => 'B2-'.fake()->unique()->numerify('######'), 'license_class' => 'B2',
@@ -46,7 +46,7 @@ function makeBookingOnTrip(Trip $trip, string $status, string $paymentStatus): B
 {
     return Booking::create([
         'booking_code' => 'HNHP'.now()->format('ymd').fake()->unique()->numerify('###'),
-        'user_id' => User::factory()->create(['role' => UserRole::Customer])->id, 'trip_id' => $trip->id,
+        'user_id' => User::factory()->create(['role' => UserRoleEnum::Customer])->id, 'trip_id' => $trip->id,
         'pickup_stop_id' => $trip->route->stops()->first()->id, 'dropoff_stop_id' => $trip->route->stops()->first()->id,
         'passenger_count' => 1, 'contact_name' => 'A', 'contact_phone' => '0900000000',
         'subtotal' => 150000, 'final_amount' => 150000, 'payment_method' => 'cash',

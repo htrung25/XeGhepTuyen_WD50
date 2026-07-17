@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Driver;
 
-use App\Enums\BookingPaymentStatus;
-use App\Enums\BookingStatus;
-use App\Enums\PaymentMethod;
+use App\Enums\BookingPaymentStatusEnum;
+use App\Enums\BookingStatusEnum;
+use App\Enums\PaymentMethodEnum;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Services\PaymentService;
@@ -36,7 +36,7 @@ class CheckinController extends Controller
             return response()->json(['success' => false, 'message' => 'Mã QR không thuộc chuyến này'], 403);
         }
 
-        if ($booking->booking_status !== BookingStatus::Confirmed) {
+        if ($booking->booking_status !== BookingStatusEnum::Confirmed) {
             return response()->json([
                 'success' => false,
                 'message' => "Vé này đã ở trạng thái: {$booking->booking_status->label()}",
@@ -44,8 +44,8 @@ class CheckinController extends Controller
         }
 
         // Vé tiền mặt chưa thu → cần thu tiền trước/đồng thời check-in
-        $cashDue = $booking->payment_method === PaymentMethod::Cash
-            && $booking->payment_status === BookingPaymentStatus::Unpaid;
+        $cashDue = $booking->payment_method === PaymentMethodEnum::Cash
+            && $booking->payment_status === BookingPaymentStatusEnum::Unpaid;
 
         // Chưa xác nhận thu tiền → báo cho app hiện popup "Thu Xđ tiền mặt", chưa check-in
         if ($cashDue && ! $request->boolean('cash_collected')) {
@@ -67,7 +67,7 @@ class CheckinController extends Controller
             }
 
             $booking->update([
-                'booking_status' => BookingStatus::CheckedIn,
+                'booking_status' => BookingStatusEnum::CheckedIn,
                 'checked_in_at' => now(),
             ]);
 
@@ -119,14 +119,14 @@ class CheckinController extends Controller
             return response()->json(['success' => false, 'message' => 'Vé không thuộc chuyến của bạn'], 403);
         }
 
-        if ($booking->booking_status !== BookingStatus::Confirmed) {
+        if ($booking->booking_status !== BookingStatusEnum::Confirmed) {
             return response()->json([
                 'success' => false,
                 'message' => "Chỉ đánh vắng vé đã xác nhận (hiện: {$booking->booking_status->label()})",
             ], 422);
         }
 
-        $booking->update(['booking_status' => BookingStatus::NoShow]);
+        $booking->update(['booking_status' => BookingStatusEnum::NoShow]);
 
         return response()->json(['success' => true, 'message' => "Đã đánh vắng khách: {$booking->contact_name}"]);
     }

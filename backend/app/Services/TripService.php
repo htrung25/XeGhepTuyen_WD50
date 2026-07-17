@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
-use App\Enums\BookingStatus;
-use App\Enums\DriverStatus;
-use App\Enums\TripStatus;
-use App\Events\TripCompleted;
-use App\Events\TripStarted;
+use App\Enums\BookingStatusEnum;
+use App\Enums\DriverStatusEnum;
+use App\Enums\TripStatusEnum;
+use App\Events\TripCompletedEvent;
+use App\Events\TripStartedEvent;
 use App\Exceptions\TripNotAvailableException;
 use App\Models\Driver;
 use App\Models\Route;
@@ -70,7 +70,7 @@ class TripService
         }
 
         // Chỉ tài xế đã được admin duyệt GPLX (verified) mới được xếp vào chuyến.
-        if ($driver->status !== DriverStatus::Verified) {
+        if ($driver->status !== DriverStatusEnum::Verified) {
             throw new \InvalidArgumentException('Tài xế chưa được admin duyệt, không thể xếp vào chuyến');
         }
 
@@ -92,7 +92,7 @@ class TripService
         }
 
         // Chặn trùng lịch: xe HOẶC tài xế đã có chuyến (chưa hủy) chồng khung giờ
-        $overlap = Trip::whereIn('status', [TripStatus::Scheduled, TripStatus::Boarding, TripStatus::InProgress])
+        $overlap = Trip::whereIn('status', [TripStatusEnum::Scheduled, TripStatusEnum::Boarding, TripStatusEnum::InProgress])
             ->where(fn ($q) => $q->where('vehicle_id', $vehicle->id)->orWhere('driver_id', $driver->id))
             ->where('depart_at', '<', $arriveAt)
             ->where('arrive_at', '>', $departAt)
@@ -106,7 +106,7 @@ class TripService
 
         // 1. Kiểm tra tài xế (Chuyến liền trước & liền sau)
         $prevDriverTrip = Trip::with('route')
-            ->whereNotIn('status', [TripStatus::Cancelled])
+            ->whereNotIn('status', [TripStatusEnum::Cancelled])
             ->where('driver_id', $driver->id)
             ->where('depart_at', '<', $departAt)
             ->orderBy('depart_at', 'desc')
@@ -123,7 +123,7 @@ class TripService
         }
 
         $nextDriverTrip = Trip::with('route')
-            ->whereNotIn('status', [TripStatus::Cancelled])
+            ->whereNotIn('status', [TripStatusEnum::Cancelled])
             ->where('driver_id', $driver->id)
             ->where('depart_at', '>', $departAt)
             ->orderBy('depart_at', 'asc')
@@ -141,7 +141,7 @@ class TripService
 
         // 2. Kiểm tra xe (Chuyến liền trước & liền sau)
         $prevVehicleTrip = Trip::with('route')
-            ->whereNotIn('status', [TripStatus::Cancelled])
+            ->whereNotIn('status', [TripStatusEnum::Cancelled])
             ->where('vehicle_id', $vehicle->id)
             ->where('depart_at', '<', $departAt)
             ->orderBy('depart_at', 'desc')
@@ -158,7 +158,7 @@ class TripService
         }
 
         $nextVehicleTrip = Trip::with('route')
-            ->whereNotIn('status', [TripStatus::Cancelled])
+            ->whereNotIn('status', [TripStatusEnum::Cancelled])
             ->where('vehicle_id', $vehicle->id)
             ->where('depart_at', '>', $departAt)
             ->orderBy('depart_at', 'asc')
@@ -177,7 +177,7 @@ class TripService
         $trip = Trip::create(array_merge($data, [
             'available_seats' => $vehicle->seat_count,
             'tracking_code' => strtoupper(Str::random(8)),
-            'status' => $data['status'] ?? TripStatus::Scheduled,
+            'status' => $data['status'] ?? TripStatusEnum::Scheduled,
         ]));
 
         $this->generateSeatMap($trip, $vehicle);
@@ -221,18 +221,18 @@ class TripService
     public function startTrip(Trip $trip): void
     {
         $trip->update([
-            'status' => TripStatus::InProgress,
+            'status' => TripStatusEnum::InProgress,
             'started_at' => now(),
         ]);
 
-        event(new TripStarted($trip));
+        event(new TripStartedEvent($trip));
     }
 
     public function completeTrip(Trip $trip): void
     {
         DB::transaction(function () use ($trip) {
             $trip->update([
-                'status' => TripStatus::Completed,
+                'status' => TripStatusEnum::Completed,
                 'completed_at' => now(),
             ]);
 
@@ -240,7 +240,7 @@ class TripService
             $this->bookingService->finalizeOnTripComplete($trip);
         });
 
-        event(new TripCompleted($trip));
+        event(new TripCompletedEvent($trip));
     }
 
     /**
@@ -252,33 +252,33 @@ class TripService
      */
     public function markRanCompleted(Trip $trip): void
     {
-        if (in_array($trip->status, [TripStatus::Completed, TripStatus::Cancelled], true)) {
+        if (in_array($trip->status, [TripStatusEnum::Completed, TripStatusEnum::Cancelled], true)) {
             return;
         }
 
         DB::transaction(function () use ($trip) {
             $trip->update([
-                'status' => TripStatus::Completed,
+                'status' => TripStatusEnum::Completed,
                 'started_at' => $trip->started_at ?? $trip->depart_at,
                 'completed_at' => now(),
             ]);
 
             // confirmed + checked_in → completed (đã đi, ghi nhận doanh thu)
             $trip->bookings()
-                ->whereIn('booking_status', [BookingStatus::Confirmed->value, BookingStatus::CheckedIn->value])
-                ->update(['booking_status' => BookingStatus::Completed, 'completed_at' => now()]);
+                ->whereIn('booking_status', [BookingStatusEnum::Confirmed->value, BookingStatusEnum::CheckedIn->value])
+                ->update(['booking_status' => BookingStatusEnum::Completed, 'completed_at' => now()]);
 
             // pending (chưa thanh toán) → hủy
             $trip->bookings()
-                ->where('booking_status', BookingStatus::Pending->value)
+                ->where('booking_status', BookingStatusEnum::Pending->value)
                 ->update([
-                    'booking_status' => BookingStatus::Cancelled,
+                    'booking_status' => BookingStatusEnum::Cancelled,
                     'cancelled_at' => now(),
                     'cancel_reason' => 'Chuyến đã kết thúc, vé chưa thanh toán',
                 ]);
         });
 
-        event(new TripCompleted($trip));
+        event(new TripCompletedEvent($trip));
     }
 
     /**
@@ -287,22 +287,22 @@ class TripService
      */
     public function cancelTrip(Trip $trip, string $reason, bool $compensate = true): void
     {
-        if (in_array($trip->status, [TripStatus::Completed, TripStatus::Cancelled], true)) {
+        if (in_array($trip->status, [TripStatusEnum::Completed, TripStatusEnum::Cancelled], true)) {
             return;
         }
 
         DB::transaction(function () use ($trip, $reason, $compensate) {
             $trip->update([
-                'status' => TripStatus::Cancelled,
+                'status' => TripStatusEnum::Cancelled,
                 'cancelled_at' => now(),
                 'cancel_reason' => $reason,
             ]);
 
             $bookings = $trip->bookings()
                 ->whereIn('booking_status', [
-                    BookingStatus::Pending->value,
-                    BookingStatus::Confirmed->value,
-                    BookingStatus::CheckedIn->value,
+                    BookingStatusEnum::Pending->value,
+                    BookingStatusEnum::Confirmed->value,
+                    BookingStatusEnum::CheckedIn->value,
                 ])
                 ->with('user')
                 ->get();

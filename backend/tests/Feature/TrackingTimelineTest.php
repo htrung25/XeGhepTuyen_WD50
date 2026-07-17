@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\UserRole;
+use App\Enums\UserRoleEnum;
 use App\Models\Booking;
 use App\Models\Driver;
 use App\Models\Operator;
@@ -16,7 +16,7 @@ use Laravel\Sanctum\Sanctum;
 /** Dựng chuyến HN→HP với 4 điểm dừng có offset_minutes và 1 booking gắn stop đón/trả. */
 function setupTrackingContext(string $tripStatus, CarbonInterface $departAt): array
 {
-    $opUser = User::factory()->create(['role' => UserRole::Operator]);
+    $opUser = User::factory()->create(['role' => UserRoleEnum::Operator]);
     $operator = Operator::create([
         'user_id' => $opUser->id, 'company_name' => 'NX Track', 'business_license' => 'GP-5678', 'status' => 'verified',
     ]);
@@ -33,7 +33,7 @@ function setupTrackingContext(string $tripStatus, CarbonInterface $departAt): ar
         'brand' => 'Ford', 'model' => 'Transit', 'vehicle_type' => 'van_9', 'seat_count' => 9,
     ]);
 
-    $drvUser = User::factory()->create(['role' => UserRole::Driver]);
+    $drvUser = User::factory()->create(['role' => UserRoleEnum::Driver]);
     $driver = Driver::create([
         'user_id' => $drvUser->id, 'operator_id' => $operator->id,
         'license_number' => 'B2-111222', 'license_class' => 'B2',
@@ -46,7 +46,7 @@ function setupTrackingContext(string $tripStatus, CarbonInterface $departAt): ar
         'available_seats' => 9, 'price' => 150000, 'status' => $tripStatus,
     ]);
 
-    $customer = User::factory()->create(['role' => UserRole::Customer]);
+    $customer = User::factory()->create(['role' => UserRoleEnum::Customer]);
     $booking = Booking::create([
         'booking_code' => 'HNHP'.now()->format('ymd').fake()->unique()->numerify('####'),
         'user_id' => $customer->id, 'trip_id' => $trip->id,
@@ -120,7 +120,7 @@ it('giữ điểm cuối là current khi xe trễ mọi mốc giờ nhưng chuy�
 it('chặn xem tracking vé của người khác', function () {
     [$booking] = setupTrackingContext('in_progress', now()->subMinutes(20));
 
-    $other = User::factory()->create(['role' => UserRole::Customer]);
+    $other = User::factory()->create(['role' => UserRoleEnum::Customer]);
     Sanctum::actingAs($other, ['*'], 'sanctum');
     Sanctum::actingAs($other, ['*'], 'customer');
 

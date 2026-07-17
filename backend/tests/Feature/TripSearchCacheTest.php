@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\UserRole;
+use App\Enums\UserRoleEnum;
 use App\Models\Driver;
 use App\Models\Operator;
 use App\Models\Route;
@@ -13,7 +13,7 @@ use App\Services\TripService;
  * (generation counter) — chuyến mới xuất hiện ngay, không chờ TTL 2'.
  */
 it('tạo chuyến làm mới cache tìm chuyến (search phản ánh ngay)', function () {
-    $opUser = User::factory()->create(['role' => UserRole::Operator]);
+    $opUser = User::factory()->create(['role' => UserRoleEnum::Operator]);
     $operator = Operator::create([
         'user_id' => $opUser->id, 'company_name' => 'NX', 'business_license' => 'GP', 'status' => 'verified',
     ]);
@@ -26,7 +26,7 @@ it('tạo chuyến làm mới cache tìm chuyến (search phản ánh ngay)', fu
         'brand' => 'Ford', 'model' => 'Transit', 'vehicle_type' => 'van_9', 'seat_count' => 9,
     ]);
     $driver = Driver::create([
-        'user_id' => User::factory()->create(['role' => UserRole::Driver])->id, 'operator_id' => $operator->id,
+        'user_id' => User::factory()->create(['role' => UserRoleEnum::Driver])->id, 'operator_id' => $operator->id,
         'license_number' => 'B2-'.fake()->unique()->numerify('######'), 'license_class' => 'B2',
         'license_expiry' => now()->addYears(3), 'id_card_number' => fake()->numerify('############'), 'status' => 'verified',
     ]);

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Customer;
 
-use App\Enums\TripStatus;
+use App\Enums\TripStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Trip;
@@ -69,9 +69,9 @@ class TrackingController extends Controller
             $time = $trip->depart_at->addMinutes((int) ($stop->offset_minutes ?? 0));
 
             $status = match ($trip->status) {
-                TripStatus::Completed => 'done',
-                TripStatus::Boarding => $i === 0 ? 'current' : 'upcoming',
-                TripStatus::InProgress => $time->lte($now) ? 'done' : ($currentAssigned ? 'upcoming' : 'current'),
+                TripStatusEnum::Completed => 'done',
+                TripStatusEnum::Boarding => $i === 0 ? 'current' : 'upcoming',
+                TripStatusEnum::InProgress => $time->lte($now) ? 'done' : ($currentAssigned ? 'upcoming' : 'current'),
                 default => 'upcoming',
             };
             if ($status === 'current') {
@@ -89,7 +89,7 @@ class TrackingController extends Controller
         })->all();
 
         // Xe đang chạy nhưng đã quá mọi mốc giờ → giữ điểm cuối là "đang đến" thay vì đã xong hết.
-        if ($trip->status === TripStatus::InProgress && ! $currentAssigned && $items !== []) {
+        if ($trip->status === TripStatusEnum::InProgress && ! $currentAssigned && $items !== []) {
             $items[array_key_last($items)]['status'] = 'current';
         }
 

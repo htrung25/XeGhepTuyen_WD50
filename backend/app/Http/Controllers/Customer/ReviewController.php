@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Customer;
 
-use App\Enums\BookingStatus;
+use App\Enums\BookingStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\StoreReviewRequest;
 use App\Jobs\UpdateDriverRatingJob;
@@ -21,7 +21,7 @@ class ReviewController extends Controller
             return response()->json(['success' => false, 'message' => 'Không có quyền truy cập'], 403);
         }
 
-        if ($booking->booking_status !== BookingStatus::Completed) {
+        if ($booking->booking_status !== BookingStatusEnum::Completed) {
             return response()->json(['success' => false, 'message' => 'Chỉ có thể đánh giá chuyến đã hoàn thành'], 422);
         }
 

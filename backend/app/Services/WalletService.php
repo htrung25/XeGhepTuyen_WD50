@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Enums\WalletTransactionType;
+use App\Enums\WalletTransactionTypeEnum;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
@@ -18,14 +18,14 @@ class WalletService
     {
         $wallet = $this->getOrCreate($user);
 
-        return $wallet->credit($amount, $description, WalletTransactionType::Refund, $bookingId);
+        return $wallet->credit($amount, $description, WalletTransactionTypeEnum::Refund, $bookingId);
     }
 
     public function debit(User $user, int $amount, string $description, ?string $bookingId = null): WalletTransaction
     {
         $wallet = $this->getOrCreate($user);
 
-        return $wallet->debit($amount, $description, WalletTransactionType::Payment, $bookingId);
+        return $wallet->debit($amount, $description, WalletTransactionTypeEnum::Payment, $bookingId);
     }
 
     public function getBalance(User $user): int

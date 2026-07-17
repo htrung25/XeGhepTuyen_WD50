@@ -2,13 +2,13 @@
 
 namespace Database\Seeders;
 
-use App\Enums\BookingPaymentStatus;
-use App\Enums\BookingStatus;
-use App\Enums\PaymentMethod;
-use App\Enums\PaymentStatus;
-use App\Enums\SeatStatus;
-use App\Enums\SeatType;
-use App\Enums\TripStatus;
+use App\Enums\BookingPaymentStatusEnum;
+use App\Enums\BookingStatusEnum;
+use App\Enums\PaymentMethodEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\SeatStatusEnum;
+use App\Enums\SeatTypeEnum;
+use App\Enums\TripStatusEnum;
 use App\Models\Booking;
 use App\Models\BookingPassenger;
 use App\Models\Driver;
@@ -91,7 +91,7 @@ class RevenueDemoSeeder extends Seeder
                 'depart_at' => $departAt, 'arrive_at' => $arriveAt,
                 'available_seats' => $vehicle->seat_count, 'price' => $price,
                 'tracking_code' => 'RVD'.strtoupper(Str::random(6)),
-                'status' => TripStatus::Completed, 'started_at' => $departAt, 'completed_at' => $arriveAt,
+                'status' => TripStatusEnum::Completed, 'started_at' => $departAt, 'completed_at' => $arriveAt,
             ]);
 
             // Sơ đồ ghế
@@ -99,7 +99,7 @@ class RevenueDemoSeeder extends Seeder
             for ($s = 1; $s <= $vehicle->seat_count; $s++) {
                 $seats[] = SeatMap::create([
                     'trip_id' => $trip->id, 'seat_code' => 'A'.str_pad($s, 2, '0', STR_PAD_LEFT),
-                    'seat_type' => SeatType::Standard, 'price' => $price, 'status' => SeatStatus::Booked,
+                    'seat_type' => SeatTypeEnum::Standard, 'price' => $price, 'status' => SeatStatusEnum::Booked,
                 ]);
             }
 
@@ -121,9 +121,9 @@ class RevenueDemoSeeder extends Seeder
                     'pickup_stop_id' => $pickup->id, 'dropoff_stop_id' => $dropoff->id,
                     'passenger_count' => $pax, 'contact_name' => $cust->full_name, 'contact_phone' => $cust->phone,
                     'subtotal' => $amount, 'final_amount' => $amount,
-                    'payment_method' => PaymentMethod::Momo,
-                    'payment_status' => BookingPaymentStatus::Paid,
-                    'booking_status' => BookingStatus::Completed,
+                    'payment_method' => PaymentMethodEnum::Momo,
+                    'payment_status' => BookingPaymentStatusEnum::Paid,
+                    'booking_status' => BookingStatusEnum::Completed,
                     'qr_token' => Str::random(32),
                     'confirmed_at' => $departAt->copy()->subDay(), 'completed_at' => $arriveAt,
                 ]);
@@ -138,7 +138,7 @@ class RevenueDemoSeeder extends Seeder
 
                 Payment::create([
                     'booking_id' => $booking->id, 'user_id' => $cust->id, 'amount' => $amount,
-                    'method' => PaymentMethod::Momo, 'status' => PaymentStatus::Success,
+                    'method' => PaymentMethodEnum::Momo, 'status' => PaymentStatusEnum::Success,
                     'gateway_order_id' => 'DEMO-'.strtoupper(Str::random(8)), 'paid_at' => $departAt,
                 ]);
 

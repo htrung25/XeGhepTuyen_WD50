@@ -1,7 +1,7 @@
 <?php
 
-use App\Enums\DriverStatus;
-use App\Enums\UserRole;
+use App\Enums\DriverStatusEnum;
+use App\Enums\UserRoleEnum;
 use App\Models\Driver;
 use App\Models\Operator;
 use App\Models\Route;
@@ -13,7 +13,7 @@ use App\Services\TripService;
 
 function setupTripTestEntities(): array
 {
-    $opUser = User::factory()->create(['role' => UserRole::Operator]);
+    $opUser = User::factory()->create(['role' => UserRoleEnum::Operator]);
     $operator = Operator::create([
         'user_id' => $opUser->id,
         'company_name' => 'Nhà xe Hải Âu',
@@ -56,7 +56,7 @@ function setupTripTestEntities(): array
         'seat_count' => 9,
     ]);
 
-    $drvUser = User::factory()->create(['role' => UserRole::Driver]);
+    $drvUser = User::factory()->create(['role' => UserRoleEnum::Driver]);
     $driver = Driver::create([
         'user_id' => $drvUser->id,
         'operator_id' => $operator->id,
@@ -64,7 +64,7 @@ function setupTripTestEntities(): array
         'license_class' => 'D',
         'license_expiry' => now()->addYears(3),
         'id_card_number' => fake()->numerify('############'),
-        'status' => DriverStatus::Verified,
+        'status' => DriverStatusEnum::Verified,
     ]);
 
     return [

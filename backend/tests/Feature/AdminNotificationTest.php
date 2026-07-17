@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\UserRole;
+use App\Enums\UserRoleEnum;
 use App\Models\AdminRole;
 use App\Models\Notification;
 use App\Models\User;
@@ -23,7 +23,7 @@ function partnerAppData(): array
 
 it('thông báo admin có quyền khi có đơn đăng ký đối tác mới', function () {
     $admin = User::factory()->create([
-        'role' => UserRole::Admin,
+        'role' => UserRoleEnum::Admin,
         'admin_role_id' => superAdminRole()->id,
     ]);
 
@@ -43,7 +43,7 @@ it('KHÔNG thông báo admin thiếu quyền partner_applications.review', funct
         'name' => 'Kế toán', 'slug' => 'ketoan-notif',
         'permissions' => ['finance.view'], 'is_super' => false,
     ]);
-    $admin = User::factory()->create(['role' => UserRole::Admin, 'admin_role_id' => $role->id]);
+    $admin = User::factory()->create(['role' => UserRoleEnum::Admin, 'admin_role_id' => $role->id]);
 
     app(PartnerApplicationService::class)->submit(partnerAppData());
 
@@ -52,7 +52,7 @@ it('KHÔNG thông báo admin thiếu quyền partner_applications.review', funct
 
 it('thông báo admin finance.payout khi nhà xe yêu cầu quyết toán', function () {
     $admin = User::factory()->create([
-        'role' => UserRole::Admin,
+        'role' => UserRoleEnum::Admin,
         'admin_role_id' => superAdminRole()->id,
     ]);
     $operator = makeOperatorWithRevenue(online: 1, cash: 0); // available = 135.000
@@ -67,7 +67,7 @@ it('thông báo admin finance.payout khi nhà xe yêu cầu quyết toán', func
 
 it('admin xem danh sách + unread_count + đánh dấu đã đọc', function () {
     $admin = User::factory()->create([
-        'role' => UserRole::Admin,
+        'role' => UserRoleEnum::Admin,
         'admin_role_id' => superAdminRole()->id,
     ]);
     Notification::create([
@@ -89,7 +89,7 @@ it('admin xem danh sách + unread_count + đánh dấu đã đọc', function ()
 
 it('badge sidebar: pending-counts đếm đơn đối tác chờ duyệt (việc thực tế)', function () {
     $admin = User::factory()->create([
-        'role' => UserRole::Admin,
+        'role' => UserRoleEnum::Admin,
         'admin_role_id' => superAdminRole()->id,
     ]);
     app(PartnerApplicationService::class)->submit(partnerAppData()); // 1 đơn pending
@@ -104,7 +104,7 @@ it('pending-counts chỉ trả mục admin có quyền xem', function () {
         'name' => 'Chỉ tài xế', 'slug' => 'drivers-only',
         'permissions' => ['drivers.view'], 'is_super' => false,
     ]);
-    $admin = User::factory()->create(['role' => UserRole::Admin, 'admin_role_id' => $role->id]);
+    $admin = User::factory()->create(['role' => UserRoleEnum::Admin, 'admin_role_id' => $role->id]);
     Sanctum::actingAs($admin);
 
     $data = $this->getJson('/api/admin/pending-counts')->assertOk()->json('data');

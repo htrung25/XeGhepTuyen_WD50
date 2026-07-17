@@ -1,13 +1,13 @@
 <?php
 
-use App\Enums\UserRole;
+use App\Enums\UserRoleEnum;
 use App\Models\User;
 use Laravel\Sanctum\Sanctum;
 
 function makeAdminUserForProfile(): User
 {
     return User::factory()->create([
-        'role' => UserRole::Admin,
+        'role' => UserRoleEnum::Admin,
     ]);
 }
 
@@ -45,7 +45,7 @@ it('cho phép admin cập nhật thông tin cá nhân', function () {
 
 it('cho phép admin đổi mật khẩu', function () {
     $admin = User::factory()->create([
-        'role' => UserRole::Admin,
+        'role' => UserRoleEnum::Admin,
         'password' => Hash::make('password123'),
     ]);
     Sanctum::actingAs($admin);
@@ -64,7 +64,7 @@ it('cho phép admin đổi mật khẩu', function () {
 
 it('chặn đổi mật khẩu khi nhập sai mật khẩu cũ', function () {
     $admin = User::factory()->create([
-        'role' => UserRole::Admin,
+        'role' => UserRoleEnum::Admin,
         'password' => Hash::make('password123'),
     ]);
     Sanctum::actingAs($admin);

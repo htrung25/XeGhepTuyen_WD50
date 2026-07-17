@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\BookingStatus;
-use App\Enums\TripStatus;
+use App\Enums\BookingStatusEnum;
+use App\Enums\TripStatusEnum;
 use App\Models\Booking;
 use App\Models\Trip;
 use App\Services\BookingService;
@@ -29,7 +29,7 @@ class AutoResolveTripsCommand extends Command
 
         // 1) Chuyến chưa chạy mà đã quá giờ khởi hành + ân hạn → nhà xe không thực hiện
         //    → hủy chuyến, hoàn 100% + bồi thường cho mọi vé còn hiệu lực.
-        $stale = Trip::whereIn('status', [TripStatus::Scheduled, TripStatus::Boarding])
+        $stale = Trip::whereIn('status', [TripStatusEnum::Scheduled, TripStatusEnum::Boarding])
             ->where('depart_at', '<', $now->copy()->subHours(self::SCHEDULED_GRACE_HOURS))
             ->get();
 
@@ -44,7 +44,7 @@ class AutoResolveTripsCommand extends Command
 
         // 2) Chuyến đang chạy quá lâu không được hoàn tất (tài xế quên bấm)
         //    → tự hoàn tất: checked_in→completed, confirmed→no_show.
-        $overdue = Trip::where('status', TripStatus::InProgress)
+        $overdue = Trip::where('status', TripStatusEnum::InProgress)
             ->where('arrive_at', '<', $now->copy()->subHours(self::IN_PROGRESS_BUFFER_HOURS))
             ->get();
 
@@ -59,26 +59,26 @@ class AutoResolveTripsCommand extends Command
 
         // 3) Vé "mồ côi": còn hiệu lực nhưng chuyến đã ĐÓNG (completed/cancelled) mà chưa được tất toán.
         //    Gồm dữ liệu cũ + vé confirm khi chuyến còn hợp lệ rồi chuyến trôi qua/bị đóng.
-        $orphanTrips = Trip::whereIn('status', [TripStatus::Completed, TripStatus::Cancelled])
+        $orphanTrips = Trip::whereIn('status', [TripStatusEnum::Completed, TripStatusEnum::Cancelled])
             ->whereHas('bookings', fn ($b) => $b->whereIn('booking_status', [
-                BookingStatus::Pending->value,
-                BookingStatus::Confirmed->value,
-                BookingStatus::CheckedIn->value,
+                BookingStatusEnum::Pending->value,
+                BookingStatusEnum::Confirmed->value,
+                BookingStatusEnum::CheckedIn->value,
             ]))
             ->get();
 
         $orphanCount = 0;
         foreach ($orphanTrips as $trip) {
             try {
-                if ($trip->status === TripStatus::Completed) {
+                if ($trip->status === TripStatusEnum::Completed) {
                     // checked_in→completed, confirmed→no_show, pending→cancelled
                     $bookingService->finalizeOnTripComplete($trip);
                 } else { // Cancelled
                     $trip->bookings()
                         ->whereIn('booking_status', [
-                            BookingStatus::Pending->value,
-                            BookingStatus::Confirmed->value,
-                            BookingStatus::CheckedIn->value,
+                            BookingStatusEnum::Pending->value,
+                            BookingStatusEnum::Confirmed->value,
+                            BookingStatusEnum::CheckedIn->value,
                         ])
                         ->with('user')->get()
                         ->each(fn (Booking $b) => $bookingService->cancelByOperator($b, 'Chuyến đã bị hủy', true));

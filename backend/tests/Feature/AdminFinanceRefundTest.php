@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\UserRole;
+use App\Enums\UserRoleEnum;
 use App\Models\AdminRole;
 use App\Models\Booking;
 use App\Models\Payment;
@@ -31,7 +31,7 @@ function refundTestBooking(): Booking
 
 function actingAsSuperAdmin(): User
 {
-    $admin = User::factory()->create(['role' => UserRole::Admin, 'admin_role_id' => superAdminRole()->id]);
+    $admin = User::factory()->create(['role' => UserRoleEnum::Admin, 'admin_role_id' => superAdminRole()->id]);
     Sanctum::actingAs($admin);
 
     return $admin;
@@ -110,7 +110,7 @@ it('chặn admin không có quyền finance.refund', function () {
         'permissions' => ['finance.view'], // KHÔNG có finance.refund
         'is_super' => false,
     ]);
-    Sanctum::actingAs(User::factory()->create(['role' => UserRole::Admin, 'admin_role_id' => $role->id]));
+    Sanctum::actingAs(User::factory()->create(['role' => UserRoleEnum::Admin, 'admin_role_id' => $role->id]));
 
     $this->postJson("/api/admin/finance/refund/{$booking->id}", [
         'amount' => 100000,

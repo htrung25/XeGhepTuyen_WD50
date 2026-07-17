@@ -1,7 +1,7 @@
 <?php
 
-use App\Enums\DriverStatus;
-use App\Enums\UserRole;
+use App\Enums\DriverStatusEnum;
+use App\Enums\UserRoleEnum;
 use App\Jobs\SendSmsNotificationJob;
 use App\Models\Driver;
 use App\Models\Operator;
@@ -9,9 +9,9 @@ use App\Models\User;
 use Illuminate\Support\Facades\Queue;
 use Laravel\Sanctum\Sanctum;
 
-function makeDriverForAdminRejection(DriverStatus $status = DriverStatus::Pending): Driver
+function makeDriverForAdminRejection(DriverStatusEnum $status = DriverStatusEnum::Pending): Driver
 {
-    $operatorUser = User::factory()->create(['role' => UserRole::Operator]);
+    $operatorUser = User::factory()->create(['role' => UserRoleEnum::Operator]);
     $operator = Operator::create([
         'user_id' => $operatorUser->id,
         'company_name' => 'Nhà xe kiểm thử từ chối',
@@ -20,7 +20,7 @@ function makeDriverForAdminRejection(DriverStatus $status = DriverStatus::Pendin
     ]);
 
     return Driver::create([
-        'user_id' => User::factory()->create(['role' => UserRole::Driver])->id,
+        'user_id' => User::factory()->create(['role' => UserRoleEnum::Driver])->id,
         'operator_id' => $operator->id,
         'license_number' => 'B2-'.fake()->unique()->numerify('######'),
         'license_class' => 'B2',
@@ -32,7 +32,7 @@ function makeDriverForAdminRejection(DriverStatus $status = DriverStatus::Pendin
 
 beforeEach(function () {
     $admin = User::factory()->create([
-        'role' => UserRole::Admin,
+        'role' => UserRoleEnum::Admin,
         'admin_role_id' => superAdminRole()->id,
     ]);
 
@@ -51,24 +51,24 @@ it('lưu lý do khi admin từ chối tài xế đang chờ duyệt', function (
 
     $driver->refresh();
 
-    expect($driver->status)->toBe(DriverStatus::Rejected)
+    expect($driver->status)->toBe(DriverStatusEnum::Rejected)
         ->and($driver->reject_reason)->toBe($reason);
 });
 
 it('trả lý do từ chối trong danh sách được lọc theo trạng thái rejected', function () {
-    $rejected = makeDriverForAdminRejection(DriverStatus::Rejected);
+    $rejected = makeDriverForAdminRejection(DriverStatusEnum::Rejected);
     $rejected->update(['reject_reason' => 'CCCD không hợp lệ.']);
-    makeDriverForAdminRejection(DriverStatus::Pending);
+    makeDriverForAdminRejection(DriverStatusEnum::Pending);
 
     $this->getJson('/api/admin/drivers?status=rejected')
         ->assertOk()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.id', $rejected->id)
-        ->assertJsonPath('data.0.status', DriverStatus::Rejected->value)
+        ->assertJsonPath('data.0.status', DriverStatusEnum::Rejected->value)
         ->assertJsonPath('data.0.reject_reason', 'CCCD không hợp lệ.');
 });
 
-it('không cho từ chối lại tài xế không còn ở trạng thái chờ duyệt', function (DriverStatus $status) {
+it('không cho từ chối lại tài xế không còn ở trạng thái chờ duyệt', function (DriverStatusEnum $status) {
     $driver = makeDriverForAdminRejection($status);
 
     $this->postJson("/api/admin/drivers/{$driver->id}/reject", [
@@ -79,9 +79,9 @@ it('không cho từ chối lại tài xế không còn ở trạng thái chờ d
     expect($driver->refresh()->status)->toBe($status)
         ->and($driver->reject_reason)->toBeNull();
 })->with([
-    'đã duyệt' => DriverStatus::Verified,
-    'đình chỉ' => DriverStatus::Suspended,
-    'đã từ chối' => DriverStatus::Rejected,
+    'đã duyệt' => DriverStatusEnum::Verified,
+    'đình chỉ' => DriverStatusEnum::Suspended,
+    'đã từ chối' => DriverStatusEnum::Rejected,
 ]);
 
 it('không cho reject ghi đè kết quả approve', function () {
@@ -94,7 +94,7 @@ it('không cho reject ghi đè kết quả approve', function () {
     ])->assertUnprocessable();
 
     $driver->refresh();
-    expect($driver->status)->toBe(DriverStatus::Verified)
+    expect($driver->status)->toBe(DriverStatusEnum::Verified)
         ->and($driver->reject_reason)->toBeNull()
         ->and($driver->user->is_active)->toBeTrue();
 });
@@ -109,7 +109,7 @@ it('không cho approve ghi đè kết quả reject', function () {
     $this->postJson("/api/admin/drivers/{$driver->id}/approve")->assertUnprocessable();
 
     $driver->refresh();
-    expect($driver->status)->toBe(DriverStatus::Rejected)
+    expect($driver->status)->toBe(DriverStatusEnum::Rejected)
         ->and($driver->reject_reason)->toBe('Hồ sơ không hợp lệ.');
 
     Queue::assertNotPushed(SendSmsNotificationJob::class);

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Customer;
 
-use App\Enums\PaymentMethod;
+use App\Enums\PaymentMethodEnum;
 use App\Exceptions\BookingExpiredException;
 use App\Exceptions\InsufficientBalanceException;
 use App\Exceptions\PaymentVerificationException;
@@ -35,7 +35,7 @@ class PaymentController extends Controller
         }
 
         try {
-            $result = $this->paymentService->initiate($booking, PaymentMethod::from($request->input('method')));
+            $result = $this->paymentService->initiate($booking, PaymentMethodEnum::from($request->input('method')));
 
             return response()->json([
                 'success' => true,

@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
-use App\Enums\UserRole;
+use App\Enums\UserRoleEnum;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -20,7 +20,7 @@ class AssignTicketRequest extends FormRequest
                 'required',
                 'uuid',
                 Rule::exists('users', 'id')->where(function ($query) {
-                    $query->where('role', UserRole::Admin->value);
+                    $query->where('role', UserRoleEnum::Admin->value);
                 }),
             ],
         ];

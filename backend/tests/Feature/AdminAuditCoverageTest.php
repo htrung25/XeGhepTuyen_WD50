@@ -1,7 +1,7 @@
 <?php
 
-use App\Enums\PartnerApplicationStatus;
-use App\Enums\UserRole;
+use App\Enums\PartnerApplicationStatusEnum;
+use App\Enums\UserRoleEnum;
 use App\Jobs\SendSmsNotificationJob;
 use App\Models\PartnerApplication;
 use App\Models\User;
@@ -21,14 +21,14 @@ function makePartnerApplicationForAudit(string $suffix): PartnerApplication
         'representative_name' => 'Nguyễn Văn Audit',
         'phone' => '09'.str_pad($suffix, 8, '0'),
         'email' => "audit-{$suffix}@example.com",
-        'status' => PartnerApplicationStatus::Pending,
+        'status' => PartnerApplicationStatusEnum::Pending,
     ]);
 }
 
 it('ghi đúng trạng thái cũ khi duyệt đơn đối tác', function () {
     Queue::fake([SendSmsNotificationJob::class]);
     $admin = User::factory()->create([
-        'role' => UserRole::Admin,
+        'role' => UserRoleEnum::Admin,
         'admin_role_id' => superAdminRole()->id,
     ]);
     Sanctum::actingAs($admin);
@@ -47,7 +47,7 @@ it('ghi đúng trạng thái cũ khi duyệt đơn đối tác', function () {
 
 it('ghi đúng trạng thái cũ khi từ chối đơn đối tác', function () {
     $admin = User::factory()->create([
-        'role' => UserRole::Admin,
+        'role' => UserRoleEnum::Admin,
         'admin_role_id' => superAdminRole()->id,
     ]);
     Sanctum::actingAs($admin);
@@ -66,7 +66,7 @@ it('ghi đúng trạng thái cũ khi từ chối đơn đối tác', function ()
 
 it('ghi audit cho đăng nhập thành công và thất bại', function () {
     $admin = User::factory()->create([
-        'role' => UserRole::Admin,
+        'role' => UserRoleEnum::Admin,
         'admin_role_id' => superAdminRole()->id,
         'password' => Hash::make('correct-password'),
     ]);
@@ -87,7 +87,7 @@ it('ghi audit cho đăng nhập thành công và thất bại', function () {
 
 it('giới hạn đăng nhập admin sai tối đa năm lần mỗi phút', function () {
     $admin = User::factory()->create([
-        'role' => UserRole::Admin,
+        'role' => UserRoleEnum::Admin,
         'admin_role_id' => superAdminRole()->id,
         'password' => Hash::make('correct-password'),
     ]);

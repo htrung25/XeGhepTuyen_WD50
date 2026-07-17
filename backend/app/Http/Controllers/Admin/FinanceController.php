@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\BookingPaymentStatus;
+use App\Enums\BookingPaymentStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\RefundBookingRequest;
 use App\Jobs\SendSmsNotificationJob;
@@ -271,7 +271,7 @@ class FinanceController extends Controller
             return response()->json(['success' => false, 'message' => 'Không tìm thấy vé', 'code' => 'BOOKING_NOT_FOUND'], 404);
         }
 
-        if ($bookingModel->payment_status !== BookingPaymentStatus::Paid) {
+        if ($bookingModel->payment_status !== BookingPaymentStatusEnum::Paid) {
             return response()->json(['success' => false, 'message' => 'Chỉ hoàn tiền được vé đã thanh toán', 'code' => 'BOOKING_NOT_PAID'], 422);
         }
 

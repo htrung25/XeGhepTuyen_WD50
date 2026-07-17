@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Operator;
 
-use App\Enums\OperatorStatus;
-use App\Enums\UserRole;
+use App\Enums\OperatorStatusEnum;
+use App\Enums\UserRoleEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Operator\LoginRequest;
 use App\Models\User;
@@ -17,7 +17,7 @@ class AuthController extends Controller
     public function login(LoginRequest $request): JsonResponse
     {
         $user = User::where('phone', $request->phone)
-            ->where('role', UserRole::Operator)
+            ->where('role', UserRoleEnum::Operator)
             ->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
@@ -25,7 +25,7 @@ class AuthController extends Controller
         }
 
         $operator = $user->operator;
-        if (! $operator || $operator->status !== OperatorStatus::Verified) {
+        if (! $operator || $operator->status !== OperatorStatusEnum::Verified) {
             return response()->json(['success' => false, 'message' => 'Tài khoản nhà xe chưa được kích hoạt'], 403);
         }
 

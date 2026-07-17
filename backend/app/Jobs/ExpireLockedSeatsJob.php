@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Enums\SeatStatus;
+use App\Enums\SeatStatusEnum;
 use App\Models\SeatMap;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -23,10 +23,10 @@ class ExpireLockedSeatsJob implements ShouldQueue
 
     public function handle(): void
     {
-        $expired = SeatMap::where('status', SeatStatus::Locked)
+        $expired = SeatMap::where('status', SeatStatusEnum::Locked)
             ->where('locked_at', '<', now()->subMinutes(10))
             ->update([
-                'status' => SeatStatus::Available,
+                'status' => SeatStatusEnum::Available,
                 'locked_at' => null,
                 'locked_by' => null,
             ]);

@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Enums\BookingStatus;
+use App\Enums\BookingStatusEnum;
 use App\Models\Trip;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -30,8 +30,8 @@ class GenerateTripManifestJob implements ShouldQueue
             'vehicle',
             'driver.user',
             'bookings' => fn ($q) => $q->whereIn('booking_status', [
-                BookingStatus::Confirmed->value,
-                BookingStatus::CheckedIn->value,
+                BookingStatusEnum::Confirmed->value,
+                BookingStatusEnum::CheckedIn->value,
             ])->with(['passengers', 'pickupStop', 'dropoffStop']),
         ]);
 

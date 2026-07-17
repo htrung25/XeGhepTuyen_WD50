@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\DTOs\DriverTransitionResult;
-use App\Enums\DriverStatus;
-use App\Enums\UserRole;
+use App\DTOs\DriverTransitionResultDTO;
+use App\Enums\DriverStatusEnum;
+use App\Enums\UserRoleEnum;
 use App\Jobs\SendSmsNotificationJob;
 use App\Models\Driver;
 use App\Models\Operator;
@@ -34,7 +34,7 @@ class DriverService
                 'phone' => $data['phone'],
                 'email' => $data['email'] ?? null,
                 'password' => $this->generateTempPassword(),   // ngẫu nhiên, chưa bàn giao
-                'role' => UserRole::Driver,
+                'role' => UserRoleEnum::Driver,
                 'is_verified' => true,
                 'is_active' => true,
             ]);
@@ -49,7 +49,7 @@ class DriverService
                 'id_card_front_url' => $data['id_card_front_url'] ?? null,
                 'id_card_back_url' => $data['id_card_back_url'] ?? null,
                 'license_front_url' => $data['license_front_url'] ?? null,
-                'status' => DriverStatus::Pending,
+                'status' => DriverStatusEnum::Pending,
             ]);
         }, attempts: 3);
 
@@ -70,14 +70,14 @@ class DriverService
      *
      * Duyệt hồ sơ và cập nhật tài khoản trong cùng một state transition có khóa.
      */
-    public function approveAndIssueCredentials(Driver $driver): DriverTransitionResult
+    public function approveAndIssueCredentials(Driver $driver): DriverTransitionResultDTO
     {
         $tempPassword = $this->generateTempPassword();
 
         $result = $this->transition(
             driver: $driver,
-            from: DriverStatus::Pending,
-            to: DriverStatus::Verified,
+            from: DriverStatusEnum::Pending,
+            to: DriverStatusEnum::Verified,
             attributes: [
                 'verified_at' => now(),
                 'reject_reason' => null,
@@ -112,12 +112,12 @@ class DriverService
     /**
      * Từ chối hồ sơ tài xế đang chờ duyệt.
      */
-    public function reject(Driver $driver, string $reason): DriverTransitionResult
+    public function reject(Driver $driver, string $reason): DriverTransitionResultDTO
     {
         return $this->transition(
             driver: $driver,
-            from: DriverStatus::Pending,
-            to: DriverStatus::Rejected,
+            from: DriverStatusEnum::Pending,
+            to: DriverStatusEnum::Rejected,
             attributes: [
                 'reject_reason' => $reason,
                 'verified_at' => null,
@@ -167,11 +167,11 @@ class DriverService
      */
     private function transition(
         Driver $driver,
-        DriverStatus $from,
-        DriverStatus $to,
+        DriverStatusEnum $from,
+        DriverStatusEnum $to,
         array $attributes = [],
         ?Closure $sideEffect = null,
-    ): DriverTransitionResult {
+    ): DriverTransitionResultDTO {
         return DB::transaction(function () use ($driver, $from, $to, $attributes, $sideEffect) {
             $locked = Driver::whereKey($driver->getKey())
                 ->lockForUpdate()
@@ -186,7 +186,7 @@ class DriverService
             $sideEffect?->__invoke($locked);
             $locked->load(['user', 'operator']);
 
-            return new DriverTransitionResult(
+            return new DriverTransitionResultDTO(
                 driver: $locked,
                 oldStatus: $oldStatus,
                 newStatus: $to,

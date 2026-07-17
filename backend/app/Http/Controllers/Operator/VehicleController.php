@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Operator;
 
-use App\Enums\VehicleStatus;
+use App\Enums\VehicleStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Operator\VehicleResource;
 use App\Models\Vehicle;
@@ -71,7 +71,7 @@ class VehicleController extends Controller
                 'registration_expiry' => $request->registration_expiry,
                 'amenities' => $request->amenities ?? [],
                 'image_url' => $imageUrl,
-                'status' => VehicleStatus::Active,
+                'status' => VehicleStatusEnum::Active,
             ]);
 
             return response()->json(['success' => true, 'message' => 'Thêm xe thành công', 'data' => $vehicle], 201);

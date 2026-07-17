@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use App\Enums\BookingPaymentStatus;
-use App\Enums\BookingStatus;
-use App\Enums\PaymentMethod;
+use App\Enums\BookingPaymentStatusEnum;
+use App\Enums\BookingStatusEnum;
+use App\Enums\PaymentMethodEnum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -54,9 +54,9 @@ class Booking extends Model
     protected function casts(): array
     {
         return [
-            'payment_method' => PaymentMethod::class,
-            'payment_status' => BookingPaymentStatus::class,
-            'booking_status' => BookingStatus::class,
+            'payment_method' => PaymentMethodEnum::class,
+            'payment_status' => BookingPaymentStatusEnum::class,
+            'booking_status' => BookingStatusEnum::class,
             'expires_at' => 'datetime',
             'confirmed_at' => 'datetime',
             'checked_in_at' => 'datetime',
@@ -124,12 +124,12 @@ class Booking extends Model
 
     public function scopePending(Builder $query): Builder
     {
-        return $query->where('booking_status', BookingStatus::Pending);
+        return $query->where('booking_status', BookingStatusEnum::Pending);
     }
 
     public function scopeConfirmed(Builder $query): Builder
     {
-        return $query->where('booking_status', BookingStatus::Confirmed);
+        return $query->where('booking_status', BookingStatusEnum::Confirmed);
     }
 
     public function scopeForUser(Builder $query, string $userId): Builder
@@ -144,14 +144,14 @@ class Booking extends Model
 
     public function scopeUnpaid(Builder $query): Builder
     {
-        return $query->where('payment_status', BookingPaymentStatus::Unpaid);
+        return $query->where('payment_status', BookingPaymentStatusEnum::Unpaid);
     }
 
     public function scopeExpired(Builder $query): Builder
     {
         return $query->where('expires_at', '<', now())
-            ->where('payment_status', BookingPaymentStatus::Unpaid)
-            ->where('booking_status', BookingStatus::Pending);
+            ->where('payment_status', BookingPaymentStatusEnum::Unpaid)
+            ->where('booking_status', BookingStatusEnum::Pending);
     }
 
     // ─── Accessors ────────────────────────────────────────────────────────────
@@ -165,7 +165,7 @@ class Booking extends Model
 
     public function canCancel(): bool
     {
-        return in_array($this->booking_status, [BookingStatus::Pending, BookingStatus::Confirmed])
+        return in_array($this->booking_status, [BookingStatusEnum::Pending, BookingStatusEnum::Confirmed])
             && ! $this->trip->isActive();
     }
 
@@ -192,6 +192,6 @@ class Booking extends Model
     public function isExpired(): bool
     {
         return $this->expires_at && $this->expires_at->isPast()
-            && $this->payment_status === BookingPaymentStatus::Unpaid;
+            && $this->payment_status === BookingPaymentStatusEnum::Unpaid;
     }
 }

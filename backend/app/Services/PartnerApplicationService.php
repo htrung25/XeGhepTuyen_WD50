@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Enums\OperatorStatus;
-use App\Enums\PartnerApplicationStatus;
-use App\Enums\UserRole;
+use App\Enums\OperatorStatusEnum;
+use App\Enums\PartnerApplicationStatusEnum;
+use App\Enums\UserRoleEnum;
 use App\Jobs\SendSmsNotificationJob;
 use App\Models\Operator;
 use App\Models\PartnerApplication;
@@ -54,7 +54,7 @@ class PartnerApplicationService
                 ->all();
         }
 
-        $data['status'] = PartnerApplicationStatus::Pending->value;
+        $data['status'] = PartnerApplicationStatusEnum::Pending->value;
 
         $application = $this->applicationRepo->create($data);
 
@@ -93,7 +93,7 @@ class PartnerApplicationService
                 'phone' => $application->phone,
                 'email' => $application->email,
                 'password' => $tempPassword,   // cast 'hashed' tự băm
-                'role' => UserRole::Operator,
+                'role' => UserRoleEnum::Operator,
                 'is_verified' => true,
                 'is_active' => true,
             ]);
@@ -106,13 +106,13 @@ class PartnerApplicationService
                 'commission_rate' => $commissionRate,
                 'description' => "Địa chỉ: {$application->address}. Đội xe khai báo: {$application->vehicle_count} xe ({$application->fleetSummary()}).",
                 'license_url' => $application->business_license_url,
-                'status' => OperatorStatus::Verified,
+                'status' => OperatorStatusEnum::Verified,
                 'verified_at' => now(),
                 'verified_by' => $admin->id,
             ]);
 
             $application->update([
-                'status' => PartnerApplicationStatus::Approved,
+                'status' => PartnerApplicationStatusEnum::Approved,
                 'reviewed_by' => $admin->id,
                 'reviewed_at' => now(),
                 'operator_id' => $operator->id,
@@ -162,12 +162,12 @@ class PartnerApplicationService
      */
     public function reject(PartnerApplication $application, string $reason, User $admin): void
     {
-        if ($application->status === PartnerApplicationStatus::Approved) {
+        if ($application->status === PartnerApplicationStatusEnum::Approved) {
             throw new DomainException('Đơn đã duyệt, không thể từ chối');
         }
 
         $application->update([
-            'status' => PartnerApplicationStatus::Rejected,
+            'status' => PartnerApplicationStatusEnum::Rejected,
             'note' => $reason,
             'reviewed_by' => $admin->id,
             'reviewed_at' => now(),

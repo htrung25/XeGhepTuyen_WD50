@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Route;
 | Admin API Routes  (prefix: /api/admin)
 |--------------------------------------------------------------------------
 | Quyền chi tiết (RBAC) gắn qua middleware `permission:<key>` — xem
-| App\Enums\AdminPermission. Group đã có `role:admin` cô lập portal.
+| App\Enums\AdminPermissionEnum. Group đã có `role:admin` cô lập portal.
 */
 
 // Auth — unauthenticated

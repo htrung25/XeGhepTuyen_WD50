@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Enums\AdminPermission as P;
+use App\Enums\AdminPermissionEnum as P;
 use App\Models\AdminRole;
 use Illuminate\Database\Seeder;
 

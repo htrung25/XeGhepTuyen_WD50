@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\GenderType;
+use App\Enums\GenderTypeEnum;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,7 +25,7 @@ class BookingPassenger extends Model
     protected function casts(): array
     {
         return [
-            'gender' => GenderType::class,
+            'gender' => GenderTypeEnum::class,
             'is_primary' => 'boolean',
         ];
     }

@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources\Operator;
 
-use App\Enums\VehicleStatus;
+use App\Enums\VehicleStatusEnum;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -17,7 +17,7 @@ class VehicleResource extends JsonResource
             'seat_count' => $this->seat_count,
             'manufacture_year' => $this->year,
             'image_url' => $this->image_url,
-            'is_active' => $this->status === VehicleStatus::Active,
+            'is_active' => $this->status === VehicleStatusEnum::Active,
             'brand' => $this->brand,
             'model' => $this->model,
             'color' => $this->color,

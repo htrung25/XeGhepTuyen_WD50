@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\UserRole;
+use App\Enums\UserRoleEnum;
 use App\Models\Operator;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -15,7 +15,7 @@ use Laravel\Sanctum\Sanctum;
 function makeOperatorUser(array $operatorAttrs = []): User
 {
     $user = User::factory()->create([
-        'role' => UserRole::Operator,
+        'role' => UserRoleEnum::Operator,
         'password' => Hash::make('old-password'),
     ]);
 

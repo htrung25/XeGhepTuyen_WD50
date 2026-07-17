@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
-use App\Enums\AdminPermission;
+use App\Enums\AdminPermissionEnum;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -19,7 +19,7 @@ class UpdateRoleRequest extends FormRequest
             'name' => ['sometimes', 'string', 'min:2', 'max:100'],
             'description' => ['nullable', 'string', 'max:500'],
             'permissions' => ['sometimes', 'array'],
-            'permissions.*' => ['string', Rule::in(AdminPermission::values())],
+            'permissions.*' => ['string', Rule::in(AdminPermissionEnum::values())],
         ];
     }
 

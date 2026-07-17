@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources\Operator;
 
-use App\Enums\DriverStatus;
+use App\Enums\DriverStatusEnum;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -16,13 +16,13 @@ class DriverResource extends JsonResource
             'phone' => $this->user?->phone,
             'rating_avg' => $this->rating_avg !== null ? (float) $this->rating_avg : null,
             'is_online' => (bool) $this->is_online,
-            'is_active' => $this->status === DriverStatus::Verified,
+            'is_active' => $this->status === DriverStatusEnum::Verified,
             'status' => $this->status?->value,
             'status_label' => match ($this->status) {
-                DriverStatus::Pending => 'Chờ duyệt',
-                DriverStatus::Verified => 'Đã duyệt',
-                DriverStatus::Suspended => 'Đình chỉ',
-                DriverStatus::Rejected => 'Từ chối',
+                DriverStatusEnum::Pending => 'Chờ duyệt',
+                DriverStatusEnum::Verified => 'Đã duyệt',
+                DriverStatusEnum::Suspended => 'Đình chỉ',
+                DriverStatusEnum::Rejected => 'Từ chối',
                 default => '—',
             },
             'license_number' => $this->license_number,

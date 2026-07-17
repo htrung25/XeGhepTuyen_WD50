@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\UserRole;
+use App\Enums\UserRoleEnum;
 use App\Models\AdminRole;
 use App\Models\PartnerApplication;
 use App\Models\User;
@@ -11,7 +11,7 @@ use Laravel\Sanctum\Sanctum;
 function actingAsDashboardAdmin(): void
 {
     Sanctum::actingAs(User::factory()->create([
-        'role' => UserRole::Admin,
+        'role' => UserRoleEnum::Admin,
         'admin_role_id' => superAdminRole()->id,
     ]));
 }
@@ -55,7 +55,7 @@ it('chặn admin không có quyền dashboard.view', function () {
         'name' => 'Kế toán', 'slug' => 'kt-no-dash',
         'permissions' => ['finance.view'], 'is_super' => false,
     ]);
-    Sanctum::actingAs(User::factory()->create(['role' => UserRole::Admin, 'admin_role_id' => $role->id]));
+    Sanctum::actingAs(User::factory()->create(['role' => UserRoleEnum::Admin, 'admin_role_id' => $role->id]));
 
     $this->getJson('/api/admin/dashboard')->assertStatus(403);
 });

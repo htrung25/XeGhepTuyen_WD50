@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\TripStatus;
+use App\Enums\TripStatusEnum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -33,7 +33,7 @@ class Trip extends Model
     protected function casts(): array
     {
         return [
-            'status' => TripStatus::class,
+            'status' => TripStatusEnum::class,
             'depart_at' => 'datetime',
             'arrive_at' => 'datetime',
             'started_at' => 'datetime',
@@ -75,7 +75,7 @@ class Trip extends Model
 
     public function scopeAvailable(Builder $query, int $passengers = 1): Builder
     {
-        return $query->where('status', TripStatus::Scheduled)
+        return $query->where('status', TripStatusEnum::Scheduled)
             ->where('available_seats', '>=', $passengers)
             ->where('depart_at', '>', now()->addMinutes((int) config('booking.min_lead_minutes', 30)));
     }
@@ -88,12 +88,12 @@ class Trip extends Model
     public function scopeUpcoming(Builder $query): Builder
     {
         return $query->where('depart_at', '>', now())
-            ->whereIn('status', [TripStatus::Scheduled->value, TripStatus::Boarding->value]);
+            ->whereIn('status', [TripStatusEnum::Scheduled->value, TripStatusEnum::Boarding->value]);
     }
 
     public function scopeInProgress(Builder $query): Builder
     {
-        return $query->where('status', TripStatus::InProgress);
+        return $query->where('status', TripStatusEnum::InProgress);
     }
 
     public function scopeForDriver(Builder $query, string $driverId): Builder
@@ -112,13 +112,13 @@ class Trip extends Model
 
     public function canBeBooked(): bool
     {
-        return $this->status === TripStatus::Scheduled
+        return $this->status === TripStatusEnum::Scheduled
             && $this->available_seats > 0
             && $this->depart_at->gt(now()->addMinutes((int) config('booking.min_lead_minutes', 30)));
     }
 
     public function isActive(): bool
     {
-        return in_array($this->status, [TripStatus::Boarding, TripStatus::InProgress]);
+        return in_array($this->status, [TripStatusEnum::Boarding, TripStatusEnum::InProgress]);
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\UserRole;
+use App\Enums\UserRoleEnum;
 use App\Models\Driver;
 use App\Models\Notification;
 use App\Models\Operator;
@@ -17,12 +17,12 @@ use Laravel\Sanctum\Sanctum;
 function makeDriverUser(array $userAttrs = []): User
 {
     $user = User::factory()->create(array_merge([
-        'role' => UserRole::Driver,
+        'role' => UserRoleEnum::Driver,
         'password' => Hash::make('old-password'),
     ], $userAttrs));
 
     $operator = Operator::create([
-        'user_id' => User::factory()->create(['role' => UserRole::Operator])->id,
+        'user_id' => User::factory()->create(['role' => UserRoleEnum::Operator])->id,
         'company_name' => 'Nhà xe Test',
         'business_license' => 'GPKD-001',
     ]);
@@ -120,7 +120,7 @@ it('liệt kê và đánh dấu đã đọc thông báo của tài xế', functi
 });
 
 it('admin xem được bản đồ GPS chuyến đang chạy', function () {
-    Sanctum::actingAs(User::factory()->create(['role' => UserRole::Admin, 'admin_role_id' => superAdminRole()->id]));
+    Sanctum::actingAs(User::factory()->create(['role' => UserRoleEnum::Admin, 'admin_role_id' => superAdminRole()->id]));
 
     $this->getJson('/api/admin/dashboard/map')
         ->assertOk()

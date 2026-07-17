@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\UserRole;
+use App\Enums\UserRoleEnum;
 use App\Models\Driver;
 use App\Models\Operator;
 use App\Models\User;
@@ -10,7 +10,7 @@ use Laravel\Sanctum\Sanctum;
 function makeAdminUser(): User
 {
     return User::factory()->create([
-        'role' => UserRole::Admin,
+        'role' => UserRoleEnum::Admin,
         'admin_role_id' => superAdminRole()->id,
     ]);
 }
@@ -18,7 +18,7 @@ function makeAdminUser(): User
 function makeFullOperator(): Operator
 {
     $user = User::factory()->create([
-        'role' => UserRole::Operator,
+        'role' => UserRoleEnum::Operator,
     ]);
 
     $operator = Operator::create([
@@ -50,7 +50,7 @@ function makeFullOperator(): Operator
 
     // Create a driver
     $driverUser = User::factory()->create([
-        'role' => UserRole::Driver,
+        'role' => UserRoleEnum::Driver,
     ]);
 
     Driver::create([
@@ -103,7 +103,7 @@ it('chặn người dùng không có vai trò admin truy cập chi tiết nhà x
 
     // Act as a normal customer
     $customer = User::factory()->create([
-        'role' => UserRole::Customer,
+        'role' => UserRoleEnum::Customer,
     ]);
     Sanctum::actingAs($customer);
 
@@ -154,7 +154,7 @@ it('chặn người dùng không có vai trò admin khôi phục nhà xe', funct
     $operator->update(['status' => 'suspended']);
 
     $customer = User::factory()->create([
-        'role' => UserRole::Customer,
+        'role' => UserRoleEnum::Customer,
     ]);
     Sanctum::actingAs($customer);
 

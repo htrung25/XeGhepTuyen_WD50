@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Enums\BookingPaymentStatus;
-use App\Enums\BookingStatus;
-use App\Enums\SeatStatus;
+use App\Enums\BookingPaymentStatusEnum;
+use App\Enums\BookingStatusEnum;
+use App\Enums\SeatStatusEnum;
 use App\Exceptions\SeatNotAvailableException;
 use App\Exceptions\TripNotAvailableException;
 use App\Jobs\ExpireUnpaidBookingJob;
@@ -59,7 +59,7 @@ class BookingService
 
             // 2. Kiểm tra từng ghế còn available hoặc đang locked bởi chính user này
             foreach ($seats as $seat) {
-                $lockedByMe = $seat->status === SeatStatus::Locked
+                $lockedByMe = $seat->status === SeatStatusEnum::Locked
                     && $seat->locked_by === $user->id;
                 if (! $seat->isAvailable() && ! $lockedByMe) {
                     throw new SeatNotAvailableException("Ghế {$seat->seat_code} đã được đặt bởi người khác");
@@ -110,8 +110,8 @@ class BookingService
                 'discount_amount' => $discount,
                 'final_amount' => $finalAmount,
                 'payment_method' => $data['payment_method'],
-                'payment_status' => BookingPaymentStatus::Unpaid,
-                'booking_status' => BookingStatus::Pending,
+                'payment_status' => BookingPaymentStatusEnum::Unpaid,
+                'booking_status' => BookingStatusEnum::Pending,
                 'voucher_id' => $voucher?->id,
                 'qr_token' => Str::random(32),
                 'expires_at' => now()->addMinutes(15),
@@ -130,7 +130,7 @@ class BookingService
 
             // 8. Cập nhật ghế → booked
             SeatMap::whereIn('id', $data['seat_ids'])->update([
-                'status' => SeatStatus::Booked,
+                'status' => SeatStatusEnum::Booked,
                 'locked_by' => null,
                 'locked_at' => null,
             ]);
@@ -170,21 +170,21 @@ class BookingService
 
             // Cập nhật trạng thái booking
             $booking->update([
-                'booking_status' => BookingStatus::Cancelled,
+                'booking_status' => BookingStatusEnum::Cancelled,
                 'cancelled_at' => now(),
                 'cancel_reason' => $reason,
             ]);
 
             // Giải phóng ghế
             $seatIds = $booking->passengers()->pluck('seat_map_id');
-            SeatMap::whereIn('id', $seatIds)->update(['status' => SeatStatus::Available]);
+            SeatMap::whereIn('id', $seatIds)->update(['status' => SeatStatusEnum::Available]);
 
             // Tăng lại available_seats
             Trip::where('id', $booking->trip_id)
                 ->increment('available_seats', $booking->passenger_count);
 
             // Dispatch hoàn tiền nếu đã thanh toán
-            if ($booking->payment_status === BookingPaymentStatus::Paid && $refundAmount > 0) {
+            if ($booking->payment_status === BookingPaymentStatusEnum::Paid && $refundAmount > 0) {
                 ProcessRefundJob::dispatch($booking, $refundAmount)->onQueue('high');
             }
 
@@ -206,13 +206,13 @@ class BookingService
 
         DB::transaction(function () use ($booking) {
             $booking->update([
-                'booking_status' => BookingStatus::Cancelled,
+                'booking_status' => BookingStatusEnum::Cancelled,
                 'cancelled_at' => now(),
                 'cancel_reason' => 'Hết hạn thanh toán',
             ]);
 
             $seatIds = $booking->passengers()->pluck('seat_map_id');
-            SeatMap::whereIn('id', $seatIds)->update(['status' => SeatStatus::Available]);
+            SeatMap::whereIn('id', $seatIds)->update(['status' => SeatStatusEnum::Available]);
             Trip::where('id', $booking->trip_id)
                 ->increment('available_seats', $booking->passenger_count);
         });
@@ -228,13 +228,13 @@ class BookingService
     {
         DB::transaction(function () use ($trip) {
             $trip->bookings()
-                ->whereIn('booking_status', [BookingStatus::CheckedIn->value, BookingStatus::Confirmed->value])
-                ->update(['booking_status' => BookingStatus::Completed, 'completed_at' => now()]);
+                ->whereIn('booking_status', [BookingStatusEnum::CheckedIn->value, BookingStatusEnum::Confirmed->value])
+                ->update(['booking_status' => BookingStatusEnum::Completed, 'completed_at' => now()]);
 
             $trip->bookings()
-                ->where('booking_status', BookingStatus::Pending->value)
+                ->where('booking_status', BookingStatusEnum::Pending->value)
                 ->update([
-                    'booking_status' => BookingStatus::Cancelled,
+                    'booking_status' => BookingStatusEnum::Cancelled,
                     'cancelled_at' => now(),
                     'cancel_reason' => 'Chuyến đã kết thúc, vé chưa thanh toán',
                 ]);
@@ -249,22 +249,22 @@ class BookingService
      */
     public function cancelByOperator(Booking $booking, string $reason, bool $compensate = true): void
     {
-        if (in_array($booking->booking_status, [BookingStatus::Cancelled, BookingStatus::Completed, BookingStatus::NoShow], true)) {
+        if (in_array($booking->booking_status, [BookingStatusEnum::Cancelled, BookingStatusEnum::Completed, BookingStatusEnum::NoShow], true)) {
             return; // đã chốt trạng thái, bỏ qua
         }
 
-        $wasPaid = $booking->payment_status === BookingPaymentStatus::Paid;
+        $wasPaid = $booking->payment_status === BookingPaymentStatusEnum::Paid;
 
         DB::transaction(function () use ($booking, $reason, $compensate, $wasPaid) {
             $booking->update([
-                'booking_status' => BookingStatus::Cancelled,
+                'booking_status' => BookingStatusEnum::Cancelled,
                 'cancelled_at' => now(),
                 'cancel_reason' => $reason,
             ]);
 
             // Giải phóng ghế + trả lại available_seats
             $seatIds = $booking->passengers()->pluck('seat_map_id');
-            SeatMap::whereIn('id', $seatIds)->update(['status' => SeatStatus::Available]);
+            SeatMap::whereIn('id', $seatIds)->update(['status' => SeatStatusEnum::Available]);
             Trip::where('id', $booking->trip_id)
                 ->increment('available_seats', $booking->passenger_count);
 
@@ -293,9 +293,9 @@ class BookingService
         DB::transaction(function () use ($seatIds, $userId, $tripId) {
             // Giải phóng toàn bộ ghế cũ đang được giữ bởi user này (tránh treo ghế rác và tự chặn chính mình)
             SeatMap::where('locked_by', $userId)
-                ->where('status', SeatStatus::Locked)
+                ->where('status', SeatStatusEnum::Locked)
                 ->update([
-                    'status' => SeatStatus::Available,
+                    'status' => SeatStatusEnum::Available,
                     'locked_at' => null,
                     'locked_by' => null,
                 ]);
@@ -312,7 +312,7 @@ class BookingService
             }
 
             SeatMap::whereIn('id', $seatIds)->update([
-                'status' => SeatStatus::Locked,
+                'status' => SeatStatusEnum::Locked,
                 'locked_at' => now(),
                 'locked_by' => $userId,
             ]);

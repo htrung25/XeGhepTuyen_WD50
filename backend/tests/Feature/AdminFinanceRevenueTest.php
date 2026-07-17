@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\UserRole;
+use App\Enums\UserRoleEnum;
 use App\Models\AdminRole;
 use App\Models\User;
 use Laravel\Sanctum\Sanctum;
@@ -9,7 +9,7 @@ use Laravel\Sanctum\Sanctum;
 function actingAsRevenueAdmin(): void
 {
     Sanctum::actingAs(User::factory()->create([
-        'role' => UserRole::Admin,
+        'role' => UserRoleEnum::Admin,
         'admin_role_id' => superAdminRole()->id,
     ]));
 }
@@ -49,7 +49,7 @@ it('chặn admin không có quyền finance.view xem báo cáo', function () {
         'name' => 'CSKH', 'slug' => 'cskh-no-finance',
         'permissions' => ['users.view'], 'is_super' => false,
     ]);
-    Sanctum::actingAs(User::factory()->create(['role' => UserRole::Admin, 'admin_role_id' => $role->id]));
+    Sanctum::actingAs(User::factory()->create(['role' => UserRoleEnum::Admin, 'admin_role_id' => $role->id]));
 
     $this->getJson('/api/admin/finance/revenue?period=month')->assertStatus(403);
 });

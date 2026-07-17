@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\UserRole;
+use App\Enums\UserRoleEnum;
 use App\Models\Driver;
 use App\Models\Operator;
 use App\Models\Route;
@@ -11,7 +11,7 @@ use Carbon\Carbon;
 
 function setupSearchTodayTestContext(): array
 {
-    $opUser = User::factory()->create(['role' => UserRole::Operator]);
+    $opUser = User::factory()->create(['role' => UserRoleEnum::Operator]);
     $operator = Operator::create([
         'user_id' => $opUser->id,
         'company_name' => 'Tìm Kiếm Bus',
@@ -36,7 +36,7 @@ function setupSearchTodayTestContext(): array
         'seat_count' => 9,
     ]);
 
-    $drvUser = User::factory()->create(['role' => UserRole::Driver]);
+    $drvUser = User::factory()->create(['role' => UserRoleEnum::Driver]);
     $driver = Driver::create([
         'user_id' => $drvUser->id,
         'operator_id' => $operator->id,

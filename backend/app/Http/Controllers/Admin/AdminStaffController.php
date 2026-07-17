@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\UserRole;
+use App\Enums\UserRoleEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreAdminStaffRequest;
 use App\Http\Resources\Admin\AdminStaffResource;
@@ -17,7 +17,7 @@ class AdminStaffController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = User::where('role', UserRole::Admin)->with('adminRole');
+        $query = User::where('role', UserRoleEnum::Admin)->with('adminRole');
 
         if ($request->search) {
             $search = $request->search;
@@ -49,7 +49,7 @@ class AdminStaffController extends Controller
 
     public function show(string $id): JsonResponse
     {
-        $staff = User::where('role', UserRole::Admin)->with('adminRole')->find($id);
+        $staff = User::where('role', UserRoleEnum::Admin)->with('adminRole')->find($id);
         if (! $staff) {
             return response()->json(['success' => false, 'message' => 'Nhân viên không tồn tại'], 404);
         }
@@ -67,7 +67,7 @@ class AdminStaffController extends Controller
             'email' => $data['email'],
             'phone' => $data['phone'],
             'password' => $tempPassword, // cast 'hashed' tự băm
-            'role' => UserRole::Admin,
+            'role' => UserRoleEnum::Admin,
             'admin_role_id' => $data['admin_role_id'],
             'is_verified' => true,
             'is_active' => true,
@@ -92,7 +92,7 @@ class AdminStaffController extends Controller
 
     public function update(Request $request, string $id): JsonResponse
     {
-        $staff = User::where('role', UserRole::Admin)->with('adminRole')->find($id);
+        $staff = User::where('role', UserRoleEnum::Admin)->with('adminRole')->find($id);
         if (! $staff) {
             return response()->json(['success' => false, 'message' => 'Nhân viên không tồn tại'], 404);
         }
@@ -141,7 +141,7 @@ class AdminStaffController extends Controller
 
     public function ban(Request $request, string $id): JsonResponse
     {
-        $staff = User::where('role', UserRole::Admin)->with('adminRole')->find($id);
+        $staff = User::where('role', UserRoleEnum::Admin)->with('adminRole')->find($id);
         if (! $staff) {
             return response()->json(['success' => false, 'message' => 'Nhân viên không tồn tại'], 404);
         }
@@ -171,7 +171,7 @@ class AdminStaffController extends Controller
 
     public function unban(string $id): JsonResponse
     {
-        $staff = User::where('role', UserRole::Admin)->find($id);
+        $staff = User::where('role', UserRoleEnum::Admin)->find($id);
         if (! $staff) {
             return response()->json(['success' => false, 'message' => 'Nhân viên không tồn tại'], 404);
         }
@@ -189,7 +189,7 @@ class AdminStaffController extends Controller
 
     public function resetPassword(string $id): JsonResponse
     {
-        $staff = User::where('role', UserRole::Admin)->find($id);
+        $staff = User::where('role', UserRoleEnum::Admin)->find($id);
         if (! $staff) {
             return response()->json(['success' => false, 'message' => 'Nhân viên không tồn tại'], 404);
         }
@@ -214,7 +214,7 @@ class AdminStaffController extends Controller
     /** Số Super Admin đang hoạt động (để chống tự khóa toàn hệ thống). */
     private function activeSuperAdminCount(): int
     {
-        return User::where('role', UserRole::Admin)
+        return User::where('role', UserRoleEnum::Admin)
             ->where('is_active', true)
             ->whereHas('adminRole', fn ($q) => $q->where('is_super', true))
             ->count();

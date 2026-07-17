@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Driver;
 
-use App\Enums\DriverStatus;
-use App\Enums\UserRole;
+use App\Enums\DriverStatusEnum;
+use App\Enums\UserRoleEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Driver\LoginRequest;
 use App\Http\Requests\Driver\RegisterDriverRequest;
@@ -24,7 +24,7 @@ class AuthController extends Controller
                 'full_name' => $request->full_name,
                 'phone' => $request->phone,
                 'password' => $request->password,
-                'role' => UserRole::Driver,
+                'role' => UserRoleEnum::Driver,
                 'is_verified' => true,
             ]);
 
@@ -42,7 +42,7 @@ class AuthController extends Controller
                 'id_card_front_url' => Storage::url($idFront),
                 'id_card_back_url' => Storage::url($idBack),
                 'license_front_url' => Storage::url($licFront),
-                'status' => DriverStatus::Pending,
+                'status' => DriverStatusEnum::Pending,
             ]);
 
             return response()->json([
@@ -59,7 +59,7 @@ class AuthController extends Controller
     public function login(LoginRequest $request): JsonResponse
     {
         $user = User::where('phone', $request->phone)
-            ->where('role', UserRole::Driver)
+            ->where('role', UserRoleEnum::Driver)
             ->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
@@ -67,7 +67,7 @@ class AuthController extends Controller
         }
 
         $driver = $user->driver;
-        if (! $driver || $driver->status !== DriverStatus::Verified) {
+        if (! $driver || $driver->status !== DriverStatusEnum::Verified) {
             return response()->json(['success' => false, 'message' => 'Tài khoản chưa được duyệt hoặc đã bị đình chỉ'], 403);
         }
 

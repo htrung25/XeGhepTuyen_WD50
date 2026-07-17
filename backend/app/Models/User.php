@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use App\Enums\AdminPermission;
-use App\Enums\UserRole;
+use App\Enums\AdminPermissionEnum;
+use App\Enums\UserRoleEnum;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -45,7 +45,7 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
-            'role' => UserRole::class,
+            'role' => UserRoleEnum::class,
             'is_verified' => 'boolean',
             'is_active' => 'boolean',
             'must_change_password' => 'boolean',
@@ -103,7 +103,7 @@ class User extends Authenticatable
         return $query->where('is_verified', true);
     }
 
-    public function scopeByRole($query, UserRole $role)
+    public function scopeByRole($query, UserRoleEnum $role)
     {
         return $query->where('role', $role);
     }
@@ -112,22 +112,22 @@ class User extends Authenticatable
 
     public function isCustomer(): bool
     {
-        return $this->role === UserRole::Customer;
+        return $this->role === UserRoleEnum::Customer;
     }
 
     public function isDriver(): bool
     {
-        return $this->role === UserRole::Driver;
+        return $this->role === UserRoleEnum::Driver;
     }
 
     public function isOperator(): bool
     {
-        return $this->role === UserRole::Operator;
+        return $this->role === UserRoleEnum::Operator;
     }
 
     public function isAdmin(): bool
     {
-        return $this->role === UserRole::Admin;
+        return $this->role === UserRoleEnum::Admin;
     }
 
     /** Admin có vai trò super (bỏ qua mọi kiểm tra quyền). */
@@ -136,7 +136,7 @@ class User extends Authenticatable
         return $this->isAdmin() && (bool) $this->adminRole?->is_super;
     }
 
-    /** Kiểm tra admin hiện tại có quyền theo key (AdminPermission). */
+    /** Kiểm tra admin hiện tại có quyền theo key (AdminPermissionEnum). */
     public function hasPermission(string $key): bool
     {
         if (! $this->isAdmin()) {
@@ -157,7 +157,7 @@ class User extends Authenticatable
         }
 
         if ($this->adminRole?->is_super) {
-            return AdminPermission::values();
+            return AdminPermissionEnum::values();
         }
 
         return $this->adminRole?->permissions ?? [];

@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Enums\TicketStatus;
+use App\Enums\TicketStatusEnum;
 use App\Models\SupportMessage;
 use App\Models\SupportTicket;
 use App\Models\User;
@@ -25,7 +25,7 @@ class SupportTicketService
                 'category' => $data['category'],
                 'priority' => $data['priority'] ?? 'normal',
                 'booking_code' => $data['booking_code'] ?? null,
-                'status' => TicketStatus::Open,
+                'status' => TicketStatusEnum::Open,
             ]);
 
             SupportMessage::create([
@@ -48,7 +48,7 @@ class SupportTicketService
         return DB::transaction(function () use ($user, $ticketId, $body, $senderType) {
             $ticket = SupportTicket::lockForUpdate()->findOrFail($ticketId);
 
-            if ($ticket->status === TicketStatus::Closed) {
+            if ($ticket->status === TicketStatusEnum::Closed) {
                 throw new \InvalidArgumentException('Không thể phản hồi yêu cầu hỗ trợ đã đóng.');
             }
 
@@ -61,8 +61,8 @@ class SupportTicketService
             ]);
 
             // Nếu admin trả lời và ticket đang ở trạng thái 'open', chuyển sang 'in_progress'
-            if ($senderType === 'admin' && $ticket->status === TicketStatus::Open) {
-                $ticket->status = TicketStatus::InProgress;
+            if ($senderType === 'admin' && $ticket->status === TicketStatusEnum::Open) {
+                $ticket->status = TicketStatusEnum::InProgress;
             }
 
             // Lưu ticket để kích hoạt updated_at của ticket
@@ -91,7 +91,7 @@ class SupportTicketService
     {
         $ticket = SupportTicket::findOrFail($ticketId);
         $ticket->update([
-            'status' => TicketStatus::Resolved,
+            'status' => TicketStatusEnum::Resolved,
             'resolved_at' => now(),
         ]);
     }
@@ -103,7 +103,7 @@ class SupportTicketService
     {
         $ticket = SupportTicket::findOrFail($ticketId);
         $ticket->update([
-            'status' => TicketStatus::Closed,
+            'status' => TicketStatusEnum::Closed,
             'closed_at' => now(),
         ]);
     }

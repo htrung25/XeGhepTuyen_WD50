@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use App\Enums\NotificationChannel;
-use App\Enums\NotificationType;
+use App\Enums\NotificationChannelEnum;
+use App\Enums\NotificationTypeEnum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -34,8 +34,8 @@ class Notification extends Model
     protected function casts(): array
     {
         return [
-            'type' => NotificationType::class,
-            'channel' => NotificationChannel::class,
+            'type' => NotificationTypeEnum::class,
+            'channel' => NotificationChannelEnum::class,
             'data' => 'array',
             'is_read' => 'boolean',
             'sent_at' => 'datetime',
@@ -68,6 +68,6 @@ class Notification extends Model
 
     public function scopeInApp(Builder $query): Builder
     {
-        return $query->where('channel', NotificationChannel::InApp);
+        return $query->where('channel', NotificationChannelEnum::InApp);
     }
 }

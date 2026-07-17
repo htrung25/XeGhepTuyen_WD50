@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\WalletTransactionType;
+use App\Enums\WalletTransactionTypeEnum;
 use App\Exceptions\InsufficientBalanceException;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -50,7 +50,7 @@ class Wallet extends Model
     /**
      * Cộng tiền vào ví (nạp tiền / hoàn tiền)
      */
-    public function credit(int $amount, string $description, WalletTransactionType $type, ?string $bookingId = null): WalletTransaction
+    public function credit(int $amount, string $description, WalletTransactionTypeEnum $type, ?string $bookingId = null): WalletTransaction
     {
         return DB::transaction(function () use ($amount, $description, $type, $bookingId) {
             $this->increment('balance', $amount);
@@ -71,7 +71,7 @@ class Wallet extends Model
      *
      * @throws InsufficientBalanceException
      */
-    public function debit(int $amount, string $description, WalletTransactionType $type, ?string $bookingId = null): WalletTransaction
+    public function debit(int $amount, string $description, WalletTransactionTypeEnum $type, ?string $bookingId = null): WalletTransaction
     {
         return DB::transaction(function () use ($amount, $description, $type, $bookingId) {
             if ($this->balance < $amount) {

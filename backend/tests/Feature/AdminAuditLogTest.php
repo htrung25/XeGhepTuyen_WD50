@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\UserRole;
+use App\Enums\UserRoleEnum;
 use App\Models\AuditLog;
 use App\Models\Operator;
 use App\Models\User;
@@ -11,7 +11,7 @@ use Laravel\Sanctum\Sanctum;
 function makeAuditLogAdminUser(): User
 {
     return User::factory()->create([
-        'role' => UserRole::Admin,
+        'role' => UserRoleEnum::Admin,
         'admin_role_id' => superAdminRole()->id,
     ]);
 }
@@ -97,7 +97,7 @@ it('cho phep admin xem chi tiet mot audit log', function () {
 
 it('chan nguoi dung khong phai admin truy cap audit logs', function () {
     $customer = User::factory()->create([
-        'role' => UserRole::Customer,
+        'role' => UserRoleEnum::Customer,
     ]);
     Sanctum::actingAs($customer);
 

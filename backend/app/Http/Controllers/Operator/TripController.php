@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Operator;
 
-use App\Enums\TripStatus;
+use App\Enums\TripStatusEnum;
 use App\Exceptions\TripNotAvailableException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Operator\StoreTripRequest;
@@ -137,7 +137,7 @@ class TripController extends Controller
         }
 
         // Chỉ áp dụng cho chuyến chưa chạy/đang đón khách VÀ đã quá giờ khởi hành
-        if (! in_array($trip->status, [TripStatus::Scheduled, TripStatus::Boarding], true)) {
+        if (! in_array($trip->status, [TripStatusEnum::Scheduled, TripStatusEnum::Boarding], true)) {
             return response()->json(['success' => false, 'message' => 'Chuyến này không ở trạng thái có thể xác nhận hoàn tất'], 422);
         }
         if ($trip->depart_at->isFuture()) {

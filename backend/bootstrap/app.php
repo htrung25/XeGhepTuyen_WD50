@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Middleware\EnsurePermission;
-use App\Http\Middleware\EnsureUserRole;
+use App\Http\Middleware\EnsurePermissionMiddleware;
+use App\Http\Middleware\EnsureUserRoleMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -49,8 +49,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Chặn truy cập chéo portal sau khi auth:sanctum xác thực token.
         // `permission` kiểm tra quyền chi tiết của admin (RBAC).
         $middleware->alias([
-            'role' => EnsureUserRole::class,
-            'permission' => EnsurePermission::class,
+            'role' => EnsureUserRoleMiddleware::class,
+            'permission' => EnsurePermissionMiddleware::class,
         ]);
 
     })

@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use App\Enums\PaymentMethod;
-use App\Enums\PaymentStatus;
+use App\Enums\PaymentMethodEnum;
+use App\Enums\PaymentStatusEnum;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -32,8 +32,8 @@ class Payment extends Model
     protected function casts(): array
     {
         return [
-            'method' => PaymentMethod::class,
-            'status' => PaymentStatus::class,
+            'method' => PaymentMethodEnum::class,
+            'status' => PaymentStatusEnum::class,
             'gateway_response' => 'array',
             'amount' => 'integer',
             'refund_amount' => 'integer',
@@ -58,7 +58,7 @@ class Payment extends Model
 
     public function isSuccessful(): bool
     {
-        return $this->status === PaymentStatus::Success;
+        return $this->status === PaymentStatusEnum::Success;
     }
 
     public function getFormattedAmountAttribute(): string

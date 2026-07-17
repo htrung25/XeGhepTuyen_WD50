@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Events\DriverLocationUpdated;
+use App\Events\DriverLocationUpdatedEvent;
 use App\Models\Driver;
 use App\Models\Trip;
 use Illuminate\Support\Facades\Cache;
@@ -32,7 +32,7 @@ class TrackingService
 
         if ($activeTrip) {
             $etaMinutes = $this->calculateEta($lat, $lng, $activeTrip);
-            event(new DriverLocationUpdated($activeTrip, $lat, $lng, $etaMinutes));
+            event(new DriverLocationUpdatedEvent($activeTrip, $lat, $lng, $etaMinutes));
         }
     }
 

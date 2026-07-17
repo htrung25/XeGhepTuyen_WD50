@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\UserRole;
+use App\Enums\UserRoleEnum;
 use App\Models\Booking;
 use App\Models\Driver;
 use App\Models\Operator;
@@ -15,7 +15,7 @@ use Laravel\Sanctum\Sanctum;
 
 function setupSepayTestContext(): array
 {
-    $opUser = User::factory()->create(['role' => UserRole::Operator]);
+    $opUser = User::factory()->create(['role' => UserRoleEnum::Operator]);
     $operator = Operator::create([
         'user_id' => $opUser->id, 'company_name' => 'SePay Express', 'business_license' => 'GP-8888', 'status' => 'verified',
     ]);
@@ -29,7 +29,7 @@ function setupSepayTestContext(): array
         'brand' => 'Ford', 'model' => 'Transit', 'vehicle_type' => 'van_9', 'seat_count' => 9,
     ]);
 
-    $drvUser = User::factory()->create(['role' => UserRole::Driver]);
+    $drvUser = User::factory()->create(['role' => UserRoleEnum::Driver]);
     $driver = Driver::create([
         'user_id' => $drvUser->id, 'operator_id' => $operator->id,
         'license_number' => 'B2-888888', 'license_class' => 'B2',
@@ -49,7 +49,7 @@ function setupSepayTestContext(): array
         'status' => 'available',
     ]);
 
-    $customer = User::factory()->create(['role' => UserRole::Customer]);
+    $customer = User::factory()->create(['role' => UserRoleEnum::Customer]);
 
     return [$trip, $seat, $customer];
 }

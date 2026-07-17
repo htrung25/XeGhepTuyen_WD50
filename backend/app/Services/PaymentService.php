@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
-use App\Enums\BookingPaymentStatus;
-use App\Enums\BookingStatus;
-use App\Enums\PaymentMethod;
-use App\Enums\PaymentStatus;
-use App\Events\BookingConfirmed;
-use App\Events\PaymentProcessed;
+use App\Enums\BookingPaymentStatusEnum;
+use App\Enums\BookingStatusEnum;
+use App\Enums\PaymentMethodEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Events\BookingConfirmedEvent;
+use App\Events\PaymentProcessedEvent;
 use App\Exceptions\BookingExpiredException;
 use App\Exceptions\PaymentVerificationException;
 use App\Models\Booking;
@@ -27,7 +27,7 @@ class PaymentService
     /**
      * Khởi tạo thanh toán — trả về URL chuyển hướng
      */
-    public function initiate(Booking $booking, PaymentMethod $method): array
+    public function initiate(Booking $booking, PaymentMethodEnum $method): array
     {
         if ($booking->isExpired()) {
             throw new BookingExpiredException;
@@ -35,7 +35,7 @@ class PaymentService
 
         // Chỉ vé đang CHỜ mới được thanh toán. Chặn thanh toán lại vé đã xác nhận/
         // đã thanh toán/đã hủy/hoàn tất → tránh tạo payment trùng, đặc biệt ví bị TRỪ 2 lần.
-        if ($booking->booking_status !== BookingStatus::Pending) {
+        if ($booking->booking_status !== BookingStatusEnum::Pending) {
             throw new \InvalidArgumentException('Vé này không ở trạng thái chờ thanh toán');
         }
 
@@ -55,15 +55,15 @@ class PaymentService
             'user_id' => $booking->user_id,
             'amount' => $booking->final_amount,
             'method' => $method,
-            'status' => PaymentStatus::Pending,
+            'status' => PaymentStatusEnum::Pending,
             'gateway_order_id' => 'XEGHEP-'.strtoupper(Str::random(10)),
         ]);
 
         return match ($method) {
-            PaymentMethod::Momo => $this->initiateMomo($payment, $booking),
-            PaymentMethod::Vnpay => $this->initiateSepay($payment, $booking),
-            PaymentMethod::Wallet => $this->initiateWallet($payment, $booking),
-            PaymentMethod::Cash => $this->initiateCash($payment, $booking),
+            PaymentMethodEnum::Momo => $this->initiateMomo($payment, $booking),
+            PaymentMethodEnum::Vnpay => $this->initiateSepay($payment, $booking),
+            PaymentMethodEnum::Wallet => $this->initiateWallet($payment, $booking),
+            PaymentMethodEnum::Cash => $this->initiateCash($payment, $booking),
             default => throw new \InvalidArgumentException('Phương thức thanh toán không hỗ trợ'),
         };
     }
@@ -118,7 +118,7 @@ class PaymentService
             // Tiền mặt do tài xế/nhà xe giữ (Phương án A) — nền tảng KHÔNG hoàn từ quỹ/ví;
             // nhà xe hoàn tiền mặt trực tiếp cho khách. Chỉ đánh dấu trạng thái để đối soát.
             // Vé online: nền tảng đang giữ tiền ⇒ hoàn về ví nội bộ.
-            if ($payment->method !== PaymentMethod::Cash) {
+            if ($payment->method !== PaymentMethodEnum::Cash) {
                 $this->walletService->credit(
                     $booking->user,
                     $amount,
@@ -128,12 +128,12 @@ class PaymentService
             }
 
             $payment->update([
-                'status' => PaymentStatus::Refunded,
+                'status' => PaymentStatusEnum::Refunded,
                 'refund_amount' => $amount,
                 'refunded_at' => now(),
             ]);
 
-            $booking->update(['payment_status' => BookingPaymentStatus::Refunded]);
+            $booking->update(['payment_status' => BookingPaymentStatusEnum::Refunded]);
         });
     }
 
@@ -148,19 +148,19 @@ class PaymentService
         }
 
         // Idempotency check — tránh xử lý 2 lần
-        if ($payment->status === PaymentStatus::Success) {
+        if ($payment->status === PaymentStatusEnum::Success) {
             return true;
         }
 
         if (! $success) {
-            $payment->update(['status' => PaymentStatus::Failed, 'gateway_response' => $payload]);
+            $payment->update(['status' => PaymentStatusEnum::Failed, 'gateway_response' => $payload]);
 
             return false;
         }
 
         DB::transaction(function () use ($payment, $gatewayTxnId, $payload) {
             $payment->update([
-                'status' => PaymentStatus::Success,
+                'status' => PaymentStatusEnum::Success,
                 'gateway_txn_id' => $gatewayTxnId,
                 'gateway_response' => $payload,
                 'paid_at' => now(),
@@ -168,12 +168,12 @@ class PaymentService
 
             $booking = $payment->booking;
             $booking->update([
-                'payment_status' => BookingPaymentStatus::Paid,
-                'booking_status' => BookingStatus::Confirmed,
+                'payment_status' => BookingPaymentStatusEnum::Paid,
+                'booking_status' => BookingStatusEnum::Confirmed,
                 'confirmed_at' => now(),
             ]);
 
-            event(new PaymentProcessed($booking, $payment));
+            event(new PaymentProcessedEvent($booking, $payment));
         });
 
         return true;
@@ -309,16 +309,16 @@ class PaymentService
         // expires_at = null ⇒ isExpired() trả false ⇒ ExpireUnpaidBookingJob KHÔNG hủy vé.
         // payment_status vẫn 'unpaid' (nghĩa: chờ tài xế thu tiền mặt).
         DB::transaction(function () use ($payment, $booking) {
-            $payment->update(['status' => PaymentStatus::Pending]); // chờ tài xế thu
+            $payment->update(['status' => PaymentStatusEnum::Pending]); // chờ tài xế thu
             $booking->update([
-                'booking_status' => BookingStatus::Confirmed,
+                'booking_status' => BookingStatusEnum::Confirmed,
                 'confirmed_at' => now(),
                 'expires_at' => null,
             ]);
         });
 
         // Thông báo xác nhận đặt vé (tương tự luồng online)
-        event(new BookingConfirmed($booking->fresh()));
+        event(new BookingConfirmedEvent($booking->fresh()));
 
         return [
             'payment_url' => null,
@@ -334,35 +334,35 @@ class PaymentService
      */
     public function collectCash(Booking $booking, string $driverId): Payment
     {
-        if ($booking->payment_method !== PaymentMethod::Cash) {
+        if ($booking->payment_method !== PaymentMethodEnum::Cash) {
             throw new \InvalidArgumentException('Vé này không phải thanh toán tiền mặt');
         }
-        if ($booking->payment_status === BookingPaymentStatus::Paid) {
+        if ($booking->payment_status === BookingPaymentStatusEnum::Paid) {
             throw new \InvalidArgumentException('Vé này đã được thanh toán');
         }
 
         return DB::transaction(function () use ($booking, $driverId) {
             // Lấy payment cash đang chờ; nếu chưa có thì tạo mới (an toàn)
             $payment = Payment::where('booking_id', $booking->id)
-                ->where('method', PaymentMethod::Cash)
+                ->where('method', PaymentMethodEnum::Cash)
                 ->latest()
                 ->first()
                 ?? Payment::create([
                     'booking_id' => $booking->id,
                     'user_id' => $booking->user_id,
                     'amount' => $booking->final_amount,
-                    'method' => PaymentMethod::Cash,
-                    'status' => PaymentStatus::Pending,
+                    'method' => PaymentMethodEnum::Cash,
+                    'status' => PaymentStatusEnum::Pending,
                     'gateway_order_id' => 'CASH-'.strtoupper(Str::random(10)),
                 ]);
 
             $payment->update([
-                'status' => PaymentStatus::Success,
+                'status' => PaymentStatusEnum::Success,
                 'paid_at' => now(),
                 'collected_by' => $driverId,
             ]);
 
-            $booking->update(['payment_status' => BookingPaymentStatus::Paid]);
+            $booking->update(['payment_status' => BookingPaymentStatusEnum::Paid]);
 
             return $payment;
         });

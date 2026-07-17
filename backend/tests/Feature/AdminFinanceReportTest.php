@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\UserRole;
+use App\Enums\UserRoleEnum;
 use App\Models\User;
 use Laravel\Sanctum\Sanctum;
 
@@ -8,7 +8,7 @@ use Laravel\Sanctum\Sanctum;
 function actingAsFinanceAdmin(): void
 {
     Sanctum::actingAs(User::factory()->create([
-        'role' => UserRole::Admin,
+        'role' => UserRoleEnum::Admin,
         'admin_role_id' => superAdminRole()->id,
     ]));
 }

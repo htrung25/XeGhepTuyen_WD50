@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\OperatorStatus;
+use App\Enums\OperatorStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Admin\OperatorResource;
 use App\Models\Operator;
@@ -61,19 +61,19 @@ class OperatorController extends Controller
             return response()->json(['success' => false, 'message' => 'Nhà xe không tồn tại'], 404);
         }
 
-        if ($operator->status !== OperatorStatus::Pending) {
+        if ($operator->status !== OperatorStatusEnum::Pending) {
             return response()->json(['success' => false, 'message' => 'Nhà xe này không ở trạng thái chờ duyệt'], 422);
         }
 
         $oldStatus = $operator->status->value;
-        $operator->update(['status' => OperatorStatus::Verified, 'verified_at' => now()]);
+        $operator->update(['status' => OperatorStatusEnum::Verified, 'verified_at' => now()]);
 
         app(AuditLogService::class)->log(
             action: 'approve_operator',
             model: $operator,
             description: "Đã duyệt nhà xe thành công: {$operator->company_name}",
             oldValues: ['status' => $oldStatus],
-            newValues: ['status' => OperatorStatus::Verified->value, 'verified_at' => now()->format('Y-m-d H:i:s')]
+            newValues: ['status' => OperatorStatusEnum::Verified->value, 'verified_at' => now()->format('Y-m-d H:i:s')]
         );
 
         return response()->json(['success' => true, 'message' => 'Đã duyệt nhà xe thành công']);
@@ -90,14 +90,14 @@ class OperatorController extends Controller
         }
 
         $oldStatus = $operator->status->value;
-        $operator->update(['status' => OperatorStatus::Rejected, 'reject_reason' => $request->reason]);
+        $operator->update(['status' => OperatorStatusEnum::Rejected, 'reject_reason' => $request->reason]);
 
         app(AuditLogService::class)->log(
             action: 'reject_operator',
             model: $operator,
             description: "Đã từ chối nhà xe: {$operator->company_name}. Lý do: {$request->reason}",
             oldValues: ['status' => $oldStatus],
-            newValues: ['status' => OperatorStatus::Rejected->value, 'reject_reason' => $request->reason]
+            newValues: ['status' => OperatorStatusEnum::Rejected->value, 'reject_reason' => $request->reason]
         );
 
         return response()->json(['success' => true, 'message' => 'Đã từ chối nhà xe']);
@@ -114,7 +114,7 @@ class OperatorController extends Controller
         }
 
         $oldStatus = $operator->status->value;
-        $operator->update(['status' => OperatorStatus::Suspended]);
+        $operator->update(['status' => OperatorStatusEnum::Suspended]);
         $operator->user()->update(['is_active' => false]);
 
         app(AuditLogService::class)->log(
@@ -122,7 +122,7 @@ class OperatorController extends Controller
             model: $operator,
             description: "Đã tạm đình chỉ nhà xe: {$operator->company_name}. Lý do: {$request->reason}",
             oldValues: ['status' => $oldStatus, 'user_is_active' => true],
-            newValues: ['status' => OperatorStatus::Suspended->value, 'user_is_active' => false]
+            newValues: ['status' => OperatorStatusEnum::Suspended->value, 'user_is_active' => false]
         );
 
         return response()->json(['success' => true, 'message' => 'Đã tạm đình chỉ nhà xe']);
@@ -136,12 +136,12 @@ class OperatorController extends Controller
             return response()->json(['success' => false, 'message' => 'Nhà xe không tồn tại'], 404);
         }
 
-        if ($operator->status !== OperatorStatus::Suspended) {
+        if ($operator->status !== OperatorStatusEnum::Suspended) {
             return response()->json(['success' => false, 'message' => 'Nhà xe này không ở trạng thái đình chỉ'], 422);
         }
 
         $oldStatus = $operator->status->value;
-        $operator->update(['status' => OperatorStatus::Verified]);
+        $operator->update(['status' => OperatorStatusEnum::Verified]);
         if ($operator->user) {
             $operator->user->update(['is_active' => true]);
         }
@@ -151,7 +151,7 @@ class OperatorController extends Controller
             model: $operator,
             description: "Đã khôi phục hoạt động cho nhà xe: {$operator->company_name}",
             oldValues: ['status' => $oldStatus, 'user_is_active' => false],
-            newValues: ['status' => OperatorStatus::Verified->value, 'user_is_active' => true]
+            newValues: ['status' => OperatorStatusEnum::Verified->value, 'user_is_active' => true]
         );
 
         return response()->json(['success' => true, 'message' => 'Đã khôi phục hoạt động cho nhà xe']);

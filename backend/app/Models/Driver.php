@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\DriverStatus;
+use App\Enums\DriverStatusEnum;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -44,7 +44,7 @@ class Driver extends Model
     protected function casts(): array
     {
         return [
-            'status' => DriverStatus::class,
+            'status' => DriverStatusEnum::class,
             'license_expiry' => 'date',
             'verified_at' => 'datetime',
             'location_updated_at' => 'datetime',
@@ -86,12 +86,12 @@ class Driver extends Model
 
     public function scopePending($query)
     {
-        return $query->where('status', DriverStatus::Pending);
+        return $query->where('status', DriverStatusEnum::Pending);
     }
 
     public function scopeVerified($query)
     {
-        return $query->where('status', DriverStatus::Verified);
+        return $query->where('status', DriverStatusEnum::Verified);
     }
 
     public function scopeOnline($query)
@@ -108,7 +108,7 @@ class Driver extends Model
 
     public function isVerified(): bool
     {
-        return $this->status === DriverStatus::Verified;
+        return $this->status === DriverStatusEnum::Verified;
     }
 
     public function hasLicenseExpired(): bool

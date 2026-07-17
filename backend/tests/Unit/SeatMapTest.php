@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\SeatStatus;
+use App\Enums\SeatStatusEnum;
 use App\Models\SeatMap;
 use Tests\TestCase;
 
@@ -11,19 +11,19 @@ uses(TestCase::class);
  * P3: ghế Locked quá 10' tự coi là available ở tầng đọc (không phụ thuộc job dọn).
  */
 it('ghế Locked quá 10 phút coi như available', function () {
-    $seat = new SeatMap(['status' => SeatStatus::Locked, 'locked_at' => now()->subMinutes(11)]);
+    $seat = new SeatMap(['status' => SeatStatusEnum::Locked, 'locked_at' => now()->subMinutes(11)]);
 
     expect($seat->isLockExpired())->toBeTrue();
     expect($seat->isAvailable())->toBeTrue();
 });
 
 it('ghế Locked còn trong 10 phút thì CHƯA available', function () {
-    $seat = new SeatMap(['status' => SeatStatus::Locked, 'locked_at' => now()->subMinutes(5)]);
+    $seat = new SeatMap(['status' => SeatStatusEnum::Locked, 'locked_at' => now()->subMinutes(5)]);
 
     expect($seat->isAvailable())->toBeFalse();
 });
 
 it('ghế Available luôn available; ghế Booked thì không', function () {
-    expect((new SeatMap(['status' => SeatStatus::Available]))->isAvailable())->toBeTrue();
-    expect((new SeatMap(['status' => SeatStatus::Booked]))->isAvailable())->toBeFalse();
+    expect((new SeatMap(['status' => SeatStatusEnum::Available]))->isAvailable())->toBeTrue();
+    expect((new SeatMap(['status' => SeatStatusEnum::Booked]))->isAvailable())->toBeFalse();
 });

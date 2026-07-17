@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\DriverStatus;
+use App\Enums\DriverStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Admin\DriverResource;
 use App\Models\Driver;
@@ -93,7 +93,7 @@ class DriverController extends Controller
         // Only an active driver can log in, so resetting the password for a
         // pending/rejected/suspended driver (blocked by gating) is pointless and
         // would issue a password + SMS for nothing.
-        if ($driver->status !== DriverStatus::Verified) {
+        if ($driver->status !== DriverStatusEnum::Verified) {
             return response()->json(['success' => false, 'message' => 'Chỉ có thể cấp lại mật khẩu cho tài xế đang hoạt động'], 422);
         }
 
@@ -152,7 +152,7 @@ class DriverController extends Controller
 
         // Only an active (verified) driver can be suspended. Suspending a
         // pending/rejected profile (never active) or an already-suspended one is invalid.
-        if ($driver->status !== DriverStatus::Verified) {
+        if ($driver->status !== DriverStatusEnum::Verified) {
             return response()->json(['success' => false, 'message' => 'Chỉ có thể đình chỉ tài xế đang hoạt động'], 422);
         }
 
@@ -160,7 +160,7 @@ class DriverController extends Controller
         // Wrap both writes (drivers + users) in one transaction so a mid-way
         // failure can't leave the driver suspended while the user stays active.
         DB::transaction(function () use ($driver) {
-            $driver->update(['status' => DriverStatus::Suspended]);
+            $driver->update(['status' => DriverStatusEnum::Suspended]);
             $driver->user()->update(['is_active' => false]);
         });
 
@@ -169,7 +169,7 @@ class DriverController extends Controller
             model: $driver,
             description: "Đã tạm đình chỉ hoạt động tài xế: {$driver->user->full_name} (SĐT: {$driver->user->phone})",
             oldValues: ['status' => $oldStatus, 'user_is_active' => true],
-            newValues: ['status' => DriverStatus::Suspended->value, 'user_is_active' => false]
+            newValues: ['status' => DriverStatusEnum::Suspended->value, 'user_is_active' => false]
         );
 
         return response()->json(['success' => true, 'message' => 'Đã tạm đình chỉ tài xế']);

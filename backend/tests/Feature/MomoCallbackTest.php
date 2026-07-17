@@ -1,7 +1,7 @@
 <?php
 
-use App\Enums\UserRole;
-use App\Events\PaymentProcessed;
+use App\Enums\UserRoleEnum;
+use App\Events\PaymentProcessedEvent;
 use App\Exceptions\PaymentVerificationException;
 use App\Models\Booking;
 use App\Models\Driver;
@@ -29,7 +29,7 @@ beforeEach(function () {
 
 function makePendingMomoPayment(): Payment
 {
-    $opUser = User::factory()->create(['role' => UserRole::Operator]);
+    $opUser = User::factory()->create(['role' => UserRoleEnum::Operator]);
     $operator = Operator::create([
         'user_id' => $opUser->id, 'company_name' => 'NX', 'business_license' => 'GP1', 'status' => 'verified',
     ]);
@@ -48,7 +48,7 @@ function makePendingMomoPayment(): Payment
         'operator_id' => $operator->id, 'plate_number' => '30A-'.fake()->unique()->numerify('#####'),
         'brand' => 'Ford', 'model' => 'Transit', 'vehicle_type' => 'van_9', 'seat_count' => 9,
     ]);
-    $drvUser = User::factory()->create(['role' => UserRole::Driver]);
+    $drvUser = User::factory()->create(['role' => UserRoleEnum::Driver]);
     $driver = Driver::create([
         'user_id' => $drvUser->id, 'operator_id' => $operator->id,
         'license_number' => 'B2-'.fake()->unique()->numerify('######'), 'license_class' => 'B2',
@@ -60,7 +60,7 @@ function makePendingMomoPayment(): Payment
         'depart_at' => now()->addDay(), 'arrive_at' => now()->addDay()->addHours(2),
         'available_seats' => 9, 'price' => 150000, 'status' => 'scheduled',
     ]);
-    $customer = User::factory()->create(['role' => UserRole::Customer]);
+    $customer = User::factory()->create(['role' => UserRoleEnum::Customer]);
     $booking = Booking::create([
         'booking_code' => 'HNHP'.now()->format('ymd').'001', 'user_id' => $customer->id, 'trip_id' => $trip->id,
         'pickup_stop_id' => $pickup->id, 'dropoff_stop_id' => $dropoff->id, 'passenger_count' => 1,
@@ -106,7 +106,7 @@ it('KHÔNG confirm vé khi MoMo resultCode != 0 (giao dịch thất bại)', fun
 });
 
 it('confirm vé khi MoMo resultCode == 0 (thành công)', function () {
-    Event::fake([PaymentProcessed::class]);
+    Event::fake([PaymentProcessedEvent::class]);
     $payment = makePendingMomoPayment();
 
     $ok = app(PaymentService::class)->handleMomoCallback(
@@ -117,7 +117,7 @@ it('confirm vé khi MoMo resultCode == 0 (thành công)', function () {
     expect($payment->fresh()->status->value)->toBe('success');
     expect($payment->booking->fresh()->booking_status->value)->toBe('confirmed');
     expect($payment->booking->fresh()->payment_status->value)->toBe('paid');
-    Event::assertDispatched(PaymentProcessed::class);
+    Event::assertDispatched(PaymentProcessedEvent::class);
 });
 
 it('từ chối callback MoMo sai chữ ký', function () {
