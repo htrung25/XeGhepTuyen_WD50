@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { customerApi } from '@/api/customer.api';
+import AuthHomeLink from '@/components/customer/auth/AuthHomeLink.vue';
 import { useCustomerAuthStore } from '@/stores/customer.auth.store';
 
 const router = useRouter();
@@ -34,7 +35,9 @@ async function handleLogin() {
 </script>
 
 <template>
-    <div class="flex min-h-dvh">
+    <div class="relative flex min-h-dvh">
+        <AuthHomeLink />
+
         <!-- ─── Left panel (ẩn trên mobile) ──────────────────────────────── -->
         <div
             class="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-blue-800 via-blue-700 to-blue-500 p-12 lg:flex lg:w-1/2"
@@ -48,7 +51,7 @@ async function handleLogin() {
             />
 
             <!-- Logo -->
-            <div class="relative z-10 flex items-center gap-3">
+            <div class="relative z-10 mt-10 flex items-center gap-3">
                 <div
                     class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur"
                 >
