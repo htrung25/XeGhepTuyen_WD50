@@ -8,7 +8,8 @@ import {
 } from '@/actions/App/Http/Controllers/Customer/AuthController';
 // search/show/seats map a controller method bound to BOTH /public and /customer,
 // so Wayfinder generates a URL-keyed object (not a callable). Indexing the key
-// lets us pick the exact binding — e.g. keep getTripSeats on the /customer route.
+// lets us pick the exact binding — e.g. getTripSeats picks /public or /customer
+// theo trạng thái đăng nhập.
 import {
     lockSeats as lockSeatsRoute,
     index as bookingsIndex,
@@ -73,8 +74,15 @@ export const customerApi = {
     // Điểm đón/trả lấy từ chi tiết chuyến (getPublicTrip → pickup_stops/dropoff_stops).
 
     // ─── Seat map ──────────────────────────────────────────────────────────
+    // Trang chọn ghế là public (khách xem sơ đồ trước, ép login lúc giữ ghế).
+    // Khách ẩn danh phải đi binding /public; binding /customer chỉ dành cho
+    // người đã đăng nhập — để BE nhận diện ghế do chính họ đang giữ.
     getTripSeats: (tripId: string) =>
-        apiClient.send(tripSeatsMap['/api/customer/trips/{id}/seats'](tripId)),
+        apiClient.send(
+            localStorage.getItem('customer_token')
+                ? tripSeatsMap['/api/customer/trips/{id}/seats'](tripId)
+                : tripSeatsMap['/api/public/trips/{id}/seats'](tripId),
+        ),
     lockSeats: (data: { trip_id: string; seat_ids: string[] }) =>
         apiClient.send(lockSeatsRoute(), data),
 

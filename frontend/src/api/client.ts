@@ -50,7 +50,10 @@ http.interceptors.response.use(
                 url.includes('/auth/login') || url.includes('/auth/register');
             if (!isAuthAttempt && localStorage.getItem(`${portal}_token`)) {
                 localStorage.removeItem(`${portal}_token`);
-                window.location.href = `/${portal}/login`;
+                // Portal customer mount ở gốc domain nên login là /login,
+                // các portal còn lại có prefix riêng (/admin/login, ...).
+                window.location.href =
+                    portal === 'customer' ? '/login' : `/${portal}/login`;
             }
         }
 

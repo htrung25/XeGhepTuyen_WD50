@@ -44,8 +44,19 @@ describe('customerApi → Wayfinder route contract', () => {
         });
     });
 
-    it('getTripSeats keeps the CUSTOMER (authed) binding for the seat map', () => {
+    it('getTripSeats dùng binding PUBLIC khi khách chưa đăng nhập', () => {
+        localStorage.removeItem('customer_token');
         customerApi.getTripSeats('trip-1');
+        expect(apiClient.send).toHaveBeenCalledWith({
+            url: '/api/public/trips/trip-1/seats',
+            method: 'get',
+        });
+    });
+
+    it('getTripSeats giữ binding CUSTOMER (authed) khi đã đăng nhập — nhận diện ghế do chính mình giữ', () => {
+        localStorage.setItem('customer_token', 'tok-123');
+        customerApi.getTripSeats('trip-1');
+        localStorage.removeItem('customer_token');
         expect(apiClient.send).toHaveBeenCalledWith({
             url: '/api/customer/trips/trip-1/seats',
             method: 'get',
