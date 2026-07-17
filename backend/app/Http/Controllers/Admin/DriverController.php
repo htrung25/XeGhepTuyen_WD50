@@ -15,7 +15,10 @@ use Illuminate\Support\Facades\DB;
 
 class DriverController extends Controller
 {
-    public function __construct(private readonly DriverService $driverService) {}
+    public function __construct(
+        private readonly DriverService $driverService,
+        private readonly AuditLogService $auditLog,
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -51,32 +54,28 @@ class DriverController extends Controller
             return response()->json(['success' => false, 'message' => 'Tài xế không tồn tại'], 404);
         }
 
-        if ($driver->status !== DriverStatus::Pending) {
-            return response()->json(['success' => false, 'message' => 'Tài xế này không ở trạng thái chờ duyệt'], 422);
-        }
-
         // Duyệt + cấp mật khẩu đăng nhập mới + gửi SMS cho tài xế.
         // KHÔNG trả mật khẩu về cho admin — chỉ tài xế nhận qua SMS (bảo đảm quyền lợi tài xế).
         // Guard + update are locked inside the service transaction; a concurrent
         // approval that loses the race throws and is reported as 422 here.
         try {
-            $this->driverService->approveAndIssueCredentials($driver);
+            $result = $this->driverService->approveAndIssueCredentials($driver);
         } catch (DomainException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
 
-        app(AuditLogService::class)->log(
+        $this->auditLog->log(
             action: 'approve_driver',
-            model: $driver,
-            description: "Đã duyệt tài xế thành công: {$driver->user->full_name} (SĐT: {$driver->user->phone})",
-            oldValues: ['status' => 'pending'],
-            newValues: ['status' => 'verified']
+            model: $result->driver,
+            description: "Đã duyệt tài xế thành công: {$result->driver->user->full_name} (SĐT: {$result->driver->user->phone})",
+            oldValues: ['status' => $result->oldStatus->value],
+            newValues: ['status' => $result->newStatus->value]
         );
 
         return response()->json([
             'success' => true,
             'message' => 'Đã duyệt tài xế và gửi mật khẩu đăng nhập cho tài xế qua SMS',
-            'data' => ['phone' => $driver->user->phone],
+            'data' => ['phone' => $result->driver->user->phone],
         ]);
     }
 
@@ -101,7 +100,7 @@ class DriverController extends Controller
         // Chỉ tài xế nhận mật khẩu mới qua SMS — admin không xem được.
         $this->driverService->resetPassword($driver);
 
-        app(AuditLogService::class)->log(
+        $this->auditLog->log(
             action: 'reset_driver_password',
             model: $driver,
             description: "Đã cấp lại mật khẩu cho tài xế: {$driver->user->full_name} (SĐT: {$driver->user->phone})"
@@ -125,21 +124,18 @@ class DriverController extends Controller
             return response()->json(['success' => false, 'message' => 'Tài xế không tồn tại'], 404);
         }
 
-        // Only pending applications can be rejected. Rejecting a verified/suspended
-        // driver would flip status to Rejected without clearing is_active (half state).
-        if ($driver->status !== DriverStatus::Pending) {
-            return response()->json(['success' => false, 'message' => 'Chỉ có thể từ chối hồ sơ tài xế đang chờ duyệt'], 422);
+        try {
+            $result = $this->driverService->reject($driver, $request->reason);
+        } catch (DomainException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
 
-        $oldStatus = $driver->status->value;
-        $driver->update(['status' => DriverStatus::Rejected, 'reject_reason' => $request->reason]);
-
-        app(AuditLogService::class)->log(
+        $this->auditLog->log(
             action: 'reject_driver',
-            model: $driver,
-            description: "Đã từ chối hồ sơ tài xế: {$driver->user->full_name} (SĐT: {$driver->user->phone}). Lý do: {$request->reason}",
-            oldValues: ['status' => $oldStatus],
-            newValues: ['status' => DriverStatus::Rejected->value, 'reject_reason' => $request->reason]
+            model: $result->driver,
+            description: "Đã từ chối hồ sơ tài xế: {$result->driver->user->full_name} (SĐT: {$result->driver->user->phone}). Lý do: {$request->reason}",
+            oldValues: ['status' => $result->oldStatus->value],
+            newValues: ['status' => $result->newStatus->value, 'reject_reason' => $request->reason]
         );
 
         return response()->json(['success' => true, 'message' => 'Đã từ chối hồ sơ tài xế']);
@@ -168,7 +164,7 @@ class DriverController extends Controller
             $driver->user()->update(['is_active' => false]);
         });
 
-        app(AuditLogService::class)->log(
+        $this->auditLog->log(
             action: 'suspend_driver',
             model: $driver,
             description: "Đã tạm đình chỉ hoạt động tài xế: {$driver->user->full_name} (SĐT: {$driver->user->phone})",

@@ -341,3 +341,58 @@ it('chặn admin không có quyền support ticket', function () {
     $this->getJson('/api/admin/support/tickets')->assertForbidden();
     $this->postJson('/api/admin/support/tickets/00000000-0000-0000-0000-000000000000/close')->assertForbidden();
 });
+
+it('cho phép admin thường có quyền support xem và xử lý ticket', function () {
+    [$customer] = setupSupportTestContext();
+    $role = AdminRole::create([
+        'name' => 'CSKH test',
+        'slug' => 'support-operator',
+        'permissions' => ['support_tickets.view', 'support_tickets.manage'],
+        'is_super' => false,
+    ]);
+    $admin = User::factory()->create([
+        'role' => UserRole::Admin,
+        'admin_role_id' => $role->id,
+    ]);
+    $ticket = SupportTicket::create([
+        'ticket_code' => 'TK-000008',
+        'user_id' => $customer->id,
+        'subject' => 'Ticket cho admin thường',
+        'category' => TicketCategory::Other,
+        'status' => TicketStatus::Open,
+    ]);
+
+    Sanctum::actingAs($admin);
+    auth()->guard('admin')->setUser($admin);
+
+    $this->getJson('/api/admin/support/tickets')->assertOk();
+    $this->postJson("/api/admin/support/tickets/{$ticket->id}/close")->assertOk();
+
+    expect($ticket->refresh()->status)->toBe(TicketStatus::Closed);
+});
+
+it('admin thường chỉ có quyền xem không được xử lý ticket', function () {
+    [$customer] = setupSupportTestContext();
+    $role = AdminRole::create([
+        'name' => 'Chỉ xem support',
+        'slug' => 'support-viewer',
+        'permissions' => ['support_tickets.view'],
+        'is_super' => false,
+    ]);
+    $admin = User::factory()->create([
+        'role' => UserRole::Admin,
+        'admin_role_id' => $role->id,
+    ]);
+    $ticket = SupportTicket::create([
+        'ticket_code' => 'TK-000009',
+        'user_id' => $customer->id,
+        'subject' => 'Ticket chỉ được xem',
+        'category' => TicketCategory::Other,
+        'status' => TicketStatus::Open,
+    ]);
+
+    Sanctum::actingAs($admin);
+
+    $this->getJson('/api/admin/support/tickets')->assertOk();
+    $this->postJson("/api/admin/support/tickets/{$ticket->id}/close")->assertForbidden();
+});

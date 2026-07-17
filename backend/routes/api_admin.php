@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Auth — unauthenticated
-Route::post('auth/login', [AuthController::class, 'login']);
+Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:5,1,admin-login:');
 
 // Authenticated
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {

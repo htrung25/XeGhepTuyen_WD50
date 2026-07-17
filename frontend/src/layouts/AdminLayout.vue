@@ -160,7 +160,7 @@ const navItems = [
         path: '/admin/support',
         label: 'Hỗ trợ KH',
         icon: 'support',
-        permission: 'support.view',
+        permission: 'support_tickets.view',
     },
 ];
 

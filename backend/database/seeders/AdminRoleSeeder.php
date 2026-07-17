@@ -38,11 +38,14 @@ class AdminRoleSeeder extends Seeder
             P::BookingsView,
         ]);
 
-        $this->preset('cskh', 'Chăm sóc khách hàng', 'Quản lý người dùng và tra cứu đặt vé/chuyến đi', [
+        $this->preset('cskh', 'Chăm sóc khách hàng', 'Quản lý người dùng, đặt vé, chuyến đi và yêu cầu hỗ trợ', [
             P::DashboardView,
             P::UsersView, P::UsersBan,
             P::BookingsView,
             P::TripsView,
+            P::SupportTicketsView, P::SupportTicketsManage,
+        ], requiredPermissions: [
+            P::SupportTicketsView, P::SupportTicketsManage,
         ]);
 
         $this->preset('kiem-soat', 'Kiểm soát', 'Chỉ xem nhật ký hệ thống và tổng quan', [
@@ -51,18 +54,29 @@ class AdminRoleSeeder extends Seeder
         ]);
     }
 
-    /** @param  array<int, P>  $permissions */
-    private function preset(string $slug, string $name, string $description, array $permissions): void
-    {
-        AdminRole::updateOrCreate(
-            ['slug' => $slug],
-            [
-                'name' => $name,
-                'description' => $description,
-                'permissions' => array_map(fn (P $p): string => $p->value, $permissions),
-                'is_super' => false,
-                'is_system' => false,
-            ]
-        );
+    /**
+     * @param  array<int, P>  $permissions
+     * @param  array<int, P>  $requiredPermissions  Quyền mới bắt buộc được merge, không ghi đè tùy chỉnh production.
+     */
+    private function preset(
+        string $slug,
+        string $name,
+        string $description,
+        array $permissions,
+        array $requiredPermissions = [],
+    ): void {
+        $role = AdminRole::firstOrNew(['slug' => $slug]);
+        $defaultKeys = array_map(fn (P $permission): string => $permission->value, $permissions);
+        $requiredKeys = array_map(fn (P $permission): string => $permission->value, $requiredPermissions);
+
+        $role->fill([
+            'name' => $name,
+            'description' => $description,
+            'permissions' => $role->exists
+                ? array_values(array_unique([...($role->permissions ?? []), ...$requiredKeys]))
+                : $defaultKeys,
+            'is_super' => false,
+            'is_system' => false,
+        ])->save();
     }
 }

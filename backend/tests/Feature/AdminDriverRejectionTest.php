@@ -2,9 +2,11 @@
 
 use App\Enums\DriverStatus;
 use App\Enums\UserRole;
+use App\Jobs\SendSmsNotificationJob;
 use App\Models\Driver;
 use App\Models\Operator;
 use App\Models\User;
+use Illuminate\Support\Facades\Queue;
 use Laravel\Sanctum\Sanctum;
 
 function makeDriverForAdminRejection(DriverStatus $status = DriverStatus::Pending): Driver
@@ -81,3 +83,34 @@ it('không cho từ chối lại tài xế không còn ở trạng thái chờ d
     'đình chỉ' => DriverStatus::Suspended,
     'đã từ chối' => DriverStatus::Rejected,
 ]);
+
+it('không cho reject ghi đè kết quả approve', function () {
+    Queue::fake([SendSmsNotificationJob::class]);
+    $driver = makeDriverForAdminRejection();
+
+    $this->postJson("/api/admin/drivers/{$driver->id}/approve")->assertOk();
+    $this->postJson("/api/admin/drivers/{$driver->id}/reject", [
+        'reason' => 'Request đến sau approve.',
+    ])->assertUnprocessable();
+
+    $driver->refresh();
+    expect($driver->status)->toBe(DriverStatus::Verified)
+        ->and($driver->reject_reason)->toBeNull()
+        ->and($driver->user->is_active)->toBeTrue();
+});
+
+it('không cho approve ghi đè kết quả reject', function () {
+    Queue::fake([SendSmsNotificationJob::class]);
+    $driver = makeDriverForAdminRejection();
+
+    $this->postJson("/api/admin/drivers/{$driver->id}/reject", [
+        'reason' => 'Hồ sơ không hợp lệ.',
+    ])->assertOk();
+    $this->postJson("/api/admin/drivers/{$driver->id}/approve")->assertUnprocessable();
+
+    $driver->refresh();
+    expect($driver->status)->toBe(DriverStatus::Rejected)
+        ->and($driver->reject_reason)->toBe('Hồ sơ không hợp lệ.');
+
+    Queue::assertNotPushed(SendSmsNotificationJob::class);
+});

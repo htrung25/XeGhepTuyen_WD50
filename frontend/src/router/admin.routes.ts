@@ -89,13 +89,16 @@ export const adminRoutes: RouteRecordRaw[] = [
                 component: () => import('@/pages/admin/Support/Index.vue'),
                 meta: {
                     title: 'Hỗ trợ khách hàng',
-                    permission: 'support.view',
+                    permission: 'support_tickets.view',
                 },
             },
             {
                 path: 'support/:id',
                 component: () => import('@/pages/admin/Support/Detail.vue'),
-                meta: { title: 'Chi tiết ticket', permission: 'support.view' },
+                meta: {
+                    title: 'Chi tiết ticket',
+                    permission: 'support_tickets.view',
+                },
             },
         ],
     },
@@ -114,6 +117,7 @@ const accessOrder: { path: string; permission: string }[] = [
     { path: '/admin/audit-logs', permission: 'audit_logs.view' },
     { path: '/admin/roles', permission: 'admin_roles.view' },
     { path: '/admin/staff', permission: 'admin_staff.view' },
+    { path: '/admin/support', permission: 'support_tickets.view' },
 ];
 
 function firstAllowedPath(can: (key: string) => boolean): string {

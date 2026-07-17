@@ -2,12 +2,14 @@
 
 namespace App\Services;
 
+use App\DTOs\DriverTransitionResult;
 use App\Enums\DriverStatus;
 use App\Enums\UserRole;
 use App\Jobs\SendSmsNotificationJob;
 use App\Models\Driver;
 use App\Models\Operator;
 use App\Models\User;
+use Closure;
 use DomainException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -66,41 +68,61 @@ class DriverService
     /**
      * Admin duyệt tài xế → kích hoạt (verified) + cấp mật khẩu đăng nhập mới + gửi SMS.
      *
-     * @return string Mật khẩu tạm (plaintext) để admin bàn giao dự phòng khi SMS không tới.
+     * Duyệt hồ sơ và cập nhật tài khoản trong cùng một state transition có khóa.
      */
-    public function approveAndIssueCredentials(Driver $driver): string
+    public function approveAndIssueCredentials(Driver $driver): DriverTransitionResult
     {
         $tempPassword = $this->generateTempPassword();
 
-        // Lock the driver row and re-check status inside the transaction so two
-        // admins approving at the same time can't both pass the guard (TOCTOU)
-        // and each issue a password + SMS + audit log.
-        DB::transaction(function () use ($driver, $tempPassword) {
-            $locked = Driver::whereKey($driver->getKey())->lockForUpdate()->firstOrFail();
-
-            if ($locked->status !== DriverStatus::Pending) {
-                throw new DomainException('Tài xế này không ở trạng thái chờ duyệt');
-            }
-
-            $locked->update(['status' => DriverStatus::Verified, 'verified_at' => now()]);
-            $locked->user->update([
-                'password' => $tempPassword,
-                'is_active' => true,
-                'must_change_password' => true,   // bắt buộc đổi MK khi đăng nhập lần đầu
-            ]);
-        });
+        $result = $this->transition(
+            driver: $driver,
+            from: DriverStatus::Pending,
+            to: DriverStatus::Verified,
+            attributes: [
+                'verified_at' => now(),
+                'reject_reason' => null,
+            ],
+            sideEffect: function (Driver $locked) use ($tempPassword): void {
+                $locked->user->update([
+                    'password' => $tempPassword,
+                    'is_active' => true,
+                    'must_change_password' => true,   // bắt buộc đổi MK khi đăng nhập lần đầu
+                ]);
+            },
+        );
 
         // Log rõ ràng để dev xem mật khẩu tạm khi chưa cấu hình SMS thật.
         Log::info('[DEV] Tài xế được duyệt — thông tin đăng nhập tạm thời', [
-            'driver' => $driver->user->full_name,
-            'phone' => $driver->user->phone,
+            'driver' => $result->driver->user->full_name,
+            'phone' => $result->driver->user->phone,
             'temp_password' => $tempPassword,
             'login_url' => rtrim((string) config('app.url'), '/').'/driver/login',
         ]);
 
-        $this->sendCredentialsSms($driver->user, $tempPassword, $driver->operator?->company_name, approved: true);
+        $this->sendCredentialsSms(
+            $result->driver->user,
+            $tempPassword,
+            $result->driver->operator?->company_name,
+            approved: true,
+        );
 
-        return $tempPassword;
+        return $result;
+    }
+
+    /**
+     * Từ chối hồ sơ tài xế đang chờ duyệt.
+     */
+    public function reject(Driver $driver, string $reason): DriverTransitionResult
+    {
+        return $this->transition(
+            driver: $driver,
+            from: DriverStatus::Pending,
+            to: DriverStatus::Rejected,
+            attributes: [
+                'reject_reason' => $reason,
+                'verified_at' => null,
+            ],
+        );
     }
 
     /**
@@ -135,6 +157,41 @@ class DriverService
     private function generateTempPassword(): string
     {
         return Str::upper(Str::random(2)).random_int(100000, 999999);
+    }
+
+    /**
+     * Nguồn duy nhất cho các transition trạng thái hồ sơ duyệt/từ chối.
+     * Row lock và kiểm tra trạng thái nằm trong cùng transaction để ngăn TOCTOU.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    private function transition(
+        Driver $driver,
+        DriverStatus $from,
+        DriverStatus $to,
+        array $attributes = [],
+        ?Closure $sideEffect = null,
+    ): DriverTransitionResult {
+        return DB::transaction(function () use ($driver, $from, $to, $attributes, $sideEffect) {
+            $locked = Driver::whereKey($driver->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($locked->status !== $from) {
+                throw new DomainException('Tài xế này không ở trạng thái chờ duyệt');
+            }
+
+            $oldStatus = $locked->status;
+            $locked->update([...$attributes, 'status' => $to]);
+            $sideEffect?->__invoke($locked);
+            $locked->load(['user', 'operator']);
+
+            return new DriverTransitionResult(
+                driver: $locked,
+                oldStatus: $oldStatus,
+                newStatus: $to,
+            );
+        }, attempts: 3);
     }
 
     /**

@@ -5,6 +5,7 @@ use App\Enums\UserRole;
 use App\Jobs\SendSmsNotificationJob;
 use App\Models\PartnerApplication;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Queue;
 use Laravel\Sanctum\Sanctum;
@@ -82,4 +83,31 @@ it('ghi audit cho đăng nhập thành công và thất bại', function () {
 
     $this->assertDatabaseHas('audit_logs', ['action' => 'admin_login_failed', 'model_id' => $admin->id]);
     $this->assertDatabaseHas('audit_logs', ['action' => 'admin_login', 'user_id' => $admin->id]);
+});
+
+it('giới hạn đăng nhập admin sai tối đa năm lần mỗi phút', function () {
+    $admin = User::factory()->create([
+        'role' => UserRole::Admin,
+        'admin_role_id' => superAdminRole()->id,
+        'password' => Hash::make('correct-password'),
+    ]);
+    $ip = '198.51.100.77';
+    Cache::clear();
+    $this->withServerVariables(['REMOTE_ADDR' => $ip]);
+
+    foreach (range(1, 5) as $attempt) {
+        $this->postJson('/api/admin/auth/login', [
+            'email' => $admin->email,
+            'password' => "wrong-password-{$attempt}",
+        ])->assertUnauthorized();
+    }
+
+    $this->postJson('/api/admin/auth/login', [
+        'email' => $admin->email,
+        'password' => 'wrong-password-6',
+    ])->assertTooManyRequests();
+
+    $this->assertDatabaseCount('audit_logs', 5);
+
+    Cache::clear();
 });
