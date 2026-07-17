@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\AssignTicketRequest;
 use App\Http\Requests\Admin\ReplyMessageRequest;
 use App\Models\SupportTicket;
+use App\Services\AuditLogService;
 use App\Services\SupportTicketService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,8 @@ use Illuminate\Http\Request;
 class SupportController extends Controller
 {
     public function __construct(
-        private readonly SupportTicketService $ticketService
+        private readonly SupportTicketService $ticketService,
+        private readonly AuditLogService $auditLog,
     ) {}
 
     /**
@@ -99,9 +101,21 @@ class SupportController extends Controller
     public function reply(ReplyMessageRequest $request, string $id): JsonResponse
     {
         $admin = auth('admin')->user();
+        $ticket = SupportTicket::findOrFail($id);
+        $oldStatus = $ticket->status->value;
 
         try {
             $message = $this->ticketService->replyToTicket($admin, $id, $request->input('body'), 'admin');
+            $ticket->refresh();
+
+            $this->auditLog->log(
+                action: 'reply_support_ticket',
+                model: $ticket,
+                description: "Đã phản hồi yêu cầu hỗ trợ {$ticket->ticket_code}",
+                oldValues: ['status' => $oldStatus],
+                newValues: ['status' => $ticket->status->value, 'message_id' => $message->id],
+                actor: $admin,
+            );
 
             return response()->json([
                 'success' => true,
@@ -121,7 +135,21 @@ class SupportController extends Controller
      */
     public function assign(AssignTicketRequest $request, string $id): JsonResponse
     {
+        $admin = auth('admin')->user();
+        $ticket = SupportTicket::findOrFail($id);
+        $oldAssignee = $ticket->assigned_to;
+
         $this->ticketService->assignTicket($id, $request->input('assigned_to'));
+        $ticket->refresh();
+
+        $this->auditLog->log(
+            action: 'assign_support_ticket',
+            model: $ticket,
+            description: "Đã phân công yêu cầu hỗ trợ {$ticket->ticket_code}",
+            oldValues: ['assigned_to' => $oldAssignee],
+            newValues: ['assigned_to' => $ticket->assigned_to],
+            actor: $admin,
+        );
 
         return response()->json([
             'success' => true,
@@ -134,7 +162,21 @@ class SupportController extends Controller
      */
     public function resolve(string $id): JsonResponse
     {
+        $admin = auth('admin')->user();
+        $ticket = SupportTicket::findOrFail($id);
+        $oldStatus = $ticket->status->value;
+
         $this->ticketService->resolveTicket($id);
+        $ticket->refresh();
+
+        $this->auditLog->log(
+            action: 'resolve_support_ticket',
+            model: $ticket,
+            description: "Đã giải quyết yêu cầu hỗ trợ {$ticket->ticket_code}",
+            oldValues: ['status' => $oldStatus],
+            newValues: ['status' => $ticket->status->value],
+            actor: $admin,
+        );
 
         return response()->json([
             'success' => true,
@@ -147,7 +189,21 @@ class SupportController extends Controller
      */
     public function close(string $id): JsonResponse
     {
+        $admin = auth('admin')->user();
+        $ticket = SupportTicket::findOrFail($id);
+        $oldStatus = $ticket->status->value;
+
         $this->ticketService->closeTicket($id);
+        $ticket->refresh();
+
+        $this->auditLog->log(
+            action: 'close_support_ticket',
+            model: $ticket,
+            description: "Đã đóng yêu cầu hỗ trợ {$ticket->ticket_code}",
+            oldValues: ['status' => $oldStatus],
+            newValues: ['status' => $ticket->status->value],
+            actor: $admin,
+        );
 
         return response()->json([
             'success' => true,

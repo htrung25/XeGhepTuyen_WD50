@@ -127,12 +127,11 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('admin-staff/{id}/unban', [AdminStaffController::class, 'unban'])->middleware('permission:admin_staff.manage');
     Route::post('admin-staff/{id}/reset-password', [AdminStaffController::class, 'resetPassword'])->middleware('permission:admin_staff.manage');
 
-    // Support tickets — AdminPermission chưa có key support.*, tạm thời chỉ
-    // cô lập bằng role:admin của group (mọi admin đều xử lý được ticket)
-    Route::get('support/tickets', [SupportController::class, 'index']);
-    Route::get('support/tickets/{id}', [SupportController::class, 'show']);
-    Route::post('support/tickets/{id}/reply', [SupportController::class, 'reply']);
-    Route::post('support/tickets/{id}/assign', [SupportController::class, 'assign']);
-    Route::post('support/tickets/{id}/resolve', [SupportController::class, 'resolve']);
-    Route::post('support/tickets/{id}/close', [SupportController::class, 'close']);
+    // Support tickets
+    Route::get('support/tickets', [SupportController::class, 'index'])->middleware('permission:support_tickets.view');
+    Route::get('support/tickets/{id}', [SupportController::class, 'show'])->middleware('permission:support_tickets.view');
+    Route::post('support/tickets/{id}/reply', [SupportController::class, 'reply'])->middleware('permission:support_tickets.manage');
+    Route::post('support/tickets/{id}/assign', [SupportController::class, 'assign'])->middleware('permission:support_tickets.manage');
+    Route::post('support/tickets/{id}/resolve', [SupportController::class, 'resolve'])->middleware('permission:support_tickets.manage');
+    Route::post('support/tickets/{id}/close', [SupportController::class, 'close'])->middleware('permission:support_tickets.manage');
 });
