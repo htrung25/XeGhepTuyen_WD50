@@ -10,13 +10,6 @@
       0 => 'L5Swagger\\L5SwaggerServiceProvider',
     ),
   ),
-  'dedoc/scramble' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'Dedoc\\Scramble\\ScrambleServiceProvider',
-    ),
-  ),
   'laravel/boost' => 
   array (
     'providers' => 
