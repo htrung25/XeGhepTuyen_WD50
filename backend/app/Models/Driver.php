@@ -97,7 +97,7 @@ class Driver extends Model
         return $query->where('status', DriverStatusEnum::Verified);
     }
 
-    public function scopeOnline($query)
+    public function scopeOnline(Builder $query): Builder
     {
         return $query->where('is_online', true);
     }
