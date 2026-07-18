@@ -24,6 +24,8 @@ class Booking extends Model
         'dropoff_stop_id',
         'pickup_address',
         'dropoff_address',
+        'pickup_point',
+        'dropoff_point',
         'pickup_lat',
         'pickup_lng',
         'dropoff_lat',
@@ -49,7 +51,8 @@ class Booking extends Model
         'cancel_reason',
     ];
 
-    protected $hidden = ['qr_token'];
+    /** *_point là geometry nhị phân — không được lọt vào JSON response */
+    protected $hidden = ['qr_token', 'pickup_point', 'dropoff_point'];
 
     protected function casts(): array
     {

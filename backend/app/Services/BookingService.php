@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\DTOs\GeoCoordinate;
 use App\Enums\BookingPaymentStatusEnum;
 use App\Enums\BookingStatusEnum;
 use App\Enums\SeatStatusEnum;
@@ -29,6 +30,8 @@ class BookingService
         private readonly BookingRepositoryInterface $bookingRepo,
         private readonly VoucherService $voucherService,
         private readonly WalletService $walletService,
+        private readonly ServiceAreaService $serviceAreaService,
+        private readonly GeometryFactory $geometryFactory,
     ) {}
 
     /**
@@ -40,7 +43,17 @@ class BookingService
      */
     public function create(array $data, User $user): Booking
     {
-        return DB::transaction(function () use ($data, $user) {
+        // Chuẩn hóa tọa độ ngay tại điểm dữ liệu đi vào: GeoCoordinate validate
+        // biên độ + chống đảo trục khi khởi tạo, mọi tầng dưới chỉ nhận VO này.
+        $pickup = GeoCoordinate::fromLatLng((float) $data['pickup_lat'], (float) $data['pickup_lng']);
+        $dropoff = GeoCoordinate::fromLatLng((float) $data['dropoff_lat'], (float) $data['dropoff_lng']);
+
+        // Geofencing TRƯỚC transaction: điểm đón/trả phải thuộc vùng phục vụ cấu hình
+        // trên tuyến (server-side, không tin FE). Sai → 422, chưa tốn lock ghế/trip.
+        $routeForArea = Trip::with('route')->findOrFail($data['trip_id'])->route;
+        $this->serviceAreaService->validateBookingLocations($routeForArea, $pickup, $dropoff);
+
+        return DB::transaction(function () use ($data, $user, $pickup, $dropoff) {
             // Khóa theo user để đếm vé pending chính xác dưới đồng thời (tránh lách quá 3 vé)
             DB::table('users')->where('id', $user->id)->lockForUpdate()->first();
             if ($this->bookingRepo->countPendingByUser($user->id) >= 3) {
@@ -97,11 +110,11 @@ class BookingService
                 'pickup_stop_id' => $data['pickup_stop_id'] ?? null,
                 'dropoff_stop_id' => $data['dropoff_stop_id'] ?? null,
                 'pickup_address' => $data['pickup_address'],
-                'pickup_lat' => $data['pickup_lat'],
-                'pickup_lng' => $data['pickup_lng'],
                 'dropoff_address' => $data['dropoff_address'],
-                'dropoff_lat' => $data['dropoff_lat'],
-                'dropoff_lng' => $data['dropoff_lng'],
+                // Tọa độ ghi qua GeometryFactory: MySQL ghi cột POINT (lat/lng là
+                // generated column tự suy ra), SQLite (test) ghi cặp lat/lng vật lý.
+                ...$this->geometryFactory->coordinateAttributes('pickup', $pickup),
+                ...$this->geometryFactory->coordinateAttributes('dropoff', $dropoff),
                 'passenger_count' => $data['passenger_count'],
                 'contact_name' => $data['contact_name'],
                 'contact_phone' => $data['contact_phone'],

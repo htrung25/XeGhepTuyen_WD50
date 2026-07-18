@@ -23,6 +23,8 @@ class Route extends Model
         'base_price',
         'is_active',
         'is_round_trip',
+        'pickup_service_area_id',
+        'dropoff_service_area_id',
     ];
 
     protected function casts(): array
@@ -51,6 +53,16 @@ class Route extends Model
     public function trips(): HasMany
     {
         return $this->hasMany(Trip::class);
+    }
+
+    public function pickupServiceArea(): BelongsTo
+    {
+        return $this->belongsTo(ServiceArea::class, 'pickup_service_area_id');
+    }
+
+    public function dropoffServiceArea(): BelongsTo
+    {
+        return $this->belongsTo(ServiceArea::class, 'dropoff_service_area_id');
     }
 
     // ─── Scopes ───────────────────────────────────────────────────────────────
