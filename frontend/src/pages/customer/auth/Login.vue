@@ -24,8 +24,10 @@ async function handleLogin() {
         password: password.value,
     });
     loading.value = false;
-    if (err) {
-        error.value = err;
+    // Chỉ xác thực khi server trả đúng token — response 2xx thiếu token
+    // (proxy/rewrite trả HTML, envelope sai) vẫn phải coi là thất bại.
+    if (err || !data?.token || !data?.user) {
+        error.value = err ?? 'Đăng nhập thất bại, vui lòng thử lại';
         return;
     }
     auth.setAuth(data.token, data.user);

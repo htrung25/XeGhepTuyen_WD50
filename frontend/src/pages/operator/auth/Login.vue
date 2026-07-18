@@ -25,8 +25,8 @@ const handleLogin = async () => {
 
     isLoading.value = false;
 
-    if (error) {
-        errorMessage.value = error;
+    if (error || !data?.token || !data?.user) {
+        errorMessage.value = error ?? 'Đăng nhập thất bại, vui lòng thử lại';
         return;
     }
 

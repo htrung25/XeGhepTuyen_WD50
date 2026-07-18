@@ -68,6 +68,23 @@ http.interceptors.response.use(
     },
 );
 
+// Xác minh token đã lưu với server khi app khởi động. Token cũ/rác → endpoint
+// `me` trả 401 → interceptor phía trên xoá token + đưa về trang login; ở đây
+// chỉ dọn nốt cache user để không còn "phiên ma" hiển thị như đã đăng nhập.
+export async function validateStoredSession(
+    portal: 'admin' | 'operator' | 'driver' | 'customer',
+    me: () => Promise<{ error: string | null }>,
+): Promise<void> {
+    if (!localStorage.getItem(`${portal}_token`)) return;
+    const { error } = await me();
+    // Chỉ dọn khi interceptor đã xoá token (401 thật) — lỗi mạng thoáng qua
+    // không được phép đăng xuất người dùng.
+    if (error && !localStorage.getItem(`${portal}_token`)) {
+        localStorage.removeItem(`${portal}_user`);
+        localStorage.removeItem(`${portal}_info`); // operator/driver cache phụ
+    }
+}
+
 export const apiClient = {
     async get<T = any>(url: string, config = {}) {
         try {

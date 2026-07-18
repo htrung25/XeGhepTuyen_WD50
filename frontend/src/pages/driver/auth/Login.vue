@@ -35,7 +35,7 @@ async function handleLogin() {
         password: password.value,
     });
     loading.value = false;
-    if (err) {
+    if (err || !data?.token || !data?.user) {
         error.value =
             typeof err === 'string'
                 ? err

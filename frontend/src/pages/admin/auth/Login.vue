@@ -21,8 +21,8 @@ async function handleLogin() {
     errorMsg.value = '';
 
     const { data, error } = await adminApi.login(form.value);
-    if (error) {
-        errorMsg.value = error;
+    if (error || !data?.token || !data?.user) {
+        errorMsg.value = error ?? 'Đăng nhập thất bại, vui lòng thử lại';
         isLoading.value = false;
         return;
     }
