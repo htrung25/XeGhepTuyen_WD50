@@ -53,8 +53,8 @@ async function handleRegister() {
         password_confirmation: form.value.password_confirmation,
     });
     loading.value = false;
-    if (error) {
-        errors.value.general = error;
+    if (error || !data?.token || !data?.user) {
+        errors.value.general = error ?? 'Đăng ký thất bại, vui lòng thử lại';
         return;
     }
     auth.setAuth(data.token, data.user);
