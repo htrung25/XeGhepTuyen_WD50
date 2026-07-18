@@ -48,6 +48,20 @@ class ServiceArea extends Model
         return $query->whereRaw("ST_Intersects(boundary, {$geom->sql})", $geom->bindings);
     }
 
+    // ─── Lookup ───────────────────────────────────────────────────────────────
+
+    /**
+     * Tra vùng theo MÃ chuẩn (HN/HP) — exact match trên cột unique, chỉ vùng active.
+     * Không match theo tên hiển thị; tên thành phố phải qua CityCodeResolver trước.
+     */
+    public static function findByCityCode(string $code): ?self
+    {
+        return static::query()
+            ->active()
+            ->where('code', strtoupper(trim($code)))
+            ->first();
+    }
+
     // ─── Business Methods ─────────────────────────────────────────────────────
 
     /**
