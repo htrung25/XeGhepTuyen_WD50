@@ -8,6 +8,7 @@ use App\Models\Route;
 use App\Models\ServiceArea;
 use App\Models\User;
 use App\Services\ServiceAreaService;
+use Database\Seeders\ServiceAreaSeeder;
 use Laravel\Sanctum\Sanctum;
 
 // SQLite không ép kiểu: boundary lưu WKT dạng text là đủ cho test không-spatial
@@ -147,4 +148,36 @@ it('route đã cấu hình đủ vùng active thì pass (sqlite bỏ qua phần 
     );
 
     expect(true)->toBeTrue();
+});
+
+// ─── Task 4: seeder demo insert-only + metadata ──────────────────────────────
+
+it('seeder tạo 2 vùng demo HN/HP và backfill tuyến; chạy lại không nhân bản', function () {
+    $route = makeRouteForGeo();
+
+    $this->seed(ServiceAreaSeeder::class);
+    $this->seed(ServiceAreaSeeder::class); // idempotent
+
+    expect(ServiceArea::count())->toBe(2)
+        ->and(ServiceArea::pluck('code')->sort()->values()->all())->toBe(['HN', 'HP'])
+        ->and(ServiceArea::where('code', 'HN')->value('boundary_version'))->toBe('demo-v1')
+        ->and($route->refresh()->pickupServiceArea?->code)->toBe('HN')
+        ->and($route->dropoffServiceArea?->code)->toBe('HP');
+});
+
+it('seeder KHÔNG bật lại vùng đã bị tắt', function () {
+    makeArea('HN', 'Hà Nội', active: false);
+
+    $this->seed(ServiceAreaSeeder::class);
+
+    expect(ServiceArea::where('code', 'HN')->value('is_active'))->toBeFalsy();
+});
+
+it('seeder KHÔNG ghi đè boundary/metadata của vùng đã tồn tại (VD đã import GADM)', function () {
+    makeArea('HN', 'Hà Nội')->update(['boundary_version' => 'gadm41-2026-07', 'boundary' => 'GADM-DATA']);
+
+    $this->seed(ServiceAreaSeeder::class);
+
+    expect(ServiceArea::where('code', 'HN')->value('boundary_version'))->toBe('gadm41-2026-07')
+        ->and(ServiceArea::where('code', 'HN')->value('boundary'))->toBe('GADM-DATA');
 });

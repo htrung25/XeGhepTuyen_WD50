@@ -18,6 +18,11 @@ class ServiceArea extends Model
         'code',
         'boundary',
         'is_active',
+        'source',
+        'source_version',
+        'boundary_version',
+        'imported_at',
+        'checksum',
     ];
 
     /** boundary là geometry nhị phân — không được lọt vào JSON response */
