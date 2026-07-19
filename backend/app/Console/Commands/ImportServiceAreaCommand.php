@@ -15,8 +15,13 @@ use Illuminate\Support\Str;
  * quản lý dữ liệu địa lý production, tách khỏi seeder demo.
  *
  * php artisan service-area:import database/data/geo/gadm41_VNM_1.json \
- *   --province="Hà Nội" --code=HN --simplify=0.003 \
+ *   --province="Hà Nội" --code=HN \
  *   --boundary-version=gadm41-2026-07 --dry-run
+ *
+ * LƯU Ý: import full-resolution. KHÔNG đơn giản hóa bằng ST_Simplify vì MySQL 8
+ * không hỗ trợ hàm này trên geographic SRS (SRID 4326 → error 3618). Ranh giới
+ * mức tỉnh (vài trăm điểm) đủ nhẹ cho ST_Intersects + spatial index. Nếu sau này
+ * cần giảm điểm, phải đơn giản hóa phía nguồn (mapshaper/PHP) TRƯỚC khi import.
  */
 class ImportServiceAreaCommand extends Command
 {
@@ -24,7 +29,6 @@ class ImportServiceAreaCommand extends Command
         {file : Đường dẫn file GeoJSON (FeatureCollection)}
         {--province= : Tên tỉnh cần lấy (so khớp NAME_1/VARNAME_1, không phân biệt dấu)}
         {--code= : Mã vùng chuẩn (HN/HP…)}
-        {--simplify=0 : Dung sai ST_Simplify theo độ (~0.003 ≈ 330m); 0 = giữ nguyên}
         {--boundary-version= : Nhãn phiên bản, mặc định gadm-YYYY-MM-DD}
         {--dry-run : Chạy đủ các bước trong transaction rồi rollback}
         {--backfill-routes : Sau import, đồng bộ vùng cho các tuyến thiếu}';
@@ -78,11 +82,6 @@ class ImportServiceAreaCommand extends Command
                      values (?, ?, ?, {$geom->sql}, 1, now(), now())",
                     [$id, $province, $code, ...$geom->bindings],
                 );
-            }
-
-            $tolerance = (float) $this->option('simplify');
-            if ($tolerance > 0) {
-                DB::update('update service_areas set boundary = ST_Simplify(boundary, ?) where id = ?', [$tolerance, $id]);
             }
 
             // Validate TRONG transaction — sai là rollback, không để geometry hỏng lọt DB
