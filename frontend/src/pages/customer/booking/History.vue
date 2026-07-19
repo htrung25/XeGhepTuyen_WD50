@@ -263,7 +263,7 @@ onMounted(() => loadBookings('upcoming'));
             <div
                 v-for="b in bookings"
                 :key="b.id"
-                class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:shadow-md"
+                class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
             >
                 <div
                     class="flex flex-col items-start gap-4 sm:flex-row sm:gap-5"
