@@ -2,6 +2,7 @@
 
 use App\DTOs\GeoCoordinate;
 use App\Exceptions\LocationOutsideServiceAreaException;
+use App\Models\Route;
 use App\Models\ServiceArea;
 use App\Services\ServiceAreaService;
 use Database\Seeders\ServiceAreaSeeder;
@@ -70,6 +71,27 @@ it('validateBookingLocations đúng cả 2 chiều HN→HP và HP→HN', functio
     // đảo chiều điểm trên tuyến HN→HP → điểm đón (Nhà hát HP) ngoài vùng HN
     expect(fn () => $svc->validateBookingLocations($routeHnHp, $nhaHatHP, $hoGuom))
         ->toThrow(LocationOutsideServiceAreaException::class);
+});
+
+it('vẫn backfill route khi import checksum không đổi', function () {
+    $file = base_path('tests/fixtures/geo/sample_province.json');
+    $options = [
+        'file' => $file,
+        '--province' => 'Hà Nội',
+        '--code' => 'HN',
+        '--boundary-version' => 'integration-test',
+        '--backfill-routes' => true,
+    ];
+
+    $this->artisan('service-area:import', $options)->assertSuccessful();
+
+    $route = makeRouteForGeo('Hà Nội', 'Hải Phòng');
+    Route::withoutEvents(fn () => $route->update(['pickup_service_area_id' => null]));
+    expect($route->refresh()->pickup_service_area_id)->toBeNull();
+
+    $this->artisan('service-area:import', $options)->assertSuccessful();
+
+    expect($route->refresh()->pickupServiceArea?->code)->toBe('HN');
 });
 
 /*

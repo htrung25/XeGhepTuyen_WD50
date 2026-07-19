@@ -94,6 +94,32 @@ it('allows creating first trip when no preceding/succeeding schedules exist', fu
     expect($trip->depart_at->toDateTimeString())->toBe($departAt->startOfSecond()->toDateTimeString());
 });
 
+it('rejects creating a trip with a route owned by another operator', function () {
+    $entities = setupTripTestEntities();
+    $otherOperator = Operator::create([
+        'user_id' => User::factory()->create(['role' => UserRoleEnum::Operator])->id,
+        'company_name' => 'Nhà xe khác',
+        'business_license' => 'OTHER-ROUTE',
+        'status' => 'verified',
+    ]);
+    $foreignRoute = Route::create([
+        'operator_id' => $otherOperator->id,
+        'name' => 'Tuyến của nhà xe khác',
+        'origin_city' => 'Hà Nội',
+        'dest_city' => 'Hải Phòng',
+        'base_price' => 120000,
+    ]);
+
+    expect(fn () => app(TripService::class)->create([
+        'route_id' => $foreignRoute->id,
+        'vehicle_id' => $entities['vehicle']->id,
+        'driver_id' => $entities['driver']->id,
+        'depart_at' => now()->addHours(2)->toDateTimeString(),
+        'price' => 120000,
+        'operator_id' => $entities['operator']->id,
+    ]))->toThrow(InvalidArgumentException::class, 'Tuyến đường không thuộc nhà xe của bạn');
+});
+
 it('allows creating trip when preceding trip ends at the same city with at least 30 mins rest', function () {
     $entities = setupTripTestEntities();
     $service = app(TripService::class);

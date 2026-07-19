@@ -75,6 +75,10 @@ class TripService
         }
 
         $route = Route::findOrFail($data['route_id']);
+        if (! empty($data['operator_id']) && $route->operator_id !== $data['operator_id']) {
+            throw new \InvalidArgumentException('Tuyến đường không thuộc nhà xe của bạn');
+        }
+
         if (empty($data['arrive_at'])) {
             $data['arrive_at'] = Carbon::parse($data['depart_at'])
                 ->addMinutes($route->est_duration_min);

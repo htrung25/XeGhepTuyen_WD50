@@ -21,13 +21,16 @@ class StoreRouteRequest extends FormRequest
             'est_duration_min' => ['required', 'integer', 'min:1', 'max:1440'],
             'base_price' => ['required', 'integer', 'min:50000', 'max:500000'],
             'is_round_trip' => ['boolean'],
+            'is_active' => ['boolean'],
             'stops' => ['required', 'array', 'min:2'],
             'stops.*.stop_name' => ['required', 'string', 'max:100'],
             'stops.*.address' => ['required', 'string', 'max:300'],
             'stops.*.lat' => ['required', 'numeric', 'between:8,24'],
             'stops.*.lng' => ['required', 'numeric', 'between:102,110'],
-            'stops.*.stop_order' => ['required', 'integer', 'min:1'],
+            'stops.*.stop_order' => ['required', 'integer', 'min:1', 'distinct'],
             'stops.*.offset_minutes' => ['required', 'integer', 'min:0'],
+            'stops.*.is_pickup' => ['sometimes', 'boolean'],
+            'stops.*.is_dropoff' => ['sometimes', 'boolean'],
         ];
     }
 

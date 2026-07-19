@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Services\GeometryFactory;
 use App\Services\ServiceAreaService;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
 
 function setupServiceAreaBookingContext(): array
@@ -129,6 +130,17 @@ it('chặn đảo trục ở tầng HTTP: lat mang giá trị kinh độ VN (~10
 
 it('tạo booking bình thường khi vị trí hợp lệ (geofencing pass) và lưu đúng tọa độ', function () {
     [$trip, $seat, $customer] = setupServiceAreaBookingContext();
+
+    $this->mock(ServiceAreaService::class)
+        ->shouldReceive('validateBookingLocations')
+        ->once()
+        ->withArgs(function ($route): bool {
+            expect(DB::transactionLevel())->toBeGreaterThan(0)
+                ->and($route->relationLoaded('pickupServiceArea'))->toBeTrue()
+                ->and($route->relationLoaded('dropoffServiceArea'))->toBeTrue();
+
+            return true;
+        });
 
     Sanctum::actingAs($customer, ['*'], 'sanctum');
     Sanctum::actingAs($customer, ['*'], 'customer');

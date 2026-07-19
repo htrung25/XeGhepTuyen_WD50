@@ -13,7 +13,9 @@ use App\Jobs\GenerateQrCodeJob;
 use App\Jobs\ProcessRefundJob;
 use App\Models\Booking;
 use App\Models\BookingPassenger;
+use App\Models\Route;
 use App\Models\SeatMap;
+use App\Models\ServiceArea;
 use App\Models\Trip;
 use App\Models\User;
 use App\Repositories\Contracts\BookingRepositoryInterface;
@@ -48,12 +50,28 @@ class BookingService
         $pickup = GeoCoordinate::fromLatLng((float) $data['pickup_lat'], (float) $data['pickup_lng']);
         $dropoff = GeoCoordinate::fromLatLng((float) $data['dropoff_lat'], (float) $data['dropoff_lng']);
 
-        // Geofencing TRƯỚC transaction: điểm đón/trả phải thuộc vùng phục vụ cấu hình
-        // trên tuyến (server-side, không tin FE). Sai → 422, chưa tốn lock ghế/trip.
-        $routeForArea = Trip::with('route')->findOrFail($data['trip_id'])->route;
-        $this->serviceAreaService->validateBookingLocations($routeForArea, $pickup, $dropoff);
-
         return DB::transaction(function () use ($data, $user, $pickup, $dropoff) {
+            // Khóa trip + route + hai vùng để cấu hình geofencing không thể thay đổi
+            // giữa lúc validate và lúc booking commit.
+            $trip = Trip::lockForUpdate()->findOrFail($data['trip_id']);
+            if (! $trip->canBeBooked()) {
+                throw new TripNotAvailableException('Chuyến đi không còn nhận đặt vé');
+            }
+
+            $route = Route::lockForUpdate()->findOrFail($trip->route_id);
+            $serviceAreas = ServiceArea::query()
+                ->whereIn('id', array_filter([
+                    $route->pickup_service_area_id,
+                    $route->dropoff_service_area_id,
+                ]))
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            $route->setRelation('pickupServiceArea', $serviceAreas->get($route->pickup_service_area_id));
+            $route->setRelation('dropoffServiceArea', $serviceAreas->get($route->dropoff_service_area_id));
+            $this->serviceAreaService->validateBookingLocations($route, $pickup, $dropoff);
+
             // Khóa theo user để đếm vé pending chính xác dưới đồng thời (tránh lách quá 3 vé)
             DB::table('users')->where('id', $user->id)->lockForUpdate()->first();
             if ($this->bookingRepo->countPendingByUser($user->id) >= 3) {
@@ -84,13 +102,7 @@ class BookingService
                 throw new \InvalidArgumentException('Số ghế không khớp với số hành khách');
             }
 
-            // 4. Kiểm tra chuyến còn hợp lệ
-            $trip = Trip::lockForUpdate()->findOrFail($data['trip_id']);
-            if (! $trip->canBeBooked()) {
-                throw new TripNotAvailableException('Chuyến đi không còn nhận đặt vé');
-            }
-
-            // 5. Tính giá
+            // 4. Tính giá
             $subtotal = $seats->sum('price');
             $discount = 0;
             $voucher = null;
