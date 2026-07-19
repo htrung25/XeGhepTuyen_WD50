@@ -66,6 +66,10 @@ class ImportServiceAreaCommand extends Command
         if ($existing?->checksum === $checksum && ! $this->option('dry-run')) {
             $this->info("[{$code}] checksum không đổi — bỏ qua.");
 
+            if ($this->option('backfill-routes')) {
+                $this->backfillRoutes();
+            }
+
             return self::SUCCESS;
         }
 
@@ -96,7 +100,7 @@ class ImportServiceAreaCommand extends Command
                 throw new \RuntimeException("SRID sai: {$check->srid} (cần 4326)");
             }
             if (! (bool) $check->valid) {
-                throw new \RuntimeException('Geometry không hợp lệ (ST_IsValid=0) — thử giảm --simplify hoặc dùng dữ liệu gốc');
+                throw new \RuntimeException('Geometry không hợp lệ (ST_IsValid=0) — cần kiểm tra hoặc xử lý dữ liệu nguồn trước khi import');
             }
             if (! str_contains(strtoupper((string) $check->gtype), 'MULTIPOLYGON')) {
                 throw new \RuntimeException("Kiểu geometry sai: {$check->gtype}");
@@ -130,21 +134,28 @@ class ImportServiceAreaCommand extends Command
         $this->info("[{$code}] import thành công.");
 
         if ($this->option('backfill-routes')) {
-            $count = 0;
-            Route::query()
-                ->where(fn ($q) => $q->whereNull('pickup_service_area_id')->orWhereNull('dropoff_service_area_id'))
-                ->chunkById(200, function ($routes) use (&$count) {
-                    foreach ($routes as $route) {
-                        if ($route->syncServiceAreasFromCities()) {
-                            $route->save();
-                            $count++;
-                        }
-                    }
-                });
-            $this->info("Backfill: {$count} tuyến được cập nhật vùng.");
+            $this->backfillRoutes();
         }
 
         return self::SUCCESS;
+    }
+
+    private function backfillRoutes(): void
+    {
+        $count = 0;
+
+        Route::query()
+            ->where(fn ($q) => $q->whereNull('pickup_service_area_id')->orWhereNull('dropoff_service_area_id'))
+            ->chunkById(200, function ($routes) use (&$count): void {
+                foreach ($routes as $route) {
+                    if ($route->syncServiceAreasFromCities()) {
+                        $route->save();
+                        $count++;
+                    }
+                }
+            });
+
+        $this->info("Backfill: {$count} tuyến được cập nhật vùng.");
     }
 
     /** Tìm feature theo NAME_1/VARNAME_1 (so sánh không dấu qua normalize) */

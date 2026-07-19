@@ -47,9 +47,14 @@ class ServiceAreaService
             throw new ServiceAreaNotConfiguredException;
         }
 
-        // SQLite (test in-memory) không có hàm spatial → phần polygon chỉ chạy MySQL.
+        // SQLite in-memory chỉ được phép bỏ qua spatial trong test. Mọi môi trường
+        // vận hành phải fail-fast nếu cấu hình nhầm database không hỗ trợ contract này.
         if (DB::getDriverName() !== 'mysql') {
-            return;
+            if (app()->environment('testing')) {
+                return;
+            }
+
+            throw new \RuntimeException('ServiceArea geofencing yêu cầu MySQL Spatial.');
         }
 
         if (! $this->isPointInsideArea($route->pickupServiceArea, $pickup)) {
