@@ -102,7 +102,7 @@ class Driver extends Model
         return $query->where('is_online', true);
     }
 
-    public function scopeForOperator($query, string $operatorId)
+    public function scopeForOperator(Builder $query, string $operatorId): Builder
     {
         return $query->where('operator_id', $operatorId);
     }
