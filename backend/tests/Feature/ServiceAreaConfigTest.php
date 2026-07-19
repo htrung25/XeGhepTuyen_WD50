@@ -181,3 +181,13 @@ it('seeder KHÔNG ghi đè boundary/metadata của vùng đã tồn tại (VD đ
     expect(ServiceArea::where('code', 'HN')->value('boundary_version'))->toBe('gadm41-2026-07')
         ->and(ServiceArea::where('code', 'HN')->value('boundary'))->toBe('GADM-DATA');
 });
+
+// ─── Task 5: command service-area:import ─────────────────────────────────────
+
+it('service-area:import từ chối chạy trên driver không phải mysql', function () {
+    $this->artisan('service-area:import', [
+        'file' => base_path('tests/fixtures/geo/sample_province.json'),
+        '--province' => 'Hà Nội',
+        '--code' => 'HN',
+    ])->assertFailed();
+});

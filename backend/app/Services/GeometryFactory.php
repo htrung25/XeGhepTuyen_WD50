@@ -37,6 +37,33 @@ class GeometryFactory
     }
 
     /**
+     * GeoJSON geometry (Polygon/MultiPolygon, RFC 7946: [lng, lat], exterior
+     * ring CCW — khớp yêu cầu MySQL geographic SRS) → WKT MULTIPOLYGON.
+     */
+    public function wktFromGeoJsonGeometry(array $geometry): string
+    {
+        $type = $geometry['type'] ?? '';
+
+        $polygons = match ($type) {
+            'Polygon' => [$geometry['coordinates']],
+            'MultiPolygon' => $geometry['coordinates'],
+            default => throw new \InvalidArgumentException("GeoJSON type không hỗ trợ: {$type} (cần Polygon/MultiPolygon)"),
+        };
+
+        $wktPolygons = array_map(function (array $rings): string {
+            $wktRings = array_map(function (array $ring): string {
+                $points = array_map(fn (array $c) => $c[0].' '.$c[1], $ring);
+
+                return '('.implode(', ', $points).')';
+            }, $rings);
+
+            return '('.implode(', ', $wktRings).')';
+        }, $polygons);
+
+        return 'MULTIPOLYGON('.implode(', ', $wktPolygons).')';
+    }
+
+    /**
      * Bộ attribute tọa độ để GHI qua Eloquent (Booking::create…).
      *  - MySQL : ghi cột POINT (nguồn sự thật; lat/lng là generated column, MySQL
      *    cấm ghi trực tiếp giá trị vào generated column).
