@@ -18,6 +18,11 @@ class ServiceArea extends Model
         'code',
         'boundary',
         'is_active',
+        'source',
+        'source_version',
+        'boundary_version',
+        'imported_at',
+        'checksum',
     ];
 
     /** boundary là geometry nhị phân — không được lọt vào JSON response */
@@ -46,6 +51,20 @@ class ServiceArea extends Model
         $geom = app(GeometryFactory::class)->point($point);
 
         return $query->whereRaw("ST_Intersects(boundary, {$geom->sql})", $geom->bindings);
+    }
+
+    // ─── Lookup ───────────────────────────────────────────────────────────────
+
+    /**
+     * Tra vùng theo MÃ chuẩn (HN/HP) — exact match trên cột unique, chỉ vùng active.
+     * Không match theo tên hiển thị; tên thành phố phải qua CityCodeResolver trước.
+     */
+    public static function findByCityCode(string $code): ?self
+    {
+        return static::query()
+            ->active()
+            ->where('code', strtoupper(trim($code)))
+            ->first();
     }
 
     // ─── Business Methods ─────────────────────────────────────────────────────

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\DTOs\GeoCoordinate;
 use App\Exceptions\LocationOutsideServiceAreaException;
+use App\Exceptions\ServiceAreaNotConfiguredException;
 use App\Models\Route;
 use App\Models\ServiceArea;
 use Illuminate\Support\Facades\DB;
@@ -30,28 +31,34 @@ class ServiceAreaService
 
     /**
      * Kiểm tra điểm đón & điểm trả của một booking theo cấu hình tuyến.
-     * Tuyến chưa cấu hình vùng (null) → bỏ qua kiểm tra polygon phía đó.
      *
+     * FAIL-CLOSED: tuyến thiếu vùng hoặc vùng đã tắt → chặn booking thay vì
+     * bypass geofencing (chống lách qua tuyến chưa/không map được vùng).
+     *
+     * @throws ServiceAreaNotConfiguredException tuyến chưa cấu hình đủ vùng active (HTTP 422)
      * @throws LocationOutsideServiceAreaException điểm nằm ngoài vùng phục vụ (HTTP 422)
      */
     public function validateBookingLocations(Route $route, GeoCoordinate $pickup, GeoCoordinate $dropoff): void
     {
-        // SQLite (test in-memory) không có hàm spatial → chỉ kiểm tra polygon trên MySQL.
+        $route->loadMissing(['pickupServiceArea', 'dropoffServiceArea']);
+
+        // Kiểm tra fail-closed chạy trên MỌI driver (kể cả sqlite test).
+        if (! $route->pickupServiceArea?->is_active || ! $route->dropoffServiceArea?->is_active) {
+            throw new ServiceAreaNotConfiguredException;
+        }
+
+        // SQLite (test in-memory) không có hàm spatial → phần polygon chỉ chạy MySQL.
         if (DB::getDriverName() !== 'mysql') {
             return;
         }
 
-        $route->loadMissing(['pickupServiceArea', 'dropoffServiceArea']);
-
-        if ($route->pickupServiceArea
-            && ! $this->isPointInsideArea($route->pickupServiceArea, $pickup)) {
+        if (! $this->isPointInsideArea($route->pickupServiceArea, $pickup)) {
             throw new LocationOutsideServiceAreaException(
                 "Điểm đón nằm ngoài vùng phục vụ ({$route->pickupServiceArea->name}) của tuyến"
             );
         }
 
-        if ($route->dropoffServiceArea
-            && ! $this->isPointInsideArea($route->dropoffServiceArea, $dropoff)) {
+        if (! $this->isPointInsideArea($route->dropoffServiceArea, $dropoff)) {
             throw new LocationOutsideServiceAreaException(
                 "Điểm trả nằm ngoài vùng phục vụ ({$route->dropoffServiceArea->name}) của tuyến"
             );

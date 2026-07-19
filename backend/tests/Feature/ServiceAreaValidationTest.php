@@ -8,6 +8,7 @@ use App\Models\Driver;
 use App\Models\Operator;
 use App\Models\Route;
 use App\Models\SeatMap;
+use App\Models\ServiceArea;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\Vehicle;
@@ -48,6 +49,12 @@ function setupServiceAreaBookingContext(): array
 
     $customer = User::factory()->create(['role' => UserRoleEnum::Customer]);
 
+    // Fail-closed: route phải có vùng active thì luồng booking mới pass. Route
+    // được tạo trước khi có area (observer sync ra null) → gọi lại sync + save.
+    ServiceArea::updateOrCreate(['code' => 'HN'], ['name' => 'Hà Nội', 'boundary' => 'MULTIPOLYGON(((0 0, 1 0, 1 1, 0 1, 0 0)))', 'is_active' => true]);
+    ServiceArea::updateOrCreate(['code' => 'HP'], ['name' => 'Hải Phòng', 'boundary' => 'MULTIPOLYGON(((0 0, 1 0, 1 1, 0 1, 0 0)))', 'is_active' => true]);
+    $trip->route->syncServiceAreasFromCities() && $trip->route->save();
+
     return [$trip, $seat, $customer];
 }
 
@@ -69,20 +76,6 @@ function serviceAreaBookingPayload(Trip $trip, SeatMap $seat): array
         'passengers' => [['full_name' => 'Nguyễn Văn B']],
     ];
 }
-
-// ─── validateBookingLocations ────────────────────────────────────────────────
-
-it('bỏ qua kiểm tra polygon khi tuyến chưa cấu hình vùng phục vụ', function () {
-    [$trip] = setupServiceAreaBookingContext();
-
-    app(ServiceAreaService::class)->validateBookingLocations(
-        $trip->route,
-        GeoCoordinate::fromLatLng(21.026543, 105.789123),
-        GeoCoordinate::fromLatLng(20.854123, 106.698765),
-    );
-
-    expect(true)->toBeTrue();
-});
 
 // ─── GeometryFactory ghi tọa độ theo driver ──────────────────────────────────
 

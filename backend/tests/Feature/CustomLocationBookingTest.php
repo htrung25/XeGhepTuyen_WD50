@@ -7,6 +7,7 @@ use App\Models\Operator;
 use App\Models\Route;
 use App\Models\RouteStop;
 use App\Models\SeatMap;
+use App\Models\ServiceArea;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\Vehicle;
@@ -50,6 +51,12 @@ function setupCustomBookingContext(): array
     ]);
 
     $customer = User::factory()->create(['role' => UserRoleEnum::Customer]);
+
+    // Fail-closed (geofencing): route cần vùng active thì booking mới pass.
+    ServiceArea::updateOrCreate(['code' => 'HN'], ['name' => 'Hà Nội', 'boundary' => 'MULTIPOLYGON(((0 0, 1 0, 1 1, 0 1, 0 0)))', 'is_active' => true]);
+    ServiceArea::updateOrCreate(['code' => 'HP'], ['name' => 'Hải Phòng', 'boundary' => 'MULTIPOLYGON(((0 0, 1 0, 1 1, 0 1, 0 0)))', 'is_active' => true]);
+    // refresh(): nạp origin_city/dest_city mặc định (default áp ở DB, model in-memory null)
+    $route->refresh()->syncServiceAreasFromCities() && $route->save();
 
     return [$trip, $seat, $customer];
 }

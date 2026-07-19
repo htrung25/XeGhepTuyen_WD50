@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use App\Observers\RouteObserver;
+use App\Services\CityCodeResolver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+#[ObservedBy(RouteObserver::class)]
 class Route extends Model
 {
     use HasUuids;
@@ -25,6 +29,8 @@ class Route extends Model
         'is_round_trip',
         'pickup_service_area_id',
         'dropoff_service_area_id',
+        'pickup_service_area_source',
+        'dropoff_service_area_source',
     ];
 
     protected function casts(): array
@@ -82,5 +88,38 @@ class Route extends Model
     public function canBeDeleted(): bool
     {
         return ! $this->trips()->whereIn('status', ['scheduled', 'boarding'])->exists();
+    }
+
+    /**
+     * Đồng bộ vùng phục vụ theo origin/dest_city — CHỈ MUTATE, không save.
+     * Cột source='auto' → luôn tính lại (về null nếu thành phố không resolve
+     * được; fail-closed sẽ chặn booking thay vì để vùng sai). source='manual'
+     * → giữ nguyên. Trả về true nếu có thay đổi.
+     */
+    public function syncServiceAreasFromCities(): bool
+    {
+        $dirty = false;
+
+        if ($this->pickup_service_area_source !== 'manual') {
+            $code = CityCodeResolver::resolve((string) $this->origin_city);
+            $areaId = $code ? ServiceArea::findByCityCode($code)?->id : null;
+
+            if ($this->pickup_service_area_id !== $areaId) {
+                $this->pickup_service_area_id = $areaId;
+                $dirty = true;
+            }
+        }
+
+        if ($this->dropoff_service_area_source !== 'manual') {
+            $code = CityCodeResolver::resolve((string) $this->dest_city);
+            $areaId = $code ? ServiceArea::findByCityCode($code)?->id : null;
+
+            if ($this->dropoff_service_area_id !== $areaId) {
+                $this->dropoff_service_area_id = $areaId;
+                $dirty = true;
+            }
+        }
+
+        return $dirty;
     }
 }
