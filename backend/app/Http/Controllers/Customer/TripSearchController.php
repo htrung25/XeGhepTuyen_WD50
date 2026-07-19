@@ -23,10 +23,14 @@ class TripSearchController extends Controller
     {
         $request->validate([
             'from_city' => ['required', 'string'],
-            'to_city' => ['required', 'string'],
+            // Điểm đến phải KHÁC điểm đi — chặn input phi lý ngay tại nguồn sự thật
+            // (server) thay vì để lọt xuống query rồi trả 200 rỗng, gây hiểu nhầm "hết vé".
+            'to_city' => ['required', 'string', 'different:from_city'],
             'date' => ['required', 'date', 'after_or_equal:today'],
             'passengers' => ['nullable', 'integer', 'min:1', 'max:4'],
             'sort' => ['nullable', 'in:price_asc,price_desc,depart_asc'],
+        ], [
+            'to_city.different' => 'Điểm đến phải khác điểm đi.',
         ]);
 
         try {

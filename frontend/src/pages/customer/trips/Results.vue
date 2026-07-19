@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { toast } from 'vue-sonner';
 import { customerApi } from '@/api/customer.api';
 import {
     Dialog,
@@ -123,6 +124,13 @@ function isNextDay(departAtIso: string, searchDateStr: string) {
 onMounted(async () => {
     const p = store.searchParams;
     if (!p.from_city || !p.to_city) {
+        router.replace('/home');
+        return;
+    }
+    // Backstop: vào thẳng /search với params cũ (điểm đi == điểm đến) — không gọi
+    // API mù, quay về Home báo lỗi. BE vẫn chặn bằng 422 nếu request lọt qua.
+    if (p.from_city === p.to_city) {
+        toast.error('Điểm đến phải khác điểm đi.');
         router.replace('/home');
         return;
     }

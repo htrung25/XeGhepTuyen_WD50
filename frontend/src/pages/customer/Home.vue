@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { toast } from 'vue-sonner';
 import { useCustomerStore } from '@/stores/customer.store';
 
 const router = useRouter();
@@ -60,6 +61,10 @@ const features = [
 
 const minDate = computed(() => store.getLocalDateString());
 
+// Điểm đi trùng điểm đến là input phi lý — chặn ở FE cho UX rõ ràng
+// (BE vẫn là nguồn sự thật: trả 422 nếu lọt qua).
+const sameCity = computed(() => fromCity.value === toCity.value);
+
 function swapCities() {
     [fromCity.value, toCity.value] = [toCity.value, fromCity.value];
 }
@@ -71,6 +76,10 @@ function adjustPassengers(delta: number) {
 
 function search() {
     if (!fromCity.value || !toCity.value || !travelDate.value) return;
+    if (sameCity.value) {
+        toast.error('Điểm đến phải khác điểm đi.');
+        return;
+    }
     store.searchParams = {
         from_city: fromCity.value,
         to_city: toCity.value,
@@ -248,6 +257,15 @@ onMounted(() => {
                             </label>
                         </div>
 
+                        <p
+                            v-if="sameCity"
+                            role="alert"
+                            class="mt-2 flex items-center gap-1.5 text-sm font-medium text-red-600"
+                        >
+                            <span aria-hidden="true">⚠</span> Điểm đến phải khác
+                            điểm đi.
+                        </p>
+
                         <button
                             type="button"
                             class="mx-auto my-2 flex size-9 items-center justify-center rounded-full border border-blue-200 bg-white text-blue-600 sm:hidden"
@@ -308,7 +326,8 @@ onMounted(() => {
 
                         <button
                             type="button"
-                            class="mt-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 font-bold text-white shadow-lg transition-colors duration-150 hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                            :disabled="sameCity"
+                            class="mt-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 font-bold text-white shadow-lg transition-colors duration-150 hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none disabled:hover:bg-slate-300"
                             @click="search"
                         >
                             Tìm chuyến phù hợp
