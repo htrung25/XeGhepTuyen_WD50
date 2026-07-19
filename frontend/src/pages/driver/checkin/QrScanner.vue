@@ -135,7 +135,7 @@ onUnmounted(() => {
             Hướng camera vào mã QR trên vé điện tử của hành khách
         </p>
 
-        <div class="grid grid-cols-[1fr_340px] gap-6">
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
             <!-- ─── LEFT: Scanner ─────────────────────────────────── -->
             <div class="space-y-4">
                 <!-- Camera scanner card -->
@@ -228,7 +228,7 @@ onUnmounted(() => {
             </div>
 
             <!-- ─── RIGHT: Result + recent ────────────────────────── -->
-            <div class="sticky top-6 space-y-4 self-start">
+            <div class="space-y-4 lg:sticky lg:top-6 lg:self-start">
                 <!-- Cash collection prompt -->
                 <div
                     v-if="scanState === 'cash'"
