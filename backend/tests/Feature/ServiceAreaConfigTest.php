@@ -1,10 +1,13 @@
 <?php
 
+use App\DTOs\GeoCoordinate;
 use App\Enums\UserRoleEnum;
+use App\Exceptions\ServiceAreaNotConfiguredException;
 use App\Models\Operator;
 use App\Models\Route;
 use App\Models\ServiceArea;
 use App\Models\User;
+use App\Services\ServiceAreaService;
 use Laravel\Sanctum\Sanctum;
 
 // SQLite không ép kiểu: boundary lưu WKT dạng text là đủ cho test không-spatial
@@ -104,4 +107,44 @@ it('operator sửa tuyến qua API thì vùng đồng bộ theo thành phố m�
         ->assertStatus(200);
 
     expect($route->refresh()->pickupServiceArea?->code)->toBe('HP');
+});
+
+// ─── Task 3: fail-closed khi tuyến chưa cấu hình vùng ────────────────────────
+
+it('route chưa cấu hình vùng thì validateBookingLocations chặn (fail-closed)', function () {
+    // KHÔNG tạo area nào → route auto-sync về null
+    $route = makeRouteForGeo();
+
+    app(ServiceAreaService::class)->validateBookingLocations(
+        $route,
+        GeoCoordinate::fromLatLng(21.0285, 105.8542),
+        GeoCoordinate::fromLatLng(20.8609, 106.6822),
+    );
+})->throws(ServiceAreaNotConfiguredException::class);
+
+it('vùng inactive coi như chưa cấu hình — chặn booking', function () {
+    makeArea('HN', 'Hà Nội');
+    makeArea('HP', 'Hải Phòng');
+    $route = makeRouteForGeo();
+    ServiceArea::where('code', 'HP')->update(['is_active' => false]);
+
+    app(ServiceAreaService::class)->validateBookingLocations(
+        $route->refresh(),
+        GeoCoordinate::fromLatLng(21.0285, 105.8542),
+        GeoCoordinate::fromLatLng(20.8609, 106.6822),
+    );
+})->throws(ServiceAreaNotConfiguredException::class);
+
+it('route đã cấu hình đủ vùng active thì pass (sqlite bỏ qua phần spatial)', function () {
+    makeArea('HN', 'Hà Nội');
+    makeArea('HP', 'Hải Phòng');
+    $route = makeRouteForGeo();
+
+    app(ServiceAreaService::class)->validateBookingLocations(
+        $route,
+        GeoCoordinate::fromLatLng(21.0285, 105.8542),
+        GeoCoordinate::fromLatLng(20.8609, 106.6822),
+    );
+
+    expect(true)->toBeTrue();
 });

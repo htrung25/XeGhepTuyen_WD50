@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Customer;
 
 use App\Exceptions\LocationOutsideServiceAreaException;
 use App\Exceptions\SeatNotAvailableException;
+use App\Exceptions\ServiceAreaNotConfiguredException;
 use App\Exceptions\TripNotAvailableException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\LockSeatsRequest;
@@ -91,6 +92,8 @@ class BookingController extends Controller
             return response()->json(['success' => false, 'message' => $e->getMessage(), 'code' => 'SEAT_NOT_AVAILABLE'], 422);
         } catch (TripNotAvailableException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage(), 'code' => 'TRIP_NOT_AVAILABLE'], 422);
+        } catch (ServiceAreaNotConfiguredException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage(), 'code' => 'SERVICE_AREA_NOT_CONFIGURED'], 422);
         } catch (LocationOutsideServiceAreaException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage(), 'code' => 'LOCATION_OUTSIDE_SERVICE_AREA'], 422);
         } catch (\InvalidArgumentException $e) {
