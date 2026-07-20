@@ -315,36 +315,36 @@ onMounted(load);
                 </div>
 
                 <div v-else class="overflow-x-auto">
-                    <table class="w-full text-sm">
+                    <table class="w-full min-w-[720px] text-sm">
                         <thead>
                             <tr class="border-b border-gray-100 bg-gray-50">
                                 <th
-                                    class="px-5 py-3 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase"
+                                    class="px-5 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap text-gray-500 uppercase"
                                 >
                                     Ngày
                                 </th>
                                 <th
-                                    class="px-5 py-3 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase"
+                                    class="px-5 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap text-gray-500 uppercase"
                                 >
                                     Giờ
                                 </th>
                                 <th
-                                    class="px-5 py-3 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase"
+                                    class="px-5 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap text-gray-500 uppercase"
                                 >
                                     Tuyến
                                 </th>
                                 <th
-                                    class="px-5 py-3 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase"
+                                    class="px-5 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap text-gray-500 uppercase"
                                 >
                                     Xe
                                 </th>
                                 <th
-                                    class="px-5 py-3 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase"
+                                    class="px-5 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap text-gray-500 uppercase"
                                 >
                                     Số khách đặt
                                 </th>
                                 <th
-                                    class="px-5 py-3 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase"
+                                    class="px-5 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap text-gray-500 uppercase"
                                 >
                                     Trạng thái
                                 </th>
@@ -451,6 +451,7 @@ onMounted(load);
                         </h3>
                         <button
                             @click="selectedTrip = null"
+                            aria-label="Đóng"
                             class="text-gray-400 transition-colors hover:text-gray-600"
                         >
                             <svg
