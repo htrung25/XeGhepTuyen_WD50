@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\VehicleStatusEnum;
 use App\Enums\VehicleTypeEnum;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -77,7 +78,7 @@ class Vehicle extends Model
 
     // ─── Scopes ───────────────────────────────────────────────────────────────
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', VehicleStatusEnum::Active);
     }
