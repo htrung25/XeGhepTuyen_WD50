@@ -83,7 +83,7 @@ class Vehicle extends Model
         return $query->where('status', VehicleStatusEnum::Active);
     }
 
-    public function scopeForOperator($query, string $operatorId)
+    public function scopeForOperator(Builder $query, string $operatorId): Builder
     {
         return $query->where('operator_id', $operatorId);
     }
