@@ -208,6 +208,7 @@ onUnmounted(() => {
                         <input
                             v-model="manualCode"
                             type="text"
+                            aria-label="Mã QR thủ công"
                             placeholder="Nhập mã QR token..."
                             class="h-11 flex-1 rounded-lg border border-gray-300 px-4 font-mono text-sm transition-colors focus:ring-2 focus:ring-green-500 focus:outline-none"
                             @keyup.enter="handleManualSubmit"
