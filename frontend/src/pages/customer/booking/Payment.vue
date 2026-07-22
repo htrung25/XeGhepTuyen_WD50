@@ -317,7 +317,7 @@ onUnmounted(() => {
                         v-for="method in paymentMethods"
                         :key="method.key"
                         :class="[
-                            'flex items-center gap-4 rounded-xl border-2 p-4 transition-all',
+                            'flex items-center gap-4 rounded-xl border-2 p-4 transition-all active:scale-[0.99]',
                             method.disabled
                                 ? 'cursor-not-allowed border-gray-200 bg-gray-50 opacity-50'
                                 : selectedMethod === method.key
