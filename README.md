@@ -97,7 +97,7 @@ CI GitHub Actions chạy pipeline tương ứng khi `backend/**` hoặc `fronten
 - **Application root: `backend`** (cấu hình trong dashboard Laravel Cloud — phải verify vì repo là monorepo).
 - Env production tối thiểu: `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://<api-domain>`, `FRONTEND_URL=https://<fe-domain>`, `SESSION_SECURE_COOKIE=true`, `LOG_LEVEL=error`, DB/Redis do Cloud cấp, `REVERB_*` nếu bật WebSocket.
 - Deploy command: `php artisan migrate --force && php artisan optimize`.
-- Queue worker: `php artisan queue:work --queue=notifications,default --sleep=3 --tries=3 --timeout=90`; Scheduler: bật scheduler của Cloud (lệnh `trips:auto-resolve` chạy theo lịch).
+- Queue worker: `php artisan queue:work --queue=high,notifications,default --sleep=3 --tries=3 --timeout=90` — **`high` phải đứng đầu và không được bỏ sót**: hủy vé quá hạn (`ExpireUnpaidBookingJob`), hoàn tiền (`ProcessRefundJob`), giải phóng ghế giữ tạm (`ExpireLockedSeatsJob`) đều chạy ở queue này. Scheduler: bật scheduler của Cloud (`trips:auto-resolve` + dọn ghế theo lịch).
 - Sau deploy kiểm tra: `https://<api-domain>/api/public/health` và `/up`.
 
 ### Frontend → Vercel
