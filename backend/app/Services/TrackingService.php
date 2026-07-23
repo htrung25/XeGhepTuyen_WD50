@@ -59,12 +59,16 @@ class TrackingService
         }
 
         try {
-            $response = Http::get('https://maps.googleapis.com/maps/api/distancematrix/json', [
-                'origins' => "{$lat},{$lng}",
-                'destinations' => "{$nextBooking->pickup_lat},{$nextBooking->pickup_lng}",
-                'key' => $apiKey,
-                'mode' => 'driving',
-            ]);
+            // Timeout ngắn: đây là call trong request đồng bộ của khách xem tracking —
+            // Google chậm không được phép treo cả API.
+            $response = Http::connectTimeout(3)
+                ->timeout(8)
+                ->get('https://maps.googleapis.com/maps/api/distancematrix/json', [
+                    'origins' => "{$lat},{$lng}",
+                    'destinations' => "{$nextBooking->pickup_lat},{$nextBooking->pickup_lng}",
+                    'key' => $apiKey,
+                    'mode' => 'driving',
+                ]);
 
             $data = $response->json();
             $seconds = $data['rows'][0]['elements'][0]['duration']['value'] ?? null;

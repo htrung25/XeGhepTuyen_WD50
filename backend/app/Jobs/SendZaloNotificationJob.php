@@ -33,7 +33,11 @@ class SendZaloNotificationJob implements ShouldQueue
 
         $accessToken = config('services.zalo.oa_access_token');
 
+        // Timeout tường minh: call treo có thể vượt retry_after (120s) → queue release
+        // job để retry TRONG LÚC vẫn đang chạy ⇒ gửi trùng.
         $response = Http::withToken($accessToken)
+            ->connectTimeout(5)
+            ->timeout(15)
             ->post('https://openapi.zalo.me/v2.0/oa/message', [
                 'recipient' => ['user_id' => $this->zaloUserId],
                 'message' => ['text' => $this->message],

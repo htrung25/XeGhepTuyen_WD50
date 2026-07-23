@@ -229,16 +229,22 @@ class BookingService
      */
     public function expire(Booking $booking): void
     {
-        // Guard PHẢI gồm booking_status: isExpired() chỉ xét expires_at + payment_status,
-        // mà các luồng hủy khác (khách tự hủy, cancelByOperator, finalizeOnTripComplete,
-        // markRanCompleted) set 'cancelled' nhưng KHÔNG đổi payment_status/expires_at.
-        // Thiếu guard này, job expire chạy lại trên vé đã hủy sẽ increment
-        // available_seats lần hai → chuyến thừa ghế ảo (oversell).
-        if ($booking->booking_status !== BookingStatusEnum::Pending || ! $booking->isExpired()) {
-            return;
-        }
-
         DB::transaction(function () use ($booking) {
+            // KHÓA hàng booking rồi mới đọc trạng thái — cùng hàng mà processCallback khóa,
+            // nên hai luồng nối đuôi nhau thay vì đua:
+            //  · callback commit trước → ở đây thấy Paid/Confirmed → thoát, KHÔNG hủy vé đã trả tiền.
+            //  · hai job expire đồng thời → người sau thấy Cancelled → thoát, không increment 2 lần.
+            $booking = Booking::whereKey($booking->id)->lockForUpdate()->first();
+
+            // Guard PHẢI gồm booking_status: isExpired() chỉ xét expires_at + payment_status,
+            // mà các luồng hủy khác (khách tự hủy, cancelByOperator, finalizeOnTripComplete,
+            // markRanCompleted) set 'cancelled' nhưng KHÔNG đổi payment_status/expires_at.
+            // Thiếu guard này, job expire chạy lại trên vé đã hủy sẽ increment
+            // available_seats lần hai → chuyến thừa ghế ảo (oversell).
+            if (! $booking || $booking->booking_status !== BookingStatusEnum::Pending || ! $booking->isExpired()) {
+                return;
+            }
+
             $booking->update([
                 'booking_status' => BookingStatusEnum::Cancelled,
                 'cancelled_at' => now(),
