@@ -97,7 +97,7 @@ class TripController extends Controller
         // Hủy chuyến + hoàn 100% + bồi thường cho toàn bộ hành khách.
         // Admin bỏ qua ownership (operatorId = null); actorUserId = admin đang đăng nhập.
         $oldStatus = $trip->status->value;
-        $this->tripService->cancelTrip($trip->id, null, auth()->id(), $request->reason, true);
+        $this->tripService->cancelTrip($trip->id, null, $request->user()->id, $request->reason, true);
 
         app(AuditLogService::class)->log(
             action: 'cancel_trip',
