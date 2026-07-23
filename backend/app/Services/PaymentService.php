@@ -150,7 +150,8 @@ class PaymentService
                     $booking->user,
                     $amount,
                     "Hoàn tiền vé {$booking->booking_code}",
-                    $booking->id
+                    $booking->id,
+                    "refund:{$booking->id}",
                 );
             }
 
@@ -381,7 +382,8 @@ class PaymentService
                 $booking->user,
                 $payment->amount,
                 "Thanh toán vé {$booking->booking_code}",
-                $booking->id
+                $booking->id,
+                "wallet_payment:{$booking->id}",
             );
 
             $this->processCallback($payment->gateway_order_id, 'WALLET-'.time(), [], true);

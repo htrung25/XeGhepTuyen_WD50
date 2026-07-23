@@ -2,10 +2,14 @@
 
 use App\Enums\UserRoleEnum;
 use App\Enums\WalletTransactionTypeEnum;
+use App\Models\Payment;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
+use App\Services\PaymentService;
+use App\Services\WalletService;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 function makeWalletUser(): User
 {
@@ -73,6 +77,36 @@ it('debit() cùng idempotency_key hai lần chỉ trừ tiền MỘT lần', fun
     expect($second->id)->toBe($first->id)
         ->and(WalletTransaction::count())->toBe(1)
         ->and($wallet->refresh()->balance)->toBe(350000); // KHÔNG phải 200000
+});
+
+// ─── Task 3: key tất định tại các điểm gọi ───────────────────────────────────
+
+it('refund() gọi lại nhiều lần chỉ ghi MỘT giao dịch ví (key refund:{booking})', function () {
+    $booking = makePaidCancellableBooking(); // helper ở RefundDispatchAfterCommitTest
+    Payment::create([
+        'booking_id' => $booking->id, 'user_id' => $booking->user_id,
+        'amount' => 150000, 'method' => 'momo', 'status' => 'success',
+        'gateway_order_id' => 'XEGHEP-'.Str::upper(Str::random(10)), 'paid_at' => now(),
+    ]);
+
+    $service = app(PaymentService::class);
+    $service->refund($booking, 150000);
+    $service->refund($booking->refresh(), 150000);
+    $service->refund($booking->refresh(), 150000);
+
+    expect(WalletTransaction::where('idempotency_key', "refund:{$booking->id}")->count())->toBe(1)
+        ->and(app(WalletService::class)->getBalance($booking->user))->toBe(150000);
+});
+
+it('hoàn tiền và bồi thường cùng booking đều ghi được (key khác nhau)', function () {
+    $user = makeWalletUser();
+    $service = app(WalletService::class);
+
+    $service->credit($user, 150000, 'Hoàn tiền', 'booking-9', 'refund:booking-9');
+    $service->credit($user, 20000, 'Bồi thường', 'booking-9', 'compensation:booking-9');
+
+    expect(WalletTransaction::count())->toBe(2)
+        ->and($service->getBalance($user))->toBe(170000);
 });
 
 it('balance_after khớp số dư thật sau chuỗi giao dịch', function () {

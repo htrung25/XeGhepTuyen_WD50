@@ -320,6 +320,7 @@ class BookingService
                         self::COMPENSATION_AMOUNT,
                         "Bồi thường hủy chuyến — vé {$booking->booking_code}",
                         $booking->id,
+                        "compensation:{$booking->id}",
                     );
                 }
             }
