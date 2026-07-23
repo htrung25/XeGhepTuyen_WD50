@@ -20,6 +20,7 @@ class WalletTransaction extends Model
     protected $fillable = [
         'wallet_id',
         'booking_id',
+        'idempotency_key',
         'type',
         'amount',
         'balance_after',
