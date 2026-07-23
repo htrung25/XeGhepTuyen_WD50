@@ -50,18 +50,39 @@ class Wallet extends Model
     /**
      * Cộng tiền vào ví (nạp tiền / hoàn tiền)
      */
-    public function credit(int $amount, string $description, WalletTransactionTypeEnum $type, ?string $bookingId = null): WalletTransaction
+    /**
+     * Cộng tiền vào ví (nạp tiền / hoàn tiền).
+     *
+     * @param  string|null  $idempotencyKey  Khóa nghiệp vụ tất định. Truyền key ⇒ gọi lại
+     *                                       nhiều lần chỉ ghi MỘT giao dịch (queue redis là
+     *                                       at-least-once). null ⇒ hành vi cũ, không chống trùng.
+     */
+    public function credit(int $amount, string $description, WalletTransactionTypeEnum $type, ?string $bookingId = null, ?string $idempotencyKey = null): WalletTransaction
     {
-        return DB::transaction(function () use ($amount, $description, $type, $bookingId) {
-            $this->increment('balance', $amount);
-            $this->refresh();
+        return DB::transaction(function () use ($amount, $description, $type, $bookingId, $idempotencyKey) {
+            // Khóa hàng ví: (1) serialize các giao dịch cùng ví nên kiểm key bên dưới là
+            // airtight, (2) giữ balance_after nhất quán — không bị giao dịch song song chen
+            // giữa increment và refresh làm số dư ghi vào sổ bị nhảy.
+            $wallet = static::whereKey($this->getKey())->lockForUpdate()->firstOrFail();
 
-            return $this->transactions()->create([
+            if ($idempotencyKey !== null) {
+                $existing = WalletTransaction::where('idempotency_key', $idempotencyKey)->first();
+                if ($existing) {
+                    return $existing; // no-op: đã xử lý ở lần giao trước
+                }
+            }
+
+            $wallet->increment('balance', $amount);
+            $wallet->refresh();
+            $this->balance = $wallet->balance; // đồng bộ instance mà caller đang giữ
+
+            return $wallet->transactions()->create([
                 'type' => $type,
                 'amount' => $amount,
-                'balance_after' => $this->balance,
+                'balance_after' => $wallet->balance,
                 'description' => $description,
                 'booking_id' => $bookingId,
+                'idempotency_key' => $idempotencyKey,
             ]);
         });
     }
@@ -71,24 +92,43 @@ class Wallet extends Model
      *
      * @throws InsufficientBalanceException
      */
-    public function debit(int $amount, string $description, WalletTransactionTypeEnum $type, ?string $bookingId = null): WalletTransaction
+    /**
+     * Trừ tiền từ ví (thanh toán / rút tiền).
+     *
+     * @param  string|null  $idempotencyKey  Xem credit(). Kiểm key TRƯỚC kiểm số dư —
+     *                                       lần giao trùng không được coi là "thiếu tiền".
+     *
+     * @throws InsufficientBalanceException
+     */
+    public function debit(int $amount, string $description, WalletTransactionTypeEnum $type, ?string $bookingId = null, ?string $idempotencyKey = null): WalletTransaction
     {
-        return DB::transaction(function () use ($amount, $description, $type, $bookingId) {
-            if ($this->balance < $amount) {
+        return DB::transaction(function () use ($amount, $description, $type, $bookingId, $idempotencyKey) {
+            $wallet = static::whereKey($this->getKey())->lockForUpdate()->firstOrFail();
+
+            if ($idempotencyKey !== null) {
+                $existing = WalletTransaction::where('idempotency_key', $idempotencyKey)->first();
+                if ($existing) {
+                    return $existing;
+                }
+            }
+
+            if ($wallet->balance < $amount) {
                 throw new InsufficientBalanceException(
-                    "Số dư ví không đủ. Cần {$amount}đ, hiện có {$this->balance}đ"
+                    "Số dư ví không đủ. Cần {$amount}đ, hiện có {$wallet->balance}đ"
                 );
             }
 
-            $this->decrement('balance', $amount);
-            $this->refresh();
+            $wallet->decrement('balance', $amount);
+            $wallet->refresh();
+            $this->balance = $wallet->balance;
 
-            return $this->transactions()->create([
+            return $wallet->transactions()->create([
                 'type' => $type,
                 'amount' => -$amount,
-                'balance_after' => $this->balance,
+                'balance_after' => $wallet->balance,
                 'description' => $description,
                 'booking_id' => $bookingId,
+                'idempotency_key' => $idempotencyKey,
             ]);
         });
     }
