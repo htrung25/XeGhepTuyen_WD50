@@ -28,6 +28,8 @@ class Trip extends Model
         'completed_at',
         'cancelled_at',
         'cancel_reason',
+        'driver_unavailable_at',
+        'driver_unavailable_reason',
     ];
 
     protected function casts(): array
@@ -39,6 +41,7 @@ class Trip extends Model
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
             'cancelled_at' => 'datetime',
+            'driver_unavailable_at' => 'datetime',
             'available_seats' => 'integer',
             'price' => 'integer',
         ];
@@ -71,12 +74,19 @@ class Trip extends Model
         return $this->hasMany(Booking::class);
     }
 
+    public function driverIncidents(): HasMany
+    {
+        return $this->hasMany(TripDriverIncident::class);
+    }
+
     // ─── Scopes ───────────────────────────────────────────────────────────────
 
     public function scopeAvailable(Builder $query, int $passengers = 1): Builder
     {
         return $query->where('status', TripStatusEnum::Scheduled)
             ->where('available_seats', '>=', $passengers)
+            // Chuyến đang chờ sắp xếp lại tài xế bị ẩn khỏi tìm kiếm/đặt vé.
+            ->whereNull('driver_unavailable_at')
             ->where('depart_at', '>', now()->addMinutes((int) config('booking.min_lead_minutes', 30)));
     }
 
@@ -114,11 +124,18 @@ class Trip extends Model
     {
         return $this->status === TripStatusEnum::Scheduled
             && $this->available_seats > 0
+            && ! $this->isAwaitingReassignment()
             && $this->depart_at->gt(now()->addMinutes((int) config('booking.min_lead_minutes', 30)));
     }
 
     public function isActive(): bool
     {
         return in_array($this->status, [TripStatusEnum::Boarding, TripStatusEnum::InProgress]);
+    }
+
+    /** Chuyến đang chờ nhà xe sắp xếp lại tài xế (tài xế đã báo không chạy được). */
+    public function isAwaitingReassignment(): bool
+    {
+        return $this->driver_unavailable_at !== null;
     }
 }

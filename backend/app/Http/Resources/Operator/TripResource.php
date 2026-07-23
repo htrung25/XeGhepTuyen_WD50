@@ -37,6 +37,10 @@ class TripResource extends JsonResource
             'total_seats' => $this->vehicle->seat_count,
             'confirmed_revenue' => $this->bookings()->whereIn('booking_status', ['confirmed', 'checked_in', 'completed'])->sum('final_amount'),
             'notes' => $this->note,
+            // Chờ sắp xếp lại tài xế (tài xế đã báo không chạy được) — FE hiện nút "Đổi tài xế".
+            'is_awaiting_reassignment' => $this->driver_unavailable_at !== null,
+            'driver_unavailable_reason' => $this->driver_unavailable_reason,
+            'driver_unavailable_at' => $this->driver_unavailable_at?->format('Y-m-d H:i:s'),
         ];
     }
 }

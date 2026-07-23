@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Driver;
 
-use App\Enums\TripStatusEnum;
+use App\Exceptions\TripActionException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Driver\ReportDriverUnavailableRequest;
 use App\Http\Resources\Driver\TripResource;
 use App\Repositories\Contracts\TripRepositoryInterface;
 use App\Services\TripService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -104,21 +106,17 @@ class TripController extends Controller
 
     public function start(string $id): JsonResponse
     {
-        $trip = $this->tripRepo->findById($id);
+        // Ownership + trạng thái + guard cờ đều kiểm TRONG service (trong transaction).
         $driver = auth('driver')->user()->driver;
 
-        if (! $trip || $trip->driver_id !== $driver->id) {
-            return response()->json(['success' => false, 'message' => 'Chuyến đi không tồn tại'], 404);
-        }
-
-        if ($trip->status !== TripStatusEnum::Boarding && $trip->status !== TripStatusEnum::Scheduled) {
-            return response()->json(['success' => false, 'message' => 'Không thể bắt đầu chuyến này'], 422);
-        }
-
         try {
-            $this->tripService->startTrip($trip);
+            $this->tripService->startTrip($id, $driver->id);
 
             return response()->json(['success' => true, 'message' => 'Chuyến đã bắt đầu']);
+        } catch (TripActionException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage(), 'code' => $e->errorCode], $e->status);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['success' => false, 'message' => 'Chuyến đi không tồn tại'], 404);
         } catch (\Exception $e) {
             Log::error('Trip start failed', ['error' => $e->getMessage(), 'trip' => $id]);
 
@@ -128,23 +126,40 @@ class TripController extends Controller
 
     public function complete(string $id): JsonResponse
     {
-        $trip = $this->tripRepo->findById($id);
         $driver = auth('driver')->user()->driver;
 
-        if (! $trip || $trip->driver_id !== $driver->id) {
-            return response()->json(['success' => false, 'message' => 'Chuyến đi không tồn tại'], 404);
-        }
-
-        if ($trip->status !== TripStatusEnum::InProgress) {
-            return response()->json(['success' => false, 'message' => 'Chuyến chưa được bắt đầu'], 422);
-        }
-
         try {
-            $this->tripService->completeTrip($trip);
+            $this->tripService->completeTrip($id, $driver->id);
 
             return response()->json(['success' => true, 'message' => 'Chuyến đã hoàn thành']);
+        } catch (TripActionException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage(), 'code' => $e->errorCode], $e->status);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['success' => false, 'message' => 'Chuyến đi không tồn tại'], 404);
         } catch (\Exception $e) {
             Log::error('Trip complete failed', ['error' => $e->getMessage(), 'trip' => $id]);
+
+            return response()->json(['success' => false, 'message' => 'Có lỗi xảy ra'], 500);
+        }
+    }
+
+    /**
+     * Tài xế báo không chạy được chuyến (§7.1). Chỉ khi còn > cutoff phút trước giờ chạy.
+     */
+    public function reportUnavailable(ReportDriverUnavailableRequest $request, string $id): JsonResponse
+    {
+        $driver = auth('driver')->user()->driver;
+
+        try {
+            $this->tripService->reportDriverUnavailable($id, $driver->id, $request->validated('reason'));
+
+            return response()->json(['success' => true, 'message' => 'Đã báo nghỉ chuyến. Nhà xe sẽ sắp xếp lại.']);
+        } catch (TripActionException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage(), 'code' => $e->errorCode], $e->status);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['success' => false, 'message' => 'Chuyến đi không tồn tại'], 404);
+        } catch (\Exception $e) {
+            Log::error('Driver report unavailable failed', ['error' => $e->getMessage(), 'trip' => $id]);
 
             return response()->json(['success' => false, 'message' => 'Có lỗi xảy ra'], 500);
         }

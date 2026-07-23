@@ -94,9 +94,10 @@ class TripController extends Controller
             return response()->json(['success' => false, 'message' => 'Chuyến đi không thể hủy ở trạng thái hiện tại'], 422);
         }
 
-        // Hủy chuyến + hoàn 100% + bồi thường cho toàn bộ hành khách
+        // Hủy chuyến + hoàn 100% + bồi thường cho toàn bộ hành khách.
+        // Admin bỏ qua ownership (operatorId = null); actorUserId = admin đang đăng nhập.
         $oldStatus = $trip->status->value;
-        $this->tripService->cancelTrip($trip, $request->reason, true);
+        $this->tripService->cancelTrip($trip->id, null, auth()->id(), $request->reason, true);
 
         app(AuditLogService::class)->log(
             action: 'cancel_trip',

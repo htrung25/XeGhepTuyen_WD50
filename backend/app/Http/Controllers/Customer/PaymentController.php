@@ -6,6 +6,7 @@ use App\Enums\PaymentMethodEnum;
 use App\Exceptions\BookingExpiredException;
 use App\Exceptions\InsufficientBalanceException;
 use App\Exceptions\PaymentVerificationException;
+use App\Exceptions\TripActionException;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Services\PaymentService;
@@ -46,6 +47,9 @@ class PaymentController extends Controller
             return response()->json(['success' => false, 'message' => $e->getMessage(), 'code' => 'BOOKING_EXPIRED'], 422);
         } catch (InsufficientBalanceException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage(), 'code' => 'INSUFFICIENT_BALANCE'], 422);
+        } catch (TripActionException $e) {
+            // Chuyến đang sắp xếp lại tài xế → chưa cho khởi tạo thanh toán mới (§6.3).
+            return response()->json(['success' => false, 'message' => $e->getMessage(), 'code' => $e->errorCode], $e->status);
         } catch (\InvalidArgumentException $e) {
             // Vé không ở trạng thái chờ / chuyến đã khởi hành / phương thức không hỗ trợ
             return response()->json(['success' => false, 'message' => $e->getMessage(), 'code' => 'PAYMENT_NOT_ALLOWED'], 422);

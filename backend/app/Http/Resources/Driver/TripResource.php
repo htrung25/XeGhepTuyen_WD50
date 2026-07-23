@@ -38,6 +38,8 @@ class TripResource extends JsonResource
             'passengers_count' => (int) $this->bookings()->whereNotIn('booking_status', ['cancelled', 'no_show'])->sum('passenger_count'),
             'total_seats' => $this->vehicle->seat_count,
             'note' => $this->note,
+            // Tài xế đã báo không chạy được chuyến này (tránh báo lại / hiểu nhầm).
+            'is_awaiting_reassignment' => $this->driver_unavailable_at !== null,
         ];
     }
 }

@@ -1,0 +1,154 @@
+{
+  "version": 1,
+  "rev": 351,
+  "savedAt": "2026-07-22T10:02:11.631Z",
+  "id": "project-mrvkva3t-2",
+  "name": "DATN_WD50",
+  "color": "#0a84ff",
+  "viewport": {
+    "x": 438.235474560875,
+    "y": -1209.3845887091175,
+    "zoom": 0.7268968993833563
+  },
+  "nodes": [
+    {
+      "id": "group-mrvt8uuz-10",
+      "kind": "group",
+      "position": {
+        "x": -624.3799008936678,
+        "y": 1642.406617705572
+      },
+      "size": {
+        "width": 1570,
+        "height": 1065
+      },
+      "title": "BE",
+      "color": "#32d74b",
+      "group": null
+    },
+    {
+      "id": "group-mrvspo2m-6",
+      "kind": "group",
+      "position": {
+        "x": 185.651309702174,
+        "y": 89.58012256323889
+      },
+      "size": {
+        "width": 1324,
+        "height": 494
+      },
+      "title": "Server Local",
+      "color": "#0a84ff",
+      "group": null
+    },
+    {
+      "id": "term-mrvsnfdz-4",
+      "kind": "terminal",
+      "position": {
+        "x": 28,
+        "y": 66.18654674228279
+      },
+      "size": {
+        "width": 600,
+        "height": 400
+      },
+      "title": "Terminal 3",
+      "color": "#ffd60a",
+      "group": null,
+      "tags": [],
+      "parentId": "group-mrvspo2m-6",
+      "cwd": "."
+    },
+    {
+      "id": "term-mrvsozng-5",
+      "kind": "terminal",
+      "position": {
+        "x": 696.4275253638922,
+        "y": 62
+      },
+      "size": {
+        "width": 600,
+        "height": 400
+      },
+      "title": "Terminal 4",
+      "color": "#ff453a",
+      "group": null,
+      "tags": [],
+      "parentId": "group-mrvspo2m-6",
+      "cwd": "."
+    },
+    {
+      "id": "term-mrvsri14-7",
+      "kind": "terminal",
+      "position": {
+        "x": 864.2644957625812,
+        "y": 76.8890002794385
+      },
+      "size": {
+        "width": 600,
+        "height": 400
+      },
+      "title": "Codex",
+      "titleAuto": true,
+      "color": "#10a37f",
+      "group": null,
+      "tags": [],
+      "parentId": "group-mrvt8uuz-10",
+      "cwd": ".",
+      "agentId": "codex"
+    },
+    {
+      "id": "term-mrvsvkj5-9",
+      "kind": "terminal",
+      "position": {
+        "x": 28,
+        "y": 62
+      },
+      "size": {
+        "width": 600,
+        "height": 400
+      },
+      "title": "opencode",
+      "titleAuto": true,
+      "color": "#a78bfa",
+      "group": null,
+      "tags": [],
+      "parentId": "group-mrvt8uuz-10",
+      "cwd": ".",
+      "agentId": "opencode"
+    },
+    {
+      "id": "term-mrvufsxk-15",
+      "kind": "terminal",
+      "position": {
+        "x": 867.5730966071715,
+        "y": 597.2288829913732
+      },
+      "size": {
+        "width": 600,
+        "height": 400
+      },
+      "title": "Claude",
+      "titleAuto": false,
+      "color": "#d97757",
+      "group": null,
+      "tags": [],
+      "parentId": "group-mrvt8uuz-10",
+      "cwd": ".",
+      "agentId": "claude"
+    }
+  ],
+  "bridges": [],
+  "ropes": [
+    {
+      "id": "ctrl-term-mrvsri14-7-term-mrvufsxk-15",
+      "source": "term-mrvsri14-7",
+      "target": "term-mrvufsxk-15"
+    }
+  ],
+  "dinoHighScore": 390,
+  "kanban": {
+    "columns": [],
+    "assignments": []
+  }
+}

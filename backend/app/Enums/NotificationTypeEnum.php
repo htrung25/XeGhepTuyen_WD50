@@ -12,6 +12,8 @@ enum NotificationTypeEnum: string
     case TripCompletedEvent = 'trip_completed';
     case PaymentSuccess = 'payment_success';
     case RefundProcessed = 'refund_processed';
+    case TripDriverUnavailable = 'trip_driver_unavailable';
+    case TripDriverReassigned = 'trip_driver_reassigned';
     case System = 'system';
 
     public function label(): string
@@ -25,6 +27,8 @@ enum NotificationTypeEnum: string
             self::TripCompletedEvent => 'Chuyến hoàn thành',
             self::PaymentSuccess => 'Thanh toán thành công',
             self::RefundProcessed => 'Hoàn tiền thành công',
+            self::TripDriverUnavailable => 'Chuyến đang sắp xếp lại tài xế',
+            self::TripDriverReassigned => 'Chuyến đã đổi tài xế',
             self::System => 'Thông báo hệ thống',
         };
     }

@@ -4,14 +4,17 @@ namespace App\Services;
 
 use App\Enums\BookingPaymentStatusEnum;
 use App\Enums\BookingStatusEnum;
+use App\Enums\NotificationTypeEnum;
 use App\Enums\PaymentMethodEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Events\BookingConfirmedEvent;
 use App\Events\PaymentProcessedEvent;
 use App\Exceptions\BookingExpiredException;
 use App\Exceptions\PaymentVerificationException;
+use App\Exceptions\TripActionException;
 use App\Models\Booking;
 use App\Models\Payment;
+use App\Models\Trip;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -29,35 +32,53 @@ class PaymentService
      */
     public function initiate(Booking $booking, PaymentMethodEnum $method): array
     {
-        if ($booking->isExpired()) {
-            throw new BookingExpiredException;
-        }
+        // Mọi guard + tạo payment nằm TRONG transaction có khóa hàng: chặn 2 lần initiate
+        // song song cùng vé (tạo payment trùng → có thể trừ ví 2 lần) và đọc cờ
+        // driver_unavailable của chuyến NHẤT QUÁN với report (report khóa trip). Khóa theo
+        // thứ tự trip → booking, đồng bộ completeTrip/cancelTrip để tránh deadlock.
+        // Gọi cổng thanh toán (HTTP) đặt NGOÀI txn — không giữ khóa DB khi chờ mạng.
+        [$payment, $booking] = DB::transaction(function () use ($booking, $method) {
+            $trip = Trip::whereKey($booking->trip_id)->lockForUpdate()->firstOrFail();
+            $booking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
 
-        // Chỉ vé đang CHỜ mới được thanh toán. Chặn thanh toán lại vé đã xác nhận/
-        // đã thanh toán/đã hủy/hoàn tất → tránh tạo payment trùng, đặc biệt ví bị TRỪ 2 lần.
-        if ($booking->booking_status !== BookingStatusEnum::Pending) {
-            throw new \InvalidArgumentException('Vé này không ở trạng thái chờ thanh toán');
-        }
+            if ($booking->isExpired()) {
+                throw new BookingExpiredException;
+            }
 
-        // Chuyến đã khởi hành → không cho thanh toán/confirm (tránh tạo vé "mồ côi")
-        if ($booking->trip->depart_at->isPast()) {
-            throw new \InvalidArgumentException('Chuyến đã khởi hành, không thể thanh toán vé này');
-        }
+            // Chỉ vé đang CHỜ mới được thanh toán. Chặn thanh toán lại vé đã xác nhận/
+            // đã thanh toán/đã hủy/hoàn tất → tránh tạo payment trùng, đặc biệt ví bị TRỪ 2 lần.
+            if ($booking->booking_status !== BookingStatusEnum::Pending) {
+                throw new \InvalidArgumentException('Vé này không ở trạng thái chờ thanh toán');
+            }
 
-        // Đồng bộ phương thức thật do khách chọn ở bước thanh toán
-        // (booking được tạo với method tạm thời ở bước checkout)
-        if ($booking->payment_method !== $method) {
-            $booking->update(['payment_method' => $method]);
-        }
+            // Chuyến đã khởi hành → không cho thanh toán/confirm (tránh tạo vé "mồ côi")
+            if ($trip->depart_at->isPast()) {
+                throw new \InvalidArgumentException('Chuyến đã khởi hành, không thể thanh toán vé này');
+            }
 
-        $payment = Payment::create([
-            'booking_id' => $booking->id,
-            'user_id' => $booking->user_id,
-            'amount' => $booking->final_amount,
-            'method' => $method,
-            'status' => PaymentStatusEnum::Pending,
-            'gateway_order_id' => 'XEGHEP-'.strtoupper(Str::random(10)),
-        ]);
+            // Chuyến đang chờ sắp xếp lại tài xế → chặn KHỞI TẠO thanh toán MỚI (§6.3).
+            // (Callback in-flight của giao dịch đã bắt đầu trước đó vẫn xử lý an toàn ở processCallback.)
+            if ($trip->driver_unavailable_at !== null) {
+                throw TripActionException::awaitingReassignment();
+            }
+
+            // Đồng bộ phương thức thật do khách chọn ở bước thanh toán
+            // (booking được tạo với method tạm thời ở bước checkout)
+            if ($booking->payment_method !== $method) {
+                $booking->update(['payment_method' => $method]);
+            }
+
+            $payment = Payment::create([
+                'booking_id' => $booking->id,
+                'user_id' => $booking->user_id,
+                'amount' => $booking->final_amount,
+                'method' => $method,
+                'status' => PaymentStatusEnum::Pending,
+                'gateway_order_id' => 'XEGHEP-'.strtoupper(Str::random(10)),
+            ]);
+
+            return [$payment, $booking];
+        });
 
         return match ($method) {
             PaymentMethodEnum::Momo => $this->initiateMomo($payment, $booking),
@@ -139,26 +160,32 @@ class PaymentService
 
     private function processCallback(string $orderId, ?string $gatewayTxnId, array $payload, bool $success = true): bool
     {
-        $payment = Payment::where('gateway_order_id', $orderId)->first();
+        // Toàn bộ đọc + idempotency + cập nhật nằm TRONG transaction có khóa payment (và
+        // booking): webhook trùng đến song song sẽ nối đuôi nhau, người thứ 2 thấy payment
+        // đã Success → thoát idempotent, KHÔNG confirm/gửi event lần 2. Khóa payment trước,
+        // booking sau (đồng bộ refund/collectCash).
+        [$result, $bookingId] = DB::transaction(function () use ($orderId, $gatewayTxnId, $payload, $success) {
+            $payment = Payment::where('gateway_order_id', $orderId)->lockForUpdate()->first();
 
-        if (! $payment) {
-            Log::warning('Payment callback: không tìm thấy payment', ['order_id' => $orderId]);
+            if (! $payment) {
+                Log::warning('Payment callback: không tìm thấy payment', ['order_id' => $orderId]);
 
-            return false;
-        }
+                return [false, null];
+            }
 
-        // Idempotency check — tránh xử lý 2 lần
-        if ($payment->status === PaymentStatusEnum::Success) {
-            return true;
-        }
+            // Idempotency check SAU khi khóa — chống xử lý 2 lần (webhook trùng).
+            if ($payment->status === PaymentStatusEnum::Success) {
+                return [true, null];
+            }
 
-        if (! $success) {
-            $payment->update(['status' => PaymentStatusEnum::Failed, 'gateway_response' => $payload]);
+            if (! $success) {
+                $payment->update(['status' => PaymentStatusEnum::Failed, 'gateway_response' => $payload]);
 
-            return false;
-        }
+                return [false, null];
+            }
 
-        DB::transaction(function () use ($payment, $gatewayTxnId, $payload) {
+            $booking = Booking::whereKey($payment->booking_id)->lockForUpdate()->firstOrFail();
+
             $payment->update([
                 'status' => PaymentStatusEnum::Success,
                 'gateway_txn_id' => $gatewayTxnId,
@@ -166,7 +193,6 @@ class PaymentService
                 'paid_at' => now(),
             ]);
 
-            $booking = $payment->booking;
             $booking->update([
                 'payment_status' => BookingPaymentStatusEnum::Paid,
                 'booking_status' => BookingStatusEnum::Confirmed,
@@ -174,9 +200,60 @@ class PaymentService
             ]);
 
             event(new PaymentProcessedEvent($booking, $payment));
+
+            return [true, $booking->id];
         });
 
-        return true;
+        // Callback in-flight đến SAU khi chuyến đã có cờ chờ-sắp-xếp-lại (khách bấm thanh toán
+        // TRƯỚC khi cờ được set) → KHÔNG chặn, đã ghi Paid+Confirmed, GIỮ ghế. Chỉ báo riêng
+        // cho khách này biết chuyến đang đổi tài xế vì họ confirm sau đợt gửi hàng loạt (§6.3).
+        // Chạy SAU commit + chỉ khi vừa confirm trong lần này ($bookingId != null) → không
+        // gửi lại khi webhook trùng.
+        if ($bookingId !== null) {
+            $this->notifyIfAwaitingReassignment(Booking::find($bookingId));
+        }
+
+        return $result;
+    }
+
+    /**
+     * Nếu vé vừa confirm nằm trên chuyến đang chờ sắp xếp lại tài xế → gửi thông báo
+     * TripDriverUnavailable cho chính khách này. Không tự hoàn, không giải phóng ghế.
+     */
+    private function notifyIfAwaitingReassignment(?Booking $booking): void
+    {
+        if (! $booking) {
+            return;
+        }
+
+        $trip = Trip::with('route')->find($booking->trip_id);
+        if (! $trip || ! $trip->isAwaitingReassignment()) {
+            return;
+        }
+
+        $when = $trip->depart_at->format('H:i d/m');
+        $route = "{$trip->route->origin_city} → {$trip->route->dest_city}";
+        $type = NotificationTypeEnum::TripDriverUnavailable;
+
+        // Dedupe DÙNG CHUNG khóa incident với SendTripDriverUnavailableNotificationListener:
+        // nếu listener hàng loạt đã (hoặc sẽ) gửi cho chính khách này thì bản callback này
+        // trùng khóa → bỏ qua ở tầng DB, khách chỉ nhận 1 thông báo cho mỗi incident.
+        $incident = $trip->driverIncidents()->open()->latest('reported_at')->first();
+        $dedupeKey = $incident
+            ? "tdu:{$incident->id}:{$booking->user_id}:{$type->value}"
+            : null;
+
+        $this->notificationService->send(
+            $booking->user,
+            $type,
+            [
+                'title' => 'Chuyến đang sắp xếp lại tài xế',
+                'body' => "Chuyến {$route} {$when} đang được sắp xếp lại tài xế. Vé của bạn vẫn được giữ, chúng tôi sẽ cập nhật sớm.",
+                'booking_id' => $booking->id,
+            ],
+            [],
+            $dedupeKey,
+        );
     }
 
     private function initiateMomo(Payment $payment, Booking $booking): array

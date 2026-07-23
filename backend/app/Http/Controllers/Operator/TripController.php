@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Operator;
 
 use App\Enums\TripStatusEnum;
+use App\Exceptions\TripActionException;
 use App\Exceptions\TripNotAvailableException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Operator\ReassignDriverRequest;
 use App\Http\Requests\Operator\StoreTripRequest;
 use App\Http\Resources\Operator\TripResource;
 use App\Repositories\Contracts\TripRepositoryInterface;
 use App\Services\TripService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -106,19 +109,46 @@ class TripController extends Controller
     {
         $request->validate(['reason' => ['required', 'string', 'max:500']]);
 
-        $trip = $this->tripRepo->findById($id);
-        $operator = auth('operator')->user()->operator;
-
-        if (! $trip || $trip->vehicle->operator_id !== $operator->id) {
-            return response()->json(['success' => false, 'message' => 'Chuyến đi không tồn tại'], 404);
-        }
+        $operatorUser = auth('operator')->user();
+        $operator = $operatorUser->operator;
 
         try {
-            $this->tripService->cancelTrip($trip, $request->reason, true);
+            $this->tripService->cancelTrip($id, $operator->id, $operatorUser->id, $request->reason, true);
 
             return response()->json(['success' => true, 'message' => 'Đã huỷ chuyến. Hoàn tiền 100% + bồi thường 20k cho hành khách']);
+        } catch (TripActionException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage(), 'code' => $e->errorCode], $e->status);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['success' => false, 'message' => 'Chuyến đi không tồn tại'], 404);
         } catch (\Exception $e) {
             Log::error('Operator cancel trip failed', ['error' => $e->getMessage(), 'trip' => $id]);
+
+            return response()->json(['success' => false, 'message' => 'Có lỗi xảy ra'], 500);
+        }
+    }
+
+    /**
+     * Nhà xe đổi tài xế cho chuyến đang chờ sắp xếp lại (hoặc đổi chủ động) — §7.2.
+     */
+    public function reassignDriver(ReassignDriverRequest $request, string $id): JsonResponse
+    {
+        $operatorUser = auth('operator')->user();
+        $operator = $operatorUser->operator;
+
+        try {
+            $trip = $this->tripService->reassignDriver($id, $operator->id, $request->validated('driver_id'), $operatorUser->id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã đổi tài xế cho chuyến.',
+                'data' => new TripResource($trip->load(['route', 'vehicle', 'driver.user'])),
+            ]);
+        } catch (TripActionException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage(), 'code' => $e->errorCode], $e->status);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['success' => false, 'message' => 'Chuyến đi không tồn tại'], 404);
+        } catch (\Exception $e) {
+            Log::error('Operator reassign driver failed', ['error' => $e->getMessage(), 'trip' => $id]);
 
             return response()->json(['success' => false, 'message' => 'Có lỗi xảy ra'], 500);
         }

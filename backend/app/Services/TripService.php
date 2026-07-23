@@ -6,12 +6,16 @@ use App\Enums\BookingStatusEnum;
 use App\Enums\DriverStatusEnum;
 use App\Enums\TripStatusEnum;
 use App\Events\TripCompletedEvent;
+use App\Events\TripDriverReassignedEvent;
+use App\Events\TripDriverUnavailableEvent;
 use App\Events\TripStartedEvent;
+use App\Exceptions\TripActionException;
 use App\Exceptions\TripNotAvailableException;
 use App\Models\Driver;
 use App\Models\Route;
 use App\Models\SeatMap;
 use App\Models\Trip;
+use App\Models\TripDriverIncident;
 use App\Models\Vehicle;
 use App\Repositories\Contracts\TripRepositoryInterface;
 use Carbon\Carbon;
@@ -222,26 +226,232 @@ class TripService
         return ['created' => $created, 'skipped' => $skipped];
     }
 
-    public function startTrip(Trip $trip): void
+    /**
+     * Tài xế báo "không chạy được chuyến X" (§6.1). Đặt cờ chờ-sắp-xếp-lại + mở incident.
+     * Mọi kiểm tra nằm TRONG transaction sau khi khóa trip (chống race — §6 nguyên tắc chung).
+     * Idempotent: báo lần 2 không tạo incident/event mới (R4).
+     *
+     * @throws TripActionException 404 (không phải chuyến của mình) | 422 (R2 trạng thái, R3 cutoff)
+     */
+    public function reportDriverUnavailable(string $tripId, string $driverId, string $reason): void
     {
-        $trip->update([
-            'status' => TripStatusEnum::InProgress,
-            'started_at' => now(),
-        ]);
+        $cutoff = (int) config('booking.driver_report_cutoff_minutes', 15);
+
+        $event = DB::transaction(function () use ($tripId, $driverId, $reason, $cutoff) {
+            $trip = Trip::whereKey($tripId)->lockForUpdate()->firstOrFail();
+
+            // R1 — ownership (404, không tiết lộ chuyến người khác).
+            if ($trip->driver_id !== $driverId) {
+                throw TripActionException::notFound();
+            }
+
+            // R4 — đã báo trước đó → idempotent, không tạo incident/event lần 2.
+            if ($trip->isAwaitingReassignment()) {
+                return null;
+            }
+
+            // R2 — chỉ chuyến chưa chạy mới báo được.
+            if (! in_array($trip->status, [TripStatusEnum::Scheduled, TripStatusEnum::Boarding], true)) {
+                throw TripActionException::notReportable();
+            }
+
+            // R3 — phải còn > cutoff phút trước giờ chạy.
+            if ($trip->depart_at->lte(now()->addMinutes($cutoff))) {
+                throw TripActionException::reportCutoffPassed($cutoff);
+            }
+
+            $trip->update([
+                'driver_unavailable_at' => now(),
+                'driver_unavailable_reason' => $reason,
+            ]);
+
+            $incident = TripDriverIncident::create([
+                'trip_id' => $trip->id,
+                'reported_driver_id' => $driverId,
+                'reason' => $reason,
+                'reported_at' => now(),
+                'status' => TripDriverIncident::STATUS_OPEN,
+            ]);
+
+            return new TripDriverUnavailableEvent($trip->id, $reason, $driverId, $incident->id);
+        });
+
+        if ($event === null) {
+            return; // idempotent — đã báo rồi
+        }
+
+        // Chuyến biến mất khỏi kết quả tìm ngay (không chờ TTL cache).
+        $this->flushSearchCache();
+
+        // Dispatch SAU commit — tránh gửi thông báo khi transaction rollback.
+        event($event);
+    }
+
+    /**
+     * Nhà xe đổi tài xế cho chuyến (§6.2). Không chịu cutoff 15' nhưng bắt buộc depart_at > now.
+     * Khóa trip + khóa record tài xế mới trong transaction, kiểm A1..A7 sau khi khóa.
+     *
+     * @throws TripActionException 404 (không thuộc nhà xe) | 422 (A2..A7)
+     */
+    public function reassignDriver(string $tripId, string $operatorId, string $newDriverId, string $actorUserId): Trip
+    {
+        // attempts: 3 — mạng lưới an toàn cho deadlock InnoDB (SQLSTATE 40001): khi 2 reassign
+        // song song tranh khóa, MySQL có thể hủy 1 bên; Laravel chạy lại nguyên transaction.
+        // Lần chạy lại thấy tài xế đã bị gán chuyến chồng giờ → ném DRIVER_SCHEDULE_CONFLICT
+        // sạch sẽ (422) thay vì lỗi deadlock 500. Thứ tự khóa tài-xế-TRƯỚC-trip cũng đã giảm
+        // hẳn khả năng deadlock (bên chờ chưa giữ khóa trip nào).
+        [$trip, $event] = DB::transaction(function () use ($tripId, $operatorId, $newDriverId, $actorUserId) {
+            // Khóa record tài xế mới TRƯỚC — điểm serialize mọi reassign tới cùng tài xế.
+            // Khóa tài xế trước khi khóa trip: bên đang chờ tài xế CHƯA giữ khóa trip nào nên
+            // không tạo được vòng chờ chéo (trip↔driver) → tránh deadlock có hệ thống.
+            $newDriver = Driver::whereKey($newDriverId)->with('user')->lockForUpdate()->first();
+
+            $trip = Trip::whereKey($tripId)->lockForUpdate()->firstOrFail();
+
+            // A1 — trip thuộc nhà xe (404, không lộ chuyến khác).
+            if ($trip->vehicle->operator_id !== $operatorId) {
+                throw TripActionException::notFound();
+            }
+
+            // A2 — chỉ đổi khi chưa chạy.
+            if (! in_array($trip->status, [TripStatusEnum::Scheduled, TripStatusEnum::Boarding], true)) {
+                throw TripActionException::notReassignable();
+            }
+
+            // A3 — không đổi sau giờ khởi hành (chặn kẽ hở 2h grace của auto-resolve).
+            if ($trip->depart_at->lte(now())) {
+                throw TripActionException::alreadyDeparted();
+            }
+
+            // A4 — tồn tại + đúng nhà xe + chưa xóa mềm (SoftDeletes loại trừ mặc định)
+            // + tài khoản user còn hoạt động (is_active). Tài xế bị vô hiệu hóa không được
+            // xếp vào chuyến (không đăng nhập được → không nhận/không chạy chuyến).
+            if (! $newDriver
+                || $newDriver->operator_id !== $operatorId
+                || ! $newDriver->user
+                || ! $newDriver->user->is_active) {
+                throw TripActionException::driverNotInOperator();
+            }
+
+            // A5 — đã verified + GPLX chưa hết hạn.
+            if ($newDriver->status !== DriverStatusEnum::Verified
+                || $newDriver->license_expiry->lt(today())) {
+                throw TripActionException::driverNotEligible();
+            }
+
+            // A6 — khác tài xế hiện tại.
+            $oldDriverId = $trip->driver_id;
+            if ($newDriverId === $oldDriverId) {
+                throw TripActionException::driverUnchanged();
+            }
+
+            // A7 — tài xế mới không trùng khung giờ với chuyến khác (chưa hủy).
+            // lockForUpdate BẮT BUỘC: dưới MySQL REPEATABLE READ, read thường dùng snapshot
+            // tạo lúc câu SELECT đầu txn (trước khi tài xế bị khóa) → có thể BỎ SÓT chuyến
+            // mà một reassign song song vừa gán cho cùng tài xế này. Locking read luôn đọc
+            // bản mới nhất đã commit → thấy xung đột, chặn double-book. (Đã serialize qua
+            // khóa record tài xế phía trên; locking read đóng nốt kẽ hở snapshot.)
+            $conflict = Trip::where('driver_id', $newDriverId)
+                ->whereKeyNot($trip->id)
+                ->whereIn('status', [TripStatusEnum::Scheduled, TripStatusEnum::Boarding, TripStatusEnum::InProgress])
+                ->where('depart_at', '<', $trip->arrive_at)
+                ->where('arrive_at', '>', $trip->depart_at)
+                ->lockForUpdate()
+                ->exists();
+            if ($conflict) {
+                throw TripActionException::driverScheduleConflict();
+            }
+
+            // Đổi tài xế + xóa cờ chờ-sắp-xếp-lại.
+            $trip->update([
+                'driver_id' => $newDriverId,
+                'driver_unavailable_at' => null,
+                'driver_unavailable_reason' => null,
+            ]);
+
+            // Đóng incident đang mở (nếu có) → resolved(reassigned).
+            $trip->driverIncidents()->open()->update([
+                'status' => TripDriverIncident::STATUS_RESOLVED,
+                'resolution' => TripDriverIncident::RESOLUTION_REASSIGNED,
+                'replacement_driver_id' => $newDriverId,
+                'resolved_by_user_id' => $actorUserId,
+                'resolved_at' => now(),
+            ]);
+
+            return [$trip, new TripDriverReassignedEvent($trip->id, $oldDriverId, $newDriverId)];
+        }, attempts: 3);
+
+        // Chuyến có thể xuất hiện lại trong tìm kiếm (cờ đã gỡ) → làm mới cache.
+        $this->flushSearchCache();
+
+        event($event);
+
+        return $trip->fresh();
+    }
+
+    /**
+     * Tài xế bắt đầu chuyến. Ownership + guard cờ kiểm TRONG transaction sau khi khóa (§6.4).
+     *
+     * @throws TripActionException 404 (không phải chuyến của mình) | 422 (trạng thái / đang chờ sắp xếp lại)
+     */
+    public function startTrip(string $tripId, string $driverId): void
+    {
+        $trip = DB::transaction(function () use ($tripId, $driverId) {
+            $trip = Trip::whereKey($tripId)->lockForUpdate()->firstOrFail();
+
+            // Ownership trong txn: chặn tài xế cũ start thay tài xế mới sau khi đã reassign.
+            if ($trip->driver_id !== $driverId) {
+                throw TripActionException::notFound();
+            }
+
+            if (! in_array($trip->status, [TripStatusEnum::Scheduled, TripStatusEnum::Boarding], true)) {
+                throw TripActionException::notStartable();
+            }
+
+            // Chặn start khi đang chờ sắp xếp lại tài xế.
+            if ($trip->isAwaitingReassignment()) {
+                throw TripActionException::awaitingReassignment();
+            }
+
+            $trip->update([
+                'status' => TripStatusEnum::InProgress,
+                'started_at' => now(),
+            ]);
+
+            return $trip;
+        });
 
         event(new TripStartedEvent($trip));
     }
 
-    public function completeTrip(Trip $trip): void
+    /**
+     * Tài xế/hệ thống hoàn tất chuyến. Khi có $driverId → kiểm ownership trong txn (§6.4);
+     * $driverId = null cho auto-resolve/system (bỏ qua ownership).
+     *
+     * @throws TripActionException 404 (không phải chuyến của mình) | 422 (chưa bắt đầu)
+     */
+    public function completeTrip(string $tripId, ?string $driverId = null): void
     {
-        DB::transaction(function () use ($trip) {
+        $trip = DB::transaction(function () use ($tripId, $driverId) {
+            $trip = Trip::whereKey($tripId)->lockForUpdate()->firstOrFail();
+
+            if ($driverId !== null && $trip->driver_id !== $driverId) {
+                throw TripActionException::notFound();
+            }
+
+            if ($trip->status !== TripStatusEnum::InProgress) {
+                throw TripActionException::notCompletable();
+            }
+
             $trip->update([
                 'status' => TripStatusEnum::Completed,
                 'completed_at' => now(),
             ]);
 
-            // Tất toán vé: checked_in→completed, confirmed→no_show, pending→cancelled
+            // Tất toán vé: checked_in+confirmed→completed, pending→cancelled
             $this->bookingService->finalizeOnTripComplete($trip);
+
+            return $trip;
         });
 
         event(new TripCompletedEvent($trip));
@@ -260,12 +470,26 @@ class TripService
             return;
         }
 
-        DB::transaction(function () use ($trip) {
+        $trip = DB::transaction(function () use ($trip) {
+            // Khóa + đọc lại bản mới nhất: model truyền vào có thể đã cũ (chuyến vừa bị
+            // hủy/hoàn tất ở luồng khác). Guard lại TRONG txn để idempotent, tránh
+            // ghi đè trạng thái cuối bằng dữ liệu stale.
+            $trip = Trip::whereKey($trip->id)->lockForUpdate()->firstOrFail();
+
+            if (in_array($trip->status, [TripStatusEnum::Completed, TripStatusEnum::Cancelled], true)) {
+                return null;
+            }
+
             $trip->update([
                 'status' => TripStatusEnum::Completed,
                 'started_at' => $trip->started_at ?? $trip->depart_at,
                 'completed_at' => now(),
             ]);
+
+            // Nếu chuyến còn treo cờ chờ-sắp-xếp-lại (hiếm): gỡ cờ + đóng incident với
+            // resolution 'completed' (chuyến ĐÃ CHẠY — không phải cancelled), tránh dữ liệu
+            // mâu thuẫn (chuyến completed nhưng incident ghi resolution=cancelled).
+            $this->clearReassignmentFlag($trip, null, TripDriverIncident::RESOLUTION_COMPLETED);
 
             // confirmed + checked_in → completed (đã đi, ghi nhận doanh thu)
             $trip->bookings()
@@ -280,27 +504,49 @@ class TripService
                     'cancelled_at' => now(),
                     'cancel_reason' => 'Chuyến đã kết thúc, vé chưa thanh toán',
                 ]);
+
+            return $trip;
         });
+
+        if ($trip === null) {
+            return; // đã chốt trạng thái ở luồng khác — idempotent, không phát event trùng
+        }
 
         event(new TripCompletedEvent($trip));
     }
 
     /**
      * Hủy chuyến (do nhà xe/admin hoặc tự động khi quá giờ không thực hiện).
-     * Hoàn 100% + bồi thường cho mọi vé còn hiệu lực.
+     * Hoàn 100% + bồi thường cho mọi vé còn hiệu lực + gỡ cờ + đóng incident (§6.5).
+     *
+     * Actor nullable: operator truyền $operatorId (kiểm ownership trong txn); admin/auto-resolve
+     * truyền null (bỏ qua ownership). $actorUserId ghi vào incident.resolved_by_user_id.
+     *
+     * @throws TripActionException 404 khi $operatorId có nhưng chuyến không thuộc nhà xe đó
      */
-    public function cancelTrip(Trip $trip, string $reason, bool $compensate = true): void
+    public function cancelTrip(string $tripId, ?string $operatorId, ?string $actorUserId, string $reason, bool $compensate = true): void
     {
-        if (in_array($trip->status, [TripStatusEnum::Completed, TripStatusEnum::Cancelled], true)) {
-            return;
-        }
+        DB::transaction(function () use ($tripId, $operatorId, $actorUserId, $reason, $compensate) {
+            $trip = Trip::whereKey($tripId)->lockForUpdate()->firstOrFail();
 
-        DB::transaction(function () use ($trip, $reason, $compensate) {
+            // Ownership (chỉ khi operator gọi) — 404, không lộ chuyến nhà xe khác.
+            if ($operatorId !== null && $trip->vehicle->operator_id !== $operatorId) {
+                throw TripActionException::notFound();
+            }
+
+            if (in_array($trip->status, [TripStatusEnum::Completed, TripStatusEnum::Cancelled], true)) {
+                return; // đã chốt trạng thái — idempotent
+            }
+
             $trip->update([
                 'status' => TripStatusEnum::Cancelled,
                 'cancelled_at' => now(),
                 'cancel_reason' => $reason,
             ]);
+
+            // Gỡ cờ + đóng incident đang mở → resolved(cancelled), tránh chuyến cancelled
+            // mà vẫn is_awaiting_reassignment (§6.5).
+            $this->clearReassignmentFlag($trip, $actorUserId);
 
             $bookings = $trip->bookings()
                 ->whereIn('booking_status', [
@@ -317,7 +563,30 @@ class TripService
         });
 
         $this->flushSearchCache(); // chuyến bị hủy biến mất khỏi kết quả tìm ngay
+    }
 
+    /**
+     * Gỡ cờ chờ-sắp-xếp-lại + đóng incident đang mở thành resolved.
+     * Gọi trong transaction hủy/hoàn tất chuyến. No-op nếu chuyến không có cờ.
+     * $resolution: cancelled (hủy chuyến) | completed (chuyến vẫn chạy xong).
+     */
+    private function clearReassignmentFlag(Trip $trip, ?string $actorUserId, string $resolution = TripDriverIncident::RESOLUTION_CANCELLED): void
+    {
+        if (! $trip->isAwaitingReassignment()) {
+            return;
+        }
+
+        $trip->update([
+            'driver_unavailable_at' => null,
+            'driver_unavailable_reason' => null,
+        ]);
+
+        $trip->driverIncidents()->open()->update([
+            'status' => TripDriverIncident::STATUS_RESOLVED,
+            'resolution' => $resolution,
+            'resolved_by_user_id' => $actorUserId,
+            'resolved_at' => now(),
+        ]);
     }
 
     private function generateSeatMap(Trip $trip, Vehicle $vehicle): void

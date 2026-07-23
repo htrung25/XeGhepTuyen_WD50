@@ -35,7 +35,7 @@ class AutoResolveTripsCommand extends Command
 
         foreach ($stale as $trip) {
             try {
-                $tripService->cancelTrip($trip, 'Nhà xe không thực hiện chuyến (quá giờ khởi hành)', true);
+                $tripService->cancelTrip($trip->id, null, null, 'Nhà xe không thực hiện chuyến (quá giờ khởi hành)', true);
                 $this->info("Đã hủy + hoàn tiền chuyến {$trip->tracking_code}");
             } catch (\Throwable $e) {
                 Log::error('AutoResolve cancel failed', ['trip' => $trip->id, 'error' => $e->getMessage()]);
@@ -50,7 +50,7 @@ class AutoResolveTripsCommand extends Command
 
         foreach ($overdue as $trip) {
             try {
-                $tripService->completeTrip($trip);
+                $tripService->completeTrip($trip->id); // system actor (không kiểm ownership)
                 $this->info("Đã tự hoàn tất chuyến {$trip->tracking_code}");
             } catch (\Throwable $e) {
                 Log::error('AutoResolve complete failed', ['trip' => $trip->id, 'error' => $e->getMessage()]);

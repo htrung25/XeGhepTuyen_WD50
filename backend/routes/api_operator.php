@@ -57,6 +57,7 @@ Route::middleware(['auth:sanctum', 'role:operator'])->group(function () {
     Route::get('trips/{id}', [TripController::class, 'show']);
     Route::post('trips/{id}/cancel', [TripController::class, 'cancel']);
     Route::post('trips/{id}/complete', [TripController::class, 'complete']);
+    Route::post('trips/{id}/reassign-driver', [TripController::class, 'reassignDriver']);
     Route::get('trips/{id}/manifest', [TripController::class, 'manifest']);
     Route::post('trips/{id}/manifest/export', [TripController::class, 'exportManifest']);
 

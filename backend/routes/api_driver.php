@@ -38,6 +38,7 @@ Route::middleware(['auth:sanctum', 'role:driver'])->group(function () {
     Route::get('trips/{id}/passengers', [TripController::class, 'passengers']);
     Route::post('trips/{id}/start', [TripController::class, 'start']);
     Route::post('trips/{id}/complete', [TripController::class, 'complete']);
+    Route::post('trips/{id}/report-unavailable', [TripController::class, 'reportUnavailable']);
 
     // Check-in
     Route::post('checkin', [CheckinController::class, 'checkin']);
