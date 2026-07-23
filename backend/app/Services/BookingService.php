@@ -225,7 +225,12 @@ class BookingService
      */
     public function expire(Booking $booking): void
     {
-        if (! $booking->isExpired()) {
+        // Guard PHẢI gồm booking_status: isExpired() chỉ xét expires_at + payment_status,
+        // mà các luồng hủy khác (khách tự hủy, cancelByOperator, finalizeOnTripComplete,
+        // markRanCompleted) set 'cancelled' nhưng KHÔNG đổi payment_status/expires_at.
+        // Thiếu guard này, job expire chạy lại trên vé đã hủy sẽ increment
+        // available_seats lần hai → chuyến thừa ghế ảo (oversell).
+        if ($booking->booking_status !== BookingStatusEnum::Pending || ! $booking->isExpired()) {
             return;
         }
 
