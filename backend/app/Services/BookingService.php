@@ -198,6 +198,7 @@ class BookingService
                 'booking_status' => BookingStatusEnum::Cancelled,
                 'cancelled_at' => now(),
                 'cancel_reason' => $reason,
+                '',
             ]);
 
             // Giải phóng ghế
@@ -210,7 +211,10 @@ class BookingService
 
             // Dispatch hoàn tiền nếu đã thanh toán
             if ($booking->payment_status === BookingPaymentStatusEnum::Paid && $refundAmount > 0) {
-                ProcessRefundJob::dispatch($booking, $refundAmount)->onQueue('high');
+                // afterCommit BẮT BUỘC: queue redis đặt after_commit=false, nếu dispatch
+                // ngay trong transaction thì worker có thể hoàn tiền TRƯỚC khi commit —
+                // transaction rollback là tiền đã ra mà vé vẫn chưa hủy.
+                ProcessRefundJob::dispatch($booking, $refundAmount)->onQueue('high')->afterCommit();
             }
 
             return [
@@ -301,7 +305,8 @@ class BookingService
             // Chỉ vé ĐÃ THANH TOÁN mới hoàn tiền + bồi thường.
             // Vé chưa trả (pending / tiền mặt chưa thu) → chỉ hủy, không có gì để hoàn/bồi thường.
             if ($wasPaid) {
-                ProcessRefundJob::dispatch($booking, (int) $booking->final_amount)->onQueue('high');
+                // afterCommit BẮT BUỘC — xem giải thích ở cancel()
+                ProcessRefundJob::dispatch($booking, (int) $booking->final_amount)->onQueue('high')->afterCommit();
 
                 if ($compensate) {
                     $this->walletService->credit(
