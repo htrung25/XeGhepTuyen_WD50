@@ -5,13 +5,17 @@ use App\Jobs\ProcessRefundJob;
 use App\Models\Booking;
 use App\Models\Driver;
 use App\Models\Operator;
+use App\Models\Payment;
 use App\Models\Route;
 use App\Models\RouteStop;
 use App\Models\SeatMap;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Models\WalletTransaction;
 use App\Services\BookingService;
+use App\Services\PaymentService;
+use App\Services\WalletService;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 
@@ -97,4 +101,28 @@ it('job tạo booking cũng giữ afterCommit (chuẩn tham chiếu sẵn có)',
 
     // Không job refund nào được phép dispatch mà thiếu afterCommit
     Queue::assertPushed(ProcessRefundJob::class, 1);
+});
+
+/*
+ * GIỚI HẠN: test đơn luồng chỉ chứng minh guard TUẦN TỰ (isSuccessful() → thoát sớm).
+ * Nó KHÔNG chứng minh được lockForUpdate trong refund() — lock chỉ có tác dụng khi hai
+ * worker xử lý song song (retry chồng lên lần chạy gốc) cùng đọc status=Success. Kiểm
+ * chứng thật cần 2 tiến trình + MySQL; ở đây test đóng vai chốt hồi quy cho guard.
+ */
+it('refund() chạy lại (queue retry) KHÔNG hoàn tiền lần hai', function () {
+    $booking = makePaidCancellableBooking();
+    Payment::create([
+        'booking_id' => $booking->id, 'user_id' => $booking->user_id,
+        'amount' => 150000, 'method' => 'momo', 'status' => 'success',
+        'gateway_order_id' => 'XEGHEP-'.Str::upper(Str::random(10)), 'paid_at' => now(),
+    ]);
+    $service = app(PaymentService::class);
+    $service->refund($booking, 150000);
+    $service->refund($booking->refresh(), 150000); // ProcessRefundJob tries=3 → retry
+    $service->refund($booking->refresh(), 150000);
+
+    // Đúng MỘT giao dịch ví được ghi dù gọi 3 lần
+    expect(WalletTransaction::where('booking_id', $booking->id)->count())->toBe(1)
+        ->and(app(WalletService::class)->getBalance($booking->user))->toBe(150000)
+        ->and($booking->refresh()->payment_status->value)->toBe('refunded');
 });

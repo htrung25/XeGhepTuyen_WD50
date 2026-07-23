@@ -130,7 +130,13 @@ class PaymentService
     public function refund(Booking $booking, int $amount): void
     {
         DB::transaction(function () use ($booking, $amount) {
-            $payment = $booking->payment;
+            // KHÓA hàng payment rồi mới kiểm trạng thái: ProcessRefundJob có tries=3,
+            // queue retry hoặc 2 job đồng thời sẽ cùng đọc status=Success nếu không khóa
+            // ⇒ credit ví HAI LẦN. lockForUpdate serialize, người sau thấy Refunded → thoát.
+            $payment = Payment::where('booking_id', $booking->id)
+                ->latest()
+                ->lockForUpdate()
+                ->first();
 
             if (! $payment || ! $payment->isSuccessful()) {
                 return;
@@ -270,19 +276,23 @@ class PaymentService
         $signature = hash_hmac('sha256', $rawHash, $secretKey);
 
         try {
-            $response = Http::post($endpoint.'/v2/gateway/api/create', [
-                'partnerCode' => $partnerCode,
-                'requestId' => $payment->id,
-                'amount' => $payment->amount,
-                'orderId' => $payment->gateway_order_id,
-                'orderInfo' => "Vé xe {$booking->booking_code}",
-                'redirectUrl' => $redirectUrl,
-                'ipnUrl' => $ipnUrl,
-                'lang' => 'vi',
-                'requestType' => 'captureWallet',
-                'extraData' => '',
-                'signature' => $signature,
-            ]);
+            // Timeout tường minh: initiate chạy trong request đồng bộ của khách —
+            // MoMo chậm không được treo cả luồng đặt vé.
+            $response = Http::connectTimeout(5)
+                ->timeout(20)
+                ->post($endpoint.'/v2/gateway/api/create', [
+                    'partnerCode' => $partnerCode,
+                    'requestId' => $payment->id,
+                    'amount' => $payment->amount,
+                    'orderId' => $payment->gateway_order_id,
+                    'orderInfo' => "Vé xe {$booking->booking_code}",
+                    'redirectUrl' => $redirectUrl,
+                    'ipnUrl' => $ipnUrl,
+                    'lang' => 'vi',
+                    'requestType' => 'captureWallet',
+                    'extraData' => '',
+                    'signature' => $signature,
+                ]);
 
             return ['payment_url' => $response->json('payUrl'), 'order_id' => $payment->gateway_order_id];
         } catch (\Exception $e) {

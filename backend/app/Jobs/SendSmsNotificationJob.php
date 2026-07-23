@@ -44,14 +44,17 @@ class SendSmsNotificationJob implements ShouldQueue
             return;
         }
 
-        $response = Http::post('https://rest.esms.vn/MainService.svc/json/SendMultipleMessage_V4_post_json/', [
-            'ApiKey' => $apiKey,
-            'SecretKey' => $secretKey,
-            'SMSTYPE' => 2,
-            'Brandname' => $brandName,
-            'Phone' => $this->phone,
-            'Content' => $this->message,
-        ]);
+        // Timeout tường minh: tránh call treo vượt retry_after → job bị retry khi vẫn chạy ⇒ SMS trùng.
+        $response = Http::connectTimeout(5)
+            ->timeout(15)
+            ->post('https://rest.esms.vn/MainService.svc/json/SendMultipleMessage_V4_post_json/', [
+                'ApiKey' => $apiKey,
+                'SecretKey' => $secretKey,
+                'SMSTYPE' => 2,
+                'Brandname' => $brandName,
+                'Phone' => $this->phone,
+                'Content' => $this->message,
+            ]);
 
         if (! $response->successful() || ($response->json('CodeResult') ?? '') !== '100') {
             Log::warning('SMS gửi thất bại', [

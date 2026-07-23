@@ -68,9 +68,15 @@ return [
             'driver' => 'redis',
             'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
             'queue' => env('REDIS_QUEUE', 'default'),
-            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 90),
+            // retry_after PHẢI > worker --timeout (README dùng 90) — nếu bằng nhau,
+            // job chạy sát ngưỡng có thể bị release để retry TRONG LÚC vẫn đang chạy
+            // ⇒ xử lý trùng (hoàn tiền 2 lần). 120 > 90 để có biên an toàn.
+            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 120),
             'block_for' => null,
-            'after_commit' => false,
+            // Mặc định an toàn: job dispatch trong DB transaction chỉ được đẩy SAU khi
+            // commit. Redis không transactional nên nếu không có cờ này, rollback vẫn
+            // để lại job đã chạy (vd hoàn tiền cho vé chưa hủy).
+            'after_commit' => true,
         ],
 
         'deferred' => [
