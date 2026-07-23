@@ -99,7 +99,7 @@ class User extends Authenticatable
         return $query->where('is_active', true);
     }
 
-    public function scopeVerified($query)
+    public function scopeVerified(Builder $query): Builder
     {
         return $query->where('is_verified', true);
     }
