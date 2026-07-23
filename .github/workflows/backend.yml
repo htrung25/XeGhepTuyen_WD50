@@ -123,4 +123,4 @@ jobs:
           DB_USERNAME: root
           DB_PASSWORD: secret
           DB_URL: ''
-        run: ./vendor/bin/pest --filter=MySqlSpatialIntegrationTest
+        run: ./vendor/bin/pest --filter='MySqlSpatialIntegrationTest|MySqlWalletConstraintTest'
