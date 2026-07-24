@@ -483,6 +483,7 @@ onUnmounted(() => {
                     </div>
                     <button
                         type="button"
+                        aria-label="Đóng"
                         class="p-1 text-slate-400 transition hover:text-slate-600"
                         @click="showSepayModal = false"
                     >
