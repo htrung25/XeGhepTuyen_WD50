@@ -104,7 +104,7 @@ class User extends Authenticatable
         return $query->where('is_verified', true);
     }
 
-    public function scopeByRole($query, UserRoleEnum $role)
+    public function scopeByRole(Builder $query, UserRoleEnum $role): Builder
     {
         return $query->where('role', $role);
     }
