@@ -404,7 +404,7 @@ onBeforeUnmount(() => {
             <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:gap-4">
                 <router-link
                     v-if="booking?.id"
-                    :to="`/customer/bookings/${booking.id}/track`"
+                    :to="`/bookings/${booking.id}/track`"
                     class="rounded-xl bg-blue-600 px-8 py-3 font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
                 >
                     📡 Theo dõi chuyến đi
