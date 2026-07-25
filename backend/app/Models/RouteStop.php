@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -45,7 +46,7 @@ class RouteStop extends Model
 
     // ─── Scopes ───────────────────────────────────────────────────────────────
 
-    public function scopePickup($query)
+    public function scopePickup(Builder $query): Builder
     {
         return $query->where('is_pickup', true);
     }
