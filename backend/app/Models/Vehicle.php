@@ -94,14 +94,4 @@ class Vehicle extends Model
     {
         return $this->registration_expiry && $this->registration_expiry->diffInDays() <= 30;
     }
-
-    public function generateSeatCodes(): array
-    {
-        return match ($this->vehicle_type) {
-            VehicleTypeEnum::Mpv7 => ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'D1'],
-            VehicleTypeEnum::Van9 => ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'D1', 'D2', 'E1'],
-            VehicleTypeEnum::Minibus16 => collect(range('A', 'D'))->flatMap(fn ($r) => ["$r1", "$r2", "$r3", "$r4"])->toArray(),
-            default => ['A1', 'A2', 'B1', 'B2'],
-        };
-    }
 }
