@@ -51,7 +51,7 @@ class RouteStop extends Model
         return $query->where('is_pickup', true);
     }
 
-    public function scopeDropoff($query)
+    public function scopeDropoff(Builder $query): Builder
     {
         return $query->where('is_dropoff', true);
     }
