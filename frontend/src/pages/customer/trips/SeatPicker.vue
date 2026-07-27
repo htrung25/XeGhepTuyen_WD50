@@ -43,10 +43,10 @@ function toggleSeat(s: SeatInfo) {
     }
 }
 
-// Nhóm ghế theo tiền tố chữ cái của seat_code (A1,A2,A3,A4 -> hàng "A"), đúng
-// cấu trúc hàng thật do backend sinh (TripService::getSeatTemplate) — KHÔNG
-// cắt cứng 2 ghế/hàng, vì minibus_16 có 4 ghế/hàng (cắt cứng 2 sẽ vỡ layout
-// thành 8 hàng thay vì 4 hàng thật).
+// Nhóm ghế theo tiền tố chữ cái của seat_code (A1,A2 -> hàng "A"), đúng cấu
+// trúc hàng thật do backend sinh (TripService::getSeatTemplate) — mỗi chữ cái
+// ứng với ĐÚNG MỘT hàng ghế vật lý, sắp theo thứ tự số trong hàng để khớp
+// đúng slot của layout bên dưới.
 const seatGrid = computed(() => {
     const seatList = seats.value.filter((s) => s.status !== 'driver');
     const rowsByPrefix = new Map<string, SeatInfo[]>();
@@ -55,7 +55,88 @@ const seatGrid = computed(() => {
         if (!rowsByPrefix.has(rowKey)) rowsByPrefix.set(rowKey, []);
         rowsByPrefix.get(rowKey)!.push(seat);
     }
+    const seatNumber = (code: string) =>
+        parseInt(code.match(/\d+$/)?.[0] ?? '0', 10);
+    for (const row of rowsByPrefix.values()) {
+        row.sort((a, b) => seatNumber(a.seat_code) - seatNumber(b.seat_code));
+    }
     return Array.from(rowsByPrefix.values());
+});
+
+// Mặt cắt ngang THẬT của từng loại xe — khớp 1-1 với TripService::getSeatTemplate
+// (backend/app/Services/TripService.php). Mỗi phần tử là 1 hàng ghế vật lý: `slots`
+// liệt kê vị trí trái→phải trong hàng, số = chỉ số ghế trong hàng (đã sort ở seatGrid),
+// 'aisle' = lối đi giữa xe. `front: true` = hàng đặt cạnh ghế tài xế (đầu xe).
+type LayoutSlot = number | 'aisle';
+interface LayoutRow {
+    front?: boolean;
+    slots: LayoutSlot[];
+}
+const VEHICLE_LAYOUTS: Record<string, LayoutRow[]> = {
+    // Sedan 4 chỗ: tài xế + 1 khách hàng trước, băng ghế sau 3 chỗ
+    sedan_4: [{ front: true, slots: [0] }, { slots: [0, 1, 2] }],
+    // MPV 7 chỗ: tài xế + 1 khách hàng trước, 2 hàng băng ghế sau mỗi hàng 3 chỗ
+    mpv_7: [
+        { front: true, slots: [0] },
+        { slots: [0, 1, 2] },
+        { slots: [0, 1, 2] },
+    ],
+    // Limousine van 9 chỗ: tài xế + 2 khách hàng ghế trước, 2 hàng ghế đơn có
+    // lối đi giữa, hàng cuối băng ghế 3 chỗ
+    van_9: [
+        { front: true, slots: [0, 1] },
+        { slots: [0, 'aisle', 1] },
+        { slots: [0, 'aisle', 1] },
+        { slots: [0, 1, 2] },
+    ],
+    // Minibus 16 chỗ: tài xế + 1 khách hàng trước, 4 hàng ghế đơn/đôi có lối
+    // đi giữa, hàng cuối băng ghế 3 chỗ sát đuôi xe
+    minibus_16: [
+        { front: true, slots: [0] },
+        { slots: [0, 'aisle', 1, 2] },
+        { slots: [0, 'aisle', 1, 2] },
+        { slots: [0, 'aisle', 1, 2] },
+        { slots: [0, 'aisle', 1, 2] },
+        { slots: [0, 1, 2] },
+    ],
+};
+
+type RenderSlot = { type: 'seat'; seat: SeatInfo } | { type: 'aisle' };
+interface RenderRow {
+    front: boolean;
+    slots: RenderSlot[];
+}
+
+const renderRows = computed<RenderRow[]>(() => {
+    const rows = seatGrid.value;
+    const layout = VEHICLE_LAYOUTS[tripInfo.value?.vehicle?.vehicle_type ?? ''];
+
+    // Chỉ dùng layout thật khi số hàng VÀ số ghế mỗi hàng khớp đúng dữ liệu
+    // trả về — tránh vỡ UI nếu gặp loại xe lạ hoặc dữ liệu cũ không chuẩn.
+    const layoutMatches =
+        layout &&
+        layout.length === rows.length &&
+        layout.every(
+            (lr, ri) =>
+                lr.slots.filter((s) => s !== 'aisle').length ===
+                rows[ri].length,
+        );
+
+    if (!layoutMatches) {
+        return rows.map((row, ri) => ({
+            front: ri === 0,
+            slots: row.map((seat) => ({ type: 'seat' as const, seat })),
+        }));
+    }
+
+    return rows.map((row, ri) => ({
+        front: !!layout![ri].front,
+        slots: layout![ri].slots.map((slot) =>
+            slot === 'aisle'
+                ? { type: 'aisle' as const }
+                : { type: 'seat' as const, seat: row[slot] },
+        ),
+    }));
 });
 
 const selectedSeats = computed(() =>
@@ -253,42 +334,48 @@ onMounted(async () => {
                         </div>
                     </div>
 
-                    <!-- Car visual -->
-                    <div v-else class="flex flex-col items-center gap-2">
-                        <!-- Driver row -->
+                    <!-- Car visual: mặt cắt ngang xe thật theo từng loại xe -->
+                    <div
+                        v-else
+                        class="flex flex-col items-center gap-2 rounded-2xl border border-gray-100 bg-gray-50/50 py-4"
+                    >
+                        <div class="mb-1 text-xs text-gray-400 italic">
+                            Đầu xe
+                        </div>
+
                         <div
-                            class="mb-2 flex w-full max-w-xs items-center justify-between"
+                            v-for="(row, ri) in renderRows"
+                            :key="ri"
+                            class="flex w-full max-w-xs items-center justify-center gap-2"
                         >
                             <div
-                                class="flex h-10 w-14 items-center justify-center rounded-lg border border-gray-200 bg-gray-200 text-xs font-medium text-gray-400"
+                                v-if="row.front"
+                                class="flex h-12 w-14 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-gray-200 text-xs font-medium text-gray-400"
                             >
                                 Tài xế
                             </div>
-                            <div class="text-xs text-gray-400 italic">
-                                Đầu xe
-                            </div>
+
+                            <template v-for="(slot, si) in row.slots" :key="si">
+                                <div
+                                    v-if="slot.type === 'aisle'"
+                                    class="w-5 shrink-0"
+                                />
+                                <button
+                                    v-else
+                                    @click="toggleSeat(slot.seat)"
+                                    :disabled="slot.seat.status !== 'available'"
+                                    :class="[
+                                        'h-12 w-14 shrink-0 rounded-lg border-2 text-sm font-bold transition-all active:scale-90',
+                                        seatClasses(slot.seat),
+                                    ]"
+                                >
+                                    {{ slot.seat.seat_code }}
+                                </button>
+                            </template>
                         </div>
 
-                        <!-- Seat rows -->
-                        <div
-                            v-for="(row, ri) in seatGrid"
-                            :key="ri"
-                            class="flex w-full max-w-xs justify-center gap-4"
-                        >
-                            <button
-                                v-for="seat in row"
-                                :key="seat.seat_code"
-                                @click="toggleSeat(seat)"
-                                :disabled="seat.status !== 'available'"
-                                :class="[
-                                    'h-12 w-14 rounded-lg border-2 text-sm font-bold transition-all active:scale-90',
-                                    seatClasses(seat),
-                                ]"
-                            >
-                                {{ seat.seat_code }}
-                            </button>
-                            <!-- Fill empty if odd -->
-                            <div v-if="row.length < 2" class="w-14" />
+                        <div class="mt-1 text-xs text-gray-400 italic">
+                            Đuôi xe
                         </div>
                     </div>
 
