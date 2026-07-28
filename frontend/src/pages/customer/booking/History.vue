@@ -360,7 +360,7 @@ onMounted(() => loadBookings('upcoming'));
                             </router-link>
                             <router-link
                                 v-if="canAccessTicket(b)"
-                                :to="`/customer/bookings/${b.id}/track`"
+                                :to="`/bookings/${b.id}/track`"
                                 class="rounded-lg border border-gray-300 px-4 py-2 text-xs font-medium whitespace-nowrap text-gray-700 transition-colors hover:bg-gray-50"
                             >
                                 📡 Theo dõi xe
@@ -376,7 +376,7 @@ onMounted(() => loadBookings('upcoming'));
                         <!-- Past actions -->
                         <template v-else-if="activeTab === 'past'">
                             <router-link
-                                :to="`/customer/bookings/${b.id}/review`"
+                                :to="`/bookings/${b.id}/review`"
                                 class="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold whitespace-nowrap text-white transition-colors hover:bg-blue-700"
                             >
                                 ⭐ Đánh giá
