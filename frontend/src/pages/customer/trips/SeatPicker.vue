@@ -43,13 +43,19 @@ function toggleSeat(s: SeatInfo) {
     }
 }
 
+// Nhóm ghế theo tiền tố chữ cái của seat_code (A1,A2,A3,A4 -> hàng "A"), đúng
+// cấu trúc hàng thật do backend sinh (TripService::getSeatTemplate) — KHÔNG
+// cắt cứng 2 ghế/hàng, vì minibus_16 có 4 ghế/hàng (cắt cứng 2 sẽ vỡ layout
+// thành 8 hàng thay vì 4 hàng thật).
 const seatGrid = computed(() => {
-    const rows: SeatInfo[][] = [];
     const seatList = seats.value.filter((s) => s.status !== 'driver');
-    for (let i = 0; i < seatList.length; i += 2) {
-        rows.push(seatList.slice(i, i + 2));
+    const rowsByPrefix = new Map<string, SeatInfo[]>();
+    for (const seat of seatList) {
+        const rowKey = seat.seat_code.replace(/\d+$/, '');
+        if (!rowsByPrefix.has(rowKey)) rowsByPrefix.set(rowKey, []);
+        rowsByPrefix.get(rowKey)!.push(seat);
     }
-    return rows;
+    return Array.from(rowsByPrefix.values());
 });
 
 const selectedSeats = computed(() =>
