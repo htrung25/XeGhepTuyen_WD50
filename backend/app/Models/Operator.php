@@ -83,7 +83,7 @@ class Operator extends Model
         return $query->where('status', OperatorStatusEnum::Pending);
     }
 
-    public function scopeVerified($query)
+    public function scopeVerified(Builder $query): Builder
     {
         return $query->where('status', OperatorStatusEnum::Verified);
     }
