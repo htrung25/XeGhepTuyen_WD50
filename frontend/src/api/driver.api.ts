@@ -83,9 +83,12 @@ export const driverApi = {
     getTripHistory: (params?: { page?: number }) =>
         apiClient.send(history({ query: params })),
 
-    // ─── Check-in ──────────────────────────────────────────────────────────
-    checkin: (data: { qr_token: string; cash_collected?: boolean }) =>
-        apiClient.send(checkin(), data),
+    // ─── Check-in (thủ công — tài xế xác nhận từng khách trong danh sách) ────
+    checkin: (data: {
+        trip_id: string;
+        booking_id: string;
+        cash_collected?: boolean;
+    }) => apiClient.send(checkin(), data),
     markAbsent: (data: { trip_id: string; booking_id: string }) =>
         apiClient.send(absent(), data),
 
