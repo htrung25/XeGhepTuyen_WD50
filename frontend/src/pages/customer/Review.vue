@@ -183,9 +183,11 @@ onMounted(async () => {
                             },
                         ]"
                         :key="row.model"
-                        class="flex items-center gap-4"
+                        class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4"
                     >
-                        <div class="flex w-52 shrink-0 items-center gap-2">
+                        <div
+                            class="flex w-full shrink-0 items-center gap-2 sm:w-52"
+                        >
                             <span class="text-xl">{{ row.icon }}</span>
                             <span class="text-sm font-medium text-gray-700">{{
                                 row.label
