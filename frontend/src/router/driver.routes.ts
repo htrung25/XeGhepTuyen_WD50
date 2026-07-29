@@ -38,11 +38,6 @@ export const driverRoutes: RouteRecordRaw[] = [
                 meta: { hideNav: true },
             },
             {
-                path: 'checkin/:tripId',
-                component: () => import('@/pages/driver/checkin/QrScanner.vue'),
-                meta: { hideNav: true },
-            },
-            {
                 path: 'earnings',
                 component: () => import('@/pages/driver/earnings/Summary.vue'),
             },
