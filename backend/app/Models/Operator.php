@@ -88,7 +88,7 @@ class Operator extends Model
         return $query->where('status', OperatorStatusEnum::Verified);
     }
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', OperatorStatusEnum::Verified);
     }
