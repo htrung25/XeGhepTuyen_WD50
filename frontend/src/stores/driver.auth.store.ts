@@ -22,17 +22,20 @@ interface DriverInfo {
     operator: { company_name: string };
 }
 
+const TOKEN_KEY = 'driver_token';
+const USER_KEY = 'driver_user';
+const INFO_KEY = 'driver_info';
+const ONLINE_KEY = 'driver_online';
+
 export const useDriverAuthStore = defineStore('driverAuth', () => {
-    const token = ref<string | null>(localStorage.getItem('driver_token'));
+    const token = ref<string | null>(localStorage.getItem(TOKEN_KEY));
     const user = ref<DriverUser | null>(
-        JSON.parse(localStorage.getItem('driver_user') ?? 'null'),
+        JSON.parse(localStorage.getItem(USER_KEY) ?? 'null'),
     );
     const driver = ref<DriverInfo | null>(
-        JSON.parse(localStorage.getItem('driver_info') ?? 'null'),
+        JSON.parse(localStorage.getItem(INFO_KEY) ?? 'null'),
     );
-    const isOnline = ref<boolean>(
-        localStorage.getItem('driver_online') === 'true',
-    );
+    const isOnline = ref<boolean>(localStorage.getItem(ONLINE_KEY) === 'true');
 
     const isAuthenticated = computed(() => !!token.value);
 
@@ -45,22 +48,22 @@ export const useDriverAuthStore = defineStore('driverAuth', () => {
         token.value = t;
         user.value = u;
         driver.value = d;
-        localStorage.setItem('driver_token', t);
-        localStorage.setItem('driver_user', JSON.stringify(u));
-        localStorage.setItem('driver_info', JSON.stringify(d));
+        localStorage.setItem(TOKEN_KEY, t);
+        localStorage.setItem(USER_KEY, JSON.stringify(u));
+        localStorage.setItem(INFO_KEY, JSON.stringify(d));
     }
 
     /** Gọi sau khi đổi mật khẩu thành công để xoá cờ bắt buộc */
     function clearMustChangePassword() {
         if (user.value) {
             user.value = { ...user.value, must_change_password: false };
-            localStorage.setItem('driver_user', JSON.stringify(user.value));
+            localStorage.setItem(USER_KEY, JSON.stringify(user.value));
         }
     }
 
     function setOnline(v: boolean) {
         isOnline.value = v;
-        localStorage.setItem('driver_online', String(v));
+        localStorage.setItem(ONLINE_KEY, String(v));
     }
 
     function logout() {
@@ -68,10 +71,10 @@ export const useDriverAuthStore = defineStore('driverAuth', () => {
         user.value = null;
         driver.value = null;
         isOnline.value = false;
-        localStorage.removeItem('driver_token');
-        localStorage.removeItem('driver_user');
-        localStorage.removeItem('driver_info');
-        localStorage.removeItem('driver_online');
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(USER_KEY);
+        localStorage.removeItem(INFO_KEY);
+        localStorage.removeItem(ONLINE_KEY);
     }
 
     return {
