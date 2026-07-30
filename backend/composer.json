@@ -12,6 +12,7 @@
         "php": "^8.3",
         "aws/aws-sdk-php": "^3.388",
         "bacon/bacon-qr-code": "^3.0",
+        "barryvdh/laravel-dompdf": "^3.1",
         "darkaonline/l5-swagger": "^11.1",
         "doctrine/annotations": "^2.0",
         "laravel/chisel": "^0.1.0",

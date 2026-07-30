@@ -60,3 +60,9 @@ it('chặn token customer truy cập route driver', function () {
 it('vẫn từ chối khi không có token (401)', function () {
     $this->getJson('/api/admin/dashboard')->assertUnauthorized();
 });
+
+it('trả JSON 401 khi API request không gửi Accept application/json', function () {
+    $this->get('/api/admin/dashboard')
+        ->assertUnauthorized()
+        ->assertJsonPath('message', 'Unauthenticated.');
+});

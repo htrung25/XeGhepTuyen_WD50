@@ -46,13 +46,16 @@ return Application::configure(basePath: dirname(__DIR__))
         // Tin proxy (ngrok/reverse proxy) để nhận diện đúng scheme HTTPS từ X-Forwarded-*.
         $middleware->trustProxies(at: '*');
 
+        // Backend chỉ phục vụ API: request chưa xác thực phải trả JSON 401,
+        // không redirect sang route web "login" (route này không tồn tại).
+        $middleware->redirectGuestsTo(null);
+
         // Chặn truy cập chéo portal sau khi auth:sanctum xác thực token.
         // `permission` kiểm tra quyền chi tiết của admin (RBAC).
         $middleware->alias([
             'role' => EnsureUserRoleMiddleware::class,
             'permission' => EnsurePermissionMiddleware::class,
         ]);
-
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
