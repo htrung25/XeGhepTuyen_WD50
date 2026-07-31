@@ -10,6 +10,7 @@ use App\Services\AdminNotificationService;
 use App\Services\SettlementService;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -61,7 +62,7 @@ class RevenueController extends Controller
     }
 
     /** Query vé doanh thu thực nhận trên tập chuyến */
-    private function realizedBookings($tripIds)
+    private function realizedBookings($tripIds): Builder
     {
         return Booking::whereIn('trip_id', $tripIds)
             ->where('booking_status', self::REALIZED['booking_status'])
