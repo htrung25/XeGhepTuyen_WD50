@@ -20,6 +20,8 @@ const showConfirm = ref<'start' | 'complete' | 'unavailable' | null>(null);
 const successMsg = ref('');
 const absentLoading = ref<string | null>(null);
 const unavailableReason = ref('');
+const checkinLoading = ref<string | null>(null);
+const cashConfirmFor = ref<Passenger | null>(null);
 
 const checkedIn = computed(
     () => passengers.value.filter((p) => p.checked_in).length,
@@ -132,6 +134,34 @@ async function reportUnavailable() {
     showConfirm.value = null;
     successMsg.value =
         message ?? 'Đã báo nhà xe sắp xếp tài xế thay thế cho chuyến.';
+}
+
+// Check-in thủ công — thay cho quét QR. Vé tiền mặt chưa thu (requires_cash)
+// thì dừng lại hiện popup xác nhận thu tiền, chỉ check-in sau khi tài xế xác
+// nhận đã cầm tiền.
+async function checkinPassenger(p: Passenger, cashCollected = false) {
+    checkinLoading.value = p.id;
+    errorMsg.value = '';
+    const { data, error } = await driverApi.checkin({
+        trip_id: tripId,
+        booking_id: p.booking_id,
+        cash_collected: cashCollected,
+    });
+    checkinLoading.value = null;
+
+    if (error) {
+        errorMsg.value = typeof error === 'string' ? error : 'Có lỗi xảy ra';
+        return;
+    }
+    if (data?.requires_cash) {
+        cashConfirmFor.value = p;
+        return;
+    }
+
+    p.checked_in = true;
+    p.booking_status = 'checked_in';
+    cashConfirmFor.value = null;
+    successMsg.value = `Đã check-in: ${p.passenger_name}`;
 }
 
 async function markAbsent(p: Passenger) {
@@ -332,11 +362,11 @@ onMounted(async () => {
                     <div v-else class="divide-y divide-gray-100">
                         <div v-for="(p, idx) in passengers" :key="p.id">
                             <!-- Main row -->
-                            <button
+                            <div
                                 @click="
                                     expanded = expanded === p.id ? null : p.id
                                 "
-                                class="flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-gray-50"
+                                class="flex w-full cursor-pointer items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-gray-50"
                             >
                                 <!-- Seat number -->
                                 <div
@@ -412,7 +442,38 @@ onMounted(async () => {
                                             />
                                         </svg>
                                     </a>
+                                    <button
+                                        v-if="
+                                            trip.status === 'in_progress' &&
+                                            !p.checked_in &&
+                                            p.booking_status !== 'no_show'
+                                        "
+                                        @click.stop="checkinPassenger(p)"
+                                        :disabled="checkinLoading === p.id"
+                                        title="Check-in khách này"
+                                        class="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-300 bg-gray-100 text-gray-400 transition-colors hover:border-green-400 hover:bg-green-50 hover:text-green-600 disabled:opacity-60"
+                                    >
+                                        <div
+                                            v-if="checkinLoading === p.id"
+                                            class="h-4 w-4 animate-spin rounded-full border-2 border-green-600 border-t-transparent"
+                                        />
+                                        <svg
+                                            v-else
+                                            class="h-4 w-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="3"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                d="M5 13l4 4L19 7"
+                                            />
+                                        </svg>
+                                    </button>
                                     <div
+                                        v-else
                                         :class="[
                                             'flex h-9 w-9 items-center justify-center rounded-lg',
                                             p.checked_in
@@ -436,7 +497,7 @@ onMounted(async () => {
                                         </svg>
                                     </div>
                                 </div>
-                            </button>
+                            </div>
 
                             <!-- Expanded row -->
                             <div
@@ -507,14 +568,14 @@ onMounted(async () => {
                         Đã báo nghỉ chuyến. Nhà xe đang sắp xếp tài xế thay thế.
                     </div>
 
-                    <!-- In progress → QR + Complete -->
+                    <!-- In progress → Check-in thủ công + Complete -->
                     <template v-else-if="trip.status === 'in_progress'">
-                        <router-link
-                            :to="`/driver/checkin/${tripId}`"
-                            class="mb-3 block w-full rounded-xl bg-blue-600 py-3.5 text-center font-bold text-white transition-colors hover:bg-blue-700"
+                        <p
+                            class="mb-3 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs text-blue-700"
                         >
-                            📷 Quét QR check-in
-                        </router-link>
+                            ✓ Nhấn vào ô check-in cạnh mỗi hành khách trong danh
+                            sách để xác nhận đã lên xe.
+                        </p>
                         <button
                             @click="showConfirm = 'complete'"
                             class="w-full rounded-xl border border-gray-200 bg-gray-100 py-3.5 font-bold text-gray-700 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-600"
@@ -590,6 +651,67 @@ onMounted(async () => {
                 </div>
             </div>
         </div>
+
+        <!-- ─── Cash collection confirm (check-in vé tiền mặt chưa thu) ── -->
+        <Teleport to="body">
+            <div
+                v-if="cashConfirmFor"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+                @click.self="cashConfirmFor = null"
+            >
+                <div
+                    class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl"
+                >
+                    <div class="mb-5 text-center">
+                        <div
+                            class="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 text-3xl"
+                        >
+                            💵
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-900">
+                            Thu tiền mặt
+                        </h3>
+                        <p class="mt-1 text-sm text-gray-500">
+                            {{ cashConfirmFor.passenger_name }} thanh toán bằng
+                            tiền mặt — xác nhận đã thu trước khi check-in
+                        </p>
+                    </div>
+                    <div
+                        class="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-center"
+                    >
+                        <p class="mb-0.5 text-xs text-amber-600">
+                            Số tiền cần thu
+                        </p>
+                        <p class="text-2xl font-bold text-amber-700">
+                            {{
+                                new Intl.NumberFormat('vi-VN').format(
+                                    cashConfirmFor.amount_due ?? 0,
+                                )
+                            }}đ
+                        </p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button
+                            @click="cashConfirmFor = null"
+                            class="flex-1 rounded-xl border border-gray-200 py-3 font-medium text-gray-600 transition-colors hover:bg-gray-50"
+                        >
+                            Hủy
+                        </button>
+                        <button
+                            @click="checkinPassenger(cashConfirmFor, true)"
+                            :disabled="checkinLoading === cashConfirmFor.id"
+                            class="flex flex-1 items-center justify-center gap-2 rounded-xl bg-amber-600 py-3 font-bold text-white transition-colors hover:bg-amber-700 disabled:opacity-60"
+                        >
+                            <div
+                                v-if="checkinLoading === cashConfirmFor.id"
+                                class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
+                            />
+                            <span>Đã thu & Check-in</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
 
         <!-- ─── Confirm modals ─────────────────────────────────── -->
         <Teleport to="body">
