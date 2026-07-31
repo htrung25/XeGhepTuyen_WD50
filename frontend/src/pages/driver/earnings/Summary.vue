@@ -129,7 +129,7 @@ onMounted(load);
                 :key="p.key"
                 @click="period = p.key"
                 :class="[
-                    'rounded-xl px-5 py-2.5 text-sm font-semibold transition-colors',
+                    'rounded-xl px-5 py-2.5 text-sm font-semibold transition-all active:scale-95',
                     period === p.key
                         ? 'bg-green-600 text-white shadow-sm'
                         : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50',
