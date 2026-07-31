@@ -35,6 +35,13 @@ class AuthController extends Controller
             return response()->json(['success' => false, 'message' => 'Email hoặc mật khẩu không đúng'], 401);
         }
 
+        if (! $user->is_active) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tài khoản đã bị khóa',
+            ], 403);
+        }
+
         $user->update(['last_login_at' => now()]);
         $token = $user->createToken('admin_token')->plainTextToken;
 

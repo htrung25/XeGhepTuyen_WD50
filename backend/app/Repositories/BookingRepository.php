@@ -13,7 +13,7 @@ class BookingRepository implements BookingRepositoryInterface
         return Booking::with([
             'trip.route',
             'trip.driver.user:id,full_name,phone',
-            'trip.vehicle:id,plate_number,vehicle_type',
+            'trip.vehicle:id,operator_id,plate_number,vehicle_type',
             'pickupStop',
             'dropoffStop',
             'passengers',
@@ -39,7 +39,14 @@ class BookingRepository implements BookingRepositoryInterface
 
     public function findByUser(string $userId, array $filters = []): LengthAwarePaginator
     {
-        $query = Booking::with(['trip.route', 'pickupStop', 'dropoffStop'])
+        $query = Booking::with([
+            'trip.route',
+            'trip.driver.user:id,full_name,phone',
+            'trip.vehicle:id,operator_id,plate_number,vehicle_type',
+            'pickupStop',
+            'dropoffStop',
+            'passengers',
+        ])
             ->where('user_id', $userId)
             ->latest();
 

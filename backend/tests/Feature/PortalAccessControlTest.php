@@ -2,6 +2,7 @@
 
 use App\Enums\UserRoleEnum;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\Sanctum;
 
 /**
@@ -65,4 +66,74 @@ it('trả JSON 401 khi API request không gửi Accept application/json', functi
     $this->get('/api/admin/dashboard')
         ->assertUnauthorized()
         ->assertJsonPath('message', 'Unauthenticated.');
+});
+
+it('chặn đăng nhập admin đã bị khóa', function () {
+    $admin = User::factory()->admin()->create([
+        'admin_role_id' => superAdminRole()->id,
+        'email' => 'locked-admin@example.com',
+        'password' => Hash::make('password'),
+        'is_active' => false,
+    ]);
+
+    $this->postJson('/api/admin/auth/login', [
+        'email' => $admin->email,
+        'password' => 'password',
+    ])->assertForbidden();
+});
+
+it('chặn đăng nhập driver đã bị khóa', function () {
+    $operator = makeOperatorWithRevenue(0, 0);
+    $user = $operator->drivers()->firstOrFail()->user;
+    $user->update([
+        'phone' => '0900000011',
+        'password' => Hash::make('password'),
+        'is_active' => false,
+    ]);
+
+    $this->postJson('/api/driver/auth/login', [
+        'phone' => $user->phone,
+        'password' => 'password',
+    ])->assertForbidden();
+});
+
+it('chặn đăng nhập operator đã bị khóa', function () {
+    $operator = makeOperatorWithRevenue(0, 0);
+    $operator->user->update([
+        'password' => Hash::make('password'),
+        'is_active' => false,
+    ]);
+
+    $this->postJson('/api/operator/auth/login', [
+        'phone' => $operator->user->phone,
+        'password' => 'password',
+    ])->assertForbidden();
+});
+
+it('chặn token của customer đã bị khóa', function () {
+    $user = actingAsRole(UserRoleEnum::Customer);
+    $user->update(['is_active' => false]);
+
+    $this->getJson('/api/customer/notifications')->assertForbidden();
+});
+
+it('chặn token của driver đã bị khóa', function () {
+    $user = actingAsRole(UserRoleEnum::Driver);
+    $user->update(['is_active' => false]);
+
+    $this->getJson('/api/driver/notifications')->assertForbidden();
+});
+
+it('chặn token của operator đã bị khóa', function () {
+    $user = actingAsRole(UserRoleEnum::Operator);
+    $user->update(['is_active' => false]);
+
+    $this->getJson('/api/operator/bookings')->assertForbidden();
+});
+
+it('chặn token của admin đã bị khóa', function () {
+    $user = actingAsRole(UserRoleEnum::Admin);
+    $user->update(['is_active' => false]);
+
+    $this->getJson('/api/admin/dashboard')->assertForbidden();
 });

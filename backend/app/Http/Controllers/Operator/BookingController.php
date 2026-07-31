@@ -28,9 +28,9 @@ class BookingController extends Controller
         ]);
     }
 
-    public function show(string $id): JsonResponse
+    public function show(Request $request, string $id): JsonResponse
     {
-        $operator = auth('operator')->user()->operator;
+        $operator = $request->user()->operator;
         $booking = $this->bookingRepo->findById($id);
 
         if (! $booking || $booking->trip->vehicle->operator_id !== $operator->id) {

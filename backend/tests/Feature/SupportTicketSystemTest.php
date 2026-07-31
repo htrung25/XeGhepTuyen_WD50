@@ -118,7 +118,7 @@ it('allows customer to create a support ticket with a start message', function (
     ];
 
     $response = $this->postJson('/api/customer/support/tickets', $payload);
-    $response->assertStatus(210);
+    $response->assertCreated();
 
     $this->assertDatabaseHas('support_tickets', [
         'subject' => 'Tôi muốn phản hồi về dịch vụ',

@@ -15,8 +15,14 @@ class EnsureUserRoleMiddleware
      */
     public function handle(Request $request, Closure $next, string $role): Response
     {
-        if ($request->user()?->role->value !== $role) {
+        $user = $request->user();
+
+        if ($user?->role->value !== $role) {
             abort(403, 'Không có quyền truy cập');
+        }
+
+        if (! $user->is_active) {
+            abort(403, 'Tài khoản đã bị khóa');
         }
 
         return $next($request);

@@ -19,7 +19,19 @@ class TripRepository implements TripRepositoryInterface
             'vehicle.operator:id,company_name',
             'driver.user:id,full_name,phone',
             'seatMaps',
-        ])->withCount('bookings')->find($id);
+        ])
+            ->withCount([
+                'bookings',
+                'bookings as confirmed_count' => fn ($query) => $query->whereIn('booking_status', ['confirmed', 'checked_in']),
+                'bookings as booking_count' => fn ($query) => $query->whereIn('booking_status', ['confirmed', 'checked_in', 'completed']),
+            ])
+            ->withSum([
+                'bookings as passengers_count' => fn ($query) => $query->whereNotIn('booking_status', ['cancelled', 'no_show']),
+            ], 'passenger_count')
+            ->withSum([
+                'bookings as confirmed_revenue' => fn ($query) => $query->whereIn('booking_status', ['confirmed', 'checked_in', 'completed']),
+            ], 'final_amount')
+            ->find($id);
     }
 
     public function findByTrackingCode(string $code): ?Trip
@@ -90,7 +102,14 @@ class TripRepository implements TripRepositoryInterface
             'vehicle:id,operator_id,plate_number,vehicle_type,seat_count',
             'vehicle.operator:id,user_id,company_name',
             'vehicle.operator.user:id,phone',
-        ])->where('driver_id', $driverId);
+        ])
+            ->withCount([
+                'bookings as confirmed_count' => fn ($query) => $query->whereIn('booking_status', ['confirmed', 'checked_in']),
+            ])
+            ->withSum([
+                'bookings as passengers_count' => fn ($query) => $query->whereNotIn('booking_status', ['cancelled', 'no_show']),
+            ], 'passenger_count')
+            ->where('driver_id', $driverId);
 
         if (! empty($filters['date'])) {
             $query->whereDate('depart_at', $filters['date']);
@@ -105,7 +124,16 @@ class TripRepository implements TripRepositoryInterface
 
     public function findByOperator(string $operatorId, array $filters = []): LengthAwarePaginator
     {
-        $query = Trip::with(['route', 'vehicle:id,plate_number,vehicle_type,seat_count', 'driver:id,user_id', 'driver.user:id,full_name'])
+        $query = Trip::with(['route', 'vehicle:id,plate_number,vehicle_type,seat_count', 'driver:id,user_id', 'driver.user:id,full_name,phone'])
+            ->withCount([
+                'bookings as booking_count' => fn ($query) => $query->whereIn('booking_status', ['confirmed', 'checked_in', 'completed']),
+            ])
+            ->withSum([
+                'bookings as passengers_count' => fn ($query) => $query->whereIn('booking_status', ['confirmed', 'checked_in', 'completed', 'no_show']),
+            ], 'passenger_count')
+            ->withSum([
+                'bookings as confirmed_revenue' => fn ($query) => $query->whereIn('booking_status', ['confirmed', 'checked_in', 'completed']),
+            ], 'final_amount')
             ->whereHas('route', fn ($q) => $q->where('operator_id', $operatorId));
 
         if (! empty($filters['date'])) {

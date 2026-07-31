@@ -66,6 +66,10 @@ class AuthController extends Controller
             return response()->json(['success' => false, 'message' => 'Số điện thoại hoặc mật khẩu không đúng'], 401);
         }
 
+        if (! $user->is_active) {
+            return response()->json(['success' => false, 'message' => 'Tài khoản đã bị khóa'], 403);
+        }
+
         $driver = $user->driver;
         if (! $driver || $driver->status !== DriverStatusEnum::Verified) {
             return response()->json(['success' => false, 'message' => 'Tài khoản chưa được duyệt hoặc đã bị đình chỉ'], 403);

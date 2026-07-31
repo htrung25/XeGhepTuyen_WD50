@@ -50,7 +50,7 @@ class SupportController extends Controller
             'success' => true,
             'message' => 'Tạo yêu cầu hỗ trợ thành công.',
             'data' => $ticket,
-        ], 210); // Custom success code or 201 Created
+        ], 201);
     }
 
     /**

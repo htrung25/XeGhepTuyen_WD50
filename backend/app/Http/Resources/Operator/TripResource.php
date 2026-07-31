@@ -31,11 +31,11 @@ class TripResource extends JsonResource
                 'full_name' => $this->driver?->user?->full_name,
                 'phone' => $this->driver?->user?->phone,
             ],
-            'booking_count' => $this->bookings()->whereIn('booking_status', ['confirmed', 'checked_in', 'completed'])->count(),
+            'booking_count' => (int) $this->booking_count,
             // Số KHÁCH thật (tổng passenger_count) — cùng tập trạng thái với manifest để thẻ khớp danh sách khách
-            'passengers_count' => (int) $this->bookings()->whereIn('booking_status', ['confirmed', 'checked_in', 'completed', 'no_show'])->sum('passenger_count'),
+            'passengers_count' => (int) $this->passengers_count,
             'total_seats' => $this->vehicle->seat_count,
-            'confirmed_revenue' => $this->bookings()->whereIn('booking_status', ['confirmed', 'checked_in', 'completed'])->sum('final_amount'),
+            'confirmed_revenue' => (float) $this->confirmed_revenue,
             'notes' => $this->note,
             // Chờ sắp xếp lại tài xế (tài xế đã báo không chạy được) — FE hiện nút "Đổi tài xế".
             'is_awaiting_reassignment' => $this->driver_unavailable_at !== null,

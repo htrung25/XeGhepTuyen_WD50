@@ -24,6 +24,10 @@ class AuthController extends Controller
             return response()->json(['success' => false, 'message' => 'Số điện thoại hoặc mật khẩu không đúng'], 401);
         }
 
+        if (! $user->is_active) {
+            return response()->json(['success' => false, 'message' => 'Tài khoản đã bị khóa'], 403);
+        }
+
         $operator = $user->operator;
         if (! $operator || $operator->status !== OperatorStatusEnum::Verified) {
             return response()->json(['success' => false, 'message' => 'Tài khoản nhà xe chưa được kích hoạt'], 403);

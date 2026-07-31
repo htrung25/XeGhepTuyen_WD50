@@ -33,9 +33,9 @@ class TripResource extends JsonResource
                 'company_name' => $this->vehicle->operator?->company_name,
                 'phone' => $this->vehicle->operator?->user?->phone,
             ],
-            'confirmed_count' => $this->bookings()->whereIn('booking_status', ['confirmed', 'checked_in'])->count(),
+            'confirmed_count' => (int) $this->confirmed_count,
             // Tổng số khách đã đặt (sum passenger_count, trừ cancelled/no_show — khớp available_seats)
-            'passengers_count' => (int) $this->bookings()->whereNotIn('booking_status', ['cancelled', 'no_show'])->sum('passenger_count'),
+            'passengers_count' => (int) $this->passengers_count,
             'total_seats' => $this->vehicle->seat_count,
             'note' => $this->note,
             // Tài xế đã báo không chạy được chuyến này (tránh báo lại / hiểu nhầm).
