@@ -19,10 +19,13 @@ interface AdminUser {
     permissions?: string[];
 }
 
+const TOKEN_KEY = 'admin_token';
+const USER_KEY = 'admin_user';
+
 export const useAdminAuthStore = defineStore('adminAuth', () => {
-    const token = ref<string | null>(localStorage.getItem('admin_token'));
+    const token = ref<string | null>(localStorage.getItem(TOKEN_KEY));
     const user = ref<AdminUser | null>(
-        JSON.parse(localStorage.getItem('admin_user') ?? 'null'),
+        JSON.parse(localStorage.getItem(USER_KEY) ?? 'null'),
     );
 
     const isAuthenticated = computed(() => !!token.value);
@@ -37,22 +40,22 @@ export const useAdminAuthStore = defineStore('adminAuth', () => {
     function setAuth(t: string, u: AdminUser) {
         token.value = t;
         user.value = u;
-        localStorage.setItem('admin_token', t);
-        localStorage.setItem('admin_user', JSON.stringify(u));
+        localStorage.setItem(TOKEN_KEY, t);
+        localStorage.setItem(USER_KEY, JSON.stringify(u));
     }
 
     function updateUser(u: Partial<AdminUser>) {
         if (user.value) {
             user.value = { ...user.value, ...u };
-            localStorage.setItem('admin_user', JSON.stringify(user.value));
+            localStorage.setItem(USER_KEY, JSON.stringify(user.value));
         }
     }
 
     function logout() {
         token.value = null;
         user.value = null;
-        localStorage.removeItem('admin_token');
-        localStorage.removeItem('admin_user');
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(USER_KEY);
     }
 
     return {
