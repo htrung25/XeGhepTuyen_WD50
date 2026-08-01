@@ -1,140 +1,43 @@
 <script setup lang="ts">
 import { watchDebounced } from '@vueuse/core';
-import { ref, computed, onMounted } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import { adminApi } from '@/api/admin.api';
+import { supportCategories } from '@/types/support';
+import type {
+    SupportStats,
+    SupportTicket,
+    SupportUser,
+    TicketCategory,
+    TicketPriority,
+    TicketStatus,
+} from '@/types/support';
 
 const router = useRouter();
 
-// ─── Types ─────────────────────────────────────────────────────────────────
-type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
-type TicketCategory =
-    | 'general'
-    | 'payment'
-    | 'refund'
-    | 'complaint'
-    | 'technical'
-    | 'other';
-type Priority = 'low' | 'normal' | 'high' | 'urgent';
-
-interface SupportTicket {
-    id: string;
-    ticket_code: string;
-    subject: string;
-    category: TicketCategory;
-    status: TicketStatus;
-    priority: Priority;
-    created_at: string;
-    updated_at: string;
-    last_reply_at?: string;
+type AdminSupportTicket = SupportTicket & {
+    user: SupportUser;
     message_count: number;
-    booking_code?: string;
-    user: { id: string; full_name: string; phone: string; email?: string };
-}
+};
 
-// ─── State ─────────────────────────────────────────────────────────────────
-const tickets = ref<SupportTicket[]>([]);
+const tickets = ref<AdminSupportTicket[]>([]);
 const loading = ref(true);
+const errorMsg = ref('');
 const search = ref('');
 const statusFilter = ref<'all' | TicketStatus>('all');
 const categoryFilter = ref<'all' | TicketCategory>('all');
-const priorityFilter = ref<'all' | Priority>('all');
-const stats = ref({ open: 0, in_progress: 0, resolved: 0, closed: 0 });
-
-const mockTickets: SupportTicket[] = [
-    {
-        id: 'tk-001',
-        ticket_code: 'TK-000001',
-        subject: 'Không nhận được vé sau khi thanh toán MoMo',
-        category: 'payment',
-        status: 'in_progress',
-        priority: 'high',
-        created_at: '2024-06-20T10:30:00Z',
-        updated_at: '2024-06-20T14:00:00Z',
-        last_reply_at: '2024-06-20T14:00:00Z',
-        message_count: 4,
-        booking_code: 'XG-20240620',
-        user: {
-            id: 'u1',
-            full_name: 'Nguyễn Văn An',
-            phone: '0901234567',
-            email: 'an@gmail.com',
-        },
-    },
-    {
-        id: 'tk-002',
-        ticket_code: 'TK-000002',
-        subject: 'Yêu cầu hoàn tiền vé đã hủy ngày 15/6',
-        category: 'refund',
-        status: 'open',
-        priority: 'normal',
-        created_at: '2024-06-18T09:15:00Z',
-        updated_at: '2024-06-18T09:15:00Z',
-        message_count: 1,
-        booking_code: 'XG-20240615',
-        user: { id: 'u2', full_name: 'Trần Thị Bình', phone: '0912345678' },
-    },
-    {
-        id: 'tk-003',
-        ticket_code: 'TK-000003',
-        subject: 'Tài xế đến muộn 30 phút, không xin lỗi',
-        category: 'complaint',
-        status: 'resolved',
-        priority: 'normal',
-        created_at: '2024-06-10T08:00:00Z',
-        updated_at: '2024-06-12T16:30:00Z',
-        last_reply_at: '2024-06-12T16:30:00Z',
-        message_count: 5,
-        booking_code: 'XG-20240610',
-        user: { id: 'u3', full_name: 'Lê Văn Cường', phone: '0923456789' },
-    },
-    {
-        id: 'tk-004',
-        ticket_code: 'TK-000004',
-        subject: 'Ứng dụng bị lỗi khi đặt vé trên iPhone',
-        category: 'technical',
-        status: 'open',
-        priority: 'urgent',
-        created_at: '2024-06-22T15:00:00Z',
-        updated_at: '2024-06-22T15:00:00Z',
-        message_count: 1,
-        user: { id: 'u4', full_name: 'Phạm Thị Dung', phone: '0934567890' },
-    },
-    {
-        id: 'tk-005',
-        ticket_code: 'TK-000005',
-        subject: 'Câu hỏi về chương trình khách hàng thân thiết',
-        category: 'general',
-        status: 'closed',
-        priority: 'low',
-        created_at: '2024-06-05T11:00:00Z',
-        updated_at: '2024-06-07T10:00:00Z',
-        last_reply_at: '2024-06-07T10:00:00Z',
-        message_count: 3,
-        user: { id: 'u5', full_name: 'Hoàng Văn Em', phone: '0945678901' },
-    },
-];
+const priorityFilter = ref<'all' | TicketPriority>('all');
+const stats = ref<SupportStats>({
+    open: 0,
+    in_progress: 0,
+    resolved: 0,
+    closed: 0,
+});
+const currentPage = ref(1);
+const lastPage = ref(1);
 
 // ─── Computed ────────────────────────────────────────────────────────────────
-const filteredTickets = computed(() => {
-    let list = tickets.value;
-    if (statusFilter.value !== 'all')
-        list = list.filter((t) => t.status === statusFilter.value);
-    if (categoryFilter.value !== 'all')
-        list = list.filter((t) => t.category === categoryFilter.value);
-    if (priorityFilter.value !== 'all')
-        list = list.filter((t) => t.priority === priorityFilter.value);
-    if (search.value.trim()) {
-        const q = search.value.toLowerCase();
-        list = list.filter(
-            (t) =>
-                t.ticket_code.toLowerCase().includes(q) ||
-                t.subject.toLowerCase().includes(q) ||
-                t.user.full_name.toLowerCase().includes(q) ||
-                t.user.phone.includes(q),
-        );
-    }
-    return list;
-});
+const filteredTickets = computed(() => tickets.value);
 
 const hasActiveFilter = computed(
     () =>
@@ -144,14 +47,7 @@ const hasActiveFilter = computed(
         !!search.value,
 );
 
-const categories: { value: TicketCategory; label: string; icon: string }[] = [
-    { value: 'general', label: 'Câu hỏi chung', icon: '💬' },
-    { value: 'payment', label: 'Thanh toán', icon: '💳' },
-    { value: 'refund', label: 'Hoàn tiền', icon: '💰' },
-    { value: 'complaint', label: 'Khiếu nại', icon: '📢' },
-    { value: 'technical', label: 'Kỹ thuật', icon: '🔧' },
-    { value: 'other', label: 'Khác', icon: '📋' },
-];
+const categories = supportCategories;
 
 // ─── Methods ────────────────────────────────────────────────────────────────
 function statusLabel(s: TicketStatus) {
@@ -170,7 +66,7 @@ function statusBadgeClass(s: TicketStatus) {
         closed: 'bg-slate-100 text-slate-600',
     }[s];
 }
-function priorityBarClass(p: Priority) {
+function priorityBarClass(p: TicketPriority) {
     return {
         low: 'bg-slate-300',
         normal: 'bg-blue-500',
@@ -178,10 +74,10 @@ function priorityBarClass(p: Priority) {
         urgent: 'bg-red-500',
     }[p];
 }
-function priorityLabel(p: Priority) {
+function priorityLabel(p: TicketPriority) {
     return { low: 'Thấp', normal: 'BT', high: 'Cao', urgent: 'Khẩn' }[p];
 }
-function priorityBadgeClass(p: Priority) {
+function priorityBadgeClass(p: TicketPriority) {
     return {
         low: 'bg-slate-100 text-slate-600',
         normal: 'bg-blue-50 text-blue-600',
@@ -204,22 +100,34 @@ function timeAgo(dateStr: string) {
     return `${Math.floor(h / 24)} ngày trước`;
 }
 
-async function fetchTickets() {
+async function fetchTickets(page = 1) {
     loading.value = true;
-    await new Promise((r) => setTimeout(r, 600));
-    tickets.value = mockTickets;
-    stats.value = {
-        open: mockTickets.filter((t) => t.status === 'open').length,
-        in_progress: mockTickets.filter((t) => t.status === 'in_progress')
-            .length,
-        resolved: mockTickets.filter((t) => t.status === 'resolved').length,
-        closed: mockTickets.filter((t) => t.status === 'closed').length,
-    };
+    errorMsg.value = '';
+    const { data, meta, error } = await adminApi.getSupportTickets({
+        page,
+        ...(search.value.trim() ? { search: search.value.trim() } : {}),
+        ...(statusFilter.value !== 'all' ? { status: statusFilter.value } : {}),
+        ...(categoryFilter.value !== 'all'
+            ? { category: categoryFilter.value }
+            : {}),
+        ...(priorityFilter.value !== 'all'
+            ? { priority: priorityFilter.value }
+            : {}),
+    });
+    tickets.value = (data as AdminSupportTicket[] | null) ?? [];
+    if (meta?.stats) stats.value = meta.stats as SupportStats;
+    currentPage.value = meta?.current_page ?? 1;
+    lastPage.value = meta?.last_page ?? 1;
+    if (error) errorMsg.value = error;
     loading.value = false;
 }
 
-watchDebounced(search, () => fetchTickets(), { debounce: 400 });
-onMounted(() => fetchTickets());
+watchDebounced(search, () => void fetchTickets(), { debounce: 400 });
+watch(
+    [statusFilter, categoryFilter, priorityFilter],
+    () => void fetchTickets(),
+);
+onMounted(() => void fetchTickets());
 </script>
 
 <template>
@@ -368,6 +276,13 @@ onMounted(() => fetchTickets());
             >
                 Xóa lọc
             </button>
+        </div>
+
+        <div
+            v-if="errorMsg"
+            class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
+            {{ errorMsg }}
         </div>
 
         <!-- ─── Table Card ─────────────────────────────────────────────────── -->
@@ -553,6 +468,29 @@ onMounted(() => fetchTickets());
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div
+                v-if="lastPage > 1"
+                class="flex items-center justify-center gap-3 border-t border-slate-100 px-5 py-4"
+            >
+                <button
+                    :disabled="currentPage <= 1"
+                    class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 disabled:cursor-not-allowed disabled:opacity-40"
+                    @click="fetchTickets(currentPage - 1)"
+                >
+                    Trang trước
+                </button>
+                <span class="text-sm text-slate-500">
+                    {{ currentPage }}/{{ lastPage }}
+                </span>
+                <button
+                    :disabled="currentPage >= lastPage"
+                    class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 disabled:cursor-not-allowed disabled:opacity-40"
+                    @click="fetchTickets(currentPage + 1)"
+                >
+                    Trang sau
+                </button>
             </div>
         </div>
     </div>

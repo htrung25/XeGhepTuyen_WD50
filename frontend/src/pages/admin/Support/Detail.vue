@@ -1,41 +1,28 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue';
-import { useRouter } from 'vue-router';
-import { useAdminAuthStore } from '@/stores/admin.auth.store';
+import { computed, nextTick, onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { adminApi } from '@/api/admin.api';
+import type {
+    SupportMessage,
+    SupportTicket,
+    SupportUser,
+    TicketPriority,
+    TicketStatus,
+} from '@/types/support';
 
-const router = useRouter();
-const authStore = useAdminAuthStore();
-
-// ─── Types ─────────────────────────────────────────────────────────────────
-type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
-type Priority = 'low' | 'normal' | 'high' | 'urgent';
-type SenderType = 'customer' | 'admin';
-
-interface SupportMessage {
-    id: string;
-    sender_type: SenderType;
-    sender_name: string;
-    body: string;
-    created_at: string;
-    is_internal?: boolean;
-}
-
-interface SupportTicket {
-    id: string;
-    ticket_code: string;
-    subject: string;
-    category: string;
-    status: TicketStatus;
-    priority: Priority;
-    created_at: string;
-    updated_at: string;
-    booking_code?: string;
-    user: { id: string; full_name: string; phone: string; email?: string };
+type AdminSupportTicket = SupportTicket & {
+    user: SupportUser;
     messages: SupportMessage[];
+};
+
+interface AdminStaffOption {
+    id: string;
+    full_name: string;
 }
 
-// ─── State ─────────────────────────────────────────────────────────────────
-const ticket = ref<SupportTicket | null>(null);
+const route = useRoute();
+const router = useRouter();
+const ticket = ref<AdminSupportTicket | null>(null);
 const loading = ref(true);
 const replyText = ref('');
 const replyLoading = ref(false);
@@ -45,57 +32,16 @@ const successMsg = ref('');
 const errorMsg = ref('');
 const messagesEnd = ref<HTMLElement | null>(null);
 const newStatus = ref<TicketStatus>('open');
-const newPriority = ref<Priority>('normal');
+const newPriority = ref<TicketPriority>('normal');
 const showStatusPanel = ref(false);
-
-const mockTicket: SupportTicket = {
-    id: 'tk-001',
-    ticket_code: 'TK-000001',
-    subject: 'Không nhận được vé sau khi thanh toán MoMo',
-    category: 'payment',
-    status: 'in_progress',
-    priority: 'high',
-    created_at: '2024-06-20T10:30:00Z',
-    updated_at: '2024-06-20T14:00:00Z',
-    booking_code: 'XG-20240620',
-    user: {
-        id: 'u1',
-        full_name: 'Nguyễn Văn An',
-        phone: '0901234567',
-        email: 'an@gmail.com',
-    },
-    messages: [
-        {
-            id: 'msg-001',
-            sender_type: 'customer',
-            sender_name: 'Nguyễn Văn An',
-            body: 'Xin chào, tôi đã thanh toán thành công qua MoMo lúc 10:25 sáng nay nhưng chưa nhận được vé điện tử. Mã giao dịch MoMo là: 20240620102534.',
-            created_at: '2024-06-20T10:30:00Z',
-        },
-        {
-            id: 'msg-002',
-            sender_type: 'admin',
-            sender_name: 'Phạm Admin',
-            body: 'Xin chào! Cảm ơn đã liên hệ với XeGhep.vn. Chúng tôi đang kiểm tra giao dịch. Vui lòng chờ 15-30 phút.',
-            created_at: '2024-06-20T11:00:00Z',
-        },
-        {
-            id: 'msg-003',
-            sender_type: 'admin',
-            sender_name: 'Phạm Admin',
-            body: '[GHI CHÚ NỘI BỘ] Giao dịch MoMo thành công nhưng webhook lỗi. Cần liên hệ MoMo để xác nhận. Booking: XG-20240620.',
-            created_at: '2024-06-20T11:05:00Z',
-            is_internal: true,
-        },
-        {
-            id: 'msg-004',
-            sender_type: 'customer',
-            sender_name: 'Nguyễn Văn An',
-            body: 'Cảm ơn bạn. Tôi sẽ chờ. Nhưng chuyến đi của tôi là 2 giờ chiều hôm nay!',
-            created_at: '2024-06-20T11:15:00Z',
-        },
-    ],
-};
+const staff = ref<AdminStaffOption[]>([]);
+const assignedTo = ref('');
+const assignLoading = ref(false);
+const canPublicReply = computed(
+    () =>
+        ticket.value?.status === 'open' ||
+        ticket.value?.status === 'in_progress',
+);
 
 // ─── Computed ────────────────────────────────────────────────────────────────
 const statusLabel = computed(
@@ -163,28 +109,53 @@ function scrollToBottom() {
 
 async function loadTicket() {
     loading.value = true;
-    await new Promise((r) => setTimeout(r, 700));
-    ticket.value = mockTicket;
-    newStatus.value = mockTicket.status;
-    newPriority.value = mockTicket.priority;
+    errorMsg.value = '';
+    const { data, error } = await adminApi.getSupportTicket(
+        String(route.params.id),
+    );
+    ticket.value = (data as AdminSupportTicket | null) ?? null;
+    if (ticket.value) {
+        newStatus.value = ticket.value.status;
+        newPriority.value = ticket.value.priority;
+        assignedTo.value = ticket.value.assigned_to ?? '';
+        if (!canPublicReply.value) isInternal.value = true;
+    }
+    if (error) errorMsg.value = error;
     loading.value = false;
     await nextTick();
     scrollToBottom();
 }
+async function loadStaff() {
+    const { data } = await adminApi.getAdminStaff({ status: 'active' });
+    staff.value = ((data as any[]) ?? []).map((item) => ({
+        id: item.id,
+        full_name: item.full_name,
+    }));
+}
 async function sendReply() {
     if (!replyText.value.trim() || replyLoading.value) return;
+    if (!isInternal.value && !canPublicReply.value) {
+        errorMsg.value =
+            'Ticket đã giải quyết hoặc đóng chỉ cho phép ghi chú nội bộ.';
+        return;
+    }
     replyLoading.value = true;
     errorMsg.value = '';
+    const body = replyText.value.trim();
     try {
-        await new Promise((r) => setTimeout(r, 700));
-        ticket.value!.messages.push({
-            id: `msg-${Date.now()}`,
-            sender_type: 'admin',
-            sender_name: authStore.user?.full_name ?? 'Admin',
-            body: replyText.value,
-            created_at: new Date().toISOString(),
-            is_internal: isInternal.value,
-        });
+        const { data, error } = await adminApi.replySupportTicket(
+            ticket.value!.id,
+            { body, is_internal: isInternal.value },
+        );
+        if (error || !data) {
+            errorMsg.value = error ?? 'Gửi phản hồi thất bại.';
+            return;
+        }
+        ticket.value!.messages.push(data as SupportMessage);
+        if (!isInternal.value && ticket.value!.status === 'open') {
+            ticket.value!.status = 'in_progress';
+            newStatus.value = 'in_progress';
+        }
         replyText.value = '';
         await nextTick();
         scrollToBottom();
@@ -192,8 +163,6 @@ async function sendReply() {
             ? 'Ghi chú nội bộ đã được lưu.'
             : 'Phản hồi đã được gửi đến khách hàng.';
         setTimeout(() => (successMsg.value = ''), 4000);
-    } catch {
-        errorMsg.value = 'Gửi thất bại. Vui lòng thử lại.';
     } finally {
         replyLoading.value = false;
     }
@@ -201,21 +170,50 @@ async function sendReply() {
 async function updateStatusAndPriority() {
     if (!ticket.value) return;
     statusLoading.value = true;
+    errorMsg.value = '';
     try {
-        await new Promise((r) => setTimeout(r, 600));
-        ticket.value.status = newStatus.value;
-        ticket.value.priority = newPriority.value;
+        const { data, error } = await adminApi.updateSupportTicket(
+            ticket.value.id,
+            { status: newStatus.value, priority: newPriority.value },
+        );
+        if (error || !data) {
+            errorMsg.value = error ?? 'Cập nhật thất bại.';
+            return;
+        }
+        ticket.value = {
+            ...ticket.value,
+            ...(data as SupportTicket),
+        };
         showStatusPanel.value = false;
         successMsg.value = 'Đã cập nhật trạng thái và mức độ ưu tiên.';
         setTimeout(() => (successMsg.value = ''), 3000);
-    } catch {
-        errorMsg.value = 'Cập nhật thất bại.';
     } finally {
         statusLoading.value = false;
     }
 }
 
-onMounted(() => loadTicket());
+async function assignTicket() {
+    if (!ticket.value || !assignedTo.value) return;
+    assignLoading.value = true;
+    errorMsg.value = '';
+    const { error } = await adminApi.assignSupportTicket(
+        ticket.value.id,
+        assignedTo.value,
+    );
+    assignLoading.value = false;
+    if (error) {
+        errorMsg.value = error;
+        return;
+    }
+    ticket.value.assigned_to = assignedTo.value;
+    ticket.value.assignee =
+        staff.value.find((item) => item.id === assignedTo.value) ?? null;
+    successMsg.value = 'Đã phân công nhân viên xử lý.';
+}
+
+onMounted(() => {
+    void Promise.all([loadTicket(), loadStaff()]);
+});
 </script>
 
 <template>
@@ -351,9 +349,13 @@ onMounted(() => loadTicket());
                                     >
                                     <select
                                         v-model="newStatus"
+                                        :disabled="ticket.status === 'closed'"
                                         class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-200"
                                     >
-                                        <option value="open">
+                                        <option
+                                            value="open"
+                                            :disabled="ticket.status !== 'open'"
+                                        >
                                             🟡 Chờ xử lý
                                         </option>
                                         <option value="in_progress">
@@ -555,6 +557,7 @@ onMounted(() => loadTicket());
                     <!-- Toggle -->
                     <div class="mb-4 flex rounded-xl bg-slate-100 p-1">
                         <button
+                            :disabled="!canPublicReply"
                             :class="[
                                 'flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition-all',
                                 !isInternal
@@ -741,6 +744,42 @@ onMounted(() => loadTicket());
                     >
                         Chi tiết ticket
                     </h3>
+                    <div class="mb-4">
+                        <label
+                            for="support-assignee"
+                            class="mb-1 block text-xs font-medium tracking-wide text-slate-400 uppercase"
+                        >
+                            Nhân viên xử lý
+                        </label>
+                        <div class="flex gap-2">
+                            <select
+                                id="support-assignee"
+                                v-model="assignedTo"
+                                :disabled="ticket.status === 'closed'"
+                                class="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-2 py-2 text-xs text-slate-700 disabled:bg-slate-100"
+                            >
+                                <option value="">Chưa phân công</option>
+                                <option
+                                    v-for="member in staff"
+                                    :key="member.id"
+                                    :value="member.id"
+                                >
+                                    {{ member.full_name }}
+                                </option>
+                            </select>
+                            <button
+                                :disabled="
+                                    !assignedTo ||
+                                    assignLoading ||
+                                    ticket.status === 'closed'
+                                "
+                                class="rounded-lg bg-indigo-600 px-3 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+                                @click="assignTicket"
+                            >
+                                {{ assignLoading ? 'Lưu...' : 'Giao' }}
+                            </button>
+                        </div>
+                    </div>
                     <dl class="space-y-3">
                         <div>
                             <dt
@@ -868,18 +907,15 @@ onMounted(() => loadTicket());
                             ✕ Đóng ticket
                         </button>
                         <button
-                            v-if="
-                                ticket.status === 'closed' ||
-                                ticket.status === 'resolved'
-                            "
+                            v-if="ticket.status === 'resolved'"
                             class="w-full rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-left text-sm font-semibold text-amber-700 transition hover:bg-amber-100"
                             @click="
-                                newStatus = 'open';
+                                newStatus = 'in_progress';
                                 newPriority = ticket.priority;
                                 updateStatusAndPriority();
                             "
                         >
-                            ↺ Mở lại ticket
+                            ↺ Tiếp tục xử lý
                         </button>
                     </div>
                 </div>

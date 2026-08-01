@@ -16,7 +16,15 @@ class SupportMessage extends Model
         'sender_type',
         'sender_name',
         'body',
+        'is_internal',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_internal' => 'boolean',
+        ];
+    }
 
     // ─── Relationships ────────────────────────────────────────────────────────
 

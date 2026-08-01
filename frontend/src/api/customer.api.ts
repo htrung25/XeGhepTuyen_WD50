@@ -29,6 +29,13 @@ import {
     wallet as walletGet,
 } from '@/actions/App/Http/Controllers/Customer/PaymentController';
 import { store as reviewStore } from '@/actions/App/Http/Controllers/Customer/ReviewController';
+import {
+    index as supportTicketsIndex,
+    store as supportTicketStore,
+    show as supportTicketShow,
+    reply as supportTicketReply,
+    close as supportTicketClose,
+} from '@/actions/App/Http/Controllers/Customer/SupportController';
 import { trackByBooking } from '@/actions/App/Http/Controllers/Customer/TrackingController';
 import {
     search as tripSearch,
@@ -152,4 +159,19 @@ export const customerApi = {
     markNotificationRead: (id: string) =>
         apiClient.send(notificationMarkRead(id)),
     markAllRead: () => apiClient.send(notificationMarkAllRead()),
+
+    // ─── Support tickets ─────────────────────────────────────────────────
+    getSupportTickets: (params?: { page?: number; status?: string }) =>
+        apiClient.send(supportTicketsIndex({ query: params })),
+    createSupportTicket: (data: {
+        subject: string;
+        category: string;
+        booking_code?: string;
+        priority?: string;
+        message: string;
+    }) => apiClient.send(supportTicketStore(), data),
+    getSupportTicket: (id: string) => apiClient.send(supportTicketShow(id)),
+    replySupportTicket: (id: string, body: string) =>
+        apiClient.send(supportTicketReply(id), { body }),
+    closeSupportTicket: (id: string) => apiClient.send(supportTicketClose(id)),
 };

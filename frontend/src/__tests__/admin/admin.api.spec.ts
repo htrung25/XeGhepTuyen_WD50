@@ -98,4 +98,36 @@ describe('adminApi → Wayfinder route contract', () => {
             method: 'get',
         });
     });
+
+    it('maps support filters, updates and internal replies to backend routes', () => {
+        adminApi.getSupportTickets({ status: 'open', priority: 'urgent' });
+        expect(apiClient.send).toHaveBeenCalledWith({
+            url: '/api/admin/support/tickets?status=open&priority=urgent',
+            method: 'get',
+        });
+
+        adminApi.updateSupportTicket('ticket-1', {
+            status: 'in_progress',
+            priority: 'high',
+        });
+        expect(apiClient.send).toHaveBeenCalledWith(
+            {
+                url: '/api/admin/support/tickets/ticket-1',
+                method: 'patch',
+            },
+            { status: 'in_progress', priority: 'high' },
+        );
+
+        adminApi.replySupportTicket('ticket-1', {
+            body: 'Ghi chú xử lý',
+            is_internal: true,
+        });
+        expect(apiClient.send).toHaveBeenCalledWith(
+            {
+                url: '/api/admin/support/tickets/ticket-1/reply',
+                method: 'post',
+            },
+            { body: 'Ghi chú xử lý', is_internal: true },
+        );
+    });
 });

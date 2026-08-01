@@ -72,6 +72,15 @@ import {
     destroy as roleDestroy,
 } from '@/actions/App/Http/Controllers/Admin/RoleController';
 import {
+    index as supportTicketsIndex,
+    show as supportTicketShow,
+    update as supportTicketUpdate,
+    reply as supportTicketReply,
+    assign as supportTicketAssign,
+    resolve as supportTicketResolve,
+    close as supportTicketClose,
+} from '@/actions/App/Http/Controllers/Admin/SupportController';
+import {
     index as tripsIndex,
     monitor,
     autoResolve,
@@ -245,4 +254,22 @@ export const adminApi = {
     unbanAdminStaff: (id: string) => apiClient.send(adminStaffUnban(id)),
     resetAdminStaffPassword: (id: string) =>
         apiClient.send<{ temp_password: string }>(adminStaffResetPassword(id)),
+
+    // Support tickets
+    getSupportTickets: (params?: Params) =>
+        apiClient.send(supportTicketsIndex({ query: params as QueryParams })),
+    getSupportTicket: (id: string) => apiClient.send(supportTicketShow(id)),
+    updateSupportTicket: (
+        id: string,
+        data: { status?: string; priority?: string },
+    ) => apiClient.send(supportTicketUpdate(id), data),
+    replySupportTicket: (
+        id: string,
+        data: { body: string; is_internal?: boolean },
+    ) => apiClient.send(supportTicketReply(id), data),
+    assignSupportTicket: (id: string, assignedTo: string) =>
+        apiClient.send(supportTicketAssign(id), { assigned_to: assignedTo }),
+    resolveSupportTicket: (id: string) =>
+        apiClient.send(supportTicketResolve(id)),
+    closeSupportTicket: (id: string) => apiClient.send(supportTicketClose(id)),
 };

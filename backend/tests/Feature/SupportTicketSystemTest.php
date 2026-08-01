@@ -10,6 +10,7 @@ use App\Models\Driver;
 use App\Models\Operator;
 use App\Models\Route;
 use App\Models\RouteStop;
+use App\Models\SupportMessage;
 use App\Models\SupportTicket;
 use App\Models\Trip;
 use App\Models\User;
@@ -134,6 +135,10 @@ it('allows customer to create a support ticket with a start message', function (
         'sender_type' => 'customer',
         'body' => 'Tài xế đi xe rất cẩn thận nhưng bật nhạc quá to.',
     ]);
+    $this->assertDatabaseHas('notifications', [
+        'user_id' => $admin->id,
+        'title' => 'Yêu cầu hỗ trợ mới',
+    ]);
 });
 
 it('prevents customer from linking ticket to a booking owned by someone else', function () {
@@ -228,6 +233,10 @@ it('allows admin to reply to a support ticket, changing its status to in_progres
 
     $response = $this->postJson("/api/admin/support/tickets/{$ticket->id}/reply", [
         'body' => 'Chào bạn, chúng tôi đang kiểm tra yêu cầu của bạn.',
+    ]);
+    $this->assertDatabaseHas('notifications', [
+        'user_id' => $customer->id,
+        'title' => 'Yêu cầu hỗ trợ có phản hồi mới',
     ]);
 
     $this->assertDatabaseHas('audit_logs', [
@@ -395,4 +404,151 @@ it('admin thường chỉ có quyền xem không được xử lý ticket', func
 
     $this->getJson('/api/admin/support/tickets')->assertOk();
     $this->postJson("/api/admin/support/tickets/{$ticket->id}/close")->assertForbidden();
+});
+
+it('returns message metadata and never exposes internal notes to customers', function () {
+    [$customer, $admin] = setupSupportTestContext();
+    $ticket = SupportTicket::create([
+        'ticket_code' => 'TK-000010',
+        'user_id' => $customer->id,
+        'subject' => 'Kiểm tra hội thoại bảo mật',
+        'category' => TicketCategoryEnum::Technical,
+        'status' => TicketStatusEnum::InProgress,
+    ]);
+
+    SupportMessage::create([
+        'support_ticket_id' => $ticket->id,
+        'sender_id' => $customer->id,
+        'sender_type' => 'customer',
+        'sender_name' => $customer->full_name,
+        'body' => 'Tin nhắn khách hàng có thể xem.',
+    ]);
+    SupportMessage::create([
+        'support_ticket_id' => $ticket->id,
+        'sender_id' => $admin->id,
+        'sender_type' => 'admin',
+        'sender_name' => $admin->full_name,
+        'body' => 'Ghi chú chỉ dành cho nhân viên.',
+        'is_internal' => true,
+    ]);
+
+    Sanctum::actingAs($customer);
+    auth()->guard('customer')->setUser($customer);
+
+    $this->getJson('/api/customer/support/tickets')
+        ->assertOk()
+        ->assertJsonPath('data.0.message_count', 1)
+        ->assertJsonPath('data.0.last_reply_at', fn ($value) => is_string($value));
+
+    $this->getJson("/api/customer/support/tickets/{$ticket->id}")
+        ->assertOk()
+        ->assertJsonCount(1, 'data.messages')
+        ->assertJsonMissing(['body' => 'Ghi chú chỉ dành cho nhân viên.']);
+
+    Sanctum::actingAs($admin);
+    auth()->guard('admin')->setUser($admin);
+
+    $this->getJson("/api/admin/support/tickets/{$ticket->id}")
+        ->assertOk()
+        ->assertJsonCount(2, 'data.messages');
+});
+
+it('allows admin internal notes without changing ticket status', function () {
+    [$customer, $admin] = setupSupportTestContext();
+    $ticket = SupportTicket::create([
+        'ticket_code' => 'TK-000011',
+        'user_id' => $customer->id,
+        'subject' => 'Ticket cần ghi chú nội bộ',
+        'category' => TicketCategoryEnum::Other,
+        'status' => TicketStatusEnum::Open,
+    ]);
+
+    Sanctum::actingAs($admin);
+    auth()->guard('admin')->setUser($admin);
+
+    $this->postJson("/api/admin/support/tickets/{$ticket->id}/reply", [
+        'body' => 'Cần gọi lại khách hàng vào buổi chiều.',
+        'is_internal' => true,
+    ])->assertOk()
+        ->assertJsonPath('data.is_internal', true);
+
+    expect($ticket->refresh()->status)->toBe(TicketStatusEnum::Open);
+    $this->assertDatabaseHas('support_messages', [
+        'support_ticket_id' => $ticket->id,
+        'is_internal' => true,
+    ]);
+});
+
+it('updates support status and priority through the guarded transition', function () {
+    [$customer, $admin] = setupSupportTestContext();
+    $ticket = SupportTicket::create([
+        'ticket_code' => 'TK-000012',
+        'user_id' => $customer->id,
+        'subject' => 'Ticket cần cập nhật ưu tiên',
+        'category' => TicketCategoryEnum::Complaint,
+        'status' => TicketStatusEnum::Open,
+        'priority' => TicketPriorityEnum::Normal,
+    ]);
+
+    Sanctum::actingAs($admin);
+    auth()->guard('admin')->setUser($admin);
+
+    $this->patchJson("/api/admin/support/tickets/{$ticket->id}", [
+        'status' => TicketStatusEnum::InProgress->value,
+        'priority' => TicketPriorityEnum::Urgent->value,
+    ])->assertOk()
+        ->assertJsonPath('data.status', TicketStatusEnum::InProgress->value)
+        ->assertJsonPath('data.priority', TicketPriorityEnum::Urgent->value);
+
+    $this->assertDatabaseHas('audit_logs', [
+        'user_id' => $admin->id,
+        'action' => 'update_support_ticket',
+        'model_id' => $ticket->id,
+    ]);
+});
+
+it('treats closed tickets as terminal and rejects public replies', function () {
+    [$customer, $admin] = setupSupportTestContext();
+    $ticket = SupportTicket::create([
+        'ticket_code' => 'TK-000013',
+        'user_id' => $customer->id,
+        'subject' => 'Ticket đã đóng',
+        'category' => TicketCategoryEnum::General,
+        'status' => TicketStatusEnum::Closed,
+        'closed_at' => now(),
+    ]);
+
+    Sanctum::actingAs($customer);
+    auth()->guard('customer')->setUser($customer);
+    $this->postJson("/api/customer/support/tickets/{$ticket->id}/reply", [
+        'body' => 'Tôi muốn phản hồi tiếp.',
+    ])->assertUnprocessable();
+
+    Sanctum::actingAs($admin);
+    auth()->guard('admin')->setUser($admin);
+    $this->patchJson("/api/admin/support/tickets/{$ticket->id}", [
+        'status' => TicketStatusEnum::Open->value,
+    ])->assertUnprocessable();
+});
+
+it('allocates the next ticket code after the highest existing code', function () {
+    [$customer, $admin, $booking] = setupSupportTestContext();
+    SupportTicket::create([
+        'ticket_code' => 'TK-000099',
+        'user_id' => $customer->id,
+        'subject' => 'Ticket được nhập từ dữ liệu cũ',
+        'category' => TicketCategoryEnum::Other,
+        'status' => TicketStatusEnum::Open,
+    ]);
+
+    Sanctum::actingAs($customer);
+    auth()->guard('customer')->setUser($customer);
+
+    $this->postJson('/api/customer/support/tickets', [
+        'subject' => 'Ticket mới sau dữ liệu cũ',
+        'category' => TicketCategoryEnum::General->value,
+        'booking_code' => $booking->booking_code,
+        'message' => 'Nội dung yêu cầu hỗ trợ hợp lệ.',
+    ])->assertCreated()
+        ->assertJsonPath('data.ticket_code', 'TK-000100');
 });

@@ -1,37 +1,13 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue';
-import { useRouter } from 'vue-router';
+import { computed, nextTick, onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { customerApi } from '@/api/customer.api';
 import { useCustomerAuthStore } from '@/stores/customer.auth.store';
+import type { SupportMessage, SupportTicket } from '@/types/support';
 
+const route = useRoute();
 const router = useRouter();
 const auth = useCustomerAuthStore();
-
-// ─── Types ─────────────────────────────────────────────────────────────────
-type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
-type SenderType = 'customer' | 'admin';
-
-interface SupportMessage {
-    id: string;
-    sender_type: SenderType;
-    sender_name: string;
-    body: string;
-    created_at: string;
-}
-
-interface SupportTicket {
-    id: string;
-    ticket_code: string;
-    subject: string;
-    category: string;
-    status: TicketStatus;
-    priority: string;
-    created_at: string;
-    updated_at: string;
-    booking_code?: string;
-    messages: SupportMessage[];
-}
-
-// ─── State ─────────────────────────────────────────────────────────────────
 const ticket = ref<SupportTicket | null>(null);
 const loading = ref(true);
 const replyText = ref('');
@@ -41,48 +17,6 @@ const showCloseConfirm = ref(false);
 const successMsg = ref('');
 const errorMsg = ref('');
 const messagesEnd = ref<HTMLElement | null>(null);
-
-const mockTicket: SupportTicket = {
-    id: 'tk-001',
-    ticket_code: 'TK-000001',
-    subject: 'Không nhận được vé sau khi thanh toán',
-    category: 'payment',
-    status: 'in_progress',
-    priority: 'high',
-    created_at: '2024-06-20T10:30:00Z',
-    updated_at: '2024-06-20T14:00:00Z',
-    booking_code: 'XG-20240620',
-    messages: [
-        {
-            id: 'msg-001',
-            sender_type: 'customer',
-            sender_name: 'Nguyễn Văn An',
-            body: 'Xin chào, tôi đã thanh toán thành công qua MoMo lúc 10:25 sáng nay nhưng chưa nhận được vé điện tử. Mã giao dịch MoMo là: 20240620102534. Xin hãy kiểm tra giúp tôi.',
-            created_at: '2024-06-20T10:30:00Z',
-        },
-        {
-            id: 'msg-002',
-            sender_type: 'admin',
-            sender_name: 'Nhân viên hỗ trợ',
-            body: 'Xin chào anh/chị! Cảm ơn đã liên hệ với XeGhep.vn. Chúng tôi đang kiểm tra giao dịch với mã code XG-20240620. Vui lòng chờ 15-30 phút để xác minh.',
-            created_at: '2024-06-20T11:00:00Z',
-        },
-        {
-            id: 'msg-003',
-            sender_type: 'customer',
-            sender_name: 'Nguyễn Văn An',
-            body: 'Cảm ơn bạn. Tôi sẽ chờ. Nhưng chuyến đi của tôi là 2 giờ chiều hôm nay, bạn có thể xử lý nhanh hơn không?',
-            created_at: '2024-06-20T11:15:00Z',
-        },
-        {
-            id: 'msg-004',
-            sender_type: 'admin',
-            sender_name: 'Nhân viên hỗ trợ',
-            body: 'Chúng tôi hiểu sự cấp bách. Nhóm kỹ thuật đang ưu tiên xử lý ngay. Bạn có thể xuất trình màn hình xác nhận thanh toán MoMo tại quầy lúc lên xe!',
-            created_at: '2024-06-20T11:20:00Z',
-        },
-    ],
-};
 
 // ─── Computed ────────────────────────────────────────────────────────────────
 const statusLabel = computed(
@@ -159,8 +93,12 @@ function scrollToBottom() {
 
 async function loadTicket() {
     loading.value = true;
-    await new Promise((r) => setTimeout(r, 600));
-    ticket.value = mockTicket;
+    errorMsg.value = '';
+    const { data, error } = await customerApi.getSupportTicket(
+        String(route.params.id),
+    );
+    ticket.value = (data as SupportTicket | null) ?? null;
+    if (error) errorMsg.value = error;
     loading.value = false;
     await nextTick();
     scrollToBottom();
@@ -169,40 +107,45 @@ async function sendReply() {
     if (!replyText.value.trim() || replyLoading.value) return;
     replyLoading.value = true;
     errorMsg.value = '';
+    const body = replyText.value.trim();
     try {
-        await new Promise((r) => setTimeout(r, 700));
-        ticket.value!.messages.push({
-            id: `msg-${Date.now()}`,
-            sender_type: 'customer',
-            sender_name: auth.user?.full_name ?? 'Bạn',
-            body: replyText.value,
-            created_at: new Date().toISOString(),
-        });
+        const { data, error } = await customerApi.replySupportTicket(
+            ticket.value!.id,
+            body,
+        );
+        if (error || !data) {
+            errorMsg.value = error ?? 'Gửi tin nhắn thất bại.';
+            return;
+        }
+        ticket.value!.messages ??= [];
+        ticket.value!.messages.push(data as SupportMessage);
         replyText.value = '';
         await nextTick();
         scrollToBottom();
-    } catch {
-        errorMsg.value = 'Gửi tin nhắn thất bại. Vui lòng thử lại.';
     } finally {
         replyLoading.value = false;
     }
 }
 async function closeTicket() {
+    if (!ticket.value) return;
     closeLoading.value = true;
+    errorMsg.value = '';
     try {
-        await new Promise((r) => setTimeout(r, 700));
-        ticket.value!.status = 'closed';
+        const { error } = await customerApi.closeSupportTicket(ticket.value.id);
+        if (error) {
+            errorMsg.value = error;
+            return;
+        }
+        ticket.value.status = 'closed';
         showCloseConfirm.value = false;
         successMsg.value = 'Ticket đã được đóng. Cảm ơn bạn đã liên hệ!';
         setTimeout(() => (successMsg.value = ''), 4000);
-    } catch {
-        errorMsg.value = 'Có lỗi xảy ra. Vui lòng thử lại.';
     } finally {
         closeLoading.value = false;
     }
 }
 
-onMounted(() => loadTicket());
+onMounted(() => void loadTicket());
 </script>
 
 <template>
@@ -397,7 +340,7 @@ onMounted(() => loadTicket());
                             >{{ statusLabel }}</span
                         >
                         <span class="ml-auto text-xs text-slate-400"
-                            >{{ ticket.messages.length }} tin nhắn</span
+                            >{{ ticket.messages?.length ?? 0 }} tin nhắn</span
                         >
                     </div>
                     <h1 class="text-base font-bold text-slate-900">

@@ -130,6 +130,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     // Support tickets
     Route::get('support/tickets', [SupportController::class, 'index'])->middleware('permission:support_tickets.view');
     Route::get('support/tickets/{id}', [SupportController::class, 'show'])->middleware('permission:support_tickets.view');
+    Route::patch('support/tickets/{id}', [SupportController::class, 'update'])->middleware('permission:support_tickets.manage');
     Route::post('support/tickets/{id}/reply', [SupportController::class, 'reply'])->middleware('permission:support_tickets.manage');
     Route::post('support/tickets/{id}/assign', [SupportController::class, 'assign'])->middleware('permission:support_tickets.manage');
     Route::post('support/tickets/{id}/resolve', [SupportController::class, 'resolve'])->middleware('permission:support_tickets.manage');

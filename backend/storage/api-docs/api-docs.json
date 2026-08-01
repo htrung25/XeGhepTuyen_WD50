@@ -4952,6 +4952,39 @@
                         "sanctum": []
                     }
                 ]
+            },
+            "patch": {
+                "tags": [
+                    "Admin Support"
+                ],
+                "summary": "update",
+                "operationId": "patch.app.http.controllers.admin.supportcontroller.update.ea468e37",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": "Response theo contract của endpoint."
+                    },
+                    "401": {
+                        "description": "Chưa xác thực."
+                    },
+                    "403": {
+                        "description": "Không có quyền truy cập."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         },
         "/api/admin/support/tickets/{id}/reply": {

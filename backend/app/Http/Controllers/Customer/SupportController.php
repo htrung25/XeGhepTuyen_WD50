@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\CreateTicketRequest;
+use App\Http\Requests\Customer\ListSupportTicketsRequest;
 use App\Http\Requests\Customer\ReplyMessageRequest;
 use App\Models\SupportTicket;
 use App\Services\SupportTicketService;
@@ -18,13 +19,31 @@ class SupportController extends Controller
     /**
      * Lấy danh sách ticket hỗ trợ của chính khách hàng đăng nhập
      */
-    public function index(): JsonResponse
+    public function index(ListSupportTicketsRequest $request): JsonResponse
     {
         $user = auth('customer')->user();
+        $validated = $request->validated();
 
-        $tickets = SupportTicket::where('user_id', $user->id)
+        $query = SupportTicket::where('user_id', $user->id);
+
+        if (! empty($validated['status'])) {
+            $query->where('status', $validated['status']);
+        }
+
+        $tickets = $query
+            ->withCount([
+                'messages as message_count' => fn ($query) => $query->where('is_internal', false),
+            ])
+            ->withMax([
+                'messages as last_reply_at' => fn ($query) => $query->where('is_internal', false),
+            ], 'created_at')
             ->orderBy('created_at', 'desc')
             ->paginate(15);
+
+        $stats = SupportTicket::where('user_id', $user->id)
+            ->selectRaw('status, count(*) as aggregate')
+            ->groupBy('status')
+            ->pluck('aggregate', 'status');
 
         return response()->json([
             'success' => true,
@@ -34,6 +53,12 @@ class SupportController extends Controller
                 'last_page' => $tickets->lastPage(),
                 'total' => $tickets->total(),
                 'per_page' => $tickets->perPage(),
+                'stats' => [
+                    'open' => (int) ($stats['open'] ?? 0),
+                    'in_progress' => (int) ($stats['in_progress'] ?? 0),
+                    'resolved' => (int) ($stats['resolved'] ?? 0),
+                    'closed' => (int) ($stats['closed'] ?? 0),
+                ],
             ],
         ]);
     }
@@ -59,9 +84,7 @@ class SupportController extends Controller
     public function show(string $id): JsonResponse
     {
         $user = auth('customer')->user();
-        $ticket = SupportTicket::with(['messages' => function ($query) {
-            $query->orderBy('created_at', 'asc');
-        }])->findOrFail($id);
+        $ticket = SupportTicket::findOrFail($id);
 
         if ($ticket->user_id !== $user->id) {
             return response()->json([
@@ -69,6 +92,10 @@ class SupportController extends Controller
                 'message' => 'Bạn không có quyền truy cập yêu cầu hỗ trợ này.',
             ], 403);
         }
+
+        $ticket->load(['messages' => function ($query) {
+            $query->where('is_internal', false)->orderBy('created_at', 'asc');
+        }]);
 
         return response()->json([
             'success' => true,
@@ -82,23 +109,19 @@ class SupportController extends Controller
     public function reply(ReplyMessageRequest $request, string $id): JsonResponse
     {
         $user = auth('customer')->user();
-        $ticket = SupportTicket::findOrFail($id);
-
-        if ($ticket->user_id !== $user->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Bạn không có quyền phản hồi yêu cầu hỗ trợ này.',
-            ], 403);
-        }
-
         try {
-            $message = $this->ticketService->replyToTicket($user, $id, $request->input('body'), 'customer');
+            $result = $this->ticketService->replyAsCustomer($user, $id, $request->input('body'));
 
             return response()->json([
                 'success' => true,
                 'message' => 'Gửi tin nhắn phản hồi thành công.',
-                'data' => $message,
+                'data' => $result->message,
             ]);
+        } catch (\DomainException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 403);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'success' => false,
@@ -113,16 +136,19 @@ class SupportController extends Controller
     public function close(string $id): JsonResponse
     {
         $user = auth('customer')->user();
-        $ticket = SupportTicket::findOrFail($id);
-
-        if ($ticket->user_id !== $user->id) {
+        try {
+            $this->ticketService->closeAsCustomer($user, $id);
+        } catch (\DomainException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Bạn không có quyền đóng yêu cầu hỗ trợ này.',
+                'message' => $e->getMessage(),
             ], 403);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
         }
-
-        $this->ticketService->closeTicket($id);
 
         return response()->json([
             'success' => true,

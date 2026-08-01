@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\TicketPriorityEnum;
+use App\Enums\TicketStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\AssignTicketRequest;
+use App\Http\Requests\Admin\ListSupportTicketsRequest;
 use App\Http\Requests\Admin\ReplyMessageRequest;
+use App\Http\Requests\Admin\UpdateSupportTicketRequest;
 use App\Models\SupportTicket;
 use App\Services\AuditLogService;
 use App\Services\SupportTicketService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class SupportController extends Controller
 {
@@ -21,29 +24,33 @@ class SupportController extends Controller
     /**
      * Danh sách toàn bộ ticket hỗ trợ (Phân trang + Lọc + Tìm kiếm + Stats)
      */
-    public function index(Request $request): JsonResponse
+    public function index(ListSupportTicketsRequest $request): JsonResponse
     {
+        $validated = $request->validated();
         $query = SupportTicket::with('user:id,full_name,phone,email')
+            ->with('assignee:id,full_name')
+            ->withCount('messages as message_count')
+            ->withMax('messages as last_reply_at', 'created_at')
             ->orderBy('created_at', 'desc');
 
         // Lọc theo trạng thái
-        if ($request->filled('status') && $request->input('status') !== 'all') {
-            $query->where('status', $request->input('status'));
+        if (! empty($validated['status'])) {
+            $query->where('status', $validated['status']);
         }
 
         // Lọc theo danh mục
-        if ($request->filled('category') && $request->input('category') !== 'all') {
-            $query->where('category', $request->input('category'));
+        if (! empty($validated['category'])) {
+            $query->where('category', $validated['category']);
         }
 
         // Lọc theo mức độ ưu tiên
-        if ($request->filled('priority') && $request->input('priority') !== 'all') {
-            $query->where('priority', $request->input('priority'));
+        if (! empty($validated['priority'])) {
+            $query->where('priority', $validated['priority']);
         }
 
         // Tìm kiếm (Mã ticket, tiêu đề, tên khách hàng, SĐT khách hàng)
-        if ($request->filled('search')) {
-            $search = $request->input('search');
+        if (! empty($validated['search'])) {
+            $search = $validated['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('ticket_code', 'like', "%{$search}%")
                     ->orWhere('subject', 'like', "%{$search}%")
@@ -72,6 +79,7 @@ class SupportController extends Controller
                 'last_page' => $tickets->lastPage(),
                 'total' => $tickets->total(),
                 'per_page' => $tickets->perPage(),
+                'stats' => $stats,
             ],
             'stats' => $stats,
         ]);
@@ -84,6 +92,7 @@ class SupportController extends Controller
     {
         $ticket = SupportTicket::with([
             'user:id,full_name,phone,email',
+            'assignee:id,full_name',
             'messages' => function ($query) {
                 $query->orderBy('created_at', 'asc');
             },
@@ -101,26 +110,29 @@ class SupportController extends Controller
     public function reply(ReplyMessageRequest $request, string $id): JsonResponse
     {
         $admin = auth('admin')->user();
-        $ticket = SupportTicket::findOrFail($id);
-        $oldStatus = $ticket->status->value;
-
         try {
-            $message = $this->ticketService->replyToTicket($admin, $id, $request->input('body'), 'admin');
-            $ticket->refresh();
+            $result = $this->ticketService->replyAsAdmin(
+                $admin,
+                $id,
+                $request->input('body'),
+                $request->boolean('is_internal'),
+            );
 
             $this->auditLog->log(
                 action: 'reply_support_ticket',
-                model: $ticket,
-                description: "Đã phản hồi yêu cầu hỗ trợ {$ticket->ticket_code}",
-                oldValues: ['status' => $oldStatus],
-                newValues: ['status' => $ticket->status->value, 'message_id' => $message->id],
+                model: $result->ticket,
+                description: $request->boolean('is_internal')
+                    ? "Đã thêm ghi chú nội bộ cho yêu cầu {$result->ticket->ticket_code}"
+                    : "Đã phản hồi yêu cầu hỗ trợ {$result->ticket->ticket_code}",
+                oldValues: $result->oldValues,
+                newValues: $result->newValues,
                 actor: $admin,
             );
 
             return response()->json([
                 'success' => true,
                 'message' => 'Trả lời yêu cầu hỗ trợ thành công.',
-                'data' => $message,
+                'data' => $result->message,
             ]);
         } catch (\InvalidArgumentException $e) {
             return response()->json([
@@ -136,18 +148,18 @@ class SupportController extends Controller
     public function assign(AssignTicketRequest $request, string $id): JsonResponse
     {
         $admin = auth('admin')->user();
-        $ticket = SupportTicket::findOrFail($id);
-        $oldAssignee = $ticket->assigned_to;
-
-        $this->ticketService->assignTicket($id, $request->input('assigned_to'));
-        $ticket->refresh();
+        try {
+            $result = $this->ticketService->assignTicket($id, $request->input('assigned_to'));
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
 
         $this->auditLog->log(
             action: 'assign_support_ticket',
-            model: $ticket,
-            description: "Đã phân công yêu cầu hỗ trợ {$ticket->ticket_code}",
-            oldValues: ['assigned_to' => $oldAssignee],
-            newValues: ['assigned_to' => $ticket->assigned_to],
+            model: $result->ticket,
+            description: "Đã phân công yêu cầu hỗ trợ {$result->ticket->ticket_code}",
+            oldValues: $result->oldValues,
+            newValues: $result->newValues,
             actor: $admin,
         );
 
@@ -163,18 +175,18 @@ class SupportController extends Controller
     public function resolve(string $id): JsonResponse
     {
         $admin = auth('admin')->user();
-        $ticket = SupportTicket::findOrFail($id);
-        $oldStatus = $ticket->status->value;
-
-        $this->ticketService->resolveTicket($id);
-        $ticket->refresh();
+        try {
+            $result = $this->ticketService->resolveTicket($id);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
 
         $this->auditLog->log(
             action: 'resolve_support_ticket',
-            model: $ticket,
-            description: "Đã giải quyết yêu cầu hỗ trợ {$ticket->ticket_code}",
-            oldValues: ['status' => $oldStatus],
-            newValues: ['status' => $ticket->status->value],
+            model: $result->ticket,
+            description: "Đã giải quyết yêu cầu hỗ trợ {$result->ticket->ticket_code}",
+            oldValues: $result->oldValues,
+            newValues: $result->newValues,
             actor: $admin,
         );
 
@@ -190,24 +202,58 @@ class SupportController extends Controller
     public function close(string $id): JsonResponse
     {
         $admin = auth('admin')->user();
-        $ticket = SupportTicket::findOrFail($id);
-        $oldStatus = $ticket->status->value;
-
-        $this->ticketService->closeTicket($id);
-        $ticket->refresh();
+        try {
+            $result = $this->ticketService->closeTicket($id);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
 
         $this->auditLog->log(
             action: 'close_support_ticket',
-            model: $ticket,
-            description: "Đã đóng yêu cầu hỗ trợ {$ticket->ticket_code}",
-            oldValues: ['status' => $oldStatus],
-            newValues: ['status' => $ticket->status->value],
+            model: $result->ticket,
+            description: "Đã đóng yêu cầu hỗ trợ {$result->ticket->ticket_code}",
+            oldValues: $result->oldValues,
+            newValues: $result->newValues,
             actor: $admin,
         );
 
         return response()->json([
             'success' => true,
             'message' => 'Đóng yêu cầu hỗ trợ thành công.',
+        ]);
+    }
+
+    /**
+     * Cập nhật trạng thái và mức độ ưu tiên theo state machine của ticket.
+     */
+    public function update(UpdateSupportTicketRequest $request, string $id): JsonResponse
+    {
+        $admin = auth('admin')->user();
+        $validated = $request->validated();
+
+        try {
+            $result = $this->ticketService->updateTicket(
+                $id,
+                isset($validated['status']) ? TicketStatusEnum::from($validated['status']) : null,
+                isset($validated['priority']) ? TicketPriorityEnum::from($validated['priority']) : null,
+            );
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+
+        $this->auditLog->log(
+            action: 'update_support_ticket',
+            model: $result->ticket,
+            description: "Đã cập nhật yêu cầu hỗ trợ {$result->ticket->ticket_code}",
+            oldValues: $result->oldValues,
+            newValues: $result->newValues,
+            actor: $admin,
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cập nhật yêu cầu hỗ trợ thành công.',
+            'data' => $result->ticket,
         ]);
     }
 }

@@ -15,6 +15,7 @@ class ReplyMessageRequest extends FormRequest
     {
         return [
             'body' => ['required', 'string', 'min:2', 'max:5000'],
+            'is_internal' => ['sometimes', 'boolean'],
         ];
     }
 

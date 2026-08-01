@@ -1,35 +1,24 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import { customerApi } from '@/api/customer.api';
+import { supportCategories } from '@/types/support';
+import type {
+    SupportStats,
+    SupportTicket,
+    TicketCategory,
+    TicketPriority,
+    TicketStatus,
+} from '@/types/support';
 
-const router = useRouter();
-
-// ─── Types ─────────────────────────────────────────────────────────────────
-type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
-type TicketCategory =
-    | 'general'
-    | 'payment'
-    | 'refund'
-    | 'complaint'
-    | 'technical'
-    | 'other';
-type Priority = 'low' | 'normal' | 'high' | 'urgent';
-
-interface SupportTicket {
+interface BookingOption {
     id: string;
-    ticket_code: string;
-    subject: string;
-    category: TicketCategory;
-    status: TicketStatus;
-    priority: Priority;
-    created_at: string;
-    updated_at: string;
-    last_reply_at?: string;
-    message_count?: number;
-    booking_code?: string;
+    booking_code: string;
+    route: string;
+    date: string;
 }
 
-// ─── State ─────────────────────────────────────────────────────────────────
+const router = useRouter();
 const activeTab = ref<'list' | 'create'>('list');
 const tickets = ref<SupportTicket[]>([]);
 const statusFilter = ref<'all' | TicketStatus>('all');
@@ -37,128 +26,32 @@ const loading = ref(false);
 const createLoading = ref(false);
 const successMsg = ref('');
 const errorMsg = ref('');
-
-const myBookings = ref([
-    {
-        id: 'bk-001',
-        booking_code: 'XG-20240101',
-        route: 'Hà Nội → Hải Phòng',
-        date: '01/01/2024',
-    },
-    {
-        id: 'bk-002',
-        booking_code: 'XG-20240215',
-        route: 'Hải Phòng → Hà Nội',
-        date: '15/02/2024',
-    },
-]);
+const myBookings = ref<BookingOption[]>([]);
+const currentPage = ref(1);
+const lastPage = ref(1);
+const stats = ref<SupportStats>({
+    open: 0,
+    in_progress: 0,
+    resolved: 0,
+    closed: 0,
+});
 
 const form = ref({
     category: '' as TicketCategory | '',
     subject: '',
     body: '',
     booking_id: '',
-    priority: 'normal' as Priority,
+    priority: 'normal' as TicketPriority,
 });
-
-const mockTickets: SupportTicket[] = [
-    {
-        id: 'tk-001',
-        ticket_code: 'TK-000001',
-        subject: 'Không nhận được vé sau khi thanh toán',
-        category: 'payment',
-        status: 'in_progress',
-        priority: 'high',
-        created_at: '2024-06-20T10:30:00Z',
-        updated_at: '2024-06-20T14:00:00Z',
-        last_reply_at: '2024-06-20T14:00:00Z',
-        message_count: 3,
-        booking_code: 'XG-20240620',
-    },
-    {
-        id: 'tk-002',
-        ticket_code: 'TK-000002',
-        subject: 'Yêu cầu hoàn tiền vé đã hủy',
-        category: 'refund',
-        status: 'open',
-        priority: 'normal',
-        created_at: '2024-06-18T09:15:00Z',
-        updated_at: '2024-06-18T09:15:00Z',
-        message_count: 1,
-        booking_code: 'XG-20240615',
-    },
-    {
-        id: 'tk-003',
-        ticket_code: 'TK-000003',
-        subject: 'Tài xế đến muộn 30 phút',
-        category: 'complaint',
-        status: 'resolved',
-        priority: 'normal',
-        created_at: '2024-06-10T08:00:00Z',
-        updated_at: '2024-06-12T16:30:00Z',
-        last_reply_at: '2024-06-12T16:30:00Z',
-        message_count: 5,
-        booking_code: 'XG-20240610',
-    },
-];
 
 // ─── Computed ───────────────────────────────────────────────────────────────
-const filteredTickets = computed(() => {
-    if (statusFilter.value === 'all') return tickets.value;
-    return tickets.value.filter((t) => t.status === statusFilter.value);
-});
+const filteredTickets = computed(() => tickets.value);
 
-const openCount = computed(
-    () => tickets.value.filter((t) => t.status === 'open').length,
-);
-const inProgressCount = computed(
-    () => tickets.value.filter((t) => t.status === 'in_progress').length,
-);
-const resolvedCount = computed(
-    () =>
-        tickets.value.filter(
-            (t) => t.status === 'resolved' || t.status === 'closed',
-        ).length,
-);
+const openCount = computed(() => stats.value.open);
+const inProgressCount = computed(() => stats.value.in_progress);
+const resolvedCount = computed(() => stats.value.resolved + stats.value.closed);
 
-const categories: {
-    value: TicketCategory;
-    label: string;
-    icon: string;
-    desc: string;
-}[] = [
-    {
-        value: 'payment',
-        label: 'Vấn đề thanh toán',
-        icon: '💳',
-        desc: 'Thanh toán lỗi, chưa nhận vé',
-    },
-    {
-        value: 'refund',
-        label: 'Yêu cầu hoàn tiền',
-        icon: '💰',
-        desc: 'Hoàn tiền vé đã hủy',
-    },
-    {
-        value: 'complaint',
-        label: 'Khiếu nại dịch vụ',
-        icon: '📢',
-        desc: 'Chất lượng xe, tài xế',
-    },
-    {
-        value: 'technical',
-        label: 'Lỗi kỹ thuật',
-        icon: '🔧',
-        desc: 'Ứng dụng không hoạt động',
-    },
-    {
-        value: 'general',
-        label: 'Câu hỏi chung',
-        icon: '💬',
-        desc: 'Thắc mắc về dịch vụ',
-    },
-    { value: 'other', label: 'Khác', icon: '📋', desc: 'Vấn đề khác' },
-];
+const categories = supportCategories;
 
 // ─── Methods ────────────────────────────────────────────────────────────────
 function statusLabel(s: TicketStatus) {
@@ -179,7 +72,7 @@ function statusBadgeClass(s: TicketStatus) {
     }[s];
 }
 
-function priorityLabel(p: Priority) {
+function priorityLabel(p: TicketPriority) {
     return {
         low: 'Thấp',
         normal: 'Bình thường',
@@ -188,7 +81,7 @@ function priorityLabel(p: Priority) {
     }[p];
 }
 
-function priorityBadgeClass(p: Priority) {
+function priorityBadgeClass(p: TicketPriority) {
     return {
         low: 'bg-slate-100 text-slate-600',
         normal: 'bg-blue-50 text-blue-600',
@@ -221,31 +114,56 @@ function isFormValid() {
     );
 }
 
-async function loadTickets() {
+async function loadTickets(page = 1) {
     loading.value = true;
-    await new Promise((r) => setTimeout(r, 500));
-    tickets.value = mockTickets;
+    errorMsg.value = '';
+    const { data, meta, error } = await customerApi.getSupportTickets({
+        page,
+        ...(statusFilter.value !== 'all' ? { status: statusFilter.value } : {}),
+    });
+    tickets.value = (data as SupportTicket[] | null) ?? [];
+    currentPage.value = meta?.current_page ?? 1;
+    lastPage.value = meta?.last_page ?? 1;
+    if (meta?.stats) stats.value = meta.stats as SupportStats;
+    if (error) errorMsg.value = error;
     loading.value = false;
+}
+
+async function loadBookings() {
+    const { data } = await customerApi.getBookings();
+    const rows = (data as any[]) ?? [];
+    myBookings.value = rows.map((booking) => ({
+        id: booking.id,
+        booking_code: booking.booking_code,
+        route: booking.trip?.route
+            ? `${booking.trip.route.origin_city} → ${booking.trip.route.dest_city}`
+            : 'Chuyến xe',
+        date: booking.trip?.depart_at
+            ? new Date(booking.trip.depart_at).toLocaleDateString('vi-VN')
+            : 'Chưa xác định',
+    }));
 }
 
 async function submitTicket() {
     if (!isFormValid()) return;
     createLoading.value = true;
     errorMsg.value = '';
+    const booking = myBookings.value.find(
+        (item) => item.id === form.value.booking_id,
+    );
     try {
-        await new Promise((r) => setTimeout(r, 1000));
-        const newTicket: SupportTicket = {
-            id: `tk-${Date.now()}`,
-            ticket_code: `TK-${String(tickets.value.length + 1).padStart(6, '0')}`,
-            subject: form.value.subject,
-            category: form.value.category as TicketCategory,
-            status: 'open',
+        const { data, error } = await customerApi.createSupportTicket({
+            category: form.value.category,
+            subject: form.value.subject.trim(),
+            message: form.value.body.trim(),
             priority: form.value.priority,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            message_count: 1,
-        };
-        tickets.value.unshift(newTicket);
+            ...(booking ? { booking_code: booking.booking_code } : {}),
+        });
+        if (error || !data) {
+            errorMsg.value = error ?? 'Không thể tạo yêu cầu hỗ trợ.';
+            return;
+        }
+        const newTicket = data as SupportTicket;
         successMsg.value = `Ticket ${newTicket.ticket_code} đã được tạo thành công! Chúng tôi sẽ phản hồi trong vòng 24 giờ.`;
         form.value = {
             category: '',
@@ -255,15 +173,18 @@ async function submitTicket() {
             priority: 'normal',
         };
         activeTab.value = 'list';
+        statusFilter.value = 'all';
+        await loadTickets(1);
         setTimeout(() => (successMsg.value = ''), 6000);
-    } catch {
-        errorMsg.value = 'Có lỗi xảy ra, vui lòng thử lại.';
     } finally {
         createLoading.value = false;
     }
 }
 
-onMounted(() => loadTickets());
+onMounted(() => {
+    void Promise.all([loadTickets(), loadBookings()]);
+});
+watch(statusFilter, () => void loadTickets(1));
 </script>
 
 <template>
@@ -586,6 +507,29 @@ onMounted(() => loadTickets());
                                 class="h-full w-3/5 animate-pulse rounded-full bg-blue-500"
                             ></div>
                         </div>
+                    </div>
+
+                    <div
+                        v-if="lastPage > 1"
+                        class="flex items-center justify-center gap-3 pt-3"
+                    >
+                        <button
+                            :disabled="currentPage <= 1"
+                            class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-600 disabled:cursor-not-allowed disabled:opacity-40"
+                            @click="loadTickets(currentPage - 1)"
+                        >
+                            Trang trước
+                        </button>
+                        <span class="text-sm text-slate-500">
+                            {{ currentPage }}/{{ lastPage }}
+                        </span>
+                        <button
+                            :disabled="currentPage >= lastPage"
+                            class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-600 disabled:cursor-not-allowed disabled:opacity-40"
+                            @click="loadTickets(currentPage + 1)"
+                        >
+                            Trang sau
+                        </button>
                     </div>
                 </div>
             </div>

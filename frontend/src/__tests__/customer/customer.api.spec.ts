@@ -133,4 +133,27 @@ describe('customerApi → Wayfinder route contract', () => {
             form,
         );
     });
+
+    it('maps the complete customer support ticket workflow', () => {
+        customerApi.getSupportTickets({ page: 2 });
+        expect(apiClient.send).toHaveBeenCalledWith({
+            url: '/api/customer/support/tickets?page=2',
+            method: 'get',
+        });
+
+        customerApi.replySupportTicket('ticket-1', 'Nội dung phản hồi');
+        expect(apiClient.send).toHaveBeenCalledWith(
+            {
+                url: '/api/customer/support/tickets/ticket-1/reply',
+                method: 'post',
+            },
+            { body: 'Nội dung phản hồi' },
+        );
+
+        customerApi.closeSupportTicket('ticket-1');
+        expect(apiClient.send).toHaveBeenCalledWith({
+            url: '/api/customer/support/tickets/ticket-1/close',
+            method: 'post',
+        });
+    });
 });
