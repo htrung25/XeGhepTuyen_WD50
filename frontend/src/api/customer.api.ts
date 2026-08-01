@@ -1,4 +1,6 @@
 import {
+    sendOtp,
+    verifyOtp,
     login,
     register,
     logout,
@@ -45,12 +47,16 @@ export const customerApi = {
     // ─── Auth ─────────────────────────────────────────────────────────────
     login: (data: { phone: string; password: string }) =>
         apiClient.send(login(), data),
+    sendOtp: (data: { phone: string }) => apiClient.send(sendOtp(), data),
+    verifyOtp: (data: { phone: string; otp: string }) =>
+        apiClient.send(verifyOtp(), data),
     register: (data: {
         full_name: string;
         phone: string;
         email?: string;
         password: string;
         password_confirmation: string;
+        verification_token: string;
     }) => apiClient.send(register(), data),
     logout: () => apiClient.send(logout()),
     me: () => apiClient.send(me()),

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onUnmounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { customerApi } from '@/api/customer.api';
 import AuthHomeLink from '@/components/customer/auth/AuthHomeLink.vue';
@@ -18,7 +18,93 @@ const form = ref({
 const showPw = ref(false);
 const showPw2 = ref(false);
 const loading = ref(false);
+const otp = ref('');
+const otpSent = ref(false);
+const otpLoading = ref(false);
+const otpVerifying = ref(false);
+const verificationToken = ref<string | null>(null);
+const verifiedPhone = ref<string | null>(null);
+const resendSeconds = ref(0);
 const errors = ref<Record<string, string>>({});
+let countdownTimer: ReturnType<typeof setInterval> | null = null;
+
+watch(
+    () => form.value.phone,
+    (phone) => {
+        if (verifiedPhone.value && phone !== verifiedPhone.value) {
+            verificationToken.value = null;
+            verifiedPhone.value = null;
+            otp.value = '';
+            otpSent.value = false;
+        }
+    },
+);
+
+onUnmounted(() => {
+    if (countdownTimer) clearInterval(countdownTimer);
+});
+
+function isValidPhone() {
+    if (!form.value.phone.trim()) {
+        errors.value.phone = 'Vui lòng nhập số điện thoại';
+        return false;
+    }
+    if (!/^(0[35789])[0-9]{8}$/.test(form.value.phone)) {
+        errors.value.phone = 'Số điện thoại không hợp lệ (VD: 09xxxxxxxx)';
+        return false;
+    }
+    delete errors.value.phone;
+    return true;
+}
+
+function startResendCountdown() {
+    resendSeconds.value = 60;
+    if (countdownTimer) clearInterval(countdownTimer);
+    countdownTimer = setInterval(() => {
+        resendSeconds.value -= 1;
+        if (resendSeconds.value <= 0 && countdownTimer) {
+            clearInterval(countdownTimer);
+            countdownTimer = null;
+        }
+    }, 1000);
+}
+
+async function handleSendOtp() {
+    if (!isValidPhone() || resendSeconds.value > 0) return;
+    otpLoading.value = true;
+    delete errors.value.general;
+    const { error } = await customerApi.sendOtp({ phone: form.value.phone });
+    otpLoading.value = false;
+    if (error) {
+        errors.value.general = error;
+        return;
+    }
+    otpSent.value = true;
+    verificationToken.value = null;
+    verifiedPhone.value = null;
+    startResendCountdown();
+}
+
+async function handleVerifyOtp() {
+    if (!/^\d{6}$/.test(otp.value)) {
+        errors.value.otp = 'Mã OTP phải gồm 6 chữ số';
+        return;
+    }
+    otpVerifying.value = true;
+    delete errors.value.otp;
+    delete errors.value.general;
+    const { data, error } = await customerApi.verifyOtp({
+        phone: form.value.phone,
+        otp: otp.value,
+    });
+    otpVerifying.value = false;
+    if (error || !data?.verification_token) {
+        errors.value.otp = error ?? 'Không thể xác thực OTP';
+        return;
+    }
+    verificationToken.value = data.verification_token;
+    verifiedPhone.value = form.value.phone;
+}
 
 function validate() {
     errors.value = {};
@@ -26,7 +112,7 @@ function validate() {
         errors.value.full_name = 'Vui lòng nhập họ tên';
     if (!form.value.phone.trim())
         errors.value.phone = 'Vui lòng nhập số điện thoại';
-    else if (!/^(0[3|5|7|8|9])[0-9]{8}$/.test(form.value.phone))
+    else if (!/^(0[35789])[0-9]{8}$/.test(form.value.phone))
         errors.value.phone = 'Số điện thoại không hợp lệ (VD: 09xxxxxxxx)';
     if (
         form.value.email &&
@@ -34,10 +120,12 @@ function validate() {
     )
         errors.value.email = 'Email không hợp lệ';
     if (!form.value.password) errors.value.password = 'Vui lòng nhập mật khẩu';
-    else if (form.value.password.length < 6)
-        errors.value.password = 'Mật khẩu tối thiểu 6 ký tự';
+    else if (form.value.password.length < 8)
+        errors.value.password = 'Mật khẩu tối thiểu 8 ký tự';
     if (form.value.password !== form.value.password_confirmation)
         errors.value.password_confirmation = 'Mật khẩu xác nhận không khớp';
+    if (!verificationToken.value || verifiedPhone.value !== form.value.phone)
+        errors.value.otp = 'Vui lòng xác thực số điện thoại';
     return Object.keys(errors.value).length === 0;
 }
 
@@ -51,6 +139,7 @@ async function handleRegister() {
         email: form.value.email || undefined,
         password: form.value.password,
         password_confirmation: form.value.password_confirmation,
+        verification_token: verificationToken.value!,
     });
     loading.value = false;
     if (error || !data?.token || !data?.user) {
@@ -272,19 +361,45 @@ async function handleRegister() {
                                 Số điện thoại
                                 <span class="text-red-500">*</span>
                             </label>
-                            <input
-                                v-model="form.phone"
-                                type="tel"
-                                inputmode="numeric"
-                                placeholder="09xxxxxxxx"
-                                autocomplete="tel"
-                                class="w-full rounded-xl border px-4 py-3 text-sm transition-colors focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                :class="
-                                    errors.phone
-                                        ? 'border-red-400 bg-red-50'
-                                        : 'border-gray-200'
-                                "
-                            />
+                            <div class="flex gap-2">
+                                <input
+                                    v-model="form.phone"
+                                    type="tel"
+                                    inputmode="numeric"
+                                    maxlength="10"
+                                    placeholder="09xxxxxxxx"
+                                    autocomplete="tel"
+                                    class="min-w-0 flex-1 rounded-xl border px-4 py-3 text-sm transition-colors focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    :class="
+                                        errors.phone
+                                            ? 'border-red-400 bg-red-50'
+                                            : 'border-gray-200'
+                                    "
+                                />
+                                <button
+                                    type="button"
+                                    :disabled="
+                                        otpLoading ||
+                                        resendSeconds > 0 ||
+                                        !!verificationToken
+                                    "
+                                    class="shrink-0 rounded-xl border border-blue-200 px-3 text-sm font-semibold text-blue-600 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                    @click="handleSendOtp"
+                                >
+                                    <template v-if="verificationToken"
+                                        >Đã xác thực</template
+                                    >
+                                    <template v-else-if="otpLoading"
+                                        >Đang gửi...</template
+                                    >
+                                    <template v-else-if="resendSeconds > 0">
+                                        Gửi lại {{ resendSeconds }}s
+                                    </template>
+                                    <template v-else>{{
+                                        otpSent ? 'Gửi lại' : 'Gửi OTP'
+                                    }}</template>
+                                </button>
+                            </div>
                             <p
                                 v-if="errors.phone"
                                 class="mt-1.5 flex items-center gap-1 text-xs text-red-500"
@@ -301,6 +416,59 @@ async function handleRegister() {
                                     />
                                 </svg>
                                 {{ errors.phone }}
+                            </p>
+                        </div>
+
+                        <!-- OTP verification -->
+                        <div v-if="otpSent || verificationToken">
+                            <label
+                                class="mb-1.5 block text-sm font-medium text-gray-700"
+                            >
+                                Mã xác thực <span class="text-red-500">*</span>
+                            </label>
+                            <div class="flex gap-2">
+                                <input
+                                    v-model="otp"
+                                    type="text"
+                                    inputmode="numeric"
+                                    maxlength="6"
+                                    autocomplete="one-time-code"
+                                    placeholder="Nhập 6 chữ số"
+                                    :disabled="!!verificationToken"
+                                    class="min-w-0 flex-1 rounded-xl border px-4 py-3 text-center text-sm tracking-[0.35em] transition-colors focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-green-50 disabled:text-green-700"
+                                    :class="
+                                        errors.otp
+                                            ? 'border-red-400 bg-red-50'
+                                            : verificationToken
+                                              ? 'border-green-300'
+                                              : 'border-gray-200'
+                                    "
+                                />
+                                <button
+                                    v-if="!verificationToken"
+                                    type="button"
+                                    :disabled="otpVerifying || otp.length !== 6"
+                                    class="shrink-0 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                    @click="handleVerifyOtp"
+                                >
+                                    {{
+                                        otpVerifying
+                                            ? 'Đang kiểm tra...'
+                                            : 'Xác thực'
+                                    }}
+                                </button>
+                            </div>
+                            <p
+                                v-if="verificationToken"
+                                class="mt-1.5 text-xs font-medium text-green-600"
+                            >
+                                Số điện thoại đã được xác thực
+                            </p>
+                            <p
+                                v-else-if="errors.otp"
+                                class="mt-1.5 text-xs text-red-500"
+                            >
+                                {{ errors.otp }}
                             </p>
                         </div>
 
@@ -357,7 +525,7 @@ async function handleRegister() {
                                 <input
                                     v-model="form.password"
                                     :type="showPw ? 'text' : 'password'"
-                                    placeholder="Tối thiểu 6 ký tự"
+                                    placeholder="Tối thiểu 8 ký tự"
                                     autocomplete="new-password"
                                     class="w-full rounded-xl border px-4 py-3 pr-11 text-sm transition-colors focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                     :class="

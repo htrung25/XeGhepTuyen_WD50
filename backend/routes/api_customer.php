@@ -19,10 +19,14 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Auth — unauthenticated
-Route::post('auth/send-otp', [AuthController::class, 'sendOtp']);
-Route::post('auth/verify-otp', [AuthController::class, 'verifyOtp']);
-Route::post('auth/register', [AuthController::class, 'register']);
-Route::post('auth/login', [AuthController::class, 'login']);
+Route::post('auth/send-otp', [AuthController::class, 'sendOtp'])
+    ->middleware('throttle:5,1,customer-otp-send:');
+Route::post('auth/verify-otp', [AuthController::class, 'verifyOtp'])
+    ->middleware('throttle:10,1,customer-otp-verify:');
+Route::post('auth/register', [AuthController::class, 'register'])
+    ->middleware('throttle:5,1,customer-register:');
+Route::post('auth/login', [AuthController::class, 'login'])
+    ->middleware('throttle:10,1,customer-login:');
 
 // Payment callbacks — no auth (gateway posts here)
 Route::post('payments/momo/callback', [PaymentController::class, 'momoCallback']);

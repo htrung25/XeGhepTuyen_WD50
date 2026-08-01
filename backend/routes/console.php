@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\ExpireLockedSeatsJob;
+use App\Models\OtpVerification;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -14,3 +15,8 @@ Schedule::command('trips:auto-resolve')->everyTenMinutes()->withoutOverlapping()
 
 // Giải phóng ghế giữ tạm quá 10' (dọn DB; tầng đọc đã tự liền qua SeatMap::isAvailable)
 Schedule::job(new ExpireLockedSeatsJob)->everyMinute()->withoutOverlapping();
+
+// Xóa proof OTP đã hết hạn/đã dùng; model chỉ prune bản ghi cũ hơn 24 giờ.
+Schedule::command('model:prune', ['--model' => [OtpVerification::class]])
+    ->dailyAt('02:15')
+    ->withoutOverlapping();

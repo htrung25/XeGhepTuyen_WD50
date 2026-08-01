@@ -10,6 +10,7 @@ use App\Http\Requests\Customer\RegisterRequest;
 use App\Http\Requests\Customer\SendOtpRequest;
 use App\Jobs\SendSmsNotificationJob;
 use App\Models\User;
+use App\Services\CustomerRegistrationService;
 use App\Services\OtpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,7 +20,10 @@ use Illuminate\Support\Facades\Storage;
 
 class AuthController extends Controller
 {
-    public function __construct(private readonly OtpService $otpService) {}
+    public function __construct(
+        private readonly OtpService $otpService,
+        private readonly CustomerRegistrationService $registrationService,
+    ) {}
 
     public function sendOtp(SendOtpRequest $request): JsonResponse
     {
@@ -52,9 +56,16 @@ class AuthController extends Controller
         ]);
 
         try {
-            $this->otpService->verify($request->phone, $request->otp);
+            $proof = $this->otpService->verify($request->phone, $request->otp);
 
-            return response()->json(['success' => true, 'message' => 'Xác thực OTP thành công']);
+            return response()->json([
+                'success' => true,
+                'message' => 'Xác thực OTP thành công',
+                'data' => [
+                    'verification_token' => $proof->plainToken,
+                    'expires_at' => $proof->expiresAt->toIso8601String(),
+                ],
+            ]);
         } catch (InvalidOtpException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -63,14 +74,7 @@ class AuthController extends Controller
     public function register(RegisterRequest $request): JsonResponse
     {
         try {
-            $user = User::create([
-                'full_name' => $request->full_name,
-                'phone' => $request->phone,
-                'email' => $request->email,
-                'password' => $request->password,
-                'role' => UserRoleEnum::Customer,
-                'is_verified' => true,
-            ]);
+            $user = $this->registrationService->register($request->validated());
 
             $token = $user->createToken('customer_token')->plainTextToken;
 
@@ -79,6 +83,8 @@ class AuthController extends Controller
                 'message' => 'Đăng ký thành công',
                 'data' => ['token' => $token, 'user' => $this->userResponse($user)],
             ], 201);
+        } catch (InvalidOtpException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         } catch (\Exception $e) {
             Log::error('Register failed', ['error' => $e->getMessage()]);
 

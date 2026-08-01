@@ -17,7 +17,8 @@ class RegisterRequest extends FormRequest
             'phone' => ['required', 'regex:/^(0[3|5|7|8|9])+([0-9]{8})$/', 'unique:users,phone'],
             'full_name' => ['required', 'string', 'min:2', 'max:100'],
             'email' => ['sometimes', 'nullable', 'email', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:6', 'confirmed'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'verification_token' => ['required', 'string', 'size:64'],
         ];
     }
 
@@ -32,8 +33,10 @@ class RegisterRequest extends FormRequest
             'email.email' => 'Email không hợp lệ',
             'email.unique' => 'Email đã được sử dụng',
             'password.required' => 'Vui lòng nhập mật khẩu',
-            'password.min' => 'Mật khẩu phải có ít nhất 6 ký tự',
+            'password.min' => 'Mật khẩu phải có ít nhất 8 ký tự',
             'password.confirmed' => 'Xác nhận mật khẩu không khớp',
+            'verification_token.required' => 'Vui lòng xác thực số điện thoại trước khi đăng ký',
+            'verification_token.size' => 'Phiên xác thực OTP không hợp lệ',
         ];
     }
 }

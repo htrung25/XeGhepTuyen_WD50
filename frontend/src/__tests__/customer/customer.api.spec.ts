@@ -15,6 +15,35 @@ import { apiClient } from '@/api/client';
 import { customerApi } from '@/api/customer.api';
 
 describe('customerApi → Wayfinder route contract', () => {
+    it('sendOtp and verifyOtp resolve to customer auth endpoints', () => {
+        customerApi.sendOtp({ phone: '0901234567' });
+        expect(apiClient.send).toHaveBeenCalledWith(
+            { url: '/api/customer/auth/send-otp', method: 'post' },
+            { phone: '0901234567' },
+        );
+
+        customerApi.verifyOtp({ phone: '0901234567', otp: '123456' });
+        expect(apiClient.send).toHaveBeenCalledWith(
+            { url: '/api/customer/auth/verify-otp', method: 'post' },
+            { phone: '0901234567', otp: '123456' },
+        );
+    });
+
+    it('register forwards the one-time verification proof', () => {
+        const payload = {
+            full_name: 'Khách Test',
+            phone: '0901234567',
+            password: 'Customer@123',
+            password_confirmation: 'Customer@123',
+            verification_token: 'a'.repeat(64),
+        };
+        customerApi.register(payload);
+        expect(apiClient.send).toHaveBeenCalledWith(
+            { url: '/api/customer/auth/register', method: 'post' },
+            payload,
+        );
+    });
+
     it('login resolves to POST /api/customer/auth/login', () => {
         customerApi.login({ phone: '0901234567', password: 'secret' });
         expect(apiClient.send).toHaveBeenCalledWith(
