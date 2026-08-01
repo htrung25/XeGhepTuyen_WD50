@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\UserRoleEnum;
+use App\Events\DriverLocationUpdatedEvent;
 use App\Models\Booking;
 use App\Models\Driver;
 use App\Models\Operator;
@@ -9,7 +10,11 @@ use App\Models\RouteStop;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Services\TrackingService;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 
@@ -125,4 +130,49 @@ it('chặn xem tracking vé của người khác', function () {
     Sanctum::actingAs($other, ['*'], 'customer');
 
     $this->getJson("/api/customer/bookings/{$booking->id}/track")->assertNotFound();
+});
+
+it('tính ETA bằng đúng google_maps.api_key và trả ETA ở API tracking', function () {
+    Event::fake([DriverLocationUpdatedEvent::class]);
+    Http::fake([
+        'https://maps.googleapis.com/maps/api/distancematrix/json*' => Http::response([
+            'status' => 'OK',
+            'rows' => [['elements' => [['status' => 'OK', 'duration' => ['value' => 601]]]]],
+        ]),
+    ]);
+    config([
+        'services.google_maps.api_key' => 'google-test-key',
+        'services.google_maps.base_url' => 'https://maps.googleapis.com/maps/api',
+    ]);
+    [$booking] = setupTrackingContext('in_progress', now()->subMinutes(20));
+    $driver = $booking->trip->driver;
+
+    app(TrackingService::class)->updateLocation($driver, $booking->trip, 21.01, 105.80);
+
+    Http::assertSent(fn ($request) => $request['key'] === 'google-test-key');
+    Event::assertDispatched(
+        DriverLocationUpdatedEvent::class,
+        fn ($event) => $event->trip->is($booking->trip) && $event->etaMinutes === 11,
+    );
+    $this->getJson("/api/customer/bookings/{$booking->id}/track")
+        ->assertOk()
+        ->assertJsonPath('data.eta_minutes', 11)
+        ->assertJsonPath('data.driver_lat', 21.01);
+});
+
+it('fallback vị trí DB còn mới khi cache GPS vừa bị mất', function () {
+    [$booking] = setupTrackingContext('in_progress', now()->subMinutes(20));
+    $driver = $booking->trip->driver;
+    $driver->update([
+        'current_lat' => 21.02,
+        'current_lng' => 105.81,
+        'location_updated_at' => now(),
+    ]);
+    Cache::forget("driver_location:{$driver->id}");
+
+    $location = app(TrackingService::class)->getLocation($driver->fresh());
+
+    expect($location)->not->toBeNull()
+        ->and($location['lat'])->toBe(21.02)
+        ->and($location['lng'])->toBe(105.81);
 });

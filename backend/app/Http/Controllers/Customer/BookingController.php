@@ -7,6 +7,7 @@ use App\Exceptions\SeatNotAvailableException;
 use App\Exceptions\ServiceAreaNotConfiguredException;
 use App\Exceptions\TripNotAvailableException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Customer\CancelBookingRequest;
 use App\Http\Requests\Customer\LockSeatsRequest;
 use App\Http\Requests\Customer\StoreBookingRequest;
 use App\Http\Resources\Customer\BookingResource;
@@ -105,7 +106,7 @@ class BookingController extends Controller
         }
     }
 
-    public function cancel(Request $request, string $id): JsonResponse
+    public function cancel(CancelBookingRequest $request, string $id): JsonResponse
     {
         $booking = $this->bookingRepo->findById($id);
 
@@ -114,7 +115,11 @@ class BookingController extends Controller
         }
 
         try {
-            $result = $this->bookingService->cancel($booking, auth('customer')->user(), $request->reason ?? '');
+            $result = $this->bookingService->cancel(
+                $booking,
+                auth('customer')->user(),
+                (string) ($request->validated('reason') ?? ''),
+            );
 
             return response()->json([
                 'success' => true,

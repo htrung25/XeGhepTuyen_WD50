@@ -51,6 +51,8 @@ class TrackingController extends Controller
                 ],
                 'driver_lat' => $location['lat'] ?? null,
                 'driver_lng' => $location['lng'] ?? null,
+                'location_updated_at' => $location['updated_at'] ?? null,
+                'eta_minutes' => $location['eta_minutes'] ?? null,
                 'stops' => $this->buildStopTimeline($trip, $booking),
             ],
         ]);

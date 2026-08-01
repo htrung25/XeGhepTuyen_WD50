@@ -108,7 +108,7 @@ class BookingService
             $voucher = null;
 
             if (! empty($data['voucher_code'])) {
-                $voucher = $this->voucherService->validate($data['voucher_code'], $subtotal, $user, $trip->id);
+                $voucher = $this->voucherService->reserve($data['voucher_code'], $subtotal, $user, $trip);
                 $discount = $voucher->calculateDiscount($subtotal);
             }
 
@@ -185,20 +185,32 @@ class BookingService
      */
     public function cancel(Booking $booking, User $user, string $reason = ''): array
     {
-        if (! $booking->canCancel()) {
-            throw new \InvalidArgumentException('Vé này không thể hủy');
-        }
+        return DB::transaction(function () use ($booking, $user, $reason) {
+            $trip = Trip::whereKey($booking->trip_id)->lockForUpdate()->firstOrFail();
+            $booking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+            $booking->setRelation('trip', $trip);
 
-        return DB::transaction(function () use ($booking, $reason) {
+            if ($booking->user_id !== $user->id) {
+                throw new \InvalidArgumentException('Bạn không có quyền hủy vé này');
+            }
+            if (! $booking->canCancel()) {
+                throw new \InvalidArgumentException('Vé này không thể hủy');
+            }
+
             $refundPercent = $booking->refundPercent();
-            $refundAmount = $booking->refundAmount();
+            $policyRefundAmount = $booking->refundAmount();
+            $alreadyRefunded = (int) ($booking->payment()->value('refund_amount') ?? 0);
+            $refundAmount = max(0, $policyRefundAmount - $alreadyRefunded);
+            $wasRefundable = in_array($booking->payment_status, [
+                BookingPaymentStatusEnum::Paid,
+                BookingPaymentStatusEnum::PartialRefund,
+            ], true);
 
             // Cập nhật trạng thái booking
             $booking->update([
                 'booking_status' => BookingStatusEnum::Cancelled,
                 'cancelled_at' => now(),
                 'cancel_reason' => $reason,
-                '',
             ]);
 
             // Giải phóng ghế
@@ -206,11 +218,12 @@ class BookingService
             SeatMap::whereIn('id', $seatIds)->update(['status' => SeatStatusEnum::Available]);
 
             // Tăng lại available_seats
-            Trip::where('id', $booking->trip_id)
-                ->increment('available_seats', $booking->passenger_count);
+            $trip->increment('available_seats', $booking->passenger_count);
+
+            $this->voucherService->releaseUnpaid($booking);
 
             // Dispatch hoàn tiền nếu đã thanh toán
-            if ($booking->payment_status === BookingPaymentStatusEnum::Paid && $refundAmount > 0) {
+            if ($wasRefundable && $refundAmount > 0) {
                 // afterCommit BẮT BUỘC: queue redis đặt after_commit=false, nếu dispatch
                 // ngay trong transaction thì worker có thể hoàn tiền TRƯỚC khi commit —
                 // transaction rollback là tiền đã ra mà vé vẫn chưa hủy.
@@ -255,6 +268,8 @@ class BookingService
             SeatMap::whereIn('id', $seatIds)->update(['status' => SeatStatusEnum::Available]);
             Trip::where('id', $booking->trip_id)
                 ->increment('available_seats', $booking->passenger_count);
+
+            $this->voucherService->releaseUnpaid($booking);
         });
     }
 
@@ -271,13 +286,19 @@ class BookingService
                 ->whereIn('booking_status', [BookingStatusEnum::CheckedIn->value, BookingStatusEnum::Confirmed->value])
                 ->update(['booking_status' => BookingStatusEnum::Completed, 'completed_at' => now()]);
 
-            $trip->bookings()
+            $pendingBookings = $trip->bookings()
                 ->where('booking_status', BookingStatusEnum::Pending->value)
-                ->update([
+                ->lockForUpdate()
+                ->get();
+
+            foreach ($pendingBookings as $booking) {
+                $booking->update([
                     'booking_status' => BookingStatusEnum::Cancelled,
                     'cancelled_at' => now(),
                     'cancel_reason' => 'Chuyến đã kết thúc, vé chưa thanh toán',
                 ]);
+                $this->voucherService->releaseUnpaid($booking);
+            }
         });
     }
 
@@ -289,13 +310,21 @@ class BookingService
      */
     public function cancelByOperator(Booking $booking, string $reason, bool $compensate = true): void
     {
-        if (in_array($booking->booking_status, [BookingStatusEnum::Cancelled, BookingStatusEnum::Completed, BookingStatusEnum::NoShow], true)) {
-            return; // đã chốt trạng thái, bỏ qua
-        }
+        DB::transaction(function () use ($booking, $reason, $compensate) {
+            $trip = Trip::whereKey($booking->trip_id)->lockForUpdate()->firstOrFail();
+            $booking = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
 
-        $wasPaid = $booking->payment_status === BookingPaymentStatusEnum::Paid;
+            if (in_array($booking->booking_status, [BookingStatusEnum::Cancelled, BookingStatusEnum::Completed, BookingStatusEnum::NoShow], true)) {
+                return; // đã chốt trạng thái, bỏ qua
+            }
 
-        DB::transaction(function () use ($booking, $reason, $compensate, $wasPaid) {
+            $wasPaid = in_array($booking->payment_status, [
+                BookingPaymentStatusEnum::Paid,
+                BookingPaymentStatusEnum::PartialRefund,
+            ], true);
+            $alreadyRefunded = (int) ($booking->payment()->value('refund_amount') ?? 0);
+            $refundAmount = max(0, (int) $booking->final_amount - $alreadyRefunded);
+
             $booking->update([
                 'booking_status' => BookingStatusEnum::Cancelled,
                 'cancelled_at' => now(),
@@ -305,14 +334,15 @@ class BookingService
             // Giải phóng ghế + trả lại available_seats
             $seatIds = $booking->passengers()->pluck('seat_map_id');
             SeatMap::whereIn('id', $seatIds)->update(['status' => SeatStatusEnum::Available]);
-            Trip::where('id', $booking->trip_id)
-                ->increment('available_seats', $booking->passenger_count);
+            $trip->increment('available_seats', $booking->passenger_count);
+
+            $this->voucherService->releaseUnpaid($booking);
 
             // Chỉ vé ĐÃ THANH TOÁN mới hoàn tiền + bồi thường.
             // Vé chưa trả (pending / tiền mặt chưa thu) → chỉ hủy, không có gì để hoàn/bồi thường.
-            if ($wasPaid) {
+            if ($wasPaid && $refundAmount > 0) {
                 // afterCommit BẮT BUỘC — xem giải thích ở cancel()
-                ProcessRefundJob::dispatch($booking, (int) $booking->final_amount)->onQueue('high')->afterCommit();
+                ProcessRefundJob::dispatch($booking, $refundAmount)->onQueue('high')->afterCommit();
 
                 if ($compensate) {
                     $this->walletService->credit(
