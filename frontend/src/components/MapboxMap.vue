@@ -14,11 +14,13 @@ export interface MapMarker {
 const props = withDefaults(
     defineProps<{
         markers?: MapMarker[];
+        routeCoordinates?: [number, number][];
         center?: [number, number]; // [lng, lat]
         zoom?: number;
     }>(),
     {
         markers: () => [],
+        routeCoordinates: () => [],
         center: () => [106.4, 20.9], // giữa Hà Nội – Hải Phòng
         zoom: 8.5,
     },
@@ -74,6 +76,51 @@ function renderMarkers() {
     }
 }
 
+function renderRoute() {
+    if (!map || !loaded) return;
+
+    const source = map.getSource('navigation-route') as
+        | mapboxgl.GeoJSONSource
+        | undefined;
+    const data =
+        props.routeCoordinates.length >= 2
+            ? {
+                  type: 'Feature' as const,
+                  properties: {},
+                  geometry: {
+                      type: 'LineString' as const,
+                      coordinates: props.routeCoordinates,
+                  },
+              }
+            : {
+                  type: 'FeatureCollection' as const,
+                  features: [],
+              };
+
+    if (source) {
+        source.setData(data);
+        return;
+    }
+
+    if (props.routeCoordinates.length < 2) return;
+
+    map.addSource('navigation-route', { type: 'geojson', data });
+    map.addLayer({
+        id: 'navigation-route-line',
+        type: 'line',
+        source: 'navigation-route',
+        layout: {
+            'line-cap': 'round',
+            'line-join': 'round',
+        },
+        paint: {
+            'line-color': '#16a34a',
+            'line-width': 6,
+            'line-opacity': 0.9,
+        },
+    });
+}
+
 onMounted(() => {
     if (!hasToken || !container.value) return;
     try {
@@ -89,6 +136,7 @@ onMounted(() => {
             loaded = true;
             mapError.value = '';
             map?.resize();
+            renderRoute();
             renderMarkers();
         });
         map.on('error', (event) => {
@@ -111,6 +159,7 @@ onMounted(() => {
 });
 
 watch(() => props.markers, renderMarkers, { deep: true });
+watch(() => props.routeCoordinates, renderRoute, { deep: true });
 
 onUnmounted(() => {
     resizeObserver?.disconnect();

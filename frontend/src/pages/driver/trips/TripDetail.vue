@@ -85,8 +85,8 @@ async function startTrip() {
     trip.value.status = 'in_progress';
     successMsg.value = 'Chuyến đã bắt đầu!';
     setTimeout(() => {
-        successMsg.value = '';
-    }, 3000);
+        router.push(`/driver/trips/${tripId}/navigate`);
+    }, 800);
 }
 
 async function completeTrip() {

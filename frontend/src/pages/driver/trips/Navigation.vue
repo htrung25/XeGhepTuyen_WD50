@@ -4,6 +4,14 @@ import { useRoute } from 'vue-router';
 import { driverApi } from '@/api/driver.api';
 import MapboxMap from '@/components/MapboxMap.vue';
 import type { MapMarker } from '@/components/MapboxMap.vue';
+import {
+    buildNavigationWaypoints,
+    fetchNavigationRoute,
+} from '@/services/navigation-route.service';
+import type {
+    NavigationRouteResult,
+    NavigationWaypoint,
+} from '@/services/navigation-route.service';
 import { useDriverStore } from '@/stores/driver.store';
 
 const route = useRoute();
@@ -19,18 +27,28 @@ const incidentNote = ref('');
 const gpsActive = ref(false);
 const gpsLastUpdate = ref<string | null>(null);
 const currentPos = ref({ lat: 21.0285, lng: 105.8542 }); // default Hanoi
+const navigationWaypoints = ref<NavigationWaypoint[]>([]);
+const navigationRoute = ref<NavigationRouteResult | null>(null);
+const routeLoading = ref(false);
+const routeError = ref('');
+let routedFromActualGps = false;
 
 let locationInterval: ReturnType<typeof setInterval> | null = null;
 let watchId: number | null = null;
-const mapMarkers = computed<MapMarker[]>(() => [
-    {
-        id: tripId,
-        lat: currentPos.value.lat,
-        lng: currentPos.value.lng,
-        color: '#16a34a',
-        label: 'Vị trí của bạn',
-    },
-]);
+const mapMarkers = computed<MapMarker[]>(() =>
+    navigationWaypoints.value.map((waypoint, index) => ({
+        id: `${tripId}-${index}`,
+        lat: waypoint.lat,
+        lng: waypoint.lng,
+        color:
+            index === 0
+                ? '#16a34a'
+                : index === navigationWaypoints.value.length - 1
+                  ? '#dc2626'
+                  : '#2563eb',
+        label: waypoint.label,
+    })),
+);
 
 const nextPassenger = computed(() => {
     return (
@@ -68,6 +86,47 @@ function openGoogleMaps() {
 
 function updateMapPosition(lat: number, lng: number) {
     currentPos.value = { lat, lng };
+    if (!routedFromActualGps && passengers.value.length > 0) {
+        routedFromActualGps = true;
+        void loadNavigationRoute();
+    }
+}
+
+async function loadNavigationRoute() {
+    routeLoading.value = true;
+    routeError.value = '';
+
+    try {
+        navigationWaypoints.value = buildNavigationWaypoints(
+            currentPos.value,
+            passengers.value,
+        );
+        navigationRoute.value =
+            navigationWaypoints.value.length >= 2
+                ? await fetchNavigationRoute(navigationWaypoints.value)
+                : null;
+    } catch (error) {
+        navigationRoute.value = null;
+        routeError.value =
+            error instanceof Error
+                ? error.message
+                : 'Không thể sinh tuyến đón khách';
+    } finally {
+        routeLoading.value = false;
+    }
+}
+
+function formatDistance(meters: number) {
+    return meters >= 1000
+        ? `${(meters / 1000).toFixed(1)} km`
+        : `${Math.round(meters)} m`;
+}
+
+function formatDuration(seconds: number) {
+    const minutes = Math.max(1, Math.round(seconds / 60));
+    return minutes >= 60
+        ? `${Math.floor(minutes / 60)} giờ ${minutes % 60} phút`
+        : `${minutes} phút`;
 }
 
 async function sendLocation(lat: number, lng: number) {
@@ -110,6 +169,7 @@ async function loadData() {
     trip.value = tripRes.data;
     passengers.value = passRes.data ?? [];
     store.passengers = passengers.value;
+    await loadNavigationRoute();
 }
 
 onMounted(async () => {
@@ -212,6 +272,9 @@ onUnmounted(() => {
                     <div class="relative h-[560px] w-full bg-slate-100">
                         <MapboxMap
                             :markers="mapMarkers"
+                            :route-coordinates="
+                                navigationRoute?.coordinates ?? []
+                            "
                             :center="[currentPos.lng, currentPos.lat]"
                             :zoom="13"
                         />
@@ -225,6 +288,45 @@ onUnmounted(() => {
                                 {{ currentPos.lng.toFixed(5) }}
                             </p>
                         </div>
+                        <div
+                            v-if="routeLoading"
+                            class="absolute top-4 left-4 rounded-lg bg-white/95 px-3 py-2 text-xs font-semibold text-green-700 shadow-sm"
+                        >
+                            Đang sinh tuyến đón khách…
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    v-if="routeError"
+                    class="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700"
+                >
+                    <span>{{ routeError }}</span>
+                    <button
+                        class="font-semibold underline"
+                        @click="loadNavigationRoute"
+                    >
+                        Thử lại
+                    </button>
+                </div>
+
+                <div
+                    v-else-if="navigationRoute"
+                    class="grid grid-cols-2 gap-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm"
+                >
+                    <div>
+                        <p class="text-xs text-green-600">Tổng quãng đường</p>
+                        <p class="font-bold text-green-800">
+                            {{ formatDistance(navigationRoute.distanceMeters) }}
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-green-600">Thời gian dự kiến</p>
+                        <p class="font-bold text-green-800">
+                            {{
+                                formatDuration(navigationRoute.durationSeconds)
+                            }}
+                        </p>
                     </div>
                 </div>
 
@@ -298,16 +400,28 @@ onUnmounted(() => {
                         {{ nextStop.address }}
                     </p>
 
-                    <!-- ETA (mock) -->
+                    <!-- ETA thật từ chặng đầu của Mapbox Directions -->
                     <div
                         class="mb-4 flex items-center gap-4 rounded-xl bg-green-50 p-3"
                     >
                         <div>
                             <p class="text-2xl font-black text-green-700">
-                                ~{{ Math.floor(Math.random() * 8 + 3) }} phút
+                                {{
+                                    navigationRoute
+                                        ? formatDuration(
+                                              navigationRoute.nextStopDurationSeconds,
+                                          )
+                                        : 'Đang tính…'
+                                }}
                             </p>
                             <p class="text-xs text-green-600">
-                                {{ (Math.random() * 4 + 0.5).toFixed(1) }} km
+                                {{
+                                    navigationRoute
+                                        ? formatDistance(
+                                              navigationRoute.nextStopDistanceMeters,
+                                          )
+                                        : '—'
+                                }}
                             </p>
                         </div>
                         <div class="h-10 w-px bg-green-200" />

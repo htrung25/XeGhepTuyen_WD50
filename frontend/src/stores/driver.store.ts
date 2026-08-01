@@ -21,8 +21,20 @@ export interface Passenger {
     passenger_name: string;
     passenger_phone: string;
     seat_codes: string[];
-    pickup_stop: { stop_name: string; address: string };
-    dropoff_stop: { stop_name: string; address: string };
+    pickup_stop: {
+        stop_name: string;
+        address: string;
+        lat: number;
+        lng: number;
+        stop_order?: number | null;
+    };
+    dropoff_stop: {
+        stop_name: string;
+        address: string;
+        lat: number;
+        lng: number;
+        stop_order?: number | null;
+    };
     booking_status: string;
     checked_in: boolean;
     payment_method?: string;
