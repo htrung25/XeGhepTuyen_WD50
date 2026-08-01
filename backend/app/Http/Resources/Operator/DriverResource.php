@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Operator;
 
 use App\Enums\DriverStatusEnum;
+use App\Services\PrivateDocumentService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -10,6 +11,8 @@ class DriverResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $documents = app(PrivateDocumentService::class);
+
         return [
             'id' => $this->id,
             'full_name' => $this->user?->full_name,
@@ -29,9 +32,9 @@ class DriverResource extends JsonResource
             'license_class' => $this->license_class,
             'license_expiry' => $this->license_expiry?->toDateString(),
             'id_card_number' => $this->id_card_number,
-            'id_card_front_url' => $this->id_card_front_url,
-            'id_card_back_url' => $this->id_card_back_url,
-            'license_front_url' => $this->license_front_url,
+            'id_card_front_url' => $documents->temporaryUrl($this->id_card_front_path),
+            'id_card_back_url' => $documents->temporaryUrl($this->id_card_back_path),
+            'license_front_url' => $documents->temporaryUrl($this->license_front_path),
             'total_trips' => (int) $this->total_trips,
             'current_vehicle_id' => $this->current_vehicle_id,
             'current_vehicle' => $this->currentVehicle ? [

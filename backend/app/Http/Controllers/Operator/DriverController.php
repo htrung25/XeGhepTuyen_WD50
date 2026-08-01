@@ -6,14 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Operator\DriverResource;
 use App\Models\Driver;
 use App\Services\DriverService;
+use App\Services\PrivateDocumentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 class DriverController extends Controller
 {
-    public function __construct(private readonly DriverService $driverService) {}
+    public function __construct(
+        private readonly DriverService $driverService,
+        private readonly PrivateDocumentService $documents,
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -60,10 +63,14 @@ class DriverController extends Controller
 
         $operator = auth('operator')->user()->operator;
 
+        $storedPaths = [];
+
         try {
             foreach (['id_card_front', 'id_card_back', 'license_front'] as $field) {
                 if ($request->hasFile($field)) {
-                    $validated[$field.'_url'] = Storage::url($request->file($field)->store('drivers', 'public'));
+                    $column = $field.'_path';
+                    $validated[$column] = $this->documents->store($request->file($field), 'drivers');
+                    $storedPaths[] = $validated[$column];
                 }
             }
 
@@ -78,6 +85,7 @@ class DriverController extends Controller
                 ],
             ], 201);
         } catch (\Exception $e) {
+            $this->documents->deleteMany($storedPaths);
             Log::error('Operator add driver failed', ['error' => $e->getMessage()]);
 
             return response()->json(['success' => false, 'message' => 'Có lỗi xảy ra, vui lòng thử lại'], 500);
@@ -93,7 +101,7 @@ class DriverController extends Controller
             return response()->json(['success' => false, 'message' => 'Tài xế không tồn tại'], 404);
         }
 
-        return response()->json(['success' => true, 'data' => $driver]);
+        return response()->json(['success' => true, 'data' => new DriverResource($driver)]);
     }
 
     public function assignVehicle(Request $request, string $id): JsonResponse

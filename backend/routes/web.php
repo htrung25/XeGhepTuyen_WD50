@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Public\PrivateDocumentController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,3 +16,9 @@ Route::get('/', fn () => response()->json([
     'app' => config('app.name'),
     'message' => 'XeGhep API — health check: /api/public/health, docs: /api/docs',
 ]));
+
+// File định danh không public trực tiếp: URL được mã hóa, ký số và hết hạn ngắn.
+// Tách khỏi global API throttle 60/phút vì một trang duyệt có thể tải nhiều ảnh.
+Route::get('/api/public/private-documents', [PrivateDocumentController::class, 'show'])
+    ->middleware(['signed', 'throttle:300,1,private-document:'])
+    ->name('private-documents.show');

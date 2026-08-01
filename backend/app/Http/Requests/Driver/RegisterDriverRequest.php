@@ -22,9 +22,9 @@ class RegisterDriverRequest extends FormRequest
             'license_class' => ['required', 'in:B2,C,D,E'],
             'license_expiry' => ['required', 'date', 'after:today'],
             'id_card_number' => ['required', 'string', 'max:20'],
-            'id_card_front' => ['required', 'image', 'max:5120'],
-            'id_card_back' => ['required', 'image', 'max:5120'],
-            'license_front' => ['required', 'image', 'max:5120'],
+            'id_card_front' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
+            'id_card_back' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
+            'license_front' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
         ];
     }
 

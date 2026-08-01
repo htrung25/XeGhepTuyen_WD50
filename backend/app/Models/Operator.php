@@ -25,7 +25,7 @@ class Operator extends Model
         'commission_rate',
         'logo_url',
         'description',
-        'license_url',
+        'license_path',
         'status',
         'verified_at',
         'verified_by',

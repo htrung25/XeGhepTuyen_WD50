@@ -21,9 +21,9 @@ class Driver extends Model
         'license_class',
         'license_expiry',
         'id_card_number',
-        'id_card_front_url',
-        'id_card_back_url',
-        'license_front_url',
+        'id_card_front_path',
+        'id_card_back_path',
+        'license_front_path',
         'rating_avg',
         'total_trips',
         'is_online',
@@ -37,8 +37,9 @@ class Driver extends Model
 
     protected $hidden = [
         'id_card_number',
-        'id_card_front_url',
-        'id_card_back_url',
+        'id_card_front_path',
+        'id_card_back_path',
+        'license_front_path',
     ];
 
     protected function casts(): array

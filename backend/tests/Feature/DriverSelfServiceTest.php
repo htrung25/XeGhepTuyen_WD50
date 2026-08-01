@@ -77,7 +77,8 @@ it('từ chối đổi mật khẩu khi mật khẩu cũ sai (422)', function ()
 });
 
 it('tải giấy tờ và lưu đúng cột theo type', function () {
-    Storage::fake('public');
+    Storage::fake('local');
+    config(['documents.disk' => 'local']);
     $user = makeDriverUser();
     Sanctum::actingAs($user);
 
@@ -86,7 +87,9 @@ it('tải giấy tờ và lưu đúng cột theo type', function () {
         'file' => UploadedFile::fake()->image('gplx.jpg'),
     ])->assertOk();
 
-    expect($user->driver->fresh()->license_front_url)->not->toBeNull();
+    $path = $user->driver->fresh()->license_front_path;
+    expect($path)->toStartWith('private-documents/drivers/');
+    Storage::disk('local')->assertExists($path);
 });
 
 it('từ chối type giấy tờ không hợp lệ (422)', function () {

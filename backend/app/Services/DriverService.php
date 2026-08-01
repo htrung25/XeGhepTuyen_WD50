@@ -24,7 +24,7 @@ class DriverService
      * khi chưa duyệt). Chỉ gửi SMS báo "đang chờ duyệt". Mật khẩu thật sự được cấp khi
      * admin DUYỆT (approveAndIssueCredentials).
      *
-     * @param  array<string,mixed>  $data  Đã validate ở controller, gồm cả *_url ảnh (nếu có).
+     * @param  array<string,mixed>  $data  Đã validate ở controller, gồm cả *_path ảnh (nếu có).
      */
     public function createByOperator(array $data, Operator $operator): Driver
     {
@@ -46,9 +46,9 @@ class DriverService
                 'license_class' => $data['license_class'],
                 'license_expiry' => $data['license_expiry'],
                 'id_card_number' => $data['id_card_number'],
-                'id_card_front_url' => $data['id_card_front_url'] ?? null,
-                'id_card_back_url' => $data['id_card_back_url'] ?? null,
-                'license_front_url' => $data['license_front_url'] ?? null,
+                'id_card_front_path' => $data['id_card_front_path'] ?? null,
+                'id_card_back_path' => $data['id_card_back_path'] ?? null,
+                'license_front_path' => $data['license_front_path'] ?? null,
                 'status' => DriverStatusEnum::Pending,
             ]);
         }, attempts: 3);

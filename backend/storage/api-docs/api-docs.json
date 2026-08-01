@@ -16,6 +16,22 @@
         }
     ],
     "paths": {
+        "/api/public/private-documents": {
+            "get": {
+                "tags": [
+                    "Public Private Documents"
+                ],
+                "summary": "show",
+                "operationId": "get.app.http.controllers.public.privatedocumentcontroller.show.24a33825",
+                "parameters": [],
+                "responses": {
+                    "default": {
+                        "description": "Response theo contract của endpoint."
+                    }
+                },
+                "security": []
+            }
+        },
         "/api/public/health": {
             "get": {
                 "tags": [
@@ -1567,6 +1583,41 @@
                 ]
             }
         },
+        "/api/driver/trips/{id}/report-unavailable": {
+            "post": {
+                "tags": [
+                    "Driver Trips"
+                ],
+                "summary": "report Unavailable",
+                "operationId": "post.app.http.controllers.driver.tripcontroller.reportunavailable.369076c9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": "Response theo contract của endpoint."
+                    },
+                    "401": {
+                        "description": "Chưa xác thực."
+                    },
+                    "403": {
+                        "description": "Không có quyền truy cập."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/driver/checkin": {
             "post": {
                 "tags": [
@@ -2455,6 +2506,41 @@
                 ],
                 "summary": "complete",
                 "operationId": "post.app.http.controllers.operator.tripcontroller.complete.5452a56f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": "Response theo contract của endpoint."
+                    },
+                    "401": {
+                        "description": "Chưa xác thực."
+                    },
+                    "403": {
+                        "description": "Không có quyền truy cập."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/operator/trips/{id}/reassign-driver": {
+            "post": {
+                "tags": [
+                    "Operator Trips"
+                ],
+                "summary": "reassign Driver",
+                "operationId": "post.app.http.controllers.operator.tripcontroller.reassigndriver.3886dd1e",
                 "parameters": [
                     {
                         "name": "id",

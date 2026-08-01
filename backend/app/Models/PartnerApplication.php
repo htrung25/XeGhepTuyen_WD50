@@ -21,8 +21,8 @@ class PartnerApplication extends Model
         'representative_name',
         'phone',
         'email',
-        'business_license_url',
-        'fleet_images',
+        'business_license_path',
+        'fleet_image_paths',
         'status',
         'note',
         'reviewed_by',
@@ -34,7 +34,7 @@ class PartnerApplication extends Model
     {
         return [
             'status' => PartnerApplicationStatusEnum::class,
-            'fleet_images' => 'array',
+            'fleet_image_paths' => 'array',
             'fleet_breakdown' => 'array',
             'vehicle_count' => 'integer',
             'reviewed_at' => 'datetime',

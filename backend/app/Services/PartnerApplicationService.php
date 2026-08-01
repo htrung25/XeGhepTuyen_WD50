@@ -14,13 +14,13 @@ use DomainException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class PartnerApplicationService
 {
     public function __construct(
         private readonly PartnerApplicationRepositoryInterface $applicationRepo,
+        private readonly PrivateDocumentService $documents,
     ) {}
 
     /**
@@ -41,22 +41,35 @@ class PartnerApplicationService
         $data['fleet_breakdown'] = $breakdown;
         $data['vehicle_count'] = array_sum($breakdown);
 
-        if ($license) {
-            $data['business_license_url'] = Storage::disk('public')
-                ->url($license->store('partner-applications/licenses', 'public'));
+        $storedPaths = [];
+
+        try {
+            if ($license) {
+                $data['business_license_path'] = $this->documents->store(
+                    $license,
+                    'partner-applications/licenses',
+                );
+                $storedPaths[] = $data['business_license_path'];
+            }
+
+            if (! empty($fleetImages)) {
+                $data['fleet_image_paths'] = collect($fleetImages)
+                    ->take(5)
+                    ->map(function (UploadedFile $image) use (&$storedPaths): string {
+                        $path = $this->documents->store($image, 'partner-applications/fleet');
+                        $storedPaths[] = $path;
+
+                        return $path;
+                    })
+                    ->all();
+            }
+
+            $data['status'] = PartnerApplicationStatusEnum::Pending->value;
+            $application = $this->applicationRepo->create($data);
+        } catch (\Throwable $e) {
+            $this->documents->deleteMany($storedPaths);
+            throw $e;
         }
-
-        if (! empty($fleetImages)) {
-            $data['fleet_images'] = collect($fleetImages)
-                ->take(5)
-                ->map(fn (UploadedFile $img) => Storage::disk('public')
-                    ->url($img->store('partner-applications/fleet', 'public')))
-                ->all();
-        }
-
-        $data['status'] = PartnerApplicationStatusEnum::Pending->value;
-
-        $application = $this->applicationRepo->create($data);
 
         app(AdminNotificationService::class)->notify(
             'partner_applications.review',
@@ -105,7 +118,7 @@ class PartnerApplicationService
                 'tax_code' => $application->tax_code,
                 'commission_rate' => $commissionRate,
                 'description' => "Địa chỉ: {$application->address}. Đội xe khai báo: {$application->vehicle_count} xe ({$application->fleetSummary()}).",
-                'license_url' => $application->business_license_url,
+                'license_path' => $application->business_license_path,
                 'status' => OperatorStatusEnum::Verified,
                 'verified_at' => now(),
                 'verified_by' => $admin->id,

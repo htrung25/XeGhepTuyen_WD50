@@ -9,47 +9,56 @@ use App\Http\Requests\Driver\LoginRequest;
 use App\Http\Requests\Driver\RegisterDriverRequest;
 use App\Models\Driver;
 use App\Models\User;
+use App\Services\PrivateDocumentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class AuthController extends Controller
 {
+    public function __construct(private readonly PrivateDocumentService $documents) {}
+
     public function register(RegisterDriverRequest $request): JsonResponse
     {
+        $storedPaths = [];
+
         try {
-            $user = User::create([
-                'full_name' => $request->full_name,
-                'phone' => $request->phone,
-                'password' => $request->password,
-                'role' => UserRoleEnum::Driver,
-                'is_verified' => true,
-            ]);
+            $storedPaths = [
+                'id_card_front_path' => $this->documents->store($request->file('id_card_front'), 'drivers'),
+                'id_card_back_path' => $this->documents->store($request->file('id_card_back'), 'drivers'),
+                'license_front_path' => $this->documents->store($request->file('license_front'), 'drivers'),
+            ];
 
-            $idFront = $request->file('id_card_front')->store('documents', 'public');
-            $idBack = $request->file('id_card_back')->store('documents', 'public');
-            $licFront = $request->file('license_front')->store('documents', 'public');
+            DB::transaction(function () use ($request, $storedPaths): void {
+                $user = User::create([
+                    'full_name' => $request->full_name,
+                    'phone' => $request->phone,
+                    'password' => $request->password,
+                    'role' => UserRoleEnum::Driver,
+                    'is_verified' => true,
+                ]);
 
-            Driver::create([
-                'user_id' => $user->id,
-                'operator_id' => $request->operator_id,
-                'license_number' => $request->license_number,
-                'license_class' => $request->license_class,
-                'license_expiry' => $request->license_expiry,
-                'id_card_number' => $request->id_card_number,
-                'id_card_front_url' => Storage::url($idFront),
-                'id_card_back_url' => Storage::url($idBack),
-                'license_front_url' => Storage::url($licFront),
-                'status' => DriverStatusEnum::Pending,
-            ]);
+                Driver::create([
+                    'user_id' => $user->id,
+                    'operator_id' => $request->operator_id,
+                    'license_number' => $request->license_number,
+                    'license_class' => $request->license_class,
+                    'license_expiry' => $request->license_expiry,
+                    'id_card_number' => $request->id_card_number,
+                    ...$storedPaths,
+                    'status' => DriverStatusEnum::Pending,
+                ]);
+            });
 
             return response()->json([
                 'success' => true,
                 'message' => 'Đăng ký thành công. Hồ sơ đang chờ admin xét duyệt.',
             ], 201);
         } catch (\Exception $e) {
+            $this->documents->deleteMany($storedPaths);
             Log::error('Driver register failed', ['error' => $e->getMessage()]);
 
             return response()->json(['success' => false, 'message' => 'Có lỗi xảy ra, vui lòng thử lại'], 500);
@@ -225,14 +234,14 @@ class AuthController extends Controller
     public function uploadDocument(Request $request): JsonResponse
     {
         $columns = [
-            'id_card_front' => 'id_card_front_url',
-            'id_card_back' => 'id_card_back_url',
-            'license_front' => 'license_front_url',
+            'id_card_front' => 'id_card_front_path',
+            'id_card_back' => 'id_card_back_path',
+            'license_front' => 'license_front_path',
         ];
 
         $request->validate([
             'type' => ['required', 'string', 'in:'.implode(',', array_keys($columns))],
-            'file' => ['required', 'image', 'max:10240'],
+            'file' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:10240'],
         ], [
             'type.in' => 'Loại giấy tờ không hợp lệ',
             'file.required' => 'Vui lòng chọn tệp',
@@ -241,15 +250,26 @@ class AuthController extends Controller
         ]);
 
         $driver = $request->user()->driver;
-        $path = $request->file('file')->store('driver-documents', 'public');
         $column = $columns[$request->input('type')];
+        $oldPath = $driver->{$column};
+        $path = $this->documents->store($request->file('file'), 'drivers');
 
-        $driver->update([$column => Storage::url($path)]);
+        try {
+            $driver->update([$column => $path]);
+        } catch (\Throwable $e) {
+            $this->documents->delete($path);
+            throw $e;
+        }
+
+        $this->documents->delete($oldPath);
 
         return response()->json([
             'success' => true,
             'message' => 'Tải giấy tờ thành công',
-            'data' => ['type' => $request->input('type'), 'url' => $driver->{$column}],
+            'data' => [
+                'type' => $request->input('type'),
+                'url' => $this->documents->temporaryUrl($path),
+            ],
         ]);
     }
 }
