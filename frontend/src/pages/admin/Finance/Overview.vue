@@ -42,6 +42,7 @@ interface Transaction {
     booking_id: string | null;
     type: string;
     amount: number;
+    refund_amount: number;
     booking_code: string;
     customer: string;
     operator: string;
@@ -142,6 +143,14 @@ const selectedTxn = ref<Transaction | null>(null);
 const refundAmount = ref(0);
 const refundReason = ref('');
 const refundLoading = ref(false);
+// Số tiền còn lại có thể hoàn = tổng gốc - đã hoàn trước đó (nếu có).
+// Không dùng amount gốc làm max/prefill, tránh hoàn lần 2 bị BE từ chối
+// REFUND_EXCEEDS_TOTAL dù còn tiền hợp lệ để hoàn.
+const remainingRefundable = computed(
+    () =>
+        (selectedTxn.value?.amount ?? 0) -
+        (selectedTxn.value?.refund_amount ?? 0),
+);
 
 const tabs: { key: TabKey; label: string }[] = [
     { key: 'overview', label: 'Tổng quan' },
@@ -345,7 +354,7 @@ async function confirmPayout() {
 
 function openRefund(t: Transaction) {
     selectedTxn.value = t;
-    refundAmount.value = t.amount;
+    refundAmount.value = t.amount - (t.refund_amount ?? 0);
     refundReason.value = '';
     showRefundModal.value = true;
 }
@@ -1536,14 +1545,18 @@ onMounted(loadData);
                     <div>
                         <label
                             class="mb-1.5 block text-sm font-medium text-gray-700"
-                            >Số tiền hoàn (tối đa
-                            {{ fmt(selectedTxn?.amount ?? 0) }})</label
+                            >Số tiền hoàn (tối đa {{ fmt(remainingRefundable)
+                            }}<template v-if="selectedTxn?.refund_amount">
+                                — đã hoàn
+                                {{ fmt(selectedTxn.refund_amount) }} trước
+                                đó</template
+                            >)</label
                         >
                         <input
                             v-model.number="refundAmount"
                             type="number"
                             min="1"
-                            :max="selectedTxn?.amount"
+                            :max="remainingRefundable"
                             class="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-100 focus:outline-none"
                         />
                     </div>
