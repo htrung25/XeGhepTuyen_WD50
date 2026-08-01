@@ -8,6 +8,7 @@ use App\Exceptions\InsufficientBalanceException;
 use App\Exceptions\PaymentVerificationException;
 use App\Exceptions\TripActionException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Customer\InitiatePaymentRequest;
 use App\Models\Booking;
 use App\Services\PaymentService;
 use App\Services\WalletService;
@@ -22,21 +23,17 @@ class PaymentController extends Controller
         private readonly WalletService $walletService,
     ) {}
 
-    public function initiate(Request $request): JsonResponse
+    public function initiate(InitiatePaymentRequest $request): JsonResponse
     {
-        $request->validate([
-            'booking_id' => ['required', 'uuid', 'exists:bookings,id'],
-            'method' => ['required', 'in:momo,vnpay,zalopay,wallet,cash'],
-        ]);
-
-        $booking = Booking::findOrFail($request->input('booking_id'));
+        $validated = $request->validated();
+        $booking = Booking::findOrFail($validated['booking_id']);
 
         if ($booking->user_id !== auth('customer')->id()) {
             return response()->json(['success' => false, 'message' => 'Không có quyền truy cập', 'code' => 'FORBIDDEN'], 403);
         }
 
         try {
-            $result = $this->paymentService->initiate($booking, PaymentMethodEnum::from($request->input('method')));
+            $result = $this->paymentService->initiate($booking, PaymentMethodEnum::from($validated['method']));
 
             return response()->json([
                 'success' => true,
@@ -54,7 +51,7 @@ class PaymentController extends Controller
             // Vé không ở trạng thái chờ / chuyến đã khởi hành / phương thức không hỗ trợ
             return response()->json(['success' => false, 'message' => $e->getMessage(), 'code' => 'PAYMENT_NOT_ALLOWED'], 422);
         } catch (\Exception $e) {
-            Log::error('Payment initiate failed', ['error' => $e->getMessage(), 'booking' => $request->input('booking_id')]);
+            Log::error('Payment initiate failed', ['error' => $e->getMessage(), 'booking' => $validated['booking_id']]);
 
             return response()->json(['success' => false, 'message' => 'Không thể khởi tạo thanh toán, vui lòng thử lại'], 500);
         }
@@ -67,7 +64,11 @@ class PaymentController extends Controller
 
             return response()->json(['resultCode' => 0]);
         } catch (PaymentVerificationException $e) {
-            Log::warning('MoMo callback verification failed', ['payload' => $request->all()]);
+            Log::warning('MoMo callback verification failed', [
+                'order_id' => $request->input('orderId'),
+                'request_id' => $request->input('requestId'),
+                'reason' => $e->getMessage(),
+            ]);
 
             return response()->json(['resultCode' => 1], 400);
         } catch (\Exception $e) {
@@ -97,10 +98,11 @@ class PaymentController extends Controller
     public function sepayWebhook(Request $request): JsonResponse
     {
         try {
-            $authHeader = $request->header('Authorization');
-            $expectedToken = 'Bearer '.config('services.sepay.webhook_token');
+            $authHeader = (string) $request->header('Authorization');
+            $configuredToken = (string) config('services.sepay.webhook_token');
+            $expectedToken = 'Bearer '.$configuredToken;
 
-            if (! $authHeader || $authHeader !== $expectedToken) {
+            if ($configuredToken === '' || ! hash_equals($expectedToken, $authHeader)) {
                 Log::warning('SePay webhook unauthorized access attempt');
 
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
@@ -113,7 +115,10 @@ class PaymentController extends Controller
                 'message' => $success ? 'Giao dịch được xử lý thành công' : 'Không tìm thấy giao dịch hoặc giao dịch đã xử lý',
             ]);
         } catch (PaymentVerificationException $e) {
-            Log::warning('SePay callback verification failed', ['payload' => $request->all(), 'error' => $e->getMessage()]);
+            Log::warning('SePay callback verification failed', [
+                'transaction_id' => $request->input('id'),
+                'error' => $e->getMessage(),
+            ]);
 
             return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
         } catch (\Exception $e) {

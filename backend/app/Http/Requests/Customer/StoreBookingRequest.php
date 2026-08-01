@@ -29,7 +29,7 @@ class StoreBookingRequest extends FormRequest
             'contact_name' => ['required', 'string', 'min:2', 'max:100'],
             'contact_phone' => ['required', 'regex:/^(0[3|5|7|8|9])+([0-9]{8})$/'],
             'note' => ['nullable', 'string', 'max:500'],
-            'payment_method' => ['required', 'in:momo,vnpay,zalopay,wallet,cash'],
+            'payment_method' => ['required', 'in:momo,vnpay,wallet,cash'],
             'voucher_code' => ['nullable', 'string', 'max:20'],
             'passengers' => ['required', 'array', 'min:1', 'max:4'],
             'passengers.*.full_name' => ['required', 'string', 'min:2', 'max:100'],

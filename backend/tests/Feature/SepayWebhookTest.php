@@ -13,6 +13,14 @@ use App\Models\Vehicle;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 
+beforeEach(function () {
+    config([
+        'services.sepay.webhook_token' => 'test-sepay-token',
+        'services.sepay.bank_acc' => '0935555555',
+        'services.sepay.bank_name' => 'MBBank',
+    ]);
+});
+
 function setupSepayTestContext(): array
 {
     $opUser = User::factory()->create(['role' => UserRoleEnum::Operator]);
@@ -190,4 +198,69 @@ it('fails SePay webhook if payment amount is mismatched', function () {
     ]);
 
     $webhookResponse->assertStatus(400); // PaymentVerificationException maps to 400
+});
+
+it('rejects SePay outgoing transfer even when content and amount match', function () {
+    [$trip, $seat, $customer] = setupSepayTestContext();
+    Sanctum::actingAs($customer, ['*'], 'sanctum');
+    Sanctum::actingAs($customer, ['*'], 'customer');
+
+    $booking = Booking::create([
+        'booking_code' => 'XGBOOK'.rand(1000, 9999), 'user_id' => $customer->id,
+        'trip_id' => $trip->id, 'pickup_address' => 'Mỹ Đình', 'pickup_lat' => 21,
+        'pickup_lng' => 105, 'dropoff_address' => 'Lạch Tray', 'dropoff_lat' => 20,
+        'dropoff_lng' => 106, 'passenger_count' => 1, 'contact_name' => 'Khách',
+        'contact_phone' => '0988888888', 'subtotal' => 150000, 'final_amount' => 150000,
+        'payment_method' => 'vnpay', 'payment_status' => 'unpaid',
+        'booking_status' => 'pending', 'qr_token' => Str::random(32),
+    ]);
+
+    $orderId = $this->postJson('/api/customer/payments/initiate', [
+        'booking_id' => $booking->id, 'method' => 'vnpay',
+    ])->assertOk()->json('data.order_id');
+
+    $this->withHeaders([
+        'Authorization' => 'Bearer '.config('services.sepay.webhook_token'),
+    ])->postJson('/api/customer/payments/sepay/webhook', [
+        'id' => 777777,
+        'gateway' => config('services.sepay.bank_name'),
+        'accountNumber' => config('services.sepay.bank_acc'),
+        'transferType' => 'out',
+        'amountIn' => 150000,
+        'transactionContent' => "Thanh toan {$orderId}",
+    ])->assertStatus(400);
+
+    expect($booking->fresh()->payment_status->value)->toBe('unpaid');
+});
+
+it('rejects SePay webhook sent to a different beneficiary account', function () {
+    [$trip, $seat, $customer] = setupSepayTestContext();
+    Sanctum::actingAs($customer, ['*'], 'sanctum');
+    Sanctum::actingAs($customer, ['*'], 'customer');
+
+    $booking = Booking::create([
+        'booking_code' => 'XGBOOK'.rand(1000, 9999), 'user_id' => $customer->id,
+        'trip_id' => $trip->id, 'pickup_address' => 'Mỹ Đình', 'pickup_lat' => 21,
+        'pickup_lng' => 105, 'dropoff_address' => 'Lạch Tray', 'dropoff_lat' => 20,
+        'dropoff_lng' => 106, 'passenger_count' => 1, 'contact_name' => 'Khách',
+        'contact_phone' => '0988888888', 'subtotal' => 150000, 'final_amount' => 150000,
+        'payment_method' => 'vnpay', 'payment_status' => 'unpaid',
+        'booking_status' => 'pending', 'qr_token' => Str::random(32),
+    ]);
+    $orderId = $this->postJson('/api/customer/payments/initiate', [
+        'booking_id' => $booking->id, 'method' => 'vnpay',
+    ])->assertOk()->json('data.order_id');
+
+    $this->withHeaders([
+        'Authorization' => 'Bearer '.config('services.sepay.webhook_token'),
+    ])->postJson('/api/customer/payments/sepay/webhook', [
+        'id' => 666666,
+        'gateway' => config('services.sepay.bank_name'),
+        'accountNumber' => '0000000000',
+        'transferType' => 'in',
+        'amountIn' => 150000,
+        'transactionContent' => "Thanh toan {$orderId}",
+    ])->assertStatus(400);
+
+    expect($booking->fresh()->payment_status->value)->toBe('unpaid');
 });

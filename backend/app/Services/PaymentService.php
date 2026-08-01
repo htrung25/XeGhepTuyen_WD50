@@ -14,6 +14,7 @@ use App\Exceptions\PaymentVerificationException;
 use App\Exceptions\TripActionException;
 use App\Models\Booking;
 use App\Models\Payment;
+use App\Models\PaymentRefund;
 use App\Models\Trip;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -68,13 +69,24 @@ class PaymentService
                 $booking->update(['payment_method' => $method]);
             }
 
-            $payment = Payment::create([
+            // Một booking chỉ có một giao dịch pending tại một thời điểm. Request retry
+            // dùng lại order/request id để cổng thanh toán xử lý idempotent.
+            $payment = Payment::where('booking_id', $booking->id)
+                ->where('status', PaymentStatusEnum::Pending)
+                ->latest()
+                ->first();
+
+            if ($payment && $payment->method !== $method) {
+                throw new \InvalidArgumentException('Vé đang có một giao dịch thanh toán khác chờ xử lý');
+            }
+
+            $payment ??= Payment::create([
                 'booking_id' => $booking->id,
                 'user_id' => $booking->user_id,
                 'amount' => $booking->final_amount,
                 'method' => $method,
                 'status' => PaymentStatusEnum::Pending,
-                'gateway_order_id' => 'XEGHEP-'.strtoupper(Str::random(10)),
+                'gateway_order_id' => 'XEGHEP-'.strtoupper((string) Str::ulid()),
             ]);
 
             return [$payment, $booking];
@@ -95,6 +107,15 @@ class PaymentService
     public function handleMomoCallback(array $payload): bool
     {
         $this->verifyMomoSignature($payload);
+
+        $payment = Payment::where('gateway_order_id', $payload['orderId'])->first();
+        if (! $payment
+            || $payment->method !== PaymentMethodEnum::Momo
+            || ! hash_equals((string) $payment->id, (string) $payload['requestId'])
+            || (int) $payload['amount'] !== $payment->amount
+            || ! hash_equals((string) config('services.momo.partner_code'), (string) $payload['partnerCode'])) {
+            throw new PaymentVerificationException('Số tiền, đối tác hoặc request MoMo không khớp');
+        }
 
         // MoMo: resultCode === 0 nghĩa là giao dịch THÀNH CÔNG. Giá trị khác = thất bại/hủy
         // → không được confirm vé (tránh xác nhận vé chưa thanh toán). Tương tự VNPay '00'.
@@ -127,9 +148,9 @@ class PaymentService
     /**
      * Hoàn tiền vé
      */
-    public function refund(Booking $booking, int $amount): void
+    public function refund(Booking $booking, int $amount, ?string $idempotencyKey = null): bool
     {
-        DB::transaction(function () use ($booking, $amount) {
+        return DB::transaction(function () use ($booking, $amount, $idempotencyKey) {
             // KHÓA hàng payment rồi mới kiểm trạng thái: ProcessRefundJob có tries=3,
             // queue retry hoặc 2 job đồng thời sẽ cùng đọc status=Success nếu không khóa
             // ⇒ credit ví HAI LẦN. lockForUpdate serialize, người sau thấy Refunded → thoát.
@@ -138,8 +159,19 @@ class PaymentService
                 ->lockForUpdate()
                 ->first();
 
-            if (! $payment || ! $payment->isSuccessful()) {
-                return;
+            if (! $payment || (! $payment->isSuccessful() && $payment->status !== PaymentStatusEnum::Refunded)) {
+                return false;
+            }
+
+            $idempotencyKey ??= "refund:{$booking->id}";
+            if (PaymentRefund::where('idempotency_key', $idempotencyKey)->exists()) {
+                return false;
+            }
+
+            $alreadyRefunded = (int) $payment->refund_amount;
+            $remaining = $payment->amount - $alreadyRefunded;
+            if ($amount <= 0 || $amount > $remaining) {
+                throw new \InvalidArgumentException('Số tiền hoàn vượt quá số tiền còn có thể hoàn');
             }
 
             // Tiền mặt do tài xế/nhà xe giữ (Phương án A) — nền tảng KHÔNG hoàn từ quỹ/ví;
@@ -151,17 +183,34 @@ class PaymentService
                     $amount,
                     "Hoàn tiền vé {$booking->booking_code}",
                     $booking->id,
-                    "refund:{$booking->id}",
+                    $idempotencyKey,
                 );
             }
 
+            $totalRefunded = $alreadyRefunded + $amount;
+            $fullyRefunded = $totalRefunded === $payment->amount;
+
             $payment->update([
-                'status' => PaymentStatusEnum::Refunded,
-                'refund_amount' => $amount,
-                'refunded_at' => now(),
+                'status' => $fullyRefunded ? PaymentStatusEnum::Refunded : PaymentStatusEnum::Success,
+                'refund_amount' => $totalRefunded,
+                'refunded_at' => $fullyRefunded ? now() : null,
             ]);
 
-            $booking->update(['payment_status' => BookingPaymentStatusEnum::Refunded]);
+            $booking->update([
+                'payment_status' => $fullyRefunded
+                    ? BookingPaymentStatusEnum::Refunded
+                    : BookingPaymentStatusEnum::PartialRefund,
+            ]);
+
+            PaymentRefund::create([
+                'payment_id' => $payment->id,
+                'booking_id' => $booking->id,
+                'amount' => $amount,
+                'idempotency_key' => $idempotencyKey,
+                'processed_at' => now(),
+            ]);
+
+            return true;
         });
     }
 
@@ -192,6 +241,16 @@ class PaymentService
             }
 
             $booking = Booking::whereKey($payment->booking_id)->lockForUpdate()->firstOrFail();
+
+            if ($gatewayTxnId !== null) {
+                $duplicateGatewayTransaction = Payment::where('method', $payment->method)
+                    ->where('gateway_txn_id', $gatewayTxnId)
+                    ->whereKeyNot($payment->id)
+                    ->exists();
+                if ($duplicateGatewayTransaction) {
+                    throw new PaymentVerificationException('Mã giao dịch cổng thanh toán đã được xử lý');
+                }
+            }
 
             $payment->update([
                 'status' => PaymentStatusEnum::Success,
@@ -265,13 +324,13 @@ class PaymentService
 
     private function initiateMomo(Payment $payment, Booking $booking): array
     {
-        $endpoint = config('services.momo.endpoint');
+        $createUrl = config('services.momo.create_url');
         $partnerCode = config('services.momo.partner_code');
         $accessKey = config('services.momo.access_key');
         $secretKey = config('services.momo.secret_key');
         // Trang kết quả thanh toán nằm ở frontend (Vercel), không phải API origin.
         $redirectUrl = config('services.momo.redirect_url');
-        $ipnUrl = config('app.url').'/api/public/payments/momo/callback';
+        $ipnUrl = config('services.momo.notify_url');
 
         $rawHash = "accessKey={$accessKey}&amount={$payment->amount}&extraData=&ipnUrl={$ipnUrl}&orderId={$payment->gateway_order_id}&orderInfo=Vé xe {$booking->booking_code}&partnerCode={$partnerCode}&redirectUrl={$redirectUrl}&requestId={$payment->id}&requestType=captureWallet";
         $signature = hash_hmac('sha256', $rawHash, $secretKey);
@@ -281,7 +340,7 @@ class PaymentService
             // MoMo chậm không được treo cả luồng đặt vé.
             $response = Http::connectTimeout(5)
                 ->timeout(20)
-                ->post($endpoint.'/v2/gateway/api/create', [
+                ->post($createUrl, [
                     'partnerCode' => $partnerCode,
                     'requestId' => $payment->id,
                     'amount' => $payment->amount,
@@ -295,8 +354,17 @@ class PaymentService
                     'signature' => $signature,
                 ]);
 
+            $response->throw();
+            if ((int) $response->json('resultCode', -1) !== 0 || ! is_string($response->json('payUrl'))) {
+                throw new \RuntimeException('MoMo từ chối khởi tạo giao dịch');
+            }
+
             return ['payment_url' => $response->json('payUrl'), 'order_id' => $payment->gateway_order_id];
         } catch (\Exception $e) {
+            $payment->update([
+                'status' => PaymentStatusEnum::Failed,
+                'gateway_response' => ['initiate_error' => $e->getMessage()],
+            ]);
             Log::error('MoMo initiate failed', ['error' => $e->getMessage()]);
             throw new \RuntimeException('Không thể kết nối cổng thanh toán MoMo');
         }
@@ -343,6 +411,16 @@ class PaymentService
         $amountIn = (int) ($payload['amountIn'] ?? 0);
         $gatewayTxnId = $payload['id'] ?? null;
 
+        if (($payload['transferType'] ?? null) !== 'in') {
+            throw new PaymentVerificationException('SePay webhook không phải giao dịch tiền vào');
+        }
+
+        $expectedAccount = preg_replace('/\s+/', '', (string) config('services.sepay.bank_acc'));
+        $actualAccount = preg_replace('/\s+/', '', (string) ($payload['accountNumber'] ?? ''));
+        if ($expectedAccount === '' || ! hash_equals($expectedAccount, $actualAccount)) {
+            throw new PaymentVerificationException('Tài khoản thụ hưởng SePay không khớp');
+        }
+
         Log::info('SePay Webhook matched transaction', [
             'order_id' => $orderId,
             'amount_in' => $amountIn,
@@ -356,8 +434,12 @@ class PaymentService
             return false;
         }
 
-        if ($amountIn < $payment->amount) {
-            Log::warning('SePay Webhook: số tiền chuyển khoản không đủ', [
+        if ($payment->method !== PaymentMethodEnum::Vnpay || $gatewayTxnId === null || $gatewayTxnId === '') {
+            throw new PaymentVerificationException('Thông tin giao dịch SePay không hợp lệ');
+        }
+
+        if ($amountIn !== $payment->amount) {
+            Log::warning('SePay Webhook: số tiền chuyển khoản không khớp', [
                 'expected' => $payment->amount,
                 'actual' => $amountIn,
                 'order_id' => $orderId,
@@ -462,10 +544,21 @@ class PaymentService
         $secretKey = config('services.momo.secret_key');
         $accessKey = config('services.momo.access_key');
 
+        $required = ['amount', 'extraData', 'message', 'orderId', 'orderInfo', 'orderType', 'partnerCode', 'payType', 'requestId', 'responseTime', 'resultCode', 'transId', 'signature'];
+        foreach ($required as $key) {
+            if (! array_key_exists($key, $payload)) {
+                throw new PaymentVerificationException("Callback MoMo thiếu trường {$key}");
+            }
+        }
+
+        if (! is_string($secretKey) || $secretKey === '' || ! is_string($accessKey) || $accessKey === '') {
+            throw new PaymentVerificationException('Cấu hình xác thực MoMo chưa đầy đủ');
+        }
+
         $rawHash = "accessKey={$accessKey}&amount={$payload['amount']}&extraData={$payload['extraData']}&message={$payload['message']}&orderId={$payload['orderId']}&orderInfo={$payload['orderInfo']}&orderType={$payload['orderType']}&partnerCode={$payload['partnerCode']}&payType={$payload['payType']}&requestId={$payload['requestId']}&responseTime={$payload['responseTime']}&resultCode={$payload['resultCode']}&transId={$payload['transId']}";
         $expected = hash_hmac('sha256', $rawHash, $secretKey);
 
-        if ($expected !== ($payload['signature'] ?? '')) {
+        if (! hash_equals($expected, (string) $payload['signature'])) {
             throw new PaymentVerificationException('Chữ ký MoMo không hợp lệ');
         }
     }

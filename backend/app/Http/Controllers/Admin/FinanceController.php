@@ -42,7 +42,7 @@ class FinanceController extends Controller
         $totalCommission = (int) $settlements->sum('commission');
         $pendingSettlement = (int) $settlements->sum(fn ($r) => max(0, $r['net_amount']));
         $operatorDebt = (int) $settlements->sum(fn ($r) => max(0, -$r['net_amount']));
-        $totalRefunds = (int) Payment::where('status', 'refunded')->sum('refund_amount');
+        $totalRefunds = (int) Payment::where('refund_amount', '>', 0)->sum('refund_amount');
 
         return response()->json([
             'success' => true,
@@ -247,7 +247,7 @@ class FinanceController extends Controller
 
     public function refunds(Request $request): JsonResponse
     {
-        $refunds = Payment::where('status', 'refunded')
+        $refunds = Payment::where('refund_amount', '>', 0)
             ->with(['booking.user'])
             ->latest()
             ->paginate(20);
@@ -271,16 +271,17 @@ class FinanceController extends Controller
             return response()->json(['success' => false, 'message' => 'Không tìm thấy vé', 'code' => 'BOOKING_NOT_FOUND'], 404);
         }
 
-        if ($bookingModel->payment_status !== BookingPaymentStatusEnum::Paid) {
-            return response()->json(['success' => false, 'message' => 'Chỉ hoàn tiền được vé đã thanh toán', 'code' => 'BOOKING_NOT_PAID'], 422);
+        if (! in_array($bookingModel->payment_status, [BookingPaymentStatusEnum::Paid, BookingPaymentStatusEnum::PartialRefund], true)) {
+            return response()->json(['success' => false, 'message' => 'Vé không còn khoản thanh toán có thể hoàn', 'code' => 'BOOKING_NOT_PAID'], 422);
         }
 
         $amount = (int) $request->validated('amount');
-        $final = (int) $bookingModel->final_amount;
-        if ($amount > $final) {
+        $alreadyRefunded = (int) ($bookingModel->payment?->refund_amount ?? 0);
+        $remaining = (int) $bookingModel->final_amount - $alreadyRefunded;
+        if ($amount > $remaining) {
             return response()->json([
                 'success' => false,
-                'message' => 'Số tiền hoàn ('.number_format($amount, 0, ',', '.').'đ) vượt quá giá trị vé ('.number_format($final, 0, ',', '.').'đ)',
+                'message' => 'Số tiền hoàn ('.number_format($amount, 0, ',', '.').'đ) vượt quá số tiền còn lại ('.number_format($remaining, 0, ',', '.').'đ)',
                 'code' => 'REFUND_EXCEEDS_TOTAL',
             ], 422);
         }
@@ -288,7 +289,16 @@ class FinanceController extends Controller
         $reason = (string) $request->validated('reason');
 
         // Hoàn tiền trong transaction (PaymentService) → đánh dấu payment/booking refunded.
-        $this->paymentService->refund($bookingModel, $amount);
+        $idempotencyKey = 'admin-refund:'.$bookingModel->id.':'.hash('sha256', auth('admin')->id().'|'.$amount.'|'.$reason);
+        $processed = $this->paymentService->refund($bookingModel, $amount, $idempotencyKey);
+
+        if (! $processed) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Yêu cầu hoàn tiền này đã được xử lý trước đó',
+                'data' => ['amount' => $amount, 'idempotent' => true],
+            ]);
+        }
 
         // Thông báo khách qua SMS (môi trường dev: hiện ở terminal).
         SendSmsNotificationJob::dispatch(
@@ -446,7 +456,7 @@ class FinanceController extends Controller
         $totalTrips = (int) Trip::whereIn('id', $periodTripIds)->where('status', 'completed')->count();
         $totalBookings = (int) (clone $realized)->count();
         $totalPassengers = (int) (clone $realized)->sum('passenger_count');
-        $totalRefunds = (int) Payment::where('status', 'refunded')
+        $totalRefunds = (int) Payment::where('refund_amount', '>', 0)
             ->whereBetween('refunded_at', [$from, $to])
             ->sum('refund_amount');
 

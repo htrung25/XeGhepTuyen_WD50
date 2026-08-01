@@ -81,3 +81,46 @@ it('hoàn vé ONLINE vẫn ghi có ví khách', function () {
     expect((int) $booking->user->fresh()->wallet->balance)->toBe(150000);
     expect($booking->payment->fresh()->status->value)->toBe('refunded');
 });
+
+it('hoàn một phần giữ payment có thể hoàn tiếp và đánh dấu booking partial_refund', function () {
+    $booking = makePaidBooking(PaymentMethodEnum::Momo->value);
+    $service = app(PaymentService::class);
+
+    $service->refund($booking, 50000, "admin-refund:{$booking->id}:1");
+
+    expect($booking->fresh()->payment_status->value)->toBe('partial_refund');
+    expect($booking->payment->fresh()->status->value)->toBe('success');
+    expect($booking->payment->fresh()->refund_amount)->toBe(50000);
+    expect((int) $booking->user->fresh()->wallet->balance)->toBe(50000);
+
+    $service->refund($booking->fresh(), 100000, "admin-refund:{$booking->id}:2");
+
+    expect($booking->fresh()->payment_status->value)->toBe('refunded');
+    expect($booking->payment->fresh()->status->value)->toBe('refunded');
+    expect($booking->payment->fresh()->refund_amount)->toBe(150000);
+    expect((int) $booking->user->fresh()->wallet->balance)->toBe(150000);
+});
+
+it('refund idempotency key giống nhau không ghi có ví hoặc cộng refund lần hai', function () {
+    $booking = makePaidBooking(PaymentMethodEnum::Momo->value);
+    $service = app(PaymentService::class);
+    $key = "admin-refund:{$booking->id}:same";
+
+    $service->refund($booking, 50000, $key);
+    $service->refund($booking->fresh(), 50000, $key);
+
+    expect($booking->payment->fresh()->refund_amount)->toBe(50000);
+    expect((int) $booking->user->fresh()->wallet->balance)->toBe(50000);
+});
+
+it('không cho tổng tiền hoàn vượt giá trị payment', function () {
+    $booking = makePaidBooking(PaymentMethodEnum::Momo->value);
+
+    expect(fn () => app(PaymentService::class)->refund(
+        $booking,
+        150001,
+        "admin-refund:{$booking->id}:too-much",
+    ))->toThrow(InvalidArgumentException::class);
+
+    expect($booking->payment->fresh()->refund_amount)->toBe(0);
+});

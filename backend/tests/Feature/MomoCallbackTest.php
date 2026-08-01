@@ -14,7 +14,9 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Services\PaymentService;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\Sanctum;
 
 /**
  * Regression P1: callback MoMo phải đọc resultCode — giao dịch thất bại
@@ -24,6 +26,10 @@ beforeEach(function () {
     config([
         'services.momo.secret_key' => 'test-secret',
         'services.momo.access_key' => 'test-access',
+        'services.momo.partner_code' => 'MOMO',
+        'services.momo.create_url' => 'https://test-payment.momo.vn/v2/gateway/api/create',
+        'services.momo.redirect_url' => 'https://frontend.test/payment/momo/return',
+        'services.momo.notify_url' => 'https://api.test/api/customer/payments/momo/callback',
     ]);
 });
 
@@ -75,10 +81,10 @@ function makePendingMomoPayment(): Payment
     ]);
 }
 
-function momoPayload(string $orderId, int $resultCode): array
+function momoPayload(Payment $payment, int $resultCode): array
 {
     $p = [
-        'partnerCode' => 'MOMO', 'orderId' => $orderId, 'requestId' => $orderId,
+        'partnerCode' => 'MOMO', 'orderId' => $payment->gateway_order_id, 'requestId' => $payment->id,
         'amount' => '150000', 'orderInfo' => 'Vé xe', 'orderType' => 'momo_wallet',
         'transId' => '999', 'resultCode' => $resultCode, 'message' => 'ok',
         'payType' => 'qr', 'responseTime' => '123', 'extraData' => '',
@@ -96,7 +102,7 @@ it('KHÔNG confirm vé khi MoMo resultCode != 0 (giao dịch thất bại)', fun
     $payment = makePendingMomoPayment();
 
     $ok = app(PaymentService::class)->handleMomoCallback(
-        momoPayload($payment->gateway_order_id, 1)
+        momoPayload($payment, 1)
     );
 
     expect($ok)->toBeFalse();
@@ -110,7 +116,7 @@ it('confirm vé khi MoMo resultCode == 0 (thành công)', function () {
     $payment = makePendingMomoPayment();
 
     $ok = app(PaymentService::class)->handleMomoCallback(
-        momoPayload($payment->gateway_order_id, 0)
+        momoPayload($payment, 0)
     );
 
     expect($ok)->toBeTrue();
@@ -122,9 +128,102 @@ it('confirm vé khi MoMo resultCode == 0 (thành công)', function () {
 
 it('từ chối callback MoMo sai chữ ký', function () {
     $payment = makePendingMomoPayment();
-    $payload = momoPayload($payment->gateway_order_id, 0);
+    $payload = momoPayload($payment, 0);
     $payload['signature'] = 'tampered';
 
     expect(fn () => app(PaymentService::class)->handleMomoCallback($payload))
         ->toThrow(PaymentVerificationException::class);
+});
+
+it('từ chối callback MoMo nếu số tiền không đúng với payment', function () {
+    $payment = makePendingMomoPayment();
+    $payload = momoPayload($payment, 0);
+    $payload['amount'] = '149000';
+
+    $raw = "accessKey=test-access&amount={$payload['amount']}&extraData={$payload['extraData']}&message={$payload['message']}"
+        ."&orderId={$payload['orderId']}&orderInfo={$payload['orderInfo']}&orderType={$payload['orderType']}"
+        ."&partnerCode={$payload['partnerCode']}&payType={$payload['payType']}&requestId={$payload['requestId']}"
+        ."&responseTime={$payload['responseTime']}&resultCode={$payload['resultCode']}&transId={$payload['transId']}";
+    $payload['signature'] = hash_hmac('sha256', $raw, 'test-secret');
+
+    expect(fn () => app(PaymentService::class)->handleMomoCallback($payload))
+        ->toThrow(PaymentVerificationException::class, 'Số tiền');
+    expect($payment->fresh()->status->value)->toBe('pending');
+});
+
+it('từ chối callback MoMo của partner hoặc request khác', function (string $field, string $value) {
+    $payment = makePendingMomoPayment();
+    $payload = momoPayload($payment, 0);
+    $payload[$field] = $value;
+
+    $raw = "accessKey=test-access&amount={$payload['amount']}&extraData={$payload['extraData']}&message={$payload['message']}"
+        ."&orderId={$payload['orderId']}&orderInfo={$payload['orderInfo']}&orderType={$payload['orderType']}"
+        ."&partnerCode={$payload['partnerCode']}&payType={$payload['payType']}&requestId={$payload['requestId']}"
+        ."&responseTime={$payload['responseTime']}&resultCode={$payload['resultCode']}&transId={$payload['transId']}";
+    $payload['signature'] = hash_hmac('sha256', $raw, 'test-secret');
+
+    expect(fn () => app(PaymentService::class)->handleMomoCallback($payload))
+        ->toThrow(PaymentVerificationException::class);
+    expect($payment->fresh()->status->value)->toBe('pending');
+})->with([
+    ['partnerCode', 'OTHER'],
+    ['requestId', 'wrong-request'],
+]);
+
+it('gọi đúng create URL và IPN URL cấu hình khi khởi tạo MoMo', function () {
+    Http::fake([
+        'https://test-payment.momo.vn/v2/gateway/api/create' => Http::response([
+            'resultCode' => 0,
+            'payUrl' => 'https://momo.test/pay',
+        ]),
+    ]);
+
+    $existing = makePendingMomoPayment();
+    $booking = $existing->booking;
+    $existing->delete();
+    Sanctum::actingAs($booking->user, ['*'], 'sanctum');
+    Sanctum::actingAs($booking->user, ['*'], 'customer');
+
+    $this->postJson('/api/customer/payments/initiate', [
+        'booking_id' => $booking->id,
+        'method' => 'momo',
+    ])->assertOk()->assertJsonPath('data.payment_url', 'https://momo.test/pay');
+
+    Http::assertSentCount(1);
+    Http::assertSent(fn ($request) => $request->url() === 'https://test-payment.momo.vn/v2/gateway/api/create'
+        && $request['ipnUrl'] === 'https://api.test/api/customer/payments/momo/callback');
+});
+
+it('retry khởi tạo thanh toán dùng lại payment pending thay vì tạo order mới', function () {
+    Http::fake(['*' => Http::response(['resultCode' => 0, 'payUrl' => 'https://momo.test/pay'])]);
+    $existing = makePendingMomoPayment();
+    $booking = $existing->booking;
+    $existing->delete();
+    Sanctum::actingAs($booking->user, ['*'], 'sanctum');
+    Sanctum::actingAs($booking->user, ['*'], 'customer');
+
+    $first = $this->postJson('/api/customer/payments/initiate', [
+        'booking_id' => $booking->id, 'method' => 'momo',
+    ])->assertOk();
+    $second = $this->postJson('/api/customer/payments/initiate', [
+        'booking_id' => $booking->id, 'method' => 'momo',
+    ])->assertOk();
+
+    expect($first->json('data.order_id'))->toBe($second->json('data.order_id'));
+    expect(Payment::where('booking_id', $booking->id)->count())->toBe(1);
+});
+
+it('không nhận ZaloPay khi chưa có tích hợp gateway', function () {
+    $payment = makePendingMomoPayment();
+    $booking = $payment->booking;
+    $payment->delete();
+    Sanctum::actingAs($booking->user, ['*'], 'sanctum');
+    Sanctum::actingAs($booking->user, ['*'], 'customer');
+
+    $this->postJson('/api/customer/payments/initiate', [
+        'booking_id' => $booking->id,
+        'method' => 'zalopay',
+    ])->assertUnprocessable();
+
+    expect(Payment::where('booking_id', $booking->id)->count())->toBe(0);
 });

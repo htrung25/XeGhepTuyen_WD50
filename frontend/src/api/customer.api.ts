@@ -109,7 +109,7 @@ export const customerApi = {
         passenger_count: number;
         contact_name: string;
         contact_phone: string;
-        payment_method: 'momo' | 'vnpay' | 'zalopay' | 'wallet' | 'cash';
+        payment_method: 'momo' | 'vnpay' | 'wallet' | 'cash';
         passengers: { full_name: string; phone?: string }[];
     }) => apiClient.send(bookingStore(), data),
     getBookings: (params?: { status?: string; page?: number }) =>

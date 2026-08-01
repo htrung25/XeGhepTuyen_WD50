@@ -500,6 +500,7 @@ it('webhook SePay trùng: idempotent — không confirm/không phát PaymentProc
 
     $payload = fn (string $txn) => [
         'transactionContent' => "Thanh toan {$payment->gateway_order_id}", 'amountIn' => 120000, 'id' => $txn,
+        'transferType' => 'in', 'accountNumber' => config('services.sepay.bank_acc'),
     ];
 
     expect($svc->handleSepayWebhook($payload('TXN-1')))->toBeTrue();
@@ -524,6 +525,7 @@ it('callback in-flight trên chuyến đã có cờ: giữ ghế + báo khách �
     // Callback đến sau: confirm vé, GIỮ ghế (không tự hủy), báo riêng cho khách.
     $svc->handleSepayWebhook([
         'transactionContent' => "Thanh toan {$payment->gateway_order_id}", 'amountIn' => 120000, 'id' => 'TXN-1',
+        'transferType' => 'in', 'accountNumber' => config('services.sepay.bank_acc'),
     ]);
 
     expect($booking->fresh()->booking_status->value)->toBe('confirmed'); // giữ ghế
@@ -537,6 +539,7 @@ it('callback in-flight trên chuyến đã có cờ: giữ ghế + báo khách �
     // Webhook trùng lần 2 KHÔNG tạo thêm thông báo (idempotent + dedupe).
     $svc->handleSepayWebhook([
         'transactionContent' => "Thanh toan {$payment->gateway_order_id}", 'amountIn' => 120000, 'id' => 'TXN-2',
+        'transferType' => 'in', 'accountNumber' => config('services.sepay.bank_acc'),
     ]);
     expect(Notification::where('user_id', $booking->user_id)
         ->where('type', NotificationTypeEnum::TripDriverUnavailable->value)
