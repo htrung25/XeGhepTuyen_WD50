@@ -2,7 +2,7 @@ import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFo
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerAssetController::index
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerAssetController.php:26
-* @route '/docs/asset/{asset}'
+* @route '/api/documentation/asset/{asset}'
 */
 export const index = (args: { asset: string | number } | [asset: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: index.url(args, options),
@@ -11,13 +11,13 @@ export const index = (args: { asset: string | number } | [asset: string | number
 
 index.definition = {
     methods: ["get","head"],
-    url: '/docs/asset/{asset}',
+    url: '/api/documentation/asset/{asset}',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerAssetController::index
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerAssetController.php:26
-* @route '/docs/asset/{asset}'
+* @route '/api/documentation/asset/{asset}'
 */
 index.url = (args: { asset: string | number } | [asset: string | number ] | string | number, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
@@ -44,7 +44,7 @@ index.url = (args: { asset: string | number } | [asset: string | number ] | stri
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerAssetController::index
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerAssetController.php:26
-* @route '/docs/asset/{asset}'
+* @route '/api/documentation/asset/{asset}'
 */
 index.get = (args: { asset: string | number } | [asset: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: index.url(args, options),
@@ -54,7 +54,7 @@ index.get = (args: { asset: string | number } | [asset: string | number ] | stri
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerAssetController::index
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerAssetController.php:26
-* @route '/docs/asset/{asset}'
+* @route '/api/documentation/asset/{asset}'
 */
 index.head = (args: { asset: string | number } | [asset: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: index.url(args, options),
@@ -64,7 +64,7 @@ index.head = (args: { asset: string | number } | [asset: string | number ] | str
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerAssetController::index
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerAssetController.php:26
-* @route '/docs/asset/{asset}'
+* @route '/api/documentation/asset/{asset}'
 */
 const indexForm = (args: { asset: string | number } | [asset: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
     action: index.url(args, options),
@@ -74,7 +74,7 @@ const indexForm = (args: { asset: string | number } | [asset: string | number ] 
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerAssetController::index
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerAssetController.php:26
-* @route '/docs/asset/{asset}'
+* @route '/api/documentation/asset/{asset}'
 */
 indexForm.get = (args: { asset: string | number } | [asset: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
     action: index.url(args, options),
@@ -84,7 +84,7 @@ indexForm.get = (args: { asset: string | number } | [asset: string | number ] | 
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerAssetController::index
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerAssetController.php:26
-* @route '/docs/asset/{asset}'
+* @route '/api/documentation/asset/{asset}'
 */
 indexForm.head = (args: { asset: string | number } | [asset: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
     action: index.url(args, {

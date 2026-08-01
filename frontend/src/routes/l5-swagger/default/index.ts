@@ -83,7 +83,7 @@ api.form = apiForm
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::docs
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
-* @route '/docs'
+* @route '/api/documentation'
 */
 export const docs = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: docs.url(options),
@@ -92,13 +92,13 @@ export const docs = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 docs.definition = {
     methods: ["get","head"],
-    url: '/docs',
+    url: '/api/documentation',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::docs
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
-* @route '/docs'
+* @route '/api/documentation'
 */
 docs.url = (options?: RouteQueryOptions) => {
     return docs.definition.url + queryParams(options)
@@ -107,7 +107,7 @@ docs.url = (options?: RouteQueryOptions) => {
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::docs
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
-* @route '/docs'
+* @route '/api/documentation'
 */
 docs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: docs.url(options),
@@ -117,7 +117,7 @@ docs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::docs
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
-* @route '/docs'
+* @route '/api/documentation'
 */
 docs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: docs.url(options),
@@ -127,7 +127,7 @@ docs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::docs
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
-* @route '/docs'
+* @route '/api/documentation'
 */
 const docsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
     action: docs.url(options),
@@ -137,7 +137,7 @@ const docsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::docs
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
-* @route '/docs'
+* @route '/api/documentation'
 */
 docsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
     action: docs.url(options),
@@ -147,7 +147,7 @@ docsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::docs
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
-* @route '/docs'
+* @route '/api/documentation'
 */
 docsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
     action: docs.url({
@@ -164,7 +164,7 @@ docs.form = docsForm
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerAssetController::asset
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerAssetController.php:26
-* @route '/docs/asset/{asset}'
+* @route '/api/documentation/asset/{asset}'
 */
 export const asset = (args: { asset: string | number } | [asset: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: asset.url(args, options),
@@ -173,13 +173,13 @@ export const asset = (args: { asset: string | number } | [asset: string | number
 
 asset.definition = {
     methods: ["get","head"],
-    url: '/docs/asset/{asset}',
+    url: '/api/documentation/asset/{asset}',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerAssetController::asset
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerAssetController.php:26
-* @route '/docs/asset/{asset}'
+* @route '/api/documentation/asset/{asset}'
 */
 asset.url = (args: { asset: string | number } | [asset: string | number ] | string | number, options?: RouteQueryOptions) => {
     if (typeof args === 'string' || typeof args === 'number') {
@@ -206,7 +206,7 @@ asset.url = (args: { asset: string | number } | [asset: string | number ] | stri
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerAssetController::asset
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerAssetController.php:26
-* @route '/docs/asset/{asset}'
+* @route '/api/documentation/asset/{asset}'
 */
 asset.get = (args: { asset: string | number } | [asset: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: asset.url(args, options),
@@ -216,7 +216,7 @@ asset.get = (args: { asset: string | number } | [asset: string | number ] | stri
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerAssetController::asset
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerAssetController.php:26
-* @route '/docs/asset/{asset}'
+* @route '/api/documentation/asset/{asset}'
 */
 asset.head = (args: { asset: string | number } | [asset: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: asset.url(args, options),
@@ -226,7 +226,7 @@ asset.head = (args: { asset: string | number } | [asset: string | number ] | str
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerAssetController::asset
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerAssetController.php:26
-* @route '/docs/asset/{asset}'
+* @route '/api/documentation/asset/{asset}'
 */
 const assetForm = (args: { asset: string | number } | [asset: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
     action: asset.url(args, options),
@@ -236,7 +236,7 @@ const assetForm = (args: { asset: string | number } | [asset: string | number ] 
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerAssetController::asset
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerAssetController.php:26
-* @route '/docs/asset/{asset}'
+* @route '/api/documentation/asset/{asset}'
 */
 assetForm.get = (args: { asset: string | number } | [asset: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
     action: asset.url(args, options),
@@ -246,7 +246,7 @@ assetForm.get = (args: { asset: string | number } | [asset: string | number ] | 
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerAssetController::asset
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerAssetController.php:26
-* @route '/docs/asset/{asset}'
+* @route '/api/documentation/asset/{asset}'
 */
 assetForm.head = (args: { asset: string | number } | [asset: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
     action: asset.url(args, {

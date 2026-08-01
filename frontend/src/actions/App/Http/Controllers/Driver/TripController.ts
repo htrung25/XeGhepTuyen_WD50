@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Driver\TripController::index
-* @see app/Http/Controllers/Driver/TripController.php:21
+* @see app/Http/Controllers/Driver/TripController.php:23
 * @route '/api/driver/trips'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::index
-* @see app/Http/Controllers/Driver/TripController.php:21
+* @see app/Http/Controllers/Driver/TripController.php:23
 * @route '/api/driver/trips'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::index
-* @see app/Http/Controllers/Driver/TripController.php:21
+* @see app/Http/Controllers/Driver/TripController.php:23
 * @route '/api/driver/trips'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::index
-* @see app/Http/Controllers/Driver/TripController.php:21
+* @see app/Http/Controllers/Driver/TripController.php:23
 * @route '/api/driver/trips'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::index
-* @see app/Http/Controllers/Driver/TripController.php:21
+* @see app/Http/Controllers/Driver/TripController.php:23
 * @route '/api/driver/trips'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::index
-* @see app/Http/Controllers/Driver/TripController.php:21
+* @see app/Http/Controllers/Driver/TripController.php:23
 * @route '/api/driver/trips'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::index
-* @see app/Http/Controllers/Driver/TripController.php:21
+* @see app/Http/Controllers/Driver/TripController.php:23
 * @route '/api/driver/trips'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::history
-* @see app/Http/Controllers/Driver/TripController.php:153
+* @see app/Http/Controllers/Driver/TripController.php:170
 * @route '/api/driver/trips/history'
 */
 export const history = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -97,7 +97,7 @@ history.definition = {
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::history
-* @see app/Http/Controllers/Driver/TripController.php:153
+* @see app/Http/Controllers/Driver/TripController.php:170
 * @route '/api/driver/trips/history'
 */
 history.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ history.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::history
-* @see app/Http/Controllers/Driver/TripController.php:153
+* @see app/Http/Controllers/Driver/TripController.php:170
 * @route '/api/driver/trips/history'
 */
 history.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -116,7 +116,7 @@ history.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::history
-* @see app/Http/Controllers/Driver/TripController.php:153
+* @see app/Http/Controllers/Driver/TripController.php:170
 * @route '/api/driver/trips/history'
 */
 history.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -126,7 +126,7 @@ history.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::history
-* @see app/Http/Controllers/Driver/TripController.php:153
+* @see app/Http/Controllers/Driver/TripController.php:170
 * @route '/api/driver/trips/history'
 */
 const historyForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -136,7 +136,7 @@ const historyForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::history
-* @see app/Http/Controllers/Driver/TripController.php:153
+* @see app/Http/Controllers/Driver/TripController.php:170
 * @route '/api/driver/trips/history'
 */
 historyForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -146,7 +146,7 @@ historyForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::history
-* @see app/Http/Controllers/Driver/TripController.php:153
+* @see app/Http/Controllers/Driver/TripController.php:170
 * @route '/api/driver/trips/history'
 */
 historyForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -163,7 +163,7 @@ history.form = historyForm
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::show
-* @see app/Http/Controllers/Driver/TripController.php:44
+* @see app/Http/Controllers/Driver/TripController.php:46
 * @route '/api/driver/trips/{id}'
 */
 export const show = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -178,7 +178,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::show
-* @see app/Http/Controllers/Driver/TripController.php:44
+* @see app/Http/Controllers/Driver/TripController.php:46
 * @route '/api/driver/trips/{id}'
 */
 show.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -205,7 +205,7 @@ show.url = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::show
-* @see app/Http/Controllers/Driver/TripController.php:44
+* @see app/Http/Controllers/Driver/TripController.php:46
 * @route '/api/driver/trips/{id}'
 */
 show.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -215,7 +215,7 @@ show.get = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::show
-* @see app/Http/Controllers/Driver/TripController.php:44
+* @see app/Http/Controllers/Driver/TripController.php:46
 * @route '/api/driver/trips/{id}'
 */
 show.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -225,7 +225,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::show
-* @see app/Http/Controllers/Driver/TripController.php:44
+* @see app/Http/Controllers/Driver/TripController.php:46
 * @route '/api/driver/trips/{id}'
 */
 const showForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -235,7 +235,7 @@ const showForm = (args: { id: string | number } | [id: string | number ] | strin
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::show
-* @see app/Http/Controllers/Driver/TripController.php:44
+* @see app/Http/Controllers/Driver/TripController.php:46
 * @route '/api/driver/trips/{id}'
 */
 showForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -245,7 +245,7 @@ showForm.get = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::show
-* @see app/Http/Controllers/Driver/TripController.php:44
+* @see app/Http/Controllers/Driver/TripController.php:46
 * @route '/api/driver/trips/{id}'
 */
 showForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -262,7 +262,7 @@ show.form = showForm
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::passengers
-* @see app/Http/Controllers/Driver/TripController.php:56
+* @see app/Http/Controllers/Driver/TripController.php:58
 * @route '/api/driver/trips/{id}/passengers'
 */
 export const passengers = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -277,7 +277,7 @@ passengers.definition = {
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::passengers
-* @see app/Http/Controllers/Driver/TripController.php:56
+* @see app/Http/Controllers/Driver/TripController.php:58
 * @route '/api/driver/trips/{id}/passengers'
 */
 passengers.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -304,7 +304,7 @@ passengers.url = (args: { id: string | number } | [id: string | number ] | strin
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::passengers
-* @see app/Http/Controllers/Driver/TripController.php:56
+* @see app/Http/Controllers/Driver/TripController.php:58
 * @route '/api/driver/trips/{id}/passengers'
 */
 passengers.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -314,7 +314,7 @@ passengers.get = (args: { id: string | number } | [id: string | number ] | strin
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::passengers
-* @see app/Http/Controllers/Driver/TripController.php:56
+* @see app/Http/Controllers/Driver/TripController.php:58
 * @route '/api/driver/trips/{id}/passengers'
 */
 passengers.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -324,7 +324,7 @@ passengers.head = (args: { id: string | number } | [id: string | number ] | stri
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::passengers
-* @see app/Http/Controllers/Driver/TripController.php:56
+* @see app/Http/Controllers/Driver/TripController.php:58
 * @route '/api/driver/trips/{id}/passengers'
 */
 const passengersForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -334,7 +334,7 @@ const passengersForm = (args: { id: string | number } | [id: string | number ] |
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::passengers
-* @see app/Http/Controllers/Driver/TripController.php:56
+* @see app/Http/Controllers/Driver/TripController.php:58
 * @route '/api/driver/trips/{id}/passengers'
 */
 passengersForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -344,7 +344,7 @@ passengersForm.get = (args: { id: string | number } | [id: string | number ] | s
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::passengers
-* @see app/Http/Controllers/Driver/TripController.php:56
+* @see app/Http/Controllers/Driver/TripController.php:58
 * @route '/api/driver/trips/{id}/passengers'
 */
 passengersForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -361,7 +361,7 @@ passengers.form = passengersForm
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::start
-* @see app/Http/Controllers/Driver/TripController.php:105
+* @see app/Http/Controllers/Driver/TripController.php:109
 * @route '/api/driver/trips/{id}/start'
 */
 export const start = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -376,7 +376,7 @@ start.definition = {
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::start
-* @see app/Http/Controllers/Driver/TripController.php:105
+* @see app/Http/Controllers/Driver/TripController.php:109
 * @route '/api/driver/trips/{id}/start'
 */
 start.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -403,7 +403,7 @@ start.url = (args: { id: string | number } | [id: string | number ] | string | n
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::start
-* @see app/Http/Controllers/Driver/TripController.php:105
+* @see app/Http/Controllers/Driver/TripController.php:109
 * @route '/api/driver/trips/{id}/start'
 */
 start.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -413,7 +413,7 @@ start.post = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::start
-* @see app/Http/Controllers/Driver/TripController.php:105
+* @see app/Http/Controllers/Driver/TripController.php:109
 * @route '/api/driver/trips/{id}/start'
 */
 const startForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -423,7 +423,7 @@ const startForm = (args: { id: string | number } | [id: string | number ] | stri
 
 /**
 * @see \App\Http\Controllers\Driver\TripController::start
-* @see app/Http/Controllers/Driver/TripController.php:105
+* @see app/Http/Controllers/Driver/TripController.php:109
 * @route '/api/driver/trips/{id}/start'
 */
 startForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -507,6 +507,80 @@ completeForm.post = (args: { id: string | number } | [id: string | number ] | st
 
 complete.form = completeForm
 
-const TripController = { index, history, show, passengers, start, complete }
+/**
+* @see \App\Http\Controllers\Driver\TripController::reportUnavailable
+* @see app/Http/Controllers/Driver/TripController.php:151
+* @route '/api/driver/trips/{id}/report-unavailable'
+*/
+export const reportUnavailable = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: reportUnavailable.url(args, options),
+    method: 'post',
+})
+
+reportUnavailable.definition = {
+    methods: ["post"],
+    url: '/api/driver/trips/{id}/report-unavailable',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\Driver\TripController::reportUnavailable
+* @see app/Http/Controllers/Driver/TripController.php:151
+* @route '/api/driver/trips/{id}/report-unavailable'
+*/
+reportUnavailable.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { id: args }
+    }
+
+    if (Array.isArray(args)) {
+        args = {
+            id: args[0],
+        }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+        id: args.id,
+    }
+
+    return reportUnavailable.definition.url
+            .replace('{id}', parsedArgs.id.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Driver\TripController::reportUnavailable
+* @see app/Http/Controllers/Driver/TripController.php:151
+* @route '/api/driver/trips/{id}/report-unavailable'
+*/
+reportUnavailable.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: reportUnavailable.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Driver\TripController::reportUnavailable
+* @see app/Http/Controllers/Driver/TripController.php:151
+* @route '/api/driver/trips/{id}/report-unavailable'
+*/
+const reportUnavailableForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: reportUnavailable.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\Driver\TripController::reportUnavailable
+* @see app/Http/Controllers/Driver/TripController.php:151
+* @route '/api/driver/trips/{id}/report-unavailable'
+*/
+reportUnavailableForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: reportUnavailable.url(args, options),
+    method: 'post',
+})
+
+reportUnavailable.form = reportUnavailableForm
+
+const TripController = { index, history, show, passengers, start, complete, reportUnavailable }
 
 export default TripController

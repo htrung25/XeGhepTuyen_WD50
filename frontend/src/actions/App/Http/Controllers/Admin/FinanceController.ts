@@ -325,7 +325,7 @@ commissions.form = commissionsForm
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::payouts
-* @see app/Http/Controllers/Admin/FinanceController.php:377
+* @see app/Http/Controllers/Admin/FinanceController.php:387
 * @route '/api/admin/finance/payouts'
 */
 export const payouts = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -340,7 +340,7 @@ payouts.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::payouts
-* @see app/Http/Controllers/Admin/FinanceController.php:377
+* @see app/Http/Controllers/Admin/FinanceController.php:387
 * @route '/api/admin/finance/payouts'
 */
 payouts.url = (options?: RouteQueryOptions) => {
@@ -349,7 +349,7 @@ payouts.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::payouts
-* @see app/Http/Controllers/Admin/FinanceController.php:377
+* @see app/Http/Controllers/Admin/FinanceController.php:387
 * @route '/api/admin/finance/payouts'
 */
 payouts.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -359,7 +359,7 @@ payouts.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::payouts
-* @see app/Http/Controllers/Admin/FinanceController.php:377
+* @see app/Http/Controllers/Admin/FinanceController.php:387
 * @route '/api/admin/finance/payouts'
 */
 payouts.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -369,7 +369,7 @@ payouts.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::payouts
-* @see app/Http/Controllers/Admin/FinanceController.php:377
+* @see app/Http/Controllers/Admin/FinanceController.php:387
 * @route '/api/admin/finance/payouts'
 */
 const payoutsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -379,7 +379,7 @@ const payoutsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::payouts
-* @see app/Http/Controllers/Admin/FinanceController.php:377
+* @see app/Http/Controllers/Admin/FinanceController.php:387
 * @route '/api/admin/finance/payouts'
 */
 payoutsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -389,7 +389,7 @@ payoutsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::payouts
-* @see app/Http/Controllers/Admin/FinanceController.php:377
+* @see app/Http/Controllers/Admin/FinanceController.php:387
 * @route '/api/admin/finance/payouts'
 */
 payoutsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -406,7 +406,7 @@ payouts.form = payoutsForm
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::revenue
-* @see app/Http/Controllers/Admin/FinanceController.php:408
+* @see app/Http/Controllers/Admin/FinanceController.php:418
 * @route '/api/admin/finance/revenue'
 */
 export const revenue = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -421,7 +421,7 @@ revenue.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::revenue
-* @see app/Http/Controllers/Admin/FinanceController.php:408
+* @see app/Http/Controllers/Admin/FinanceController.php:418
 * @route '/api/admin/finance/revenue'
 */
 revenue.url = (options?: RouteQueryOptions) => {
@@ -430,7 +430,7 @@ revenue.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::revenue
-* @see app/Http/Controllers/Admin/FinanceController.php:408
+* @see app/Http/Controllers/Admin/FinanceController.php:418
 * @route '/api/admin/finance/revenue'
 */
 revenue.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -440,7 +440,7 @@ revenue.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::revenue
-* @see app/Http/Controllers/Admin/FinanceController.php:408
+* @see app/Http/Controllers/Admin/FinanceController.php:418
 * @route '/api/admin/finance/revenue'
 */
 revenue.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -450,7 +450,7 @@ revenue.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::revenue
-* @see app/Http/Controllers/Admin/FinanceController.php:408
+* @see app/Http/Controllers/Admin/FinanceController.php:418
 * @route '/api/admin/finance/revenue'
 */
 const revenueForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -460,7 +460,7 @@ const revenueForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::revenue
-* @see app/Http/Controllers/Admin/FinanceController.php:408
+* @see app/Http/Controllers/Admin/FinanceController.php:418
 * @route '/api/admin/finance/revenue'
 */
 revenueForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -470,7 +470,7 @@ revenueForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::revenue
-* @see app/Http/Controllers/Admin/FinanceController.php:408
+* @see app/Http/Controllers/Admin/FinanceController.php:418
 * @route '/api/admin/finance/revenue'
 */
 revenueForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -487,7 +487,7 @@ revenue.form = revenueForm
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::anomalies
-* @see app/Http/Controllers/Admin/FinanceController.php:318
+* @see app/Http/Controllers/Admin/FinanceController.php:328
 * @route '/api/admin/finance/anomalies'
 */
 export const anomalies = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -502,7 +502,7 @@ anomalies.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::anomalies
-* @see app/Http/Controllers/Admin/FinanceController.php:318
+* @see app/Http/Controllers/Admin/FinanceController.php:328
 * @route '/api/admin/finance/anomalies'
 */
 anomalies.url = (options?: RouteQueryOptions) => {
@@ -511,7 +511,7 @@ anomalies.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::anomalies
-* @see app/Http/Controllers/Admin/FinanceController.php:318
+* @see app/Http/Controllers/Admin/FinanceController.php:328
 * @route '/api/admin/finance/anomalies'
 */
 anomalies.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -521,7 +521,7 @@ anomalies.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::anomalies
-* @see app/Http/Controllers/Admin/FinanceController.php:318
+* @see app/Http/Controllers/Admin/FinanceController.php:328
 * @route '/api/admin/finance/anomalies'
 */
 anomalies.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -531,7 +531,7 @@ anomalies.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::anomalies
-* @see app/Http/Controllers/Admin/FinanceController.php:318
+* @see app/Http/Controllers/Admin/FinanceController.php:328
 * @route '/api/admin/finance/anomalies'
 */
 const anomaliesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -541,7 +541,7 @@ const anomaliesForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> 
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::anomalies
-* @see app/Http/Controllers/Admin/FinanceController.php:318
+* @see app/Http/Controllers/Admin/FinanceController.php:328
 * @route '/api/admin/finance/anomalies'
 */
 anomaliesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -551,7 +551,7 @@ anomaliesForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::anomalies
-* @see app/Http/Controllers/Admin/FinanceController.php:318
+* @see app/Http/Controllers/Admin/FinanceController.php:328
 * @route '/api/admin/finance/anomalies'
 */
 anomaliesForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -568,7 +568,7 @@ anomalies.form = anomaliesForm
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::exportMethod
-* @see app/Http/Controllers/Admin/FinanceController.php:340
+* @see app/Http/Controllers/Admin/FinanceController.php:350
 * @route '/api/admin/finance/export'
 */
 export const exportMethod = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -583,7 +583,7 @@ exportMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::exportMethod
-* @see app/Http/Controllers/Admin/FinanceController.php:340
+* @see app/Http/Controllers/Admin/FinanceController.php:350
 * @route '/api/admin/finance/export'
 */
 exportMethod.url = (options?: RouteQueryOptions) => {
@@ -592,7 +592,7 @@ exportMethod.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::exportMethod
-* @see app/Http/Controllers/Admin/FinanceController.php:340
+* @see app/Http/Controllers/Admin/FinanceController.php:350
 * @route '/api/admin/finance/export'
 */
 exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -602,7 +602,7 @@ exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::exportMethod
-* @see app/Http/Controllers/Admin/FinanceController.php:340
+* @see app/Http/Controllers/Admin/FinanceController.php:350
 * @route '/api/admin/finance/export'
 */
 exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -612,7 +612,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::exportMethod
-* @see app/Http/Controllers/Admin/FinanceController.php:340
+* @see app/Http/Controllers/Admin/FinanceController.php:350
 * @route '/api/admin/finance/export'
 */
 const exportMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -622,7 +622,7 @@ const exportMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'get
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::exportMethod
-* @see app/Http/Controllers/Admin/FinanceController.php:340
+* @see app/Http/Controllers/Admin/FinanceController.php:350
 * @route '/api/admin/finance/export'
 */
 exportMethodForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -632,7 +632,7 @@ exportMethodForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'>
 
 /**
 * @see \App\Http\Controllers\Admin\FinanceController::exportMethod
-* @see app/Http/Controllers/Admin/FinanceController.php:340
+* @see app/Http/Controllers/Admin/FinanceController.php:350
 * @route '/api/admin/finance/export'
 */
 exportMethodForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

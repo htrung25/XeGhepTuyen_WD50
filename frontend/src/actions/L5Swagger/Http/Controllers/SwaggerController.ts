@@ -83,7 +83,7 @@ api.form = apiForm
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::docs
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
-* @route '/docs'
+* @route '/api/documentation'
 */
 export const docs = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: docs.url(options),
@@ -92,13 +92,13 @@ export const docs = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 docs.definition = {
     methods: ["get","head"],
-    url: '/docs',
+    url: '/api/documentation',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::docs
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
-* @route '/docs'
+* @route '/api/documentation'
 */
 docs.url = (options?: RouteQueryOptions) => {
     return docs.definition.url + queryParams(options)
@@ -107,7 +107,7 @@ docs.url = (options?: RouteQueryOptions) => {
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::docs
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
-* @route '/docs'
+* @route '/api/documentation'
 */
 docs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: docs.url(options),
@@ -117,7 +117,7 @@ docs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::docs
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
-* @route '/docs'
+* @route '/api/documentation'
 */
 docs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: docs.url(options),
@@ -127,7 +127,7 @@ docs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::docs
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
-* @route '/docs'
+* @route '/api/documentation'
 */
 const docsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
     action: docs.url(options),
@@ -137,7 +137,7 @@ const docsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::docs
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
-* @route '/docs'
+* @route '/api/documentation'
 */
 docsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
     action: docs.url(options),
@@ -147,7 +147,7 @@ docsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::docs
 * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
-* @route '/docs'
+* @route '/api/documentation'
 */
 docsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
     action: docs.url({
