@@ -69,10 +69,14 @@ describe('driverApi → Wayfinder route contract', () => {
     });
 
     it('checkin resolves to POST /api/driver/checkin with the cash flag', () => {
-        driverApi.checkin({ qr_token: 'abc', cash_collected: true });
+        driverApi.checkin({
+            trip_id: 't1',
+            booking_id: 'b1',
+            cash_collected: true,
+        });
         expect(apiClient.send).toHaveBeenCalledWith(
             { url: '/api/driver/checkin', method: 'post' },
-            { qr_token: 'abc', cash_collected: true },
+            { trip_id: 't1', booking_id: 'b1', cash_collected: true },
         );
     });
 
