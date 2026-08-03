@@ -7,6 +7,8 @@ import { useCustomerAuthStore } from '@/stores/customer.auth.store';
 const router = useRouter();
 const auth = useCustomerAuthStore();
 
+const SUCCESS_MSG_TIMEOUT_MS = 3000;
+
 type Section = 'profile' | 'password' | 'wallet';
 
 const activeSection = ref<Section>('profile');
@@ -70,7 +72,7 @@ async function saveProfile() {
     successMsg.value = 'Cập nhật thông tin thành công!';
     setTimeout(() => {
         successMsg.value = '';
-    }, 3000);
+    }, SUCCESS_MSG_TIMEOUT_MS);
 }
 
 async function changePassword() {
@@ -99,7 +101,7 @@ async function changePassword() {
     passwordForm.value = { old_password: '', new_password: '', confirm: '' };
     setTimeout(() => {
         successMsg.value = '';
-    }, 3000);
+    }, SUCCESS_MSG_TIMEOUT_MS);
 }
 
 async function logout() {
