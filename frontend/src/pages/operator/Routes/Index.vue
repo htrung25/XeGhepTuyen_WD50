@@ -75,9 +75,23 @@ const removeStop = (idx: number) => {
     form.value.stops.splice(idx, 1);
     form.value.stops.forEach((stop, index) => {
         stop.stop_order = index + 1;
-        stop.is_pickup = index === 0;
-        stop.is_dropoff = index === form.value.stops.length - 1;
     });
+    // Chỉ gán lại pickup/dropoff mặc định khi sau khi xoá KHÔNG còn điểm nào
+    // được đánh dấu (vd xoá đúng điểm pickup/dropoff duy nhất) — trước đây
+    // code này gán lại cho MỌI điểm dừng theo vị trí đầu/cuối mỗi lần xoá,
+    // xoá mất tuỳ chỉnh thủ công (checkbox) của nhà xe trên các điểm còn lại.
+    if (
+        form.value.stops.length > 0 &&
+        !form.value.stops.some((s) => s.is_pickup)
+    ) {
+        form.value.stops[0].is_pickup = true;
+    }
+    if (
+        form.value.stops.length > 0 &&
+        !form.value.stops.some((s) => s.is_dropoff)
+    ) {
+        form.value.stops[form.value.stops.length - 1].is_dropoff = true;
+    }
 };
 
 const loadRoutes = async () => {
@@ -165,6 +179,22 @@ const saveRoute = async () => {
     ) {
         saveError.value =
             'Vui lòng nhập đủ tên, địa chỉ và tọa độ cho mọi điểm dừng';
+        return;
+    }
+    // Tọa độ nhập kiểu dấu phẩy thập phân (vd "20,9") hoặc ký tự lạ ->
+    // Number() ra NaN -> JSON.stringify thành null -> BE từ chối "required"
+    // dù ô đã có dữ liệu, rất khó hiểu với người dùng. Bắt lỗi này ở FE với
+    // thông báo rõ ràng thay vì để lọt xuống BE.
+    if (
+        !editingId.value &&
+        form.value.stops.some(
+            (stop) =>
+                !Number.isFinite(Number(stop.lat)) ||
+                !Number.isFinite(Number(stop.lng)),
+        )
+    ) {
+        saveError.value =
+            'Tọa độ (lat/lng) không hợp lệ — dùng dấu chấm thập phân (vd 20.9), không dùng dấu phẩy';
         return;
     }
 
