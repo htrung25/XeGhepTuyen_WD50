@@ -5,6 +5,7 @@ import { customerApi } from '@/api/customer.api';
 import { useCustomerAuthStore } from '@/stores/customer.auth.store';
 import { useCustomerStore } from '@/stores/customer.store';
 import type { SeatInfo } from '@/stores/customer.store';
+import SeatButton from './SeatButton.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -20,31 +21,6 @@ const lockLoading = ref(false);
 const tripInfo = ref<any>(null);
 
 const maxSeats = computed(() => store.searchParams.passengers || 1);
-
-// Hình dáng ghế thật (tựa lưng bo tròn + 2 tay vịn) vẽ bằng MỘT path SVG liền
-// mạch duy nhất — tránh kiểu ghép 3 khối rời rạc (lưng + tay trái + tay phải)
-// nhìn như 3 hộp cạnh nhau. viewBox 48x56, vẽ theo chiều kim đồng hồ.
-const SEAT_PATH =
-    'M 10,16 Q 10,2 24,2 Q 38,2 38,16 L 38,28 Q 46,28 46,34 L 46,40 Q 46,46 38,46 Q 38,52 32,52 L 16,52 Q 10,52 10,46 Q 2,46 2,40 L 2,34 Q 2,28 10,28 L 10,16 Z';
-
-// Màu phần thân ghế (fill/stroke của path SVG) theo trạng thái.
-function seatFillClasses(s: SeatInfo) {
-    if (s.status === 'booked')
-        return 'fill-red-100 stroke-red-200 cursor-not-allowed';
-    if (s.status === 'locked')
-        return 'fill-yellow-100 stroke-yellow-300 cursor-not-allowed';
-    if (selected.value.includes(s.seat_code))
-        return 'fill-blue-600 stroke-blue-600 drop-shadow-md';
-    return 'fill-white stroke-gray-300 hover:fill-blue-50 hover:stroke-blue-400 cursor-pointer';
-}
-
-// Màu chữ mã ghế đặt chồng lên giữa hình ghế.
-function seatTextClasses(s: SeatInfo) {
-    if (s.status === 'booked') return 'text-red-400';
-    if (s.status === 'locked') return 'text-yellow-600';
-    if (selected.value.includes(s.seat_code)) return 'text-white';
-    return 'text-gray-700';
-}
 
 function toggleSeat(s: SeatInfo) {
     if (s.status !== 'available') return;
@@ -114,42 +90,149 @@ const VEHICLE_LAYOUTS: Record<string, LayoutRow[]> = {
     ],
 };
 
+// Fallback đơn giản (không dùng lưới cột) khi gặp loại xe lạ hoặc dữ liệu ghế
+// không khớp layout đã khai báo — tránh vỡ UI thay vì cố ép vào lưới sai.
 type RenderSlot = { type: 'seat'; seat: SeatInfo } | { type: 'aisle' };
-interface RenderRow {
+interface FallbackRow {
     front: boolean;
     slots: RenderSlot[];
 }
 
-const renderRows = computed<RenderRow[]>(() => {
-    const rows = seatGrid.value;
-    const layout = VEHICLE_LAYOUTS[tripInfo.value?.vehicle?.vehicle_type ?? ''];
+const layout = computed(
+    () => VEHICLE_LAYOUTS[tripInfo.value?.vehicle?.vehicle_type ?? ''],
+);
 
-    // Chỉ dùng layout thật khi số hàng VÀ số ghế mỗi hàng khớp đúng dữ liệu
-    // trả về — tránh vỡ UI nếu gặp loại xe lạ hoặc dữ liệu cũ không chuẩn.
-    const layoutMatches =
-        layout &&
-        layout.length === rows.length &&
-        layout.every(
+const layoutMatches = computed(() => {
+    const rows = seatGrid.value;
+    const l = layout.value;
+    return !!(
+        l &&
+        l.length === rows.length &&
+        l.every(
             (lr, ri) =>
                 lr.slots.filter((s) => s !== 'aisle').length ===
                 rows[ri].length,
-        );
+        )
+    );
+});
 
-    if (!layoutMatches) {
-        return rows.map((row, ri) => ({
-            front: ri === 0,
-            slots: row.map((seat) => ({ type: 'seat' as const, seat })),
-        }));
+const fallbackRows = computed<FallbackRow[]>(() =>
+    seatGrid.value.map((row, ri) => ({
+        front: ri === 0,
+        slots: row.map((seat) => ({ type: 'seat' as const, seat })),
+    })),
+);
+
+// ─── Sơ đồ dạng LƯỚI CSS thật — mỗi cột giữ ĐÚNG một vị trí ghế vật lý xuyên
+// suốt mọi hàng (ghế hàng dưới thẳng cột với ghế hàng trên), khớp cách bố trí
+// thật của xe khách (ảnh mặt cắt ngang xe limousine/minibus thực tế).
+const SEAT_COL = 48; // px — khớp bề rộng nút ghế (w-12)
+const AISLE_COL = 20; // px — bề rộng lối đi giữa
+const DRIVER_COL = 48; // px — cột dành riêng cho ghế lái, rỗng ở các hàng khác
+const GAP = 8; // px — khoảng cách giữa các cột lưới VÀ giữa các ghế trong 1 hàng không lối đi
+
+interface GridSpec {
+    leftCols: number;
+    rightCols: number;
+    hasAisle: boolean;
+    totalCols: number;
+    templateColumns: string;
+}
+
+function computeGridSpec(rows: LayoutRow[]): GridSpec {
+    let leftCols = 0;
+    let rightCols = 0;
+    let hasAisle = false;
+    let maxSlots = 0;
+    for (const row of rows) {
+        maxSlots = Math.max(maxSlots, row.slots.length);
+        const aisleIdx = row.slots.indexOf('aisle');
+        if (aisleIdx !== -1) {
+            hasAisle = true;
+            leftCols = Math.max(leftCols, aisleIdx);
+            rightCols = Math.max(rightCols, row.slots.length - aisleIdx - 1);
+        }
     }
+    if (hasAisle) {
+        return {
+            leftCols,
+            rightCols,
+            hasAisle,
+            totalCols: 1 + leftCols + 1 + rightCols,
+            templateColumns: `${DRIVER_COL}px repeat(${leftCols}, ${SEAT_COL}px) ${AISLE_COL}px repeat(${rightCols}, ${SEAT_COL}px)`,
+        };
+    }
+    // Không xe nào trong bảng có lối đi (sedan/mpv) — chỉ cần 1 cột hành khách
+    // đủ rộng cho hàng đông ghế nhất, ghế trong hàng tự dàn đều bằng flex.
+    const passengerW = maxSlots * SEAT_COL + (maxSlots - 1) * GAP;
+    return {
+        leftCols: 0,
+        rightCols: 0,
+        hasAisle: false,
+        totalCols: 2,
+        templateColumns: `${DRIVER_COL}px minmax(${passengerW}px, auto)`,
+    };
+}
 
-    return rows.map((row, ri) => ({
-        front: !!layout![ri].front,
-        slots: layout![ri].slots.map((slot) =>
-            slot === 'aisle'
-                ? { type: 'aisle' as const }
-                : { type: 'seat' as const, seat: row[slot] },
-        ),
-    }));
+const gridSpec = computed<GridSpec | null>(() =>
+    layout.value ? computeGridSpec(layout.value) : null,
+);
+
+interface GridCell {
+    kind: 'seat' | 'group';
+    seat?: SeatInfo;
+    seats?: SeatInfo[];
+    gridColumn: string;
+}
+interface GridRow {
+    front: boolean;
+    cells: GridCell[];
+}
+
+const gridRows = computed<GridRow[]>(() => {
+    const spec = gridSpec.value;
+    if (!spec || !layoutMatches.value) return [];
+
+    return seatGrid.value.map((row, ri) => {
+        const layoutRow = layout.value![ri];
+        const aisleIdx = layoutRow.slots.indexOf('aisle');
+
+        if (aisleIdx === -1) {
+            // Hàng không lối đi (ghế trước cạnh tài xế / băng ghế cuối) — trải
+            // đều trên toàn bộ vùng hành khách để mép ngoài thẳng với các
+            // ghế ngoài cùng của những hàng có lối đi phía trên/dưới.
+            return {
+                front: !!layoutRow.front,
+                cells: [
+                    {
+                        kind: 'group' as const,
+                        seats: (layoutRow.slots as number[]).map((i) => row[i]),
+                        gridColumn: `2 / ${spec.totalCols + 1}`,
+                    },
+                ],
+            };
+        }
+
+        const leftSlots = layoutRow.slots.slice(0, aisleIdx) as number[];
+        const rightSlots = layoutRow.slots.slice(aisleIdx + 1) as number[];
+        const leftStartCol = 2 + spec.leftCols - leftSlots.length; // áp sát lối đi
+        const rightStartCol = 3 + spec.leftCols; // ngay sau lối đi
+
+        const cells: GridCell[] = [
+            ...leftSlots.map((seatIdx, i) => ({
+                kind: 'seat' as const,
+                seat: row[seatIdx],
+                gridColumn: `${leftStartCol + i} / ${leftStartCol + i + 1}`,
+            })),
+            ...rightSlots.map((seatIdx, i) => ({
+                kind: 'seat' as const,
+                seat: row[seatIdx],
+                gridColumn: `${rightStartCol + i} / ${rightStartCol + i + 1}`,
+            })),
+        ];
+
+        return { front: !!layoutRow.front, cells };
+    });
 });
 
 const selectedSeats = computed(() =>
@@ -347,96 +430,196 @@ onMounted(async () => {
                         </div>
                     </div>
 
-                    <!-- Car visual: mặt cắt ngang xe thật theo từng loại xe -->
-                    <div
-                        v-else
-                        class="flex flex-col items-center gap-3 rounded-2xl border border-gray-100 bg-gray-50/50 py-5"
-                    >
-                        <div class="flex flex-col items-center gap-1">
-                            <svg
-                                class="h-6 w-6 text-gray-300"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1.5"
-                                viewBox="0 0 24 24"
-                            >
-                                <circle cx="12" cy="12" r="8.25" />
-                                <circle cx="12" cy="12" r="2" />
-                                <path
-                                    stroke-linecap="round"
-                                    d="M12 3.75v6.25M12 14v7.25M5.05 7.05l4.6 3.7M18.95 7.05l-4.6 3.7M5.05 16.95l4.6-3.7M18.95 16.95l-4.6-3.7"
-                                />
-                            </svg>
-                            <span class="text-xs text-gray-400 italic"
-                                >Đầu xe</span
-                            >
-                        </div>
-
-                        <div
-                            v-for="(row, ri) in renderRows"
-                            :key="ri"
-                            class="flex w-full max-w-xs items-end justify-center gap-2"
-                        >
-                            <!-- Ghế lái — cùng hình ghế thật nhưng màu trung tính, không bấm được -->
+                    <!-- Car visual: khung xe + mặt cắt ngang thật theo từng loại xe -->
+                    <div v-else class="flex justify-center overflow-x-auto">
+                        <div class="relative shrink-0">
+                            <!-- Gương chiếu hậu 2 bên -->
                             <div
-                                v-if="row.front"
-                                class="relative h-14 w-12 shrink-0"
-                            >
-                                <svg viewBox="0 0 48 56" class="h-full w-full">
-                                    <path
-                                        :d="SEAT_PATH"
-                                        class="fill-gray-200 stroke-gray-300"
-                                        stroke-width="2.5"
-                                        stroke-linejoin="round"
-                                    />
-                                </svg>
-                                <span
-                                    class="pointer-events-none absolute inset-0 flex items-center justify-center pt-1 text-[9px] leading-tight font-medium text-gray-400"
-                                >
-                                    Tài<br />xế
-                                </span>
-                            </div>
+                                class="absolute top-14 -left-2 h-3 w-4 rounded-full border-2 border-gray-300 bg-gray-100"
+                            />
+                            <div
+                                class="absolute top-14 -right-2 h-3 w-4 rounded-full border-2 border-gray-300 bg-gray-100"
+                            />
 
-                            <template v-for="(slot, si) in row.slots" :key="si">
+                            <!-- Khung thân xe -->
+                            <div
+                                class="rounded-[2rem] border-4 border-gray-200 bg-gray-50/60 px-5 pt-4 pb-6"
+                            >
+                                <!-- Kính chắn gió -->
                                 <div
-                                    v-if="slot.type === 'aisle'"
-                                    class="w-5 shrink-0"
+                                    class="mx-auto mb-2 h-3 w-20 rounded-t-full border-2 border-b-0 border-gray-300 bg-gray-100"
                                 />
-                                <!-- Ghế hình armchair thật: 1 path SVG liền mạch (tựa lưng + 2 tay vịn) -->
-                                <button
-                                    v-else
-                                    @click="toggleSeat(slot.seat)"
-                                    :disabled="slot.seat.status !== 'available'"
-                                    class="relative h-14 w-12 shrink-0 transition-transform active:scale-90"
+
+                                <div
+                                    class="mb-3 flex flex-col items-center gap-1"
                                 >
                                     <svg
-                                        viewBox="0 0 48 56"
-                                        class="h-full w-full"
+                                        class="h-6 w-6 text-gray-300"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.5"
+                                        viewBox="0 0 24 24"
                                     >
+                                        <circle cx="12" cy="12" r="8.25" />
+                                        <circle cx="12" cy="12" r="2" />
                                         <path
-                                            :d="SEAT_PATH"
-                                            :class="[
-                                                'transition-colors',
-                                                seatFillClasses(slot.seat),
-                                            ]"
-                                            stroke-width="2.5"
-                                            stroke-linejoin="round"
+                                            stroke-linecap="round"
+                                            d="M12 3.75v6.25M12 14v7.25M5.05 7.05l4.6 3.7M18.95 7.05l-4.6 3.7M5.05 16.95l4.6-3.7M18.95 16.95l-4.6-3.7"
                                         />
                                     </svg>
-                                    <span
-                                        :class="[
-                                            'pointer-events-none absolute inset-0 flex items-center justify-center pt-1 text-xs font-bold',
-                                            seatTextClasses(slot.seat),
-                                        ]"
+                                    <span class="text-xs text-gray-400 italic"
+                                        >Đầu xe</span
                                     >
-                                        {{ slot.seat.seat_code }}
-                                    </span>
-                                </button>
-                            </template>
-                        </div>
+                                </div>
 
-                        <div class="mt-1 text-xs text-gray-400 italic">
-                            Đuôi xe
+                                <!-- Lưới ghế: mỗi cột giữ đúng 1 vị trí ghế xuyên suốt các hàng
+                                nên ghế hàng dưới luôn thẳng cột với ghế hàng trên -->
+                                <div
+                                    v-if="layoutMatches && gridSpec"
+                                    class="grid gap-2"
+                                    :style="{
+                                        gridTemplateColumns:
+                                            gridSpec.templateColumns,
+                                    }"
+                                >
+                                    <template
+                                        v-for="(row, ri) in gridRows"
+                                        :key="ri"
+                                    >
+                                        <!-- Ghế lái — cùng hình ghế thật nhưng màu trung tính -->
+                                        <div
+                                            v-if="row.front"
+                                            class="relative h-14 w-12"
+                                            :style="{
+                                                gridColumn: '1 / 2',
+                                                gridRow: ri + 1,
+                                            }"
+                                        >
+                                            <svg
+                                                viewBox="0 0 48 56"
+                                                class="h-full w-full"
+                                            >
+                                                <path
+                                                    d="M 10,16 Q 10,2 24,2 Q 38,2 38,16 L 38,28 Q 46,28 46,34 L 46,40 Q 46,46 38,46 Q 38,52 32,52 L 16,52 Q 10,52 10,46 Q 2,46 2,40 L 2,34 Q 2,28 10,28 L 10,16 Z"
+                                                    class="fill-gray-200 stroke-gray-300"
+                                                    stroke-width="2.5"
+                                                    stroke-linejoin="round"
+                                                />
+                                            </svg>
+                                            <span
+                                                class="pointer-events-none absolute inset-0 flex items-center justify-center pt-1 text-[9px] leading-tight font-medium text-gray-400"
+                                            >
+                                                Tài<br />xế
+                                            </span>
+                                        </div>
+
+                                        <template
+                                            v-for="(cell, ci) in row.cells"
+                                            :key="ci"
+                                        >
+                                            <SeatButton
+                                                v-if="cell.kind === 'seat'"
+                                                :seat="cell.seat!"
+                                                :selected="
+                                                    selected.includes(
+                                                        cell.seat!.seat_code,
+                                                    )
+                                                "
+                                                :style="{
+                                                    gridColumn: cell.gridColumn,
+                                                    gridRow: ri + 1,
+                                                }"
+                                                @toggle="toggleSeat(cell.seat!)"
+                                            />
+                                            <div
+                                                v-else
+                                                :style="{
+                                                    gridColumn: cell.gridColumn,
+                                                    gridRow: ri + 1,
+                                                }"
+                                                :class="[
+                                                    'flex items-end',
+                                                    cell.seats!.length > 1
+                                                        ? 'justify-between'
+                                                        : 'justify-center',
+                                                ]"
+                                            >
+                                                <SeatButton
+                                                    v-for="seat in cell.seats"
+                                                    :key="seat.seat_code"
+                                                    :seat="seat"
+                                                    :selected="
+                                                        selected.includes(
+                                                            seat.seat_code,
+                                                        )
+                                                    "
+                                                    @toggle="toggleSeat(seat)"
+                                                />
+                                            </div>
+                                        </template>
+                                    </template>
+                                </div>
+
+                                <!-- Fallback: loại xe lạ / dữ liệu không khớp layout đã khai báo -->
+                                <div
+                                    v-else
+                                    class="flex flex-col items-center gap-2"
+                                >
+                                    <div
+                                        v-for="(row, ri) in fallbackRows"
+                                        :key="ri"
+                                        class="flex w-full max-w-xs items-end justify-center gap-2"
+                                    >
+                                        <div
+                                            v-if="row.front"
+                                            class="relative h-14 w-12 shrink-0"
+                                        >
+                                            <svg
+                                                viewBox="0 0 48 56"
+                                                class="h-full w-full"
+                                            >
+                                                <path
+                                                    d="M 10,16 Q 10,2 24,2 Q 38,2 38,16 L 38,28 Q 46,28 46,34 L 46,40 Q 46,46 38,46 Q 38,52 32,52 L 16,52 Q 10,52 10,46 Q 2,46 2,40 L 2,34 Q 2,28 10,28 L 10,16 Z"
+                                                    class="fill-gray-200 stroke-gray-300"
+                                                    stroke-width="2.5"
+                                                    stroke-linejoin="round"
+                                                />
+                                            </svg>
+                                            <span
+                                                class="pointer-events-none absolute inset-0 flex items-center justify-center pt-1 text-[9px] leading-tight font-medium text-gray-400"
+                                            >
+                                                Tài<br />xế
+                                            </span>
+                                        </div>
+
+                                        <template
+                                            v-for="(slot, si) in row.slots"
+                                            :key="si"
+                                        >
+                                            <div
+                                                v-if="slot.type === 'aisle'"
+                                                class="w-5 shrink-0"
+                                            />
+                                            <SeatButton
+                                                v-else
+                                                :seat="slot.seat"
+                                                :selected="
+                                                    selected.includes(
+                                                        slot.seat.seat_code,
+                                                    )
+                                                "
+                                                @toggle="toggleSeat(slot.seat)"
+                                            />
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="mt-3 text-center text-xs text-gray-400 italic"
+                                >
+                                    Đuôi xe
+                                </div>
+                            </div>
                         </div>
                     </div>
 
