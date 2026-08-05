@@ -70,12 +70,14 @@ const VEHICLE_LAYOUTS: Record<string, LayoutRow[]> = {
         { slots: [0, 1, 2] },
         { slots: [0, 1, 2] },
     ],
-    // Limousine van 9 chỗ: tài xế + 2 khách hàng ghế trước, 2 hàng ghế đơn có
-    // lối đi giữa, hàng cuối băng ghế 3 chỗ
+    // Limousine van 9 chỗ: hàng đầu tài xế + 2 khách hàng ngồi sát nhau hết bề
+    // rộng xe (chưa có lối đi) — đúng bố trí limousine thật: lối đi CHỈ NẰM
+    // MỘT BÊN (phía cửa lùa), 2 hàng giữa mỗi hàng 2 ghế dồn về phía đối diện
+    // cửa, hàng cuối băng ghế 3 chỗ hết bề rộng xe (qua khỏi khu vực cửa)
     van_9: [
         { front: true, slots: [0, 1] },
-        { slots: [0, 'aisle', 1] },
-        { slots: [0, 'aisle', 1] },
+        { slots: [0, 1, 'aisle'] },
+        { slots: [0, 1, 'aisle'] },
         { slots: [0, 1, 2] },
     ],
     // Minibus 16 chỗ: tài xế + 1 khách hàng trước, 4 hàng ghế đơn/đôi có lối
@@ -127,7 +129,8 @@ const fallbackRows = computed<FallbackRow[]>(() =>
 // suốt mọi hàng (ghế hàng dưới thẳng cột với ghế hàng trên), khớp cách bố trí
 // thật của xe khách (ảnh mặt cắt ngang xe limousine/minibus thực tế).
 const SEAT_COL = 48; // px — khớp bề rộng nút ghế (w-12)
-const AISLE_COL = 20; // px — bề rộng lối đi giữa
+const AISLE_COL = 20; // px — bề rộng lối đi ở GIỮA 2 cụm ghế (kiểu minibus)
+const WALKWAY_COL = 64; // px — bề rộng lối đi MỘT BÊN chạy dọc tới cửa lùa (kiểu limousine van), rộng hơn hẳn lối đi giữa vì đây là khoảng trống thay cho cả 1 cụm ghế
 const DRIVER_COL = 48; // px — cột dành riêng cho ghế lái, rỗng ở các hàng khác
 const GAP = 8; // px — khoảng cách giữa các cột lưới VÀ giữa các ghế trong 1 hàng không lối đi
 
@@ -154,12 +157,15 @@ function computeGridSpec(rows: LayoutRow[]): GridSpec {
         }
     }
     if (hasAisle) {
+        // rightCols=0 nghĩa là lối đi chạy MỘT BÊN tới cửa lùa (không có ghế
+        // phía bên kia) — cần rộng hơn hẳn lối đi giữa 2 cụm ghế đối xứng.
+        const aisleWidth = rightCols === 0 ? WALKWAY_COL : AISLE_COL;
         return {
             leftCols,
             rightCols,
             hasAisle,
             totalCols: 1 + leftCols + 1 + rightCols,
-            templateColumns: `${DRIVER_COL}px repeat(${leftCols}, ${SEAT_COL}px) ${AISLE_COL}px repeat(${rightCols}, ${SEAT_COL}px)`,
+            templateColumns: `${DRIVER_COL}px repeat(${leftCols}, ${SEAT_COL}px) ${aisleWidth}px repeat(${rightCols}, ${SEAT_COL}px)`,
         };
     }
     // Không xe nào trong bảng có lối đi (sedan/mpv) — chỉ cần 1 cột hành khách
@@ -198,15 +204,28 @@ const gridRows = computed<GridRow[]>(() => {
         const aisleIdx = layoutRow.slots.indexOf('aisle');
 
         if (aisleIdx === -1) {
-            // Hàng không lối đi (ghế trước cạnh tài xế / băng ghế cuối) — trải
-            // đều trên toàn bộ vùng hành khách để mép ngoài thẳng với các
-            // ghế ngoài cùng của những hàng có lối đi phía trên/dưới.
+            const seatIdxs = layoutRow.slots as number[];
+            // Hàng vừa khít cụm ghế bên trái (vd hàng ghế đầu cạnh tài xế) —
+            // map THẲNG vào đúng các cột ghế trái, không tràn sang phần lối
+            // đi phía dưới, để thẳng cột với B1/C1... của các hàng có lối đi.
+            if (spec.leftCols > 0 && seatIdxs.length <= spec.leftCols) {
+                return {
+                    front: !!layoutRow.front,
+                    cells: seatIdxs.map((seatIdx, i) => ({
+                        kind: 'seat' as const,
+                        seat: row[seatIdx],
+                        gridColumn: `${2 + i} / ${3 + i}`,
+                    })),
+                };
+            }
+            // Hàng đông ghế hơn cụm ghế trái (vd băng ghế cuối) — tràn hết bề
+            // rộng xe kể cả phần lối đi phía trên, ghế dàn đều 2 mép ngoài.
             return {
                 front: !!layoutRow.front,
                 cells: [
                     {
                         kind: 'group' as const,
-                        seats: (layoutRow.slots as number[]).map((i) => row[i]),
+                        seats: seatIdxs.map((i) => row[i]),
                         gridColumn: `2 / ${spec.totalCols + 1}`,
                     },
                 ],
