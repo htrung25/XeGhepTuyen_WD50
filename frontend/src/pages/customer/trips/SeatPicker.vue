@@ -160,12 +160,20 @@ function computeGridSpec(rows: LayoutRow[]): GridSpec {
         // rightCols=0 nghĩa là lối đi chạy MỘT BÊN tới cửa lùa (không có ghế
         // phía bên kia) — cần rộng hơn hẳn lối đi giữa 2 cụm ghế đối xứng.
         const aisleWidth = rightCols === 0 ? WALKWAY_COL : AISLE_COL;
+        // repeat(0, ...) là giá trị CSS KHÔNG HỢP LỆ — trình duyệt từ chối áp
+        // dụng cả chuỗi grid-template-columns (không chỉ phần đó), khiến cột
+        // lối đi rơi về auto-size sai thay vì đúng bề rộng đã tính. Chỉ chèn
+        // phần repeat() khi count > 0.
+        const leftPart =
+            leftCols > 0 ? `repeat(${leftCols}, ${SEAT_COL}px) ` : '';
+        const rightPart =
+            rightCols > 0 ? ` repeat(${rightCols}, ${SEAT_COL}px)` : '';
         return {
             leftCols,
             rightCols,
             hasAisle,
             totalCols: 1 + leftCols + 1 + rightCols,
-            templateColumns: `${DRIVER_COL}px repeat(${leftCols}, ${SEAT_COL}px) ${aisleWidth}px repeat(${rightCols}, ${SEAT_COL}px)`,
+            templateColumns: `${DRIVER_COL}px ${leftPart}${aisleWidth}px${rightPart}`,
         };
     }
     // Không xe nào trong bảng có lối đi (sedan/mpv) — chỉ cần 1 cột hành khách
