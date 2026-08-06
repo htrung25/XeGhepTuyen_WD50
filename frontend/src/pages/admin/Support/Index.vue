@@ -36,8 +36,6 @@ const stats = ref<SupportStats>({
 const currentPage = ref(1);
 const lastPage = ref(1);
 
-// ─── Computed ────────────────────────────────────────────────────────────────
-const filteredTickets = computed(() => tickets.value);
 
 const hasActiveFilter = computed(
     () =>
@@ -293,7 +291,7 @@ onMounted(() => void fetchTickets());
                 class="flex items-center gap-2 border-b border-slate-100 px-5 py-3"
             >
                 <span class="text-sm text-slate-500"
-                    >{{ filteredTickets.length }} ticket</span
+                    >{{ tickets.length }} ticket</span
                 >
                 <span
                     v-if="statusFilter !== 'all'"
@@ -315,7 +313,7 @@ onMounted(() => void fetchTickets());
 
             <!-- Empty -->
             <div
-                v-else-if="filteredTickets.length === 0"
+                v-else-if="tickets.length === 0"
                 class="py-16 text-center"
             >
                 <p class="text-4xl">🎫</p>
@@ -330,7 +328,7 @@ onMounted(() => void fetchTickets());
             <!-- Rows -->
             <div v-else class="divide-y divide-slate-100">
                 <div
-                    v-for="ticket in filteredTickets"
+                    v-for="ticket in tickets"
                     :key="ticket.id"
                     class="group flex cursor-pointer items-stretch transition hover:bg-slate-50"
                     @click="router.push(`/admin/support/${ticket.id}`)"
