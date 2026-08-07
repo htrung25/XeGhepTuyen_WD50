@@ -307,6 +307,7 @@ onMounted(fetchUsers);
                                         <img
                                             v-if="user.avatar_url"
                                             :src="user.avatar_url"
+                                            :alt="user.full_name"
                                             class="h-9 w-9 rounded-full object-cover"
                                         />
                                         <span
