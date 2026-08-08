@@ -648,6 +648,41 @@
                 ]
             }
         },
+        "/api/customer/bookings/{id}/ticket.pdf": {
+            "get": {
+                "tags": [
+                    "Customer Bookings"
+                ],
+                "summary": "download Ticket",
+                "operationId": "get.app.http.controllers.customer.bookingcontroller.downloadticket.40ca1e6f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "default": {
+                        "description": "Response theo contract của endpoint."
+                    },
+                    "401": {
+                        "description": "Chưa xác thực."
+                    },
+                    "403": {
+                        "description": "Không có quyền truy cập."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/customer/bookings/{id}/track": {
             "get": {
                 "tags": [
