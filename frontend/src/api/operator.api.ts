@@ -55,6 +55,29 @@ import { apiClient } from './client';
 // Callers pass loose filter records; cast to Wayfinder's QueryParams at the boundary.
 type Params = Record<string, unknown>;
 
+export interface OperatorRouteStopPayload {
+    stop_name: string;
+    address: string;
+    lat: number;
+    lng: number;
+    stop_order: number;
+    offset_minutes: number;
+    is_pickup: boolean;
+    is_dropoff: boolean;
+}
+
+export interface OperatorRoutePayload {
+    name: string;
+    origin_city: string;
+    dest_city: string;
+    distance_km: number;
+    est_duration_min: number;
+    base_price: number;
+    is_round_trip: boolean;
+    is_active: boolean;
+    stops: OperatorRouteStopPayload[];
+}
+
 export const operatorApi = {
     // Auth
     login: (data: { phone: string; password: string }) =>
@@ -71,8 +94,12 @@ export const operatorApi = {
     // Routes
     getRoutes: () => apiClient.send(routesIndex()),
     getRoute: (id: string) => apiClient.send(routeShow(id)),
-    createRoute: (data: unknown) => apiClient.send(routeStore(), data),
-    updateRoute: (id: string, d: unknown) => apiClient.send(routeUpdate(id), d),
+    createRoute: (data: OperatorRoutePayload) =>
+        apiClient.send(routeStore(), data),
+    updateRoute: (
+        id: string,
+        data: Partial<Omit<OperatorRoutePayload, 'stops'>>,
+    ) => apiClient.send(routeUpdate(id), data),
     deleteRoute: (id: string) => apiClient.send(routeDestroy(id)),
 
     // Vehicles

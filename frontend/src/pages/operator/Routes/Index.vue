@@ -1,27 +1,35 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { operatorApi } from '@/api/operator.api';
+import type {
+    OperatorRoutePayload,
+    OperatorRouteStopPayload,
+} from '@/api/operator.api';
 
-interface Stop {
+interface StopForm {
     id?: string;
     stop_name: string;
-    stop_address: string;
+    address: string;
     stop_order: number;
     lat: string;
     lng: string;
+    offset_minutes: number;
     is_pickup: boolean;
     is_dropoff: boolean;
 }
 
 interface RouteRow {
     id: string;
-    route_code: string;
+    name: string;
     origin_city: string;
     dest_city: string;
     distance_km: number;
-    duration_hours: number;
+    est_duration_min: number;
+    base_price: number;
     stops_count?: number;
+    stops?: StopForm[];
     is_active: boolean;
+    is_round_trip: boolean;
 }
 
 const routes = ref<RouteRow[]>([]);
@@ -32,32 +40,44 @@ const errorMsg = ref('');
 const showModal = ref(false);
 const saving = ref(false);
 const saveError = ref('');
+const editingId = ref<string | null>(null);
 
 const form = ref({
-    route_code: '',
+    name: 'Hà Nội → Hải Phòng',
     origin_city: 'Hà Nội',
     dest_city: 'Hải Phòng',
     distance_km: 105,
-    duration_hours: 2.5,
-    description: '',
-    stops: [] as Stop[],
+    est_duration_min: 150,
+    base_price: 120000,
+    is_round_trip: false,
+    is_active: true,
+    stops: [] as StopForm[],
 });
 
 const addStop = () => {
+    if (form.value.stops.length > 0) {
+        form.value.stops[form.value.stops.length - 1].is_dropoff = false;
+    }
+    const isFirst = form.value.stops.length === 0;
     form.value.stops.push({
         stop_name: '',
-        stop_address: '',
+        address: '',
         stop_order: form.value.stops.length + 1,
         lat: '',
         lng: '',
-        is_pickup: true,
-        is_dropoff: false,
+        offset_minutes: form.value.stops.length === 0 ? 0 : 60,
+        is_pickup: isFirst,
+        is_dropoff: !isFirst,
     });
 };
 
 const removeStop = (idx: number) => {
     form.value.stops.splice(idx, 1);
-    form.value.stops.forEach((s, i) => (s.stop_order = i + 1));
+    form.value.stops.forEach((stop, index) => {
+        stop.stop_order = index + 1;
+        stop.is_pickup = index === 0;
+        stop.is_dropoff = index === form.value.stops.length - 1;
+    });
 };
 
 const loadRoutes = async () => {
@@ -73,34 +93,118 @@ const loadRoutes = async () => {
 };
 
 const openCreate = () => {
+    editingId.value = null;
     form.value = {
-        route_code: '',
+        name: 'Hà Nội → Hải Phòng',
         origin_city: 'Hà Nội',
         dest_city: 'Hải Phòng',
         distance_km: 105,
-        duration_hours: 2.5,
-        description: '',
+        est_duration_min: 150,
+        base_price: 120000,
+        is_round_trip: false,
+        is_active: true,
         stops: [],
     };
+    addStop();
     addStop();
     showModal.value = true;
     saveError.value = '';
 };
 
-const saveRoute = async () => {
-    if (!form.value.route_code || form.value.stops.length < 2) {
-        saveError.value = 'Vui lòng nhập mã tuyến và ít nhất 2 điểm dừng';
+const openEdit = async (row: RouteRow) => {
+    saveError.value = '';
+    const { data, error } = await operatorApi.getRoute(row.id);
+    if (error || !data) {
+        errorMsg.value = error ?? 'Không thể tải chi tiết tuyến đường';
         return;
     }
+
+    editingId.value = row.id;
+    form.value = {
+        name: data.name,
+        origin_city: data.origin_city,
+        dest_city: data.dest_city,
+        distance_km: Number(data.distance_km),
+        est_duration_min: Number(data.est_duration_min),
+        base_price: Number(data.base_price),
+        is_round_trip: Boolean(data.is_round_trip),
+        is_active: Boolean(data.is_active),
+        stops: (data.stops ?? []).map((stop: any) => ({
+            id: stop.id,
+            stop_name: stop.stop_name,
+            address: stop.address,
+            stop_order: Number(stop.stop_order),
+            lat: String(stop.lat),
+            lng: String(stop.lng),
+            offset_minutes: Number(stop.offset_minutes),
+            is_pickup: Boolean(stop.is_pickup),
+            is_dropoff: Boolean(stop.is_dropoff),
+        })),
+    };
+    showModal.value = true;
+};
+
+const saveRoute = async () => {
+    if (!form.value.name.trim()) {
+        saveError.value = 'Vui lòng nhập tên tuyến';
+        return;
+    }
+    if (!editingId.value && form.value.stops.length < 2) {
+        saveError.value = 'Tuyến phải có ít nhất 2 điểm dừng';
+        return;
+    }
+    if (
+        !editingId.value &&
+        form.value.stops.some(
+            (stop) =>
+                !stop.stop_name.trim() ||
+                !stop.address.trim() ||
+                stop.lat.trim() === '' ||
+                stop.lng.trim() === '',
+        )
+    ) {
+        saveError.value =
+            'Vui lòng nhập đủ tên, địa chỉ và tọa độ cho mọi điểm dừng';
+        return;
+    }
+
+    const routeFields = {
+        name: form.value.name.trim(),
+        origin_city: form.value.origin_city.trim(),
+        dest_city: form.value.dest_city.trim(),
+        distance_km: Number(form.value.distance_km),
+        est_duration_min: Number(form.value.est_duration_min),
+        base_price: Number(form.value.base_price),
+        is_round_trip: form.value.is_round_trip,
+        is_active: form.value.is_active,
+    };
+
+    const stops: OperatorRouteStopPayload[] = form.value.stops.map((stop) => ({
+        stop_name: stop.stop_name.trim(),
+        address: stop.address.trim(),
+        lat: Number(stop.lat),
+        lng: Number(stop.lng),
+        stop_order: stop.stop_order,
+        offset_minutes: Number(stop.offset_minutes),
+        is_pickup: stop.is_pickup,
+        is_dropoff: stop.is_dropoff,
+    }));
+
     saving.value = true;
     saveError.value = '';
-    const { error } = await operatorApi.createRoute(form.value);
+    const { error } = editingId.value
+        ? await operatorApi.updateRoute(editingId.value, routeFields)
+        : await operatorApi.createRoute({
+              ...routeFields,
+              stops,
+          } satisfies OperatorRoutePayload);
     saving.value = false;
     if (error) {
         saveError.value = error;
         return;
     }
     showModal.value = false;
+    editingId.value = null;
     await loadRoutes();
 };
 
@@ -263,7 +367,7 @@ onMounted(() => loadRoutes());
                             class="transition-colors hover:bg-slate-50"
                         >
                             <td class="px-6 py-4 font-medium text-slate-800">
-                                {{ route.origin_city }} → {{ route.dest_city }}
+                                {{ route.name }}
                             </td>
                             <td class="px-6 py-4 text-sm text-slate-700">
                                 {{ route.origin_city }}
@@ -272,7 +376,12 @@ onMounted(() => loadRoutes());
                                 {{ route.dest_city }}
                             </td>
                             <td class="px-6 py-4 text-sm text-slate-600">
-                                {{ route.stops_count ?? '—' }} điểm
+                                {{
+                                    route.stops_count ??
+                                    route.stops?.length ??
+                                    0
+                                }}
+                                điểm
                             </td>
                             <td class="px-6 py-4 text-sm text-slate-600">
                                 {{ route.distance_km }} km
@@ -297,6 +406,7 @@ onMounted(() => loadRoutes());
                                 <div class="flex items-center gap-2">
                                     <button
                                         class="text-sm font-medium text-amber-600 transition-colors hover:text-amber-700"
+                                        @click="openEdit(route)"
                                     >
                                         Chỉnh sửa
                                     </button>
@@ -329,7 +439,11 @@ onMounted(() => loadRoutes());
                         class="flex flex-shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4"
                     >
                         <h2 class="text-lg font-semibold text-slate-800">
-                            Thêm tuyến đường mới
+                            {{
+                                editingId
+                                    ? 'Chỉnh sửa tuyến đường'
+                                    : 'Thêm tuyến đường mới'
+                            }}
                         </h2>
                         <button
                             class="text-slate-400 transition-colors hover:text-slate-600"
@@ -361,15 +475,15 @@ onMounted(() => loadRoutes());
                             {{ saveError }}
                         </div>
 
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid gap-4 sm:grid-cols-2">
                             <div>
                                 <label
                                     class="mb-1.5 block text-sm font-semibold text-slate-700"
-                                    >Mã tuyến *</label
+                                    >Tên tuyến *</label
                                 >
                                 <input
-                                    v-model="form.route_code"
-                                    placeholder="VD: HNHP"
+                                    v-model="form.name"
+                                    placeholder="VD: Hà Nội → Hải Phòng"
                                     class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none"
                                 />
                             </div>
@@ -381,6 +495,8 @@ onMounted(() => loadRoutes());
                                 <input
                                     v-model.number="form.distance_km"
                                     type="number"
+                                    min="1"
+                                    max="2000"
                                     class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none"
                                 />
                             </div>
@@ -404,10 +520,57 @@ onMounted(() => loadRoutes());
                                     class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none"
                                 />
                             </div>
+                            <div>
+                                <label
+                                    class="mb-1.5 block text-sm font-semibold text-slate-700"
+                                    >Thời gian dự kiến (phút)</label
+                                >
+                                <input
+                                    v-model.number="form.est_duration_min"
+                                    type="number"
+                                    min="1"
+                                    max="1440"
+                                    class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label
+                                    class="mb-1.5 block text-sm font-semibold text-slate-700"
+                                    >Giá vé cơ bản (đ)</label
+                                >
+                                <input
+                                    v-model.number="form.base_price"
+                                    type="number"
+                                    min="50000"
+                                    max="500000"
+                                    step="1000"
+                                    class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none"
+                                />
+                            </div>
+                            <label
+                                class="flex cursor-pointer items-center gap-2 text-sm text-slate-600"
+                            >
+                                <input
+                                    v-model="form.is_round_trip"
+                                    type="checkbox"
+                                    class="accent-amber-500"
+                                />
+                                Có khai thác chiều về
+                            </label>
+                            <label
+                                class="flex cursor-pointer items-center gap-2 text-sm text-slate-600"
+                            >
+                                <input
+                                    v-model="form.is_active"
+                                    type="checkbox"
+                                    class="accent-amber-500"
+                                />
+                                Đang hoạt động
+                            </label>
                         </div>
 
                         <!-- Stops timeline -->
-                        <div>
+                        <div v-if="!editingId">
                             <div class="mb-3 flex items-center justify-between">
                                 <label
                                     class="text-sm font-semibold text-slate-700"
@@ -491,10 +654,33 @@ onMounted(() => loadRoutes());
                                             </button>
                                         </div>
                                         <input
-                                            v-model="stop.stop_address"
+                                            v-model="stop.address"
                                             placeholder="Địa chỉ"
                                             class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-amber-500 focus:outline-none"
                                         />
+                                        <div class="grid gap-2 sm:grid-cols-3">
+                                            <input
+                                                v-model="stop.lat"
+                                                inputmode="decimal"
+                                                placeholder="Vĩ độ"
+                                                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-amber-500 focus:outline-none"
+                                            />
+                                            <input
+                                                v-model="stop.lng"
+                                                inputmode="decimal"
+                                                placeholder="Kinh độ"
+                                                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-amber-500 focus:outline-none"
+                                            />
+                                            <input
+                                                v-model.number="
+                                                    stop.offset_minutes
+                                                "
+                                                type="number"
+                                                min="0"
+                                                placeholder="Phút từ điểm đầu"
+                                                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-amber-500 focus:outline-none"
+                                            />
+                                        </div>
                                         <div class="flex gap-4">
                                             <label
                                                 class="flex cursor-pointer items-center gap-2 text-sm text-slate-600"
@@ -520,6 +706,13 @@ onMounted(() => loadRoutes());
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                        <div
+                            v-else
+                            class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700"
+                        >
+                            Điểm dừng không được thay đổi tại màn hình này để
+                            bảo toàn lịch chuyến đã tạo.
                         </div>
                     </div>
 
@@ -558,7 +751,13 @@ onMounted(() => loadRoutes());
                                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                                 />
                             </svg>
-                            {{ saving ? 'Đang lưu...' : 'Lưu tuyến đường' }}
+                            {{
+                                saving
+                                    ? 'Đang lưu...'
+                                    : editingId
+                                      ? 'Lưu thay đổi'
+                                      : 'Tạo tuyến đường'
+                            }}
                         </button>
                     </div>
                 </div>

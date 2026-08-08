@@ -48,6 +48,56 @@ describe('operatorApi → Wayfinder route contract', () => {
         });
     });
 
+    it('createRoute forwards the backend route and stop contract', () => {
+        const payload = {
+            name: 'Hà Nội → Hải Phòng',
+            origin_city: 'Hà Nội',
+            dest_city: 'Hải Phòng',
+            distance_km: 105,
+            est_duration_min: 150,
+            base_price: 120000,
+            is_round_trip: false,
+            is_active: true,
+            stops: [
+                {
+                    stop_name: 'Hồ Gươm',
+                    address: 'Hoàn Kiếm, Hà Nội',
+                    lat: 21.0285,
+                    lng: 105.8542,
+                    stop_order: 1,
+                    offset_minutes: 0,
+                    is_pickup: true,
+                    is_dropoff: false,
+                },
+                {
+                    stop_name: 'Nhà hát lớn Hải Phòng',
+                    address: 'Hồng Bàng, Hải Phòng',
+                    lat: 20.8609,
+                    lng: 106.6822,
+                    stop_order: 2,
+                    offset_minutes: 150,
+                    is_pickup: false,
+                    is_dropoff: true,
+                },
+            ],
+        };
+
+        operatorApi.createRoute(payload);
+        expect(apiClient.send).toHaveBeenCalledWith(
+            { url: '/api/operator/routes', method: 'post' },
+            payload,
+        );
+    });
+
+    it('updateRoute sends editable metadata to PUT /api/operator/routes/{id}', () => {
+        const payload = { name: 'Hà Nội → Hải Phòng nhanh' };
+        operatorApi.updateRoute('r-1', payload);
+        expect(apiClient.send).toHaveBeenCalledWith(
+            { url: '/api/operator/routes/r-1', method: 'put' },
+            payload,
+        );
+    });
+
     it('cancelTrip resolves to POST /api/operator/trips/{id}/cancel with a reason', () => {
         operatorApi.cancelTrip('trip-1', 'Hỏng xe');
         expect(apiClient.send).toHaveBeenCalledWith(
