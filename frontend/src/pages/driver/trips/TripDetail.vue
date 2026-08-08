@@ -16,9 +16,10 @@ const isLoading = ref(true);
 const actionLoading = ref(false);
 const errorMsg = ref('');
 const expanded = ref<string | null>(null);
-const showConfirm = ref<'start' | 'complete' | null>(null);
+const showConfirm = ref<'start' | 'complete' | 'unavailable' | null>(null);
 const successMsg = ref('');
 const absentLoading = ref<string | null>(null);
+const unavailableReason = ref('');
 
 const checkedIn = computed(
     () => passengers.value.filter((p) => p.checked_in).length,
@@ -34,6 +35,11 @@ const statusConfig = {
         label: 'Sắp tới',
         cls: 'bg-blue-100 text-blue-700',
         headerCls: 'bg-blue-600',
+    },
+    boarding: {
+        label: 'Đang đón khách',
+        cls: 'bg-cyan-100 text-cyan-700',
+        headerCls: 'bg-cyan-600',
     },
     in_progress: {
         label: 'Đang chạy',
@@ -99,6 +105,33 @@ async function completeTrip() {
         return;
     }
     setTimeout(() => router.push('/driver/dashboard'), 1500);
+}
+
+async function reportUnavailable() {
+    const reason = unavailableReason.value.trim();
+    if (!reason) {
+        errorMsg.value = 'Vui lòng nhập lý do không thể chạy chuyến';
+        return;
+    }
+
+    actionLoading.value = true;
+    errorMsg.value = '';
+    const { error, message } = await driverApi.reportUnavailable(
+        tripId,
+        reason,
+    );
+    actionLoading.value = false;
+
+    if (error) {
+        errorMsg.value = error;
+        return;
+    }
+
+    trip.value.is_awaiting_reassignment = true;
+    unavailableReason.value = '';
+    showConfirm.value = null;
+    successMsg.value =
+        message ?? 'Đã báo nhà xe sắp xếp tài xế thay thế cho chuyến.';
 }
 
 async function markAbsent(p: Passenger) {
@@ -168,7 +201,7 @@ onMounted(async () => {
             </router-link>
         </div>
 
-        <div v-else-if="trip" class="grid grid-cols-[1fr_300px] gap-6">
+        <div v-else-if="trip" class="grid gap-6 lg:grid-cols-[1fr_300px]">
             <!-- ─── LEFT: Trip info + passenger list ─────────────── -->
             <div class="space-y-4">
                 <!-- Trip header card -->
@@ -446,12 +479,33 @@ onMounted(async () => {
 
                     <!-- Scheduled → Start -->
                     <button
-                        v-if="trip.status === 'scheduled'"
+                        v-if="
+                            ['scheduled', 'boarding'].includes(trip.status) &&
+                            !trip.is_awaiting_reassignment
+                        "
                         @click="showConfirm = 'start'"
                         class="mb-3 w-full rounded-xl bg-green-600 py-3.5 font-bold text-white transition-colors hover:bg-green-700"
                     >
                         🚦 Bắt đầu chuyến
                     </button>
+
+                    <button
+                        v-if="
+                            ['scheduled', 'boarding'].includes(trip.status) &&
+                            !trip.is_awaiting_reassignment
+                        "
+                        @click="showConfirm = 'unavailable'"
+                        class="w-full rounded-xl border border-red-200 bg-red-50 py-3 text-sm font-semibold text-red-600 transition-colors hover:bg-red-100"
+                    >
+                        Không thể chạy chuyến này
+                    </button>
+
+                    <div
+                        v-if="trip.is_awaiting_reassignment"
+                        class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700"
+                    >
+                        Đã báo nghỉ chuyến. Nhà xe đang sắp xếp tài xế thay thế.
+                    </div>
 
                     <!-- In progress → QR + Complete -->
                     <template v-else-if="trip.status === 'in_progress'">
@@ -622,6 +676,56 @@ onMounted(async () => {
                                 <span>{{
                                     actionLoading ? '...' : 'Kết thúc'
                                 }}</span>
+                            </button>
+                        </div>
+                    </template>
+
+                    <template v-else-if="showConfirm === 'unavailable'">
+                        <div class="mb-5 text-center">
+                            <div
+                                class="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-3xl"
+                            >
+                                ⚠️
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-900">
+                                Không thể chạy chuyến?
+                            </h3>
+                            <p class="mt-1 text-sm text-gray-500">
+                                Nhà xe sẽ nhận thông báo để sắp xếp tài xế thay
+                                thế. Chỉ có thể báo trước thời hạn quy định.
+                            </p>
+                        </div>
+                        <label
+                            for="unavailable-reason"
+                            class="mb-1.5 block text-sm font-medium text-gray-700"
+                        >
+                            Lý do
+                        </label>
+                        <textarea
+                            id="unavailable-reason"
+                            v-model="unavailableReason"
+                            maxlength="255"
+                            rows="3"
+                            class="mb-4 w-full resize-none rounded-xl border border-gray-300 px-4 py-3 text-sm focus:ring-2 focus:ring-red-500 focus:outline-none"
+                            placeholder="Ví dụ: Sức khỏe không đảm bảo, xe gặp sự cố..."
+                        />
+                        <div class="flex gap-3">
+                            <button
+                                @click="showConfirm = null"
+                                :disabled="actionLoading"
+                                class="flex-1 rounded-xl border border-gray-200 py-3 font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-60"
+                            >
+                                Quay lại
+                            </button>
+                            <button
+                                @click="reportUnavailable"
+                                :disabled="
+                                    actionLoading ||
+                                    unavailableReason.trim().length === 0
+                                "
+                                class="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-600 py-3 font-bold text-white transition-colors hover:bg-red-700 disabled:opacity-60"
+                            >
+                                {{ actionLoading ? 'Đang gửi...' : 'Xác nhận' }}
                             </button>
                         </div>
                     </template>

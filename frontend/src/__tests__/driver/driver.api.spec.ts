@@ -57,6 +57,17 @@ describe('driverApi → Wayfinder route contract', () => {
         });
     });
 
+    it('reportUnavailable sends the reason to the driver trip endpoint', () => {
+        driverApi.reportUnavailable('trip-1', 'Không đảm bảo sức khỏe');
+        expect(apiClient.send).toHaveBeenCalledWith(
+            {
+                url: '/api/driver/trips/trip-1/report-unavailable',
+                method: 'post',
+            },
+            { reason: 'Không đảm bảo sức khỏe' },
+        );
+    });
+
     it('checkin resolves to POST /api/driver/checkin with the cash flag', () => {
         driverApi.checkin({ qr_token: 'abc', cash_collected: true });
         expect(apiClient.send).toHaveBeenCalledWith(

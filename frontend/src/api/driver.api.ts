@@ -26,6 +26,7 @@ import {
     passengers,
     start,
     complete,
+    reportUnavailable,
     history,
 } from '@/actions/App/Http/Controllers/Driver/TripController';
 import { apiClient } from './client';
@@ -77,6 +78,8 @@ export const driverApi = {
     getPassengers: (tripId: string) => apiClient.send(passengers(tripId)),
     startTrip: (tripId: string) => apiClient.send(start(tripId)),
     completeTrip: (tripId: string) => apiClient.send(complete(tripId)),
+    reportUnavailable: (tripId: string, reason: string) =>
+        apiClient.send(reportUnavailable(tripId), { reason }),
     getTripHistory: (params?: { page?: number }) =>
         apiClient.send(history({ query: params })),
 
