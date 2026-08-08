@@ -5,6 +5,7 @@ import { customerApi } from '@/api/customer.api';
 import { useCustomerAuthStore } from '@/stores/customer.auth.store';
 import { useCustomerStore } from '@/stores/customer.store';
 import type { SeatInfo } from '@/stores/customer.store';
+import DriverSeat from './DriverSeat.vue';
 import SeatButton from './SeatButton.vue';
 
 const route = useRoute();
@@ -52,215 +53,122 @@ const seatGrid = computed(() => {
     return Array.from(rowsByPrefix.values());
 });
 
-// Mặt cắt ngang THẬT của từng loại xe — khớp 1-1 với TripService::getSeatTemplate
-// (backend/app/Services/TripService.php). Mỗi phần tử là 1 hàng ghế vật lý: `slots`
-// liệt kê vị trí trái→phải trong hàng, số = chỉ số ghế trong hàng (đã sort ở seatGrid),
-// 'aisle' = lối đi giữa xe. `front: true` = hàng đặt cạnh ghế tài xế (đầu xe).
-type LayoutSlot = number | 'aisle';
-interface LayoutRow {
-    front?: boolean;
-    slots: LayoutSlot[];
-}
-const VEHICLE_LAYOUTS: Record<string, LayoutRow[]> = {
-    // Sedan 4 chỗ: tài xế + 1 khách hàng trước, băng ghế sau 3 chỗ
-    sedan_4: [{ front: true, slots: [0] }, { slots: [0, 1, 2] }],
-    // MPV 7 chỗ: tài xế + 1 khách hàng trước, 2 hàng băng ghế sau mỗi hàng 3 chỗ
-    mpv_7: [
-        { front: true, slots: [0] },
-        { slots: [0, 1, 2] },
-        { slots: [0, 1, 2] },
-    ],
-    // Limousine van 9 chỗ: hàng đầu tài xế + 2 khách hàng ngồi sát nhau hết bề
-    // rộng xe (chưa có lối đi) — đúng bố trí limousine thật: lối đi CHỈ NẰM
-    // MỘT BÊN (phía cửa lùa), 2 hàng giữa mỗi hàng 2 ghế dồn về phía đối diện
-    // cửa, hàng cuối băng ghế 3 chỗ hết bề rộng xe (qua khỏi khu vực cửa)
-    van_9: [
-        { front: true, slots: [0, 1] },
-        { slots: [0, 1, 'aisle'] },
-        { slots: [0, 1, 'aisle'] },
-        { slots: [0, 1, 2] },
-    ],
-    // Minibus 16 chỗ: tài xế + 1 khách hàng trước, 4 hàng ghế đơn/đôi có lối
-    // đi giữa, hàng cuối băng ghế 3 chỗ sát đuôi xe
-    minibus_16: [
-        { front: true, slots: [0] },
-        { slots: [0, 'aisle', 1, 2] },
-        { slots: [0, 'aisle', 1, 2] },
-        { slots: [0, 'aisle', 1, 2] },
-        { slots: [0, 'aisle', 1, 2] },
-        { slots: [0, 1, 2] },
-    ],
-};
+// ─── Sơ đồ ghế theo MẶT CẮT NGANG THẬT của từng loại xe ─────────────────────
+// Khoang xe là MỘT lưới CSS: mỗi cột ứng với đúng một vị trí ghế vật lý xuyên
+// suốt mọi hàng (nhờ vậy ghế các hàng luôn thẳng cột với nhau). Mỗi hàng khai
+// báo RÕ ghế thứ j nằm ở cột nào, nên khớp 1-1 với sơ đồ nhà sản xuất — cột bị
+// bỏ trống chính là lối đi. Số ghế mỗi hàng khớp TripService::getSeatTemplate
+// (backend/app/Services/TripService.php).
+const SEAT_W = 48; // px — bề rộng 1 ghế (khớp w-12 của SeatButton)
+const AISLE_W = 22; // px — bề rộng lối đi hẹp giữa 2 cụm ghế (xe 16 chỗ)
 
-// Fallback đơn giản (không dùng lưới cột) khi gặp loại xe lạ hoặc dữ liệu ghế
-// không khớp layout đã khai báo — tránh vỡ UI thay vì cố ép vào lưới sai.
-type RenderSlot = { type: 'seat'; seat: SeatInfo } | { type: 'aisle' };
-interface FallbackRow {
-    front: boolean;
-    slots: RenderSlot[];
+/** Vị trí cột cho từng ghế trong hàng, hoặc 'span' = băng ghế trải hết bề rộng. */
+type RowPlacement = number[] | 'span';
+
+interface VehicleLayout {
+    /** Bề rộng từng cột của khoang xe (px) */
+    colWidths: number[];
+    /** Cột đặt ghế lái (0-indexed) */
+    driverCol: number;
+    /** Có vách ngăn giữa khoang lái và khoang khách không */
+    partition: boolean;
+    rows: RowPlacement[];
 }
+
+const VEHICLE_LAYOUTS: Record<string, VehicleLayout> = {
+    // Sedan 4 chỗ: tài xế + 1 khách phía trước (cách nhau bởi bệ tì tay giữa),
+    // băng ghế sau 3 chỗ trải hết bề rộng.
+    sedan_4: {
+        colWidths: [SEAT_W, SEAT_W, SEAT_W],
+        driverCol: 0,
+        partition: false,
+        rows: [[2], [0, 1, 2]],
+    },
+    // MPV 7 chỗ: tài xế + 1 khách phía trước, 2 băng ghế sau mỗi băng 3 chỗ.
+    mpv_7: {
+        colWidths: [SEAT_W, SEAT_W, SEAT_W],
+        driverCol: 0,
+        partition: false,
+        rows: [[2], [0, 1, 2], [0, 1, 2]],
+    },
+    // Limousine van 9 chỗ (Solati/H350): tài xế + 2 khách hàng đầu ngồi hết bề
+    // rộng đầu xe; 2 hàng ghế thương gia mỗi hàng 2 ghế sát 2 bên thành xe với
+    // LỐI ĐI Ở GIỮA (cột giữa bỏ trống); băng ghế cuối 3 chỗ trải hết bề rộng.
+    van_9: {
+        colWidths: [SEAT_W, SEAT_W, SEAT_W],
+        driverCol: 0,
+        partition: true,
+        rows: [
+            [1, 2],
+            [0, 2],
+            [0, 2],
+            [0, 1, 2],
+        ],
+    },
+    // Minibus 16 chỗ: tài xế + 1 khách hàng đầu; 4 hàng ghế 1+2 với lối đi hẹp
+    // giữa; băng ghế cuối 3 chỗ trải hết bề rộng (vắt qua cả lối đi).
+    minibus_16: {
+        colWidths: [SEAT_W, AISLE_W, SEAT_W, SEAT_W],
+        driverCol: 0,
+        partition: true,
+        rows: [[2], [0, 2, 3], [0, 2, 3], [0, 2, 3], [0, 2, 3], 'span'],
+    },
+};
 
 const layout = computed(
     () => VEHICLE_LAYOUTS[tripInfo.value?.vehicle?.vehicle_type ?? ''],
 );
 
+// Chỉ dùng sơ đồ thật khi số hàng VÀ số ghế mỗi hàng khớp đúng dữ liệu backend
+// trả về — gặp loại xe lạ / dữ liệu cũ thì rơi về fallback thay vì vỡ bố cục.
 const layoutMatches = computed(() => {
-    const rows = seatGrid.value;
     const l = layout.value;
-    return !!(
-        l &&
-        l.length === rows.length &&
-        l.every(
-            (lr, ri) =>
-                lr.slots.filter((s) => s !== 'aisle').length ===
-                rows[ri].length,
-        )
+    const rows = seatGrid.value;
+    if (!l || l.rows.length !== rows.length) return false;
+    return l.rows.every((placement, i) =>
+        placement === 'span'
+            ? rows[i].length > 0 && rows[i].length <= l.colWidths.length
+            : placement.length === rows[i].length,
     );
 });
 
-const fallbackRows = computed<FallbackRow[]>(() =>
-    seatGrid.value.map((row, ri) => ({
-        front: ri === 0,
-        slots: row.map((seat) => ({ type: 'seat' as const, seat })),
-    })),
+const templateColumns = computed(() =>
+    (layout.value?.colWidths ?? []).map((w) => `${w}px`).join(' '),
 );
 
-// ─── Sơ đồ dạng LƯỚI CSS thật — mỗi cột giữ ĐÚNG một vị trí ghế vật lý xuyên
-// suốt mọi hàng (ghế hàng dưới thẳng cột với ghế hàng trên), khớp cách bố trí
-// thật của xe khách (ảnh mặt cắt ngang xe limousine/minibus thực tế).
-const SEAT_COL = 48; // px — khớp bề rộng nút ghế (w-12)
-const AISLE_COL = 20; // px — bề rộng lối đi ở GIỮA 2 cụm ghế (kiểu minibus)
-const WALKWAY_COL = 64; // px — bề rộng lối đi MỘT BÊN chạy dọc tới cửa lùa (kiểu limousine van), rộng hơn hẳn lối đi giữa vì đây là khoảng trống thay cho cả 1 cụm ghế
-const DRIVER_COL = 48; // px — cột dành riêng cho ghế lái, rỗng ở các hàng khác
-const GAP = 8; // px — khoảng cách giữa các cột lưới VÀ giữa các ghế trong 1 hàng không lối đi
-
-interface GridSpec {
-    leftCols: number;
-    rightCols: number;
-    hasAisle: boolean;
-    totalCols: number;
-    templateColumns: string;
+interface CabinRow {
+    /** Ghế đặt vào cột cụ thể (gridColumn 1-indexed) */
+    placed: { seat: SeatInfo; gridColumn: number }[];
+    /** Băng ghế trải hết bề rộng khoang, dàn đều 2 mép */
+    spanned: SeatInfo[] | null;
+    /** Dòng trong lưới: hàng 1 = vô lăng, 2 = hàng ghế đầu, 3 = vách ngăn */
+    gridRow: number;
 }
 
-function computeGridSpec(rows: LayoutRow[]): GridSpec {
-    let leftCols = 0;
-    let rightCols = 0;
-    let hasAisle = false;
-    let maxSlots = 0;
-    for (const row of rows) {
-        maxSlots = Math.max(maxSlots, row.slots.length);
-        const aisleIdx = row.slots.indexOf('aisle');
-        if (aisleIdx !== -1) {
-            hasAisle = true;
-            leftCols = Math.max(leftCols, aisleIdx);
-            rightCols = Math.max(rightCols, row.slots.length - aisleIdx - 1);
+const cabinRows = computed<CabinRow[]>(() => {
+    if (!layoutMatches.value) return [];
+    const l = layout.value!;
+
+    return seatGrid.value.map((rowSeats, i) => {
+        const gridRow = i === 0 ? 2 : i + 3;
+        const placement = l.rows[i];
+        if (placement === 'span') {
+            return { placed: [], spanned: rowSeats, gridRow };
         }
-    }
-    if (hasAisle) {
-        // rightCols=0 nghĩa là lối đi chạy MỘT BÊN tới cửa lùa (không có ghế
-        // phía bên kia) — cần rộng hơn hẳn lối đi giữa 2 cụm ghế đối xứng.
-        const aisleWidth = rightCols === 0 ? WALKWAY_COL : AISLE_COL;
-        // repeat(0, ...) là giá trị CSS KHÔNG HỢP LỆ — trình duyệt từ chối áp
-        // dụng cả chuỗi grid-template-columns (không chỉ phần đó), khiến cột
-        // lối đi rơi về auto-size sai thay vì đúng bề rộng đã tính. Chỉ chèn
-        // phần repeat() khi count > 0.
-        const leftPart =
-            leftCols > 0 ? `repeat(${leftCols}, ${SEAT_COL}px) ` : '';
-        const rightPart =
-            rightCols > 0 ? ` repeat(${rightCols}, ${SEAT_COL}px)` : '';
         return {
-            leftCols,
-            rightCols,
-            hasAisle,
-            totalCols: 1 + leftCols + 1 + rightCols,
-            templateColumns: `${DRIVER_COL}px ${leftPart}${aisleWidth}px${rightPart}`,
+            placed: rowSeats.map((seat, j) => ({
+                seat,
+                gridColumn: placement[j] + 1,
+            })),
+            spanned: null,
+            gridRow,
         };
-    }
-    // Không xe nào trong bảng có lối đi (sedan/mpv) — chỉ cần 1 cột hành khách
-    // đủ rộng cho hàng đông ghế nhất, ghế trong hàng tự dàn đều bằng flex.
-    const passengerW = maxSlots * SEAT_COL + (maxSlots - 1) * GAP;
-    return {
-        leftCols: 0,
-        rightCols: 0,
-        hasAisle: false,
-        totalCols: 2,
-        templateColumns: `${DRIVER_COL}px minmax(${passengerW}px, auto)`,
-    };
-}
-
-const gridSpec = computed<GridSpec | null>(() =>
-    layout.value ? computeGridSpec(layout.value) : null,
-);
-
-interface GridCell {
-    kind: 'seat' | 'group';
-    seat?: SeatInfo;
-    seats?: SeatInfo[];
-    gridColumn: string;
-}
-interface GridRow {
-    front: boolean;
-    cells: GridCell[];
-}
-
-const gridRows = computed<GridRow[]>(() => {
-    const spec = gridSpec.value;
-    if (!spec || !layoutMatches.value) return [];
-
-    return seatGrid.value.map((row, ri) => {
-        const layoutRow = layout.value![ri];
-        const aisleIdx = layoutRow.slots.indexOf('aisle');
-
-        if (aisleIdx === -1) {
-            const seatIdxs = layoutRow.slots as number[];
-            // Hàng vừa khít cụm ghế bên trái (vd hàng ghế đầu cạnh tài xế) —
-            // map THẲNG vào đúng các cột ghế trái, không tràn sang phần lối
-            // đi phía dưới, để thẳng cột với B1/C1... của các hàng có lối đi.
-            if (spec.leftCols > 0 && seatIdxs.length <= spec.leftCols) {
-                return {
-                    front: !!layoutRow.front,
-                    cells: seatIdxs.map((seatIdx, i) => ({
-                        kind: 'seat' as const,
-                        seat: row[seatIdx],
-                        gridColumn: `${2 + i} / ${3 + i}`,
-                    })),
-                };
-            }
-            // Hàng đông ghế hơn cụm ghế trái (vd băng ghế cuối) — tràn hết bề
-            // rộng xe kể cả phần lối đi phía trên, ghế dàn đều 2 mép ngoài.
-            return {
-                front: !!layoutRow.front,
-                cells: [
-                    {
-                        kind: 'group' as const,
-                        seats: seatIdxs.map((i) => row[i]),
-                        gridColumn: `2 / ${spec.totalCols + 1}`,
-                    },
-                ],
-            };
-        }
-
-        const leftSlots = layoutRow.slots.slice(0, aisleIdx) as number[];
-        const rightSlots = layoutRow.slots.slice(aisleIdx + 1) as number[];
-        const leftStartCol = 2 + spec.leftCols - leftSlots.length; // áp sát lối đi
-        const rightStartCol = 3 + spec.leftCols; // ngay sau lối đi
-
-        const cells: GridCell[] = [
-            ...leftSlots.map((seatIdx, i) => ({
-                kind: 'seat' as const,
-                seat: row[seatIdx],
-                gridColumn: `${leftStartCol + i} / ${leftStartCol + i + 1}`,
-            })),
-            ...rightSlots.map((seatIdx, i) => ({
-                kind: 'seat' as const,
-                seat: row[seatIdx],
-                gridColumn: `${rightStartCol + i} / ${rightStartCol + i + 1}`,
-            })),
-        ];
-
-        return { front: !!layoutRow.front, cells };
     });
 });
+
+// Fallback: loại xe chưa khai báo sơ đồ — xếp mỗi hàng thành một dòng ghế đơn
+// giản, vẫn dùng đúng hình ghế/khung xe.
+const fallbackRows = computed(() => seatGrid.value);
 
 const selectedSeats = computed(() =>
     seats.value.filter((s) => selected.value.includes(s.seat_code)),
@@ -457,194 +365,146 @@ onMounted(async () => {
                         </div>
                     </div>
 
-                    <!-- Car visual: khung xe + mặt cắt ngang thật theo từng loại xe -->
+                    <!-- Car visual: khung xe nhìn từ trên xuống + mặt cắt ngang
+                    thật theo từng loại xe (khớp sơ đồ nhà sản xuất) -->
                     <div v-else class="flex justify-center overflow-x-auto">
-                        <div class="relative shrink-0">
-                            <!-- Gương chiếu hậu 2 bên -->
+                        <div class="relative shrink-0 px-3 pb-1">
+                            <!-- Gương chiếu hậu 2 bên, ngang tầm kính lái -->
                             <div
-                                class="absolute top-14 -left-2 h-3 w-4 rounded-full border-2 border-gray-300 bg-gray-100"
+                                class="absolute top-[34px] left-0 h-3 w-3 rounded-l-full border-2 border-r-0 border-gray-300 bg-gray-200"
                             />
                             <div
-                                class="absolute top-14 -right-2 h-3 w-4 rounded-full border-2 border-gray-300 bg-gray-100"
+                                class="absolute top-[34px] right-0 h-3 w-3 rounded-r-full border-2 border-l-0 border-gray-300 bg-gray-200"
                             />
 
-                            <!-- Khung thân xe -->
+                            <!-- Thân xe: mũi bo tròn ở đầu, đuôi bo nhẹ -->
                             <div
-                                class="rounded-[2rem] border-4 border-gray-200 bg-gray-50/60 px-5 pt-4 pb-6"
+                                class="overflow-hidden rounded-t-[2.75rem] rounded-b-2xl border-2 border-gray-300 bg-white"
                             >
-                                <!-- Kính chắn gió -->
-                                <div
-                                    class="mx-auto mb-2 h-3 w-20 rounded-t-full border-2 border-b-0 border-gray-300 bg-gray-100"
-                                />
-
-                                <div
-                                    class="mb-3 flex flex-col items-center gap-1"
-                                >
-                                    <svg
-                                        class="h-6 w-6 text-gray-300"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="1.5"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <circle cx="12" cy="12" r="8.25" />
-                                        <circle cx="12" cy="12" r="2" />
-                                        <path
-                                            stroke-linecap="round"
-                                            d="M12 3.75v6.25M12 14v7.25M5.05 7.05l4.6 3.7M18.95 7.05l-4.6 3.7M5.05 16.95l4.6-3.7M18.95 16.95l-4.6-3.7"
-                                        />
-                                    </svg>
-                                    <span class="text-xs text-gray-400 italic"
-                                        >Đầu xe</span
-                                    >
+                                <!-- Đầu xe: ca-pô + kính chắn gió -->
+                                <div class="relative h-10">
+                                    <div
+                                        class="mx-auto mt-3 h-1 w-10 rounded-full bg-gray-200"
+                                    />
+                                    <div
+                                        class="absolute inset-x-4 bottom-0 h-4 rounded-t-2xl border-2 border-b-0 border-gray-200 bg-gray-100"
+                                    />
                                 </div>
 
-                                <!-- Lưới ghế: mỗi cột giữ đúng 1 vị trí ghế xuyên suốt các hàng
-                                nên ghế hàng dưới luôn thẳng cột với ghế hàng trên -->
+                                <!-- Khoang ghế -->
                                 <div
-                                    v-if="layoutMatches && gridSpec"
-                                    class="grid gap-2"
+                                    v-if="layoutMatches && layout"
+                                    class="grid gap-x-1 gap-y-3 border-t-2 border-gray-200 bg-gray-50 px-4 pt-2 pb-4"
                                     :style="{
-                                        gridTemplateColumns:
-                                            gridSpec.templateColumns,
+                                        gridTemplateColumns: templateColumns,
                                     }"
                                 >
+                                    <!-- Vô lăng, ngay phía trước ghế lái -->
+                                    <div
+                                        class="flex justify-center"
+                                        :style="{
+                                            gridColumn: layout.driverCol + 1,
+                                            gridRow: 1,
+                                        }"
+                                    >
+                                        <svg
+                                            class="h-6 w-6 text-gray-500"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="1.75"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <circle cx="12" cy="12" r="8.25" />
+                                            <circle cx="12" cy="12" r="2" />
+                                            <path
+                                                stroke-linecap="round"
+                                                d="M12 3.75v6.25M12 14v7.25M5.05 7.05l4.6 3.7M18.95 7.05l-4.6 3.7"
+                                            />
+                                        </svg>
+                                    </div>
+
+                                    <DriverSeat
+                                        :style="{
+                                            gridColumn: layout.driverCol + 1,
+                                            gridRow: 2,
+                                        }"
+                                    />
+
+                                    <!-- Vách ngăn khoang lái / khoang khách -->
+                                    <div
+                                        v-if="layout.partition"
+                                        class="my-1 border-t-2 border-gray-200"
+                                        :style="{
+                                            gridColumn: '1 / -1',
+                                            gridRow: 3,
+                                        }"
+                                    />
+
                                     <template
-                                        v-for="(row, ri) in gridRows"
+                                        v-for="(row, ri) in cabinRows"
                                         :key="ri"
                                     >
-                                        <!-- Ghế lái — cùng hình ghế thật nhưng màu trung tính -->
-                                        <div
-                                            v-if="row.front"
-                                            class="relative h-14 w-12"
+                                        <SeatButton
+                                            v-for="p in row.placed"
+                                            :key="p.seat.seat_code"
+                                            :seat="p.seat"
+                                            :selected="
+                                                selected.includes(
+                                                    p.seat.seat_code,
+                                                )
+                                            "
                                             :style="{
-                                                gridColumn: '1 / 2',
-                                                gridRow: ri + 1,
+                                                gridColumn: p.gridColumn,
+                                                gridRow: row.gridRow,
+                                            }"
+                                            @toggle="toggleSeat(p.seat)"
+                                        />
+                                        <div
+                                            v-if="row.spanned"
+                                            class="flex items-end justify-between"
+                                            :style="{
+                                                gridColumn: '1 / -1',
+                                                gridRow: row.gridRow,
                                             }"
                                         >
-                                            <svg
-                                                viewBox="0 0 48 56"
-                                                class="h-full w-full"
-                                            >
-                                                <path
-                                                    d="M 10,16 Q 10,2 24,2 Q 38,2 38,16 L 38,28 Q 46,28 46,34 L 46,40 Q 46,46 38,46 Q 38,52 32,52 L 16,52 Q 10,52 10,46 Q 2,46 2,40 L 2,34 Q 2,28 10,28 L 10,16 Z"
-                                                    class="fill-gray-200 stroke-gray-300"
-                                                    stroke-width="2.5"
-                                                    stroke-linejoin="round"
-                                                />
-                                            </svg>
-                                            <span
-                                                class="pointer-events-none absolute inset-0 flex items-center justify-center pt-1 text-[9px] leading-tight font-medium text-gray-400"
-                                            >
-                                                Tài<br />xế
-                                            </span>
-                                        </div>
-
-                                        <template
-                                            v-for="(cell, ci) in row.cells"
-                                            :key="ci"
-                                        >
                                             <SeatButton
-                                                v-if="cell.kind === 'seat'"
-                                                :seat="cell.seat!"
+                                                v-for="seat in row.spanned"
+                                                :key="seat.seat_code"
+                                                :seat="seat"
                                                 :selected="
                                                     selected.includes(
-                                                        cell.seat!.seat_code,
+                                                        seat.seat_code,
                                                     )
                                                 "
-                                                :style="{
-                                                    gridColumn: cell.gridColumn,
-                                                    gridRow: ri + 1,
-                                                }"
-                                                @toggle="toggleSeat(cell.seat!)"
+                                                @toggle="toggleSeat(seat)"
                                             />
-                                            <div
-                                                v-else
-                                                :style="{
-                                                    gridColumn: cell.gridColumn,
-                                                    gridRow: ri + 1,
-                                                }"
-                                                :class="[
-                                                    'flex items-end',
-                                                    cell.seats!.length > 1
-                                                        ? 'justify-between'
-                                                        : 'justify-center',
-                                                ]"
-                                            >
-                                                <SeatButton
-                                                    v-for="seat in cell.seats"
-                                                    :key="seat.seat_code"
-                                                    :seat="seat"
-                                                    :selected="
-                                                        selected.includes(
-                                                            seat.seat_code,
-                                                        )
-                                                    "
-                                                    @toggle="toggleSeat(seat)"
-                                                />
-                                            </div>
-                                        </template>
+                                        </div>
                                     </template>
                                 </div>
 
-                                <!-- Fallback: loại xe lạ / dữ liệu không khớp layout đã khai báo -->
+                                <!-- Fallback: loại xe chưa khai báo sơ đồ -->
                                 <div
                                     v-else
-                                    class="flex flex-col items-center gap-2"
+                                    class="flex flex-col items-center gap-2 border-t-2 border-gray-200 bg-gray-50 px-4 pt-2 pb-4"
                                 >
+                                    <DriverSeat class="self-start" />
                                     <div
                                         v-for="(row, ri) in fallbackRows"
                                         :key="ri"
-                                        class="flex w-full max-w-xs items-end justify-center gap-2"
+                                        class="flex items-end justify-center gap-2"
                                     >
-                                        <div
-                                            v-if="row.front"
-                                            class="relative h-14 w-12 shrink-0"
-                                        >
-                                            <svg
-                                                viewBox="0 0 48 56"
-                                                class="h-full w-full"
-                                            >
-                                                <path
-                                                    d="M 10,16 Q 10,2 24,2 Q 38,2 38,16 L 38,28 Q 46,28 46,34 L 46,40 Q 46,46 38,46 Q 38,52 32,52 L 16,52 Q 10,52 10,46 Q 2,46 2,40 L 2,34 Q 2,28 10,28 L 10,16 Z"
-                                                    class="fill-gray-200 stroke-gray-300"
-                                                    stroke-width="2.5"
-                                                    stroke-linejoin="round"
-                                                />
-                                            </svg>
-                                            <span
-                                                class="pointer-events-none absolute inset-0 flex items-center justify-center pt-1 text-[9px] leading-tight font-medium text-gray-400"
-                                            >
-                                                Tài<br />xế
-                                            </span>
-                                        </div>
-
-                                        <template
-                                            v-for="(slot, si) in row.slots"
-                                            :key="si"
-                                        >
-                                            <div
-                                                v-if="slot.type === 'aisle'"
-                                                class="w-5 shrink-0"
-                                            />
-                                            <SeatButton
-                                                v-else
-                                                :seat="slot.seat"
-                                                :selected="
-                                                    selected.includes(
-                                                        slot.seat.seat_code,
-                                                    )
-                                                "
-                                                @toggle="toggleSeat(slot.seat)"
-                                            />
-                                        </template>
+                                        <SeatButton
+                                            v-for="seat in row"
+                                            :key="seat.seat_code"
+                                            :seat="seat"
+                                            :selected="
+                                                selected.includes(
+                                                    seat.seat_code,
+                                                )
+                                            "
+                                            @toggle="toggleSeat(seat)"
+                                        />
                                     </div>
-                                </div>
-
-                                <div
-                                    class="mt-3 text-center text-xs text-gray-400 italic"
-                                >
-                                    Đuôi xe
                                 </div>
                             </div>
                         </div>
