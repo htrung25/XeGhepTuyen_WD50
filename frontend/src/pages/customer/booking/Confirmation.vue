@@ -42,7 +42,7 @@ function fmtTime(iso: string) {
 }
 
 async function pollQrCode() {
-    if (!bookingId || booking.value?.qr_code) return;
+    if (!bookingId) return;
 
     const { data } = await customerApi.getBookingQr(bookingId);
     if (data?.qr_code) {
@@ -115,7 +115,9 @@ onMounted(async () => {
         return;
     }
     booking.value = data;
-    if (!booking.value?.qr_code) void pollQrCode();
+    // Luôn lấy QR động từ API để không dùng URL file public có thể đã mất
+    // sau khi Laravel Cloud khởi động lại container.
+    void pollQrCode();
     store.resetBooking();
 });
 

@@ -329,7 +329,7 @@ reject.form = rejectForm
 
 /**
 * @see \App\Http\Controllers\Admin\DriverController::suspend
-* @see app/Http/Controllers/Admin/DriverController.php:144
+* @see app/Http/Controllers/Admin/DriverController.php:142
 * @route '/api/admin/drivers/{id}/suspend'
 */
 export const suspend = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -344,7 +344,7 @@ suspend.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\DriverController::suspend
-* @see app/Http/Controllers/Admin/DriverController.php:144
+* @see app/Http/Controllers/Admin/DriverController.php:142
 * @route '/api/admin/drivers/{id}/suspend'
 */
 suspend.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -371,7 +371,7 @@ suspend.url = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Http\Controllers\Admin\DriverController::suspend
-* @see app/Http/Controllers/Admin/DriverController.php:144
+* @see app/Http/Controllers/Admin/DriverController.php:142
 * @route '/api/admin/drivers/{id}/suspend'
 */
 suspend.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -381,7 +381,7 @@ suspend.post = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\Admin\DriverController::suspend
-* @see app/Http/Controllers/Admin/DriverController.php:144
+* @see app/Http/Controllers/Admin/DriverController.php:142
 * @route '/api/admin/drivers/{id}/suspend'
 */
 const suspendForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -391,7 +391,7 @@ const suspendForm = (args: { id: string | number } | [id: string | number ] | st
 
 /**
 * @see \App\Http\Controllers\Admin\DriverController::suspend
-* @see app/Http/Controllers/Admin/DriverController.php:144
+* @see app/Http/Controllers/Admin/DriverController.php:142
 * @route '/api/admin/drivers/{id}/suspend'
 */
 suspendForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

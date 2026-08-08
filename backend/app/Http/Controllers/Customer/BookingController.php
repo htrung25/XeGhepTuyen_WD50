@@ -144,7 +144,7 @@ class BookingController extends Controller
         }
     }
 
-    public function qr(string $id): JsonResponse
+    public function qr(string $id, QrCodeService $qrCodeService): JsonResponse
     {
         $booking = $this->bookingRepo->findById($id);
 
@@ -154,7 +154,13 @@ class BookingController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => ['qr_code' => $booking->qr_code],
+            // Sinh trực tiếp từ token đã lưu: không phụ thuộc file public trên
+            // filesystem tạm của container Laravel Cloud.
+            'data' => [
+                'qr_code' => 'data:image/svg+xml;base64,'.base64_encode(
+                    $qrCodeService->renderSvg($booking)
+                ),
+            ],
         ]);
     }
 

@@ -65,6 +65,18 @@ it('cho chủ vé tải PDF chứa vé điện tử', function () {
     expect($response->getContent())->toStartWith('%PDF');
 });
 
+it('trả QR dạng data URI không phụ thuộc filesystem public của cloud', function () {
+    $booking = makeCustomerTicketBooking();
+    Sanctum::actingAs($booking->user, ['*'], 'sanctum');
+    Sanctum::actingAs($booking->user, ['*'], 'customer');
+
+    $response = $this->getJson("/api/customer/bookings/{$booking->id}/qr")
+        ->assertOk();
+
+    expect($response->json('data.qr_code'))
+        ->toStartWith('data:image/svg+xml;base64,');
+});
+
 it('không cho khách tải vé của người khác', function () {
     $booking = makeCustomerTicketBooking();
     $other = User::factory()->create(['role' => UserRoleEnum::Customer]);
