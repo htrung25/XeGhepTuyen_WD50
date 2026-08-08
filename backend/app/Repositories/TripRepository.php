@@ -16,7 +16,8 @@ class TripRepository implements TripRepositoryInterface
         return Trip::with([
             'route.stops',
             'route.operator:id,company_name',
-            'vehicle.operator:id,company_name',
+            'vehicle.operator:id,user_id,company_name',
+            'vehicle.operator.user:id,phone',
             'driver.user:id,full_name,phone',
             'seatMaps',
         ])

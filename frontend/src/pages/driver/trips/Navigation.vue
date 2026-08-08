@@ -22,11 +22,9 @@ const trip = ref<any>(null);
 const passengers = ref<any[]>([]);
 const isLoading = ref(true);
 const errorMsg = ref('');
-const showIncident = ref(false);
-const incidentNote = ref('');
 const gpsActive = ref(false);
 const gpsLastUpdate = ref<string | null>(null);
-const currentPos = ref({ lat: 21.0285, lng: 105.8542 }); // default Hanoi
+const currentPos = ref<{ lat: number; lng: number } | null>(null);
 const navigationWaypoints = ref<NavigationWaypoint[]>([]);
 const navigationRoute = ref<NavigationRouteResult | null>(null);
 const routeLoading = ref(false);
@@ -93,6 +91,14 @@ function updateMapPosition(lat: number, lng: number) {
 }
 
 async function loadNavigationRoute() {
+    if (!currentPos.value) {
+        navigationWaypoints.value = [];
+        navigationRoute.value = null;
+        routeError.value =
+            'Vui lòng cho phép truy cập GPS để sinh tuyến đón khách.';
+        return;
+    }
+
     routeLoading.value = true;
     routeError.value = '';
 
@@ -139,22 +145,28 @@ async function sendLocation(lat: number, lng: number) {
 }
 
 function startTracking() {
-    if (!navigator.geolocation) return;
-    gpsActive.value = true;
+    if (!navigator.geolocation) {
+        routeError.value = 'Thiết bị không hỗ trợ định vị GPS.';
+        return;
+    }
     watchId = navigator.geolocation.watchPosition(
         (pos) => {
             updateMapPosition(pos.coords.latitude, pos.coords.longitude);
+            gpsActive.value = true;
+            void sendLocation(pos.coords.latitude, pos.coords.longitude);
         },
         () => {
             gpsActive.value = false;
+            routeError.value =
+                'Không thể lấy vị trí. Hãy bật GPS và cấp quyền định vị cho trình duyệt.';
         },
         { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 },
     );
     locationInterval = setInterval(async () => {
-        await sendLocation(currentPos.value.lat, currentPos.value.lng);
+        if (currentPos.value) {
+            await sendLocation(currentPos.value.lat, currentPos.value.lng);
+        }
     }, 15000);
-    // Send immediately on start
-    sendLocation(currentPos.value.lat, currentPos.value.lng);
 }
 
 async function loadData() {
@@ -186,9 +198,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="mx-auto max-w-[1400px] p-6">
+    <div class="mx-auto max-w-[1400px] p-4 sm:p-6">
         <!-- Header -->
-        <div class="mb-5 flex items-center justify-between">
+        <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <div class="mb-1 flex items-center gap-2 text-sm text-gray-500">
                     <router-link
@@ -239,7 +251,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Loading -->
-        <div v-if="isLoading" class="grid grid-cols-[1fr_380px] gap-5">
+        <div v-if="isLoading" class="grid gap-5 lg:grid-cols-[1fr_380px]">
             <div class="h-[600px] animate-pulse rounded-xl bg-gray-200" />
             <div class="space-y-4">
                 <div
@@ -262,23 +274,24 @@ onUnmounted(() => {
         </div>
 
         <!-- Content -->
-        <div v-else class="grid grid-cols-[1fr_380px] items-start gap-5">
+        <div v-else class="grid items-start gap-5 lg:grid-cols-[1fr_380px]">
             <!-- ─── LEFT: Map ─────────────────────────────────────── -->
             <div class="space-y-3">
                 <!-- Map container -->
                 <div
                     class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
                 >
-                    <div class="relative h-[560px] w-full bg-slate-100">
+                    <div class="relative h-[420px] w-full bg-slate-100 sm:h-[560px]">
                         <MapboxMap
                             :markers="mapMarkers"
                             :route-coordinates="
                                 navigationRoute?.coordinates ?? []
                             "
-                            :center="[currentPos.lng, currentPos.lat]"
-                            :zoom="13"
+                            :center="currentPos ? [currentPos.lng, currentPos.lat] : undefined"
+                            :zoom="currentPos ? 13 : 8.5"
                         />
                         <div
+                            v-if="currentPos"
                             class="pointer-events-none absolute bottom-4 left-4 rounded-lg bg-white/90 px-3 py-2 shadow-sm"
                         >
                             <p
@@ -331,24 +344,25 @@ onUnmounted(() => {
                 </div>
 
                 <!-- Map action buttons -->
-                <div class="flex gap-3">
+                <div class="flex flex-col gap-3 sm:flex-row">
                     <button
                         @click="openGoogleMaps"
                         class="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:border-green-400 hover:text-green-700"
                     >
                         🗺️ Mở Google Maps
                     </button>
-                    <button
-                        @click="showIncident = true"
+                    <a
+                        v-if="trip?.operator?.phone"
+                        :href="`tel:${trip.operator.phone}`"
                         class="flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-600 transition-colors hover:bg-red-100"
                     >
-                        🚨 Báo sự cố
-                    </button>
+                        🚨 Gọi nhà xe khi có sự cố
+                    </a>
                 </div>
             </div>
 
             <!-- ─── RIGHT: Navigation panel ──────────────────────── -->
-            <div class="sticky top-6 space-y-4 self-start">
+            <div class="space-y-4 self-start lg:sticky lg:top-6">
                 <!-- Stop progress -->
                 <div
                     class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
@@ -550,50 +564,5 @@ onUnmounted(() => {
             </div>
         </div>
 
-        <!-- ─── Incident modal ─────────────────────────────────── -->
-        <Teleport to="body">
-            <div
-                v-if="showIncident"
-                class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-                @click.self="showIncident = false"
-            >
-                <div
-                    class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl"
-                >
-                    <h3 class="mb-1 text-lg font-bold text-gray-900">
-                        Báo sự cố
-                    </h3>
-                    <p class="mb-4 text-sm text-gray-500">
-                        Mô tả sự cố đang xảy ra
-                    </p>
-                    <textarea
-                        v-model="incidentNote"
-                        rows="3"
-                        placeholder="Ví dụ: Xe bị hỏng, tai nạn, kẹt xe..."
-                        class="mb-4 w-full resize-none rounded-xl border border-gray-300 px-4 py-3 text-sm focus:ring-2 focus:ring-red-500 focus:outline-none"
-                    />
-                    <div class="flex gap-3">
-                        <button
-                            @click="showIncident = false"
-                            class="flex-1 rounded-xl border border-gray-200 py-3 font-medium text-gray-600 transition-colors hover:bg-gray-50"
-                        >
-                            Hủy
-                        </button>
-                        <button
-                            @click="showIncident = false"
-                            class="flex-1 rounded-xl bg-red-600 py-3 font-bold text-white transition-colors hover:bg-red-700"
-                        >
-                            Gửi báo cáo
-                        </button>
-                    </div>
-                    <a
-                        href="tel:18009999"
-                        class="mt-3 block text-center text-sm font-medium text-red-600 hover:underline"
-                    >
-                        Gọi ngay hotline hỗ trợ: 1800-9999
-                    </a>
-                </div>
-            </div>
-        </Teleport>
     </div>
 </template>

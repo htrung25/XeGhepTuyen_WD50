@@ -14,9 +14,13 @@ use App\Models\Vehicle;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 
-it('trả stop_order cho điểm đón và điểm trả để frontend sinh tuyến đúng thứ tự', function () {
+it('trả stop_order và số nhà xe để frontend điều hướng và gọi hỗ trợ', function () {
+    $operatorUser = User::factory()->create([
+        'role' => UserRoleEnum::Operator,
+        'phone' => '0901112233',
+    ]);
     $operator = Operator::create([
-        'user_id' => User::factory()->create(['role' => UserRoleEnum::Operator])->id,
+        'user_id' => $operatorUser->id,
         'company_name' => 'Nhà xe Navigation',
         'business_license' => 'NAV-001',
         'status' => 'verified',
@@ -113,6 +117,10 @@ it('trả stop_order cho điểm đón và điểm trả để frontend sinh tuy
 
     Sanctum::actingAs($driverUser, ['*'], 'sanctum');
     Sanctum::actingAs($driverUser, ['*'], 'driver');
+
+    $this->getJson("/api/driver/trips/{$trip->id}")
+        ->assertOk()
+        ->assertJsonPath('data.operator.phone', '0901112233');
 
     $this->getJson("/api/driver/trips/{$trip->id}/passengers")
         ->assertOk()
