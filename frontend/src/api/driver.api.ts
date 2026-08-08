@@ -42,6 +42,13 @@ export const driverApi = {
         email?: string;
         birth_date?: string | null;
     }) => apiClient.send(updateProfile(), data),
+    updateAvatar: (file: File) => {
+        const form = new FormData();
+        form.append('_method', 'PUT');
+        form.append('avatar', file);
+
+        return apiClient.sendForm(updateProfile(), form);
+    },
     changePassword: (data: {
         old_password: string;
         new_password: string;

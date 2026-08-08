@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Customer;
 
+use App\Enums\BookingStatusEnum;
 use App\Enums\UserRoleEnum;
 use App\Exceptions\InvalidOtpException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\LoginRequest;
 use App\Http\Requests\Customer\RegisterRequest;
 use App\Http\Requests\Customer\SendOtpRequest;
+use App\Http\Requests\Customer\UpdateProfileRequest;
 use App\Jobs\SendSmsNotificationJob;
 use App\Models\User;
 use App\Services\CustomerRegistrationService;
@@ -131,33 +133,35 @@ class AuthController extends Controller
 
     public function me(Request $request): JsonResponse
     {
+        $user = $request->user()->loadCount([
+            'bookings as total_trips' => fn ($query) => $query->where('booking_status', BookingStatusEnum::Completed),
+        ]);
+
         return response()->json([
             'success' => true,
-            'data' => $this->userResponse($request->user()),
+            'data' => [
+                ...$this->userResponse($user),
+                'total_trips' => $user->total_trips,
+            ],
         ]);
     }
 
-    public function updateProfile(Request $request): JsonResponse
+    public function updateProfile(UpdateProfileRequest $request): JsonResponse
     {
-        $request->validate([
-            'full_name' => ['sometimes', 'string', 'min:2', 'max:100'],
-            'email' => ['sometimes', 'email', 'unique:users,email,'.auth('customer')->id()],
-            'avatar' => ['sometimes', 'image', 'max:2048'],
-        ]);
-
-        $data = $request->only(['full_name', 'email']);
+        $user = $request->user();
+        $data = $request->safe()->only(['full_name', 'email']);
 
         if ($request->hasFile('avatar')) {
             $path = $request->file('avatar')->store('avatars', 'public');
             $data['avatar_url'] = Storage::url($path);
         }
 
-        auth('customer')->user()->update($data);
+        $user->update($data);
 
         return response()->json([
             'success' => true,
             'message' => 'Cập nhật hồ sơ thành công',
-            'data' => $this->userResponse(auth('customer')->user()),
+            'data' => $this->userResponse($user->refresh()),
         ]);
     }
 
@@ -200,6 +204,7 @@ class AuthController extends Controller
             'email' => $user->email,
             'avatar_url' => $user->avatar_url,
             'is_verified' => $user->is_verified,
+            'created_at' => $user->created_at?->toIso8601String(),
         ];
     }
 }

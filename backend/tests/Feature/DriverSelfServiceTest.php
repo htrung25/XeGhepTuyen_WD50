@@ -56,6 +56,42 @@ it('cập nhật hồ sơ tài xế', function () {
     expect($user->fresh()->birth_date->format('Y-m-d'))->toBe('1995-10-15');
 });
 
+it('cập nhật ảnh đại diện tài xế qua multipart PUT', function () {
+    Storage::fake('public');
+    $user = makeDriverUser();
+    Sanctum::actingAs($user);
+
+    $this->post('/api/driver/auth/profile', [
+        '_method' => 'PUT',
+        'avatar' => UploadedFile::fake()->image('avatar.jpg'),
+    ])->assertOk()
+        ->assertJsonPath('data.avatar_url', fn ($value) => str_starts_with($value, '/storage/avatars/'));
+
+    $path = str_replace('/storage/', '', $user->fresh()->avatar_url);
+    Storage::disk('public')->assertExists($path);
+});
+
+it('trả dữ liệu hồ sơ thật thay vì thống kê và giấy tờ mặc định', function () {
+    $user = makeDriverUser();
+    $user->driver->update([
+        'id_card_front_path' => '/legacy/id-front.jpg',
+        'license_expiry' => now()->addYears(2)->startOfDay(),
+    ]);
+    Sanctum::actingAs($user);
+
+    $this->getJson('/api/driver/auth/me')
+        ->assertOk()
+        ->assertJsonPath('data.driver.total_trips', 0)
+        ->assertJsonPath('data.driver.month_trips', 0)
+        ->assertJsonPath('data.driver.completion_rate', 0)
+        ->assertJsonPath('data.review_count', 0)
+        ->assertJsonCount(0, 'data.recent_reviews')
+        ->assertJsonPath('data.documents.0.status', 'verified')
+        ->assertJsonPath('data.documents.0.url', '/legacy/id-front.jpg')
+        ->assertJsonPath('data.documents.1.status', 'missing')
+        ->assertJsonPath('data.documents.2.expires_at', now()->addYears(2)->format('Y-m-d'));
+});
+
 it('đổi mật khẩu thành công khi mật khẩu cũ đúng', function () {
     Sanctum::actingAs(makeDriverUser());
 

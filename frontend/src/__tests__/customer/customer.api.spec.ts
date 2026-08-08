@@ -52,6 +52,15 @@ describe('customerApi → Wayfinder route contract', () => {
         );
     });
 
+    it('updateProfile persists changes through PUT /api/customer/auth/profile', () => {
+        const payload = { full_name: 'Khách Mới', email: 'new@example.com' };
+        customerApi.updateProfile(payload);
+        expect(apiClient.send).toHaveBeenCalledWith(
+            { url: '/api/customer/auth/profile', method: 'put' },
+            payload,
+        );
+    });
+
     it('searchTrips resolves to the PUBLIC binding GET /api/public/trips', () => {
         customerApi.searchTrips({
             from_city: 'Hà Nội',

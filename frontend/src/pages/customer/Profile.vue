@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { customerApi } from '@/api/customer.api';
 import { useCustomerAuthStore } from '@/stores/customer.auth.store';
@@ -7,7 +7,7 @@ import { useCustomerAuthStore } from '@/stores/customer.auth.store';
 const router = useRouter();
 const auth = useCustomerAuthStore();
 
-type Section = 'profile' | 'password' | 'wallet' | 'vouchers';
+type Section = 'profile' | 'password' | 'wallet';
 
 const activeSection = ref<Section>('profile');
 const isLoading = ref(true);
@@ -15,6 +15,7 @@ const saveLoading = ref(false);
 const errorMsg = ref('');
 const successMsg = ref('');
 const wallet = ref<any>(null);
+const profileMetadata = ref<{ created_at?: string; total_trips?: number }>({});
 
 const form = ref({
     full_name: auth.user?.full_name ?? '',
@@ -28,14 +29,19 @@ const passwordForm = ref({
     confirm: '',
 });
 
-const stats = ref({ total_trips: 0, total_points: 0, vouchers: 0 });
-
 const menuItems: { key: Section; icon: string; label: string }[] = [
     { key: 'profile', icon: '👤', label: 'Thông tin cá nhân' },
     { key: 'password', icon: '🔒', label: 'Đổi mật khẩu' },
     { key: 'wallet', icon: '💳', label: 'Ví XeGhep' },
-    { key: 'vouchers', icon: '🏷️', label: 'Mã giảm giá' },
 ];
+
+const memberSince = computed(() => {
+    if (!profileMetadata.value.created_at) return '—';
+    return new Date(profileMetadata.value.created_at).toLocaleDateString(
+        'vi-VN',
+        { month: '2-digit', year: 'numeric' },
+    );
+});
 
 function fmt(v: number) {
     return new Intl.NumberFormat('vi-VN').format(v) + 'đ';
@@ -45,18 +51,22 @@ async function saveProfile() {
     saveLoading.value = true;
     errorMsg.value = '';
     successMsg.value = '';
-    const { error } = await customerApi.me(); // check then update
-    // In real app: PUT /api/customer/auth/profile
+    const { data, error } = await customerApi.updateProfile({
+        full_name: form.value.full_name.trim(),
+        email: form.value.email.trim() || null,
+    });
     saveLoading.value = false;
-    if (error) {
-        errorMsg.value = 'Cập nhật thất bại. Vui lòng thử lại.';
+    if (error || !data) {
+        errorMsg.value = error ?? 'Cập nhật thất bại. Vui lòng thử lại.';
         return;
     }
-    auth.setAuth(auth.token!, {
+    const updatedUser = {
         ...auth.user!,
-        full_name: form.value.full_name,
-        email: form.value.email,
-    } as any);
+        ...data,
+    } as any;
+    if (auth.token) auth.setAuth(auth.token, updatedUser);
+    form.value.full_name = data.full_name ?? form.value.full_name;
+    form.value.email = data.email ?? '';
     successMsg.value = 'Cập nhật thông tin thành công!';
     setTimeout(() => {
         successMsg.value = '';
@@ -108,6 +118,11 @@ onMounted(async () => {
         form.value.full_name = meRes.data.full_name ?? '';
         form.value.email = meRes.data.email ?? '';
         form.value.phone = meRes.data.phone ?? '';
+        profileMetadata.value = {
+            created_at: meRes.data.created_at,
+            total_trips: meRes.data.total_trips ?? 0,
+        };
+        if (auth.token) auth.setAuth(auth.token, meRes.data as any);
     }
     if (walletRes.data) wallet.value = walletRes.data;
 });
@@ -145,7 +160,9 @@ onMounted(async () => {
                     <p class="mt-0.5 text-sm text-gray-500">
                         {{ auth.user?.phone ?? '—' }}
                     </p>
-                    <p class="mt-1 text-xs text-gray-400">Thành viên từ 2024</p>
+                    <p class="mt-1 text-xs text-gray-400">
+                        Thành viên từ {{ memberSince }}
+                    </p>
                 </div>
 
                 <!-- Menu links -->
@@ -269,25 +286,18 @@ onMounted(async () => {
                     </div>
 
                     <!-- Stats row -->
-                    <div
-                        class="grid grid-cols-1 gap-3 min-[360px]:grid-cols-3 sm:gap-4"
-                    >
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                         <div
                             v-for="stat in [
                                 {
                                     label: 'Tổng chuyến đi',
-                                    value: stats.total_trips,
+                                    value: profileMetadata.total_trips ?? 0,
                                     icon: '🚌',
                                 },
                                 {
-                                    label: 'Điểm tích lũy',
-                                    value: stats.total_points,
-                                    icon: '⭐',
-                                },
-                                {
-                                    label: 'Voucher còn',
-                                    value: stats.vouchers,
-                                    icon: '🏷️',
+                                    label: 'Số dư ví',
+                                    value: wallet ? fmt(wallet.balance) : '—',
+                                    icon: '👛',
                                 },
                             ]"
                             :key="stat.label"
@@ -369,18 +379,9 @@ onMounted(async () => {
                         <p class="mb-4 text-3xl font-bold">
                             {{ wallet ? fmt(wallet.balance) : '—' }}
                         </p>
-                        <div class="flex gap-3">
-                            <button
-                                class="rounded-lg bg-white px-5 py-2 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50"
-                            >
-                                Nạp tiền
-                            </button>
-                            <button
-                                class="rounded-lg border border-white/50 px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10"
-                            >
-                                Lịch sử
-                            </button>
-                        </div>
+                        <p class="text-xs text-blue-100">
+                            Ví được dùng để nhận hoàn tiền và thanh toán vé.
+                        </p>
                     </div>
                     <div
                         v-if="!wallet"
@@ -388,20 +389,55 @@ onMounted(async () => {
                     >
                         Chưa có thông tin ví
                     </div>
-                </div>
-
-                <!-- Vouchers section -->
-                <div
-                    v-else-if="activeSection === 'vouchers'"
-                    class="rounded-xl border border-gray-200 bg-white p-8 text-center shadow-sm"
-                >
-                    <div class="mb-3 text-4xl">🏷️</div>
-                    <p class="mb-2 font-medium text-gray-700">
-                        Chưa có mã giảm giá
-                    </p>
-                    <p class="text-sm text-gray-400">
-                        Theo dõi các chương trình ưu đãi từ XeGhep.vn
-                    </p>
+                    <div
+                        v-else-if="wallet.transactions?.length"
+                        class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
+                    >
+                        <div class="border-b border-gray-100 px-5 py-4">
+                            <h3 class="font-semibold text-gray-900">
+                                Giao dịch gần đây
+                            </h3>
+                        </div>
+                        <div class="divide-y divide-gray-100">
+                            <div
+                                v-for="transaction in wallet.transactions"
+                                :key="transaction.id"
+                                class="flex items-center justify-between gap-4 px-5 py-4"
+                            >
+                                <div class="min-w-0">
+                                    <p
+                                        class="truncate text-sm font-medium text-gray-800"
+                                    >
+                                        {{ transaction.description }}
+                                    </p>
+                                    <p class="mt-0.5 text-xs text-gray-400">
+                                        {{
+                                            new Date(
+                                                transaction.created_at,
+                                            ).toLocaleString('vi-VN')
+                                        }}
+                                    </p>
+                                </div>
+                                <span
+                                    :class="[
+                                        'shrink-0 text-sm font-bold',
+                                        transaction.amount >= 0
+                                            ? 'text-green-600'
+                                            : 'text-red-600',
+                                    ]"
+                                >
+                                    {{ transaction.amount >= 0 ? '+' : ''
+                                    }}{{ fmt(transaction.amount) }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        v-else
+                        class="rounded-xl border border-gray-200 bg-white p-8 text-center text-sm text-gray-400"
+                    >
+                        Chưa có giao dịch ví
+                    </div>
                 </div>
             </div>
         </div>

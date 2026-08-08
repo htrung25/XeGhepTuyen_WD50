@@ -105,6 +105,21 @@ describe('driverApi → Wayfinder route contract', () => {
         );
     });
 
+    it('updateAvatar uses method spoofing for multipart PUT', () => {
+        const file = new File(['avatar'], 'avatar.jpg', {
+            type: 'image/jpeg',
+        });
+        driverApi.updateAvatar(file);
+
+        expect(apiClient.sendForm).toHaveBeenCalledWith(
+            { url: '/api/driver/auth/profile', method: 'put' },
+            expect.any(FormData),
+        );
+        const form = vi.mocked(apiClient.sendForm).mock.calls.at(-1)?.[1];
+        expect(form?.get('_method')).toBe('PUT');
+        expect(form?.get('avatar')).toBe(file);
+    });
+
     it('changePassword resolves to PUT /api/driver/auth/password', () => {
         driverApi.changePassword({
             old_password: 'a',

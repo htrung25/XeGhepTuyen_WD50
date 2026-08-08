@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Driver;
 
 use App\Enums\DriverStatusEnum;
+use App\Enums\TripStatusEnum;
 use App\Enums\UserRoleEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Driver\LoginRequest;
 use App\Http\Requests\Driver\RegisterDriverRequest;
+use App\Http\Requests\Driver\UpdateProfileRequest;
 use App\Models\Driver;
 use App\Models\User;
 use App\Services\PrivateDocumentService;
@@ -114,8 +116,32 @@ class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         $user = $request->user();
-        $driver = $user->driver->load('currentVehicle');
+        $driver = $user->driver->load(['currentVehicle', 'operator']);
         $vehicle = $driver->currentVehicle;
+        $completedTrips = $driver->trips()
+            ->where('status', TripStatusEnum::Completed)
+            ->count();
+        $cancelledTrips = $driver->trips()
+            ->where('status', TripStatusEnum::Cancelled)
+            ->count();
+        $terminalTrips = $completedTrips + $cancelledTrips;
+        $recentReviews = $driver->reviews()
+            ->with('user:id,full_name')
+            ->where('is_published', true)
+            ->latest('created_at')
+            ->limit(5)
+            ->get();
+
+        $document = fn (string $type, string $label, ?string $path, $expiresAt = null): array => [
+            'type' => $type,
+            'label' => $label,
+            'status' => ! $path
+                ? 'missing'
+                : ($expiresAt?->isPast() ? 'expired' : 'verified'),
+            'expires_at' => $expiresAt?->format('Y-m-d'),
+            'url' => $this->documents->temporaryUrl($path),
+            'can_upload' => true,
+        ];
 
         return response()->json([
             'success' => true,
@@ -136,14 +162,62 @@ class AuthController extends Controller
                     'color' => $vehicle->color,
                     'vehicle_type' => $vehicle->vehicle_type?->value,
                     'seat_count' => $vehicle->seat_count,
+                    'registration_expiry' => $vehicle->registration_expiry?->format('Y-m-d'),
+                    'insurance_expiry' => $vehicle->insurance_expiry?->format('Y-m-d'),
                 ] : null,
                 'driver' => [
                     'id' => $driver->id,
-                    'rating_avg' => $driver->rating_avg,
-                    'total_trips' => $driver->total_trips,
+                    'rating_avg' => (float) $driver->rating_avg,
+                    'total_trips' => $completedTrips,
+                    'month_trips' => $driver->trips()
+                        ->where('status', TripStatusEnum::Completed)
+                        ->whereYear('completed_at', now()->year)
+                        ->whereMonth('completed_at', now()->month)
+                        ->count(),
+                    'completion_rate' => $terminalTrips > 0
+                        ? round(($completedTrips / $terminalTrips) * 100, 1)
+                        : 0,
                     'is_online' => $driver->is_online,
-                    'operator' => ['id' => $driver->operator->id, 'name' => $driver->operator->company_name],
+                    'status' => $driver->status->value,
+                    'license_expiry' => $driver->license_expiry?->format('Y-m-d'),
+                    'operator' => [
+                        'id' => $driver->operator->id,
+                        'name' => $driver->operator->company_name,
+                    ],
                 ],
+                'documents' => [
+                    $document('id_card_front', 'CCCD mặt trước', $driver->id_card_front_path),
+                    $document('id_card_back', 'CCCD mặt sau', $driver->id_card_back_path),
+                    $document('license_front', 'Giấy phép lái xe', $driver->license_front_path, $driver->license_expiry),
+                    [
+                        'type' => 'vehicle_registration',
+                        'label' => 'Đăng kiểm xe',
+                        'status' => ! $vehicle?->registration_expiry
+                            ? 'missing'
+                            : ($vehicle->registration_expiry->isPast() ? 'expired' : 'verified'),
+                        'expires_at' => $vehicle?->registration_expiry?->format('Y-m-d'),
+                        'url' => null,
+                        'can_upload' => false,
+                    ],
+                    [
+                        'type' => 'vehicle_insurance',
+                        'label' => 'Bảo hiểm xe',
+                        'status' => ! $vehicle?->insurance_expiry
+                            ? 'missing'
+                            : ($vehicle->insurance_expiry->isPast() ? 'expired' : 'verified'),
+                        'expires_at' => $vehicle?->insurance_expiry?->format('Y-m-d'),
+                        'url' => null,
+                        'can_upload' => false,
+                    ],
+                ],
+                'review_count' => $driver->reviews()->where('is_published', true)->count(),
+                'recent_reviews' => $recentReviews->map(fn ($review): array => [
+                    'id' => $review->id,
+                    'customer_name' => $review->user->full_name,
+                    'rating' => $review->driver_rating,
+                    'comment' => $review->comment,
+                    'date' => $review->created_at?->format('Y-m-d'),
+                ])->values(),
             ],
         ]);
     }
@@ -160,18 +234,10 @@ class AuthController extends Controller
         ]);
     }
 
-    public function updateProfile(Request $request): JsonResponse
+    public function updateProfile(UpdateProfileRequest $request): JsonResponse
     {
         $user = $request->user();
-
-        $request->validate([
-            'full_name' => ['sometimes', 'string', 'min:2', 'max:100'],
-            'email' => ['sometimes', 'nullable', 'email', 'unique:users,email,'.$user->id],
-            'birth_date' => ['sometimes', 'nullable', 'date', 'before:today'],
-            'avatar' => ['sometimes', 'image', 'max:2048'],
-        ]);
-
-        $data = $request->only(['full_name', 'email', 'birth_date']);
+        $data = $request->safe()->only(['full_name', 'email', 'birth_date']);
 
         if ($request->hasFile('avatar')) {
             $path = $request->file('avatar')->store('avatars', 'public');

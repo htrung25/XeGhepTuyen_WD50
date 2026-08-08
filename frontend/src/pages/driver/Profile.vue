@@ -11,6 +11,11 @@ const reviews = ref<any[]>([]);
 const isLoading = ref(true);
 const saveLoading = ref(false);
 const pwLoading = ref(false);
+const avatarLoading = ref(false);
+const documentLoading = ref<string | null>(null);
+const avatarInput = ref<HTMLInputElement | null>(null);
+const documentInput = ref<HTMLInputElement | null>(null);
+const selectedDocumentType = ref<string | null>(null);
 const saveMsg = ref('');
 const saveError = ref('');
 const pwMsg = ref('');
@@ -29,7 +34,15 @@ const pwForm = ref({
 });
 
 function docStatus(doc: { status?: string; expires_at?: string }) {
-    const status = doc.status ?? 'verified';
+    const status = doc.status ?? 'missing';
+    if (status === 'missing')
+        return {
+            icon: '—',
+            cls: 'text-gray-600 bg-gray-100',
+            label: 'Chưa có dữ liệu',
+            action: 'Tải lên',
+            actionCls: 'text-green-700',
+        };
     if (status === 'expired')
         return {
             icon: '❌',
@@ -68,35 +81,14 @@ function docStatus(doc: { status?: string; expires_at?: string }) {
     };
 }
 
-const docs = computed(() => [
-    {
-        label: 'CMND / CCCD',
-        status: profile.value?.id_card_status ?? 'verified',
-        expires_at: undefined,
-    },
-    {
-        label: 'Giấy phép lái xe',
-        status: auth.driver?.license_expiry ? 'verified' : 'verified',
-        expires_at: auth.driver?.license_expiry,
-    },
-    {
-        label: 'Đăng kiểm xe',
-        status: profile.value?.registration_status ?? 'verified',
-        expires_at: profile.value?.registration_expiry,
-    },
-    {
-        label: 'Bảo hiểm xe',
-        status: 'verified' as string,
-        expires_at: profile.value?.insurance_expiry,
-    },
-]);
+const docs = computed(() => profile.value?.documents ?? []);
 
 const stats = computed(() => [
-    { label: 'Tổng chuyến đi', value: auth.user?.total_trips ?? 0 },
-    { label: 'Tháng này', value: profile.value?.month_trips ?? 0 },
+    { label: 'Tổng chuyến đi', value: profile.value?.driver?.total_trips ?? 0 },
+    { label: 'Tháng này', value: profile.value?.driver?.month_trips ?? 0 },
     {
         label: 'Tỷ lệ hoàn thành',
-        value: (profile.value?.completion_rate ?? 98) + '%',
+        value: (profile.value?.driver?.completion_rate ?? 0) + '%',
     },
 ]);
 
@@ -133,6 +125,61 @@ async function saveProfile() {
             saveMsg.value = '';
         }, 3000);
     }
+}
+
+async function updateAvatar(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    avatarLoading.value = true;
+    const res = await driverApi.updateAvatar(file);
+    avatarLoading.value = false;
+    input.value = '';
+
+    if (res.error || !res.data) {
+        toast.error(res.error ?? 'Không thể cập nhật ảnh đại diện');
+        return;
+    }
+
+    auth.user = { ...auth.user!, ...res.data } as any;
+    localStorage.setItem('driver_user', JSON.stringify(auth.user));
+    toast.success('Đã cập nhật ảnh đại diện');
+}
+
+function handleDocumentAction(doc: any) {
+    if (doc.url && doc.status !== 'expired') {
+        window.open(doc.url, '_blank', 'noopener,noreferrer');
+        return;
+    }
+    if (!doc.can_upload) return;
+
+    selectedDocumentType.value = doc.type;
+    documentInput.value?.click();
+}
+
+async function uploadDocument(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    const type = selectedDocumentType.value;
+    if (!file || !type) return;
+
+    documentLoading.value = type;
+    const res = await driverApi.uploadDocument(type, file);
+    documentLoading.value = null;
+    input.value = '';
+
+    if (res.error) {
+        toast.error(res.error);
+        return;
+    }
+
+    const doc = docs.value.find((item: any) => item.type === type);
+    if (doc) {
+        doc.url = res.data?.url ?? doc.url;
+        doc.status = 'verified';
+    }
+    toast.success('Đã cập nhật giấy tờ');
 }
 
 async function updatePassword() {
@@ -190,29 +237,7 @@ onMounted(async () => {
             localStorage.setItem('driver_user', JSON.stringify(auth.user));
         }
     }
-    reviews.value = profile.value?.recent_reviews ?? [
-        {
-            id: 1,
-            customer_name: 'Nguyễn Thị A',
-            rating: 5,
-            comment: 'Tài xế rất thân thiện, đúng giờ!',
-            date: '2024-06-10',
-        },
-        {
-            id: 2,
-            customer_name: 'Trần Văn B',
-            rating: 4,
-            comment: 'Xe sạch, đi êm ái.',
-            date: '2024-06-08',
-        },
-        {
-            id: 3,
-            customer_name: 'Lê Thị C',
-            rating: 5,
-            comment: 'Tuyệt vời, sẽ đặt lại lần sau.',
-            date: '2024-06-05',
-        },
-    ];
+    reviews.value = profile.value?.recent_reviews ?? [];
 });
 </script>
 
@@ -227,7 +252,7 @@ onMounted(async () => {
         </div>
 
         <!-- Loading -->
-        <div v-if="isLoading" class="grid grid-cols-[35%_1fr] gap-6">
+        <div v-if="isLoading" class="grid gap-6 lg:grid-cols-[35%_1fr]">
             <div class="space-y-4">
                 <div class="h-64 animate-pulse rounded-xl bg-gray-200" />
                 <div class="h-32 animate-pulse rounded-xl bg-gray-200" />
@@ -239,7 +264,7 @@ onMounted(async () => {
             </div>
         </div>
 
-        <div v-else class="grid grid-cols-[35%_1fr] items-start gap-6">
+        <div v-else class="grid items-start gap-6 lg:grid-cols-[35%_1fr]">
             <!-- ─── LEFT column ───────────────────────────────────── -->
             <div class="space-y-4">
                 <!-- Profile card -->
@@ -248,13 +273,24 @@ onMounted(async () => {
                 >
                     <!-- Avatar with upload overlay -->
                     <div class="relative mx-auto mb-3 h-24 w-24">
+                        <img
+                            v-if="auth.user?.avatar_url"
+                            :src="auth.user.avatar_url"
+                            :alt="auth.user.full_name"
+                            class="h-24 w-24 rounded-full object-cover"
+                        />
                         <div
+                            v-else
                             class="flex h-24 w-24 items-center justify-center rounded-full bg-green-100 text-4xl font-black text-green-700"
                         >
                             {{ auth.user?.full_name?.charAt(0) ?? 'T' }}
                         </div>
                         <button
+                            type="button"
+                            :disabled="avatarLoading"
+                            @click="avatarInput?.click()"
                             class="absolute right-0 bottom-0 flex h-8 w-8 items-center justify-center rounded-full bg-green-600 shadow-md transition-colors hover:bg-green-700"
+                            aria-label="Cập nhật ảnh đại diện"
                         >
                             <svg
                                 class="h-4 w-4 text-white"
@@ -275,6 +311,13 @@ onMounted(async () => {
                                 />
                             </svg>
                         </button>
+                        <input
+                            ref="avatarInput"
+                            type="file"
+                            accept="image/jpeg,image/png"
+                            class="hidden"
+                            @change="updateAvatar"
+                        />
                     </div>
 
                     <h2 class="text-lg font-black text-gray-900">
@@ -310,7 +353,8 @@ onMounted(async () => {
                                 :key="i"
                                 :class="[
                                     'h-4 w-4',
-                                    i <= Math.round(auth.user?.rating_avg ?? 5)
+                                    i <=
+                                    Math.round(profile?.driver?.rating_avg ?? 0)
                                         ? 'fill-yellow-400 text-yellow-400'
                                         : 'fill-gray-200 text-gray-200',
                                 ]"
@@ -322,7 +366,7 @@ onMounted(async () => {
                             </svg>
                         </div>
                         <span class="text-base font-black text-gray-800">{{
-                            auth.user?.rating_avg?.toFixed(1) ?? '4.8'
+                            Number(profile?.driver?.rating_avg ?? 0).toFixed(1)
                         }}</span>
                         <span class="text-sm text-gray-400"
                             >· {{ profile?.review_count ?? 0 }} đánh giá</span
@@ -408,6 +452,12 @@ onMounted(async () => {
                         </h3>
                     </div>
                     <div class="divide-y divide-gray-100">
+                        <p
+                            v-if="reviews.length === 0"
+                            class="px-4 py-6 text-center text-sm text-gray-400"
+                        >
+                            Chưa có đánh giá nào.
+                        </p>
                         <div
                             v-for="rev in reviews"
                             :key="rev.id"
@@ -461,7 +511,7 @@ onMounted(async () => {
                         Thông tin cá nhân
                     </h3>
 
-                    <div class="mb-4 grid grid-cols-2 gap-4">
+                    <div class="mb-4 grid gap-4 sm:grid-cols-2">
                         <div>
                             <label
                                 class="mb-1.5 block text-sm font-medium text-gray-700"
@@ -550,6 +600,13 @@ onMounted(async () => {
                         </h3>
                     </div>
                     <div class="overflow-x-auto">
+                        <input
+                            ref="documentInput"
+                            type="file"
+                            accept="image/jpeg,image/png"
+                            class="hidden"
+                            @change="uploadDocument"
+                        />
                         <table class="w-full text-sm">
                             <thead>
                                 <tr class="border-b border-gray-100 bg-gray-50">
@@ -608,13 +665,28 @@ onMounted(async () => {
                                     </td>
                                     <td class="px-5 py-3.5">
                                         <button
+                                            v-if="doc.url || doc.can_upload"
+                                            type="button"
+                                            :disabled="
+                                                documentLoading === doc.type
+                                            "
+                                            @click="handleDocumentAction(doc)"
                                             :class="[
                                                 'text-xs font-semibold transition-colors hover:underline',
                                                 docStatus(doc).actionCls,
                                             ]"
                                         >
-                                            {{ docStatus(doc).action }}
+                                            {{
+                                                documentLoading === doc.type
+                                                    ? 'Đang tải...'
+                                                    : docStatus(doc).action
+                                            }}
                                         </button>
+                                        <span
+                                            v-else
+                                            class="text-xs text-gray-400"
+                                            >Liên hệ nhà xe</span
+                                        >
                                     </td>
                                 </tr>
                             </tbody>
@@ -629,7 +701,7 @@ onMounted(async () => {
                     <h3 class="mb-4 font-semibold text-gray-900">
                         Đổi mật khẩu
                     </h3>
-                    <div class="mb-4 grid grid-cols-3 gap-4">
+                    <div class="mb-4 grid gap-4 md:grid-cols-3">
                         <div>
                             <label
                                 class="mb-1.5 block text-sm font-medium text-gray-700"
