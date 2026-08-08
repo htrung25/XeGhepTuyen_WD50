@@ -118,6 +118,24 @@ describe('customerApi → Wayfinder route contract', () => {
         );
     });
 
+    it('maps QR polling and authenticated PDF ticket download', () => {
+        customerApi.getBookingQr('b1');
+        expect(apiClient.send).toHaveBeenCalledWith({
+            url: '/api/customer/bookings/b1/qr',
+            method: 'get',
+        });
+
+        customerApi.downloadBookingTicket('b1');
+        expect(apiClient.send).toHaveBeenCalledWith(
+            {
+                url: '/api/customer/bookings/b1/ticket.pdf',
+                method: 'get',
+            },
+            undefined,
+            { blob: true },
+        );
+    });
+
     it('getWallet resolves to GET /api/customer/wallet', () => {
         customerApi.getWallet();
         expect(apiClient.send).toHaveBeenCalledWith({

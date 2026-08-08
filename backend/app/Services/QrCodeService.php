@@ -9,7 +9,6 @@ use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class QrCodeService
 {
@@ -19,11 +18,23 @@ class QrCodeService
 
     public function generate(Booking $booking): string
     {
-        $token = $booking->qr_token ?? Str::random(32);
+        $qrImage = $this->renderSvg($booking);
+        $path = self::QR_PATH."/qr_{$booking->booking_code}.svg";
+        Storage::disk(self::QR_DISK)->put($path, $qrImage);
+
+        return Storage::disk(self::QR_DISK)->url($path);
+    }
+
+    public function renderSvg(Booking $booking): string
+    {
+        if (! $booking->qr_token) {
+            throw new \LogicException('Booking chưa có QR token.');
+        }
+
         $content = json_encode([
-            'token' => $token,
+            'token' => $booking->qr_token,
             'booking_code' => $booking->booking_code,
-        ]);
+        ], JSON_THROW_ON_ERROR);
         // Dùng trực tiếp bacon/bacon-qr-code (đã có sẵn qua laravel/fortify) —
         // KHÔNG dùng simplesoftwareio/simple-qrcode vì nó yêu cầu bacon ^2.0
         // xung đột với fortify (cần bacon ^3.0).
@@ -31,15 +42,12 @@ class QrCodeService
             new RendererStyle(300, 1),
             new SvgImageBackEnd
         );
-        $qrImage = (new Writer($renderer))->writeString(
+
+        return (new Writer($renderer))->writeString(
             $content,
             'UTF-8',
             ErrorCorrectionLevel::H()
         );
-        $path = self::QR_PATH."/qr_{$booking->booking_code}.svg";
-        Storage::disk(self::QR_DISK)->put($path, $qrImage);
-
-        return Storage::disk(self::QR_DISK)->url($path);
     }
 
     public function verify(string $token): ?Booking

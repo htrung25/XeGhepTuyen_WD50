@@ -16,7 +16,7 @@ class BookingRepository implements BookingRepositoryInterface
             'trip.vehicle:id,operator_id,plate_number,vehicle_type',
             'pickupStop',
             'dropoffStop',
-            'passengers',
+            'passengers.seatMap',
         ])->find($id);
     }
 
@@ -25,7 +25,7 @@ class BookingRepository implements BookingRepositoryInterface
         return Booking::with([
             'trip.route',
             'trip.driver.user:id,full_name',
-            'passengers',
+            'passengers.seatMap',
             'pickupStop',
         ])->where('booking_code', $code)->first();
     }

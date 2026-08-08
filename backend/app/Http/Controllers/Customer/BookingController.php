@@ -13,8 +13,11 @@ use App\Http\Requests\Customer\StoreBookingRequest;
 use App\Http\Resources\Customer\BookingResource;
 use App\Repositories\Contracts\BookingRepositoryInterface;
 use App\Services\BookingService;
+use App\Services\QrCodeService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 
 class BookingController extends Controller
@@ -153,5 +156,23 @@ class BookingController extends Controller
             'success' => true,
             'data' => ['qr_code' => $booking->qr_code],
         ]);
+    }
+
+    public function downloadTicket(string $id, QrCodeService $qrCodeService): Response|JsonResponse
+    {
+        $booking = $this->bookingRepo->findById($id);
+
+        if (! $booking || $booking->user_id !== auth('customer')->id()) {
+            return response()->json(['success' => false, 'message' => 'Vé không tồn tại'], 404);
+        }
+
+        $qrDataUri = 'data:image/svg+xml;base64,'.base64_encode(
+            $qrCodeService->renderSvg($booking)
+        );
+
+        return Pdf::loadView('pdfs.customer-ticket', [
+            'booking' => $booking,
+            'qrDataUri' => $qrDataUri,
+        ])->setPaper('a5')->download("ve-{$booking->booking_code}.pdf");
     }
 }

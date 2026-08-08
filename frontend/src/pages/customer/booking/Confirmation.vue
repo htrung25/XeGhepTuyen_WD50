@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onBeforeUnmount, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { toast } from 'vue-sonner';
 import { customerApi } from '@/api/customer.api';
 import { useCustomerStore } from '@/stores/customer.store';
 
@@ -11,7 +12,12 @@ const store = useCustomerStore();
 const bookingId = (route.params.id as string) || store.currentBookingId;
 const booking = ref<any>(null);
 const isLoading = ref(true);
+const isDownloading = ref(false);
+const isSharing = ref(false);
 const errorMsg = ref('');
+let qrPollTimer: ReturnType<typeof setTimeout> | null = null;
+let qrPollAttempts = 0;
+const MAX_QR_POLL_ATTEMPTS = 15;
 
 function fmtDateTime(iso: string) {
     const d = new Date(iso);
@@ -35,6 +41,68 @@ function fmtTime(iso: string) {
     });
 }
 
+async function pollQrCode() {
+    if (!bookingId || booking.value?.qr_code) return;
+
+    const { data } = await customerApi.getBookingQr(bookingId);
+    if (data?.qr_code) {
+        booking.value.qr_code = data.qr_code;
+        return;
+    }
+
+    qrPollAttempts += 1;
+    if (qrPollAttempts < MAX_QR_POLL_ATTEMPTS) {
+        qrPollTimer = setTimeout(pollQrCode, 2000);
+    }
+}
+
+async function downloadTicket() {
+    if (!bookingId || isDownloading.value) return;
+
+    isDownloading.value = true;
+    const { data, error } = await customerApi.downloadBookingTicket(bookingId);
+    isDownloading.value = false;
+
+    if (error || !data) {
+        toast.error(error || 'Không thể tải vé PDF.');
+        return;
+    }
+
+    const url = URL.createObjectURL(data);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `ve-${booking.value?.booking_code || bookingId}.pdf`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+}
+
+async function shareTicket() {
+    if (!bookingId || isSharing.value) return;
+
+    isSharing.value = true;
+    const shareUrl = window.location.href;
+    const shareData = {
+        title: `Vé XeGhep.vn ${booking.value?.booking_code || ''}`.trim(),
+        text: `Thông tin vé ${booking.value?.trip?.route || ''}`.trim(),
+        url: shareUrl,
+    };
+
+    try {
+        if (navigator.share) {
+            await navigator.share(shareData);
+        } else {
+            await navigator.clipboard.writeText(shareUrl);
+            toast.success('Đã sao chép liên kết vé.');
+        }
+    } catch (error) {
+        if ((error as DOMException)?.name !== 'AbortError') {
+            toast.error('Không thể chia sẻ vé. Vui lòng thử lại.');
+        }
+    } finally {
+        isSharing.value = false;
+    }
+}
+
 onMounted(async () => {
     if (!bookingId) {
         router.replace('/home');
@@ -47,7 +115,12 @@ onMounted(async () => {
         return;
     }
     booking.value = data;
+    if (!booking.value?.qr_code) void pollQrCode();
     store.resetBooking();
+});
+
+onBeforeUnmount(() => {
+    if (qrPollTimer) clearTimeout(qrPollTimer);
 });
 </script>
 
@@ -145,7 +218,7 @@ onMounted(async () => {
                                 Tuyến đường
                             </p>
                             <p class="font-semibold text-gray-900">
-                                Hà Nội → Hải Phòng
+                                {{ booking?.trip?.route ?? '—' }}
                             </p>
                         </div>
                         <div>
@@ -175,7 +248,8 @@ onMounted(async () => {
                             <p class="font-semibold text-gray-900">
                                 {{
                                     booking?.passengers
-                                        ?.map((p: any) => p.seat?.seat_code)
+                                        ?.map((p: any) => p.seat_code)
+                                        .filter(Boolean)
                                         .join(', ') ?? '—'
                                 }}
                             </p>
@@ -247,7 +321,7 @@ onMounted(async () => {
                             </div>
                         </div>
                         <div
-                            v-if="booking?.trip?.driver"
+                            v-if="booking?.trip?.driver_name || booking?.trip?.vehicle"
                             class="flex items-start gap-2"
                         >
                             <span class="mt-0.5">🚗</span>
@@ -255,22 +329,12 @@ onMounted(async () => {
                                 <p class="text-xs text-gray-400">Tài xế</p>
                                 <p class="font-medium text-gray-900">
                                     {{
-                                        booking.trip.driver.user?.full_name ??
-                                        'Nguyễn Văn Tài'
+                                        booking.trip.driver_name ?? '—'
                                     }}
-                                    <span class="ml-1 text-yellow-500"
-                                        >⭐
-                                        {{
-                                            booking.trip.driver.rating_avg?.toFixed(
-                                                1,
-                                            ) ?? '4.8'
-                                        }}</span
-                                    >
                                     <span class="font-normal text-gray-400">
                                         ·
                                         {{
-                                            booking.trip.vehicle
-                                                ?.plate_number ?? '—'
+                                            booking.trip.vehicle?.plate ?? '—'
                                         }}</span
                                     >
                                 </p>
@@ -306,14 +370,20 @@ onMounted(async () => {
                     <!-- Action buttons -->
                     <div class="mt-4 flex gap-3">
                         <button
-                            class="flex-1 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                            type="button"
+                            :disabled="isDownloading"
+                            @click="downloadTicket"
+                            class="flex-1 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            📥 Tải vé PDF
+                            {{ isDownloading ? 'Đang tạo PDF...' : '📥 Tải vé PDF' }}
                         </button>
                         <button
-                            class="flex-1 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                            type="button"
+                            :disabled="isSharing"
+                            @click="shareTicket"
+                            class="flex-1 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            🔗 Chia sẻ vé
+                            {{ isSharing ? 'Đang chia sẻ...' : '🔗 Chia sẻ vé' }}
                         </button>
                     </div>
                 </div>

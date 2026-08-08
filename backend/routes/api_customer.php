@@ -56,6 +56,7 @@ Route::middleware(['auth:sanctum', 'role:customer'])->group(function () {
     Route::get('bookings/{id}', [BookingController::class, 'show']);
     Route::post('bookings/{id}/cancel', [BookingController::class, 'cancel']);
     Route::get('bookings/{id}/qr', [BookingController::class, 'qr']);
+    Route::get('bookings/{id}/ticket.pdf', [BookingController::class, 'downloadTicket']);
     Route::get('bookings/{id}/track', [TrackingController::class, 'trackByBooking']);
 
     // Payments

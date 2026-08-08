@@ -18,6 +18,8 @@ import {
     store as bookingStore,
     show as bookingShow,
     cancel as bookingCancel,
+    qr as bookingQr,
+    downloadTicket as bookingDownloadTicket,
 } from '@/actions/App/Http/Controllers/Customer/BookingController';
 import {
     index as notificationsIndex,
@@ -122,6 +124,11 @@ export const customerApi = {
     getBookings: (params?: { status?: string; page?: number }) =>
         apiClient.send(bookingsIndex({ query: params })),
     getBooking: (id: string) => apiClient.send(bookingShow(id)),
+    getBookingQr: (id: string) => apiClient.send(bookingQr(id)),
+    downloadBookingTicket: (id: string) =>
+        apiClient.send<Blob>(bookingDownloadTicket(id), undefined, {
+            blob: true,
+        }),
     cancelBooking: (id: string, reason?: string) =>
         apiClient.send(bookingCancel(id), { reason }),
     trackBooking: (id: string) => apiClient.send(trackByBooking(id)),
