@@ -31,6 +31,7 @@ class Driver extends Model
         'current_lng',
         'location_updated_at',
         'reject_reason',
+        'suspend_reason',
         'status',
         'verified_at',
     ];

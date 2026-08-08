@@ -126,6 +126,22 @@ class DriverService
     }
 
     /**
+     * Đình chỉ tài xế đang hoạt động và vô hiệu hóa tài khoản trong cùng transaction.
+     */
+    public function suspend(Driver $driver, string $reason): DriverTransitionResultDTO
+    {
+        return $this->transition(
+            driver: $driver,
+            from: DriverStatusEnum::Verified,
+            to: DriverStatusEnum::Suspended,
+            attributes: ['suspend_reason' => $reason],
+            sideEffect: function (Driver $locked): void {
+                $locked->user->update(['is_active' => false]);
+            },
+        );
+    }
+
+    /**
      * Cấp lại mật khẩu cho tài xế (operator hoặc admin) + gửi SMS.
      *
      * @return string Mật khẩu tạm mới (plaintext) để bàn giao cho tài xế.
@@ -178,7 +194,7 @@ class DriverService
                 ->firstOrFail();
 
             if ($locked->status !== $from) {
-                throw new DomainException('Tài xế này không ở trạng thái chờ duyệt');
+                throw new DomainException("Tài xế này không ở trạng thái {$from->label()}");
             }
 
             $oldStatus = $locked->status;

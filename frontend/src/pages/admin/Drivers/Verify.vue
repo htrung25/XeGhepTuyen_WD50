@@ -13,6 +13,7 @@ interface DriverDoc {
     operator_name: string;
     status: string;
     reject_reason?: string | null;
+    suspend_reason?: string | null;
     created_at: string;
     documents: {
         id_card_front?: string;
@@ -553,6 +554,17 @@ onMounted(loadDrivers);
                                 {{ d.reject_reason }}
                             </p>
                         </div>
+                        <div
+                            v-if="d.status === 'suspended' && d.suspend_reason"
+                            class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3"
+                        >
+                            <p class="text-xs font-semibold tracking-wide text-amber-700 uppercase">
+                                Lý do đình chỉ
+                            </p>
+                            <p class="mt-1 text-sm break-words whitespace-pre-wrap text-amber-800">
+                                {{ d.suspend_reason }}
+                            </p>
+                        </div>
                     </div>
 
                     <!-- Right: action panel -->
@@ -573,11 +585,6 @@ onMounted(loadDrivers);
                             class="w-full rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700"
                         >
                             Từ chối
-                        </button>
-                        <button
-                            class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
-                        >
-                            Yêu cầu bổ sung
                         </button>
                     </div>
                     <div

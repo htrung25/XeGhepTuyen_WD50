@@ -20,6 +20,7 @@ class DriverResource extends JsonResource
             'operator_name' => $this->operator->company_name,
             'status' => $this->status->value,
             'reject_reason' => $this->reject_reason,
+            'suspend_reason' => $this->suspend_reason,
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),
             'documents' => [
                 'id_card_front' => $documents->temporaryUrl($this->id_card_front_path),

@@ -3,6 +3,7 @@
 use App\Enums\DriverStatusEnum;
 use App\Enums\UserRoleEnum;
 use App\Jobs\SendSmsNotificationJob;
+use App\Models\AuditLog;
 use App\Models\Driver;
 use App\Models\Operator;
 use App\Models\User;
@@ -113,4 +114,26 @@ it('không cho approve ghi đè kết quả reject', function () {
         ->and($driver->reject_reason)->toBe('Hồ sơ không hợp lệ.');
 
     Queue::assertNotPushed(SendSmsNotificationJob::class);
+});
+
+it('bắt buộc lý do và lưu lý do khi đình chỉ tài xế', function () {
+    $driver = makeDriverForAdminRejection(DriverStatusEnum::Verified);
+
+    $this->postJson("/api/admin/drivers/{$driver->id}/suspend", [])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('reason');
+
+    $reason = 'Vi phạm quy trình an toàn vận hành.';
+    $this->postJson("/api/admin/drivers/{$driver->id}/suspend", [
+        'reason' => $reason,
+    ])->assertOk();
+
+    $driver->refresh();
+    expect($driver->status)->toBe(DriverStatusEnum::Suspended)
+        ->and($driver->suspend_reason)->toBe($reason)
+        ->and($driver->user->is_active)->toBeFalse();
+
+    $audit = AuditLog::where('action', 'suspend_driver')->firstOrFail();
+    expect($audit->new_values['suspend_reason'])->toBe($reason)
+        ->and($audit->old_values['status'])->toBe(DriverStatusEnum::Verified->value);
 });

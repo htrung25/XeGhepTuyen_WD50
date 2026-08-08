@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\DriverStatusEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\DriverReviewReasonRequest;
 use App\Http\Resources\Admin\DriverResource;
 use App\Models\Driver;
 use App\Services\AuditLogService;
@@ -11,7 +12,6 @@ use App\Services\DriverService;
 use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class DriverController extends Controller
 {
@@ -113,10 +113,8 @@ class DriverController extends Controller
         ]);
     }
 
-    public function reject(Request $request, string $id): JsonResponse
+    public function reject(DriverReviewReasonRequest $request, string $id): JsonResponse
     {
-        $request->validate(['reason' => ['required', 'string', 'max:500']]);
-
         // Eager-load user: the audit log reads $driver->user (FK user_id is NOT NULL).
         $driver = Driver::with('user')->find($id);
 
@@ -125,7 +123,7 @@ class DriverController extends Controller
         }
 
         try {
-            $result = $this->driverService->reject($driver, $request->reason);
+            $result = $this->driverService->reject($driver, $request->validated('reason'));
         } catch (DomainException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -141,7 +139,7 @@ class DriverController extends Controller
         return response()->json(['success' => true, 'message' => 'Đã từ chối hồ sơ tài xế']);
     }
 
-    public function suspend(string $id): JsonResponse
+    public function suspend(DriverReviewReasonRequest $request, string $id): JsonResponse
     {
         // Eager-load user: audit log + is_active update read $driver->user (FK user_id NOT NULL).
         $driver = Driver::with('user')->find($id);
@@ -150,26 +148,22 @@ class DriverController extends Controller
             return response()->json(['success' => false, 'message' => 'Tài xế không tồn tại'], 404);
         }
 
-        // Only an active (verified) driver can be suspended. Suspending a
-        // pending/rejected profile (never active) or an already-suspended one is invalid.
-        if ($driver->status !== DriverStatusEnum::Verified) {
-            return response()->json(['success' => false, 'message' => 'Chỉ có thể đình chỉ tài xế đang hoạt động'], 422);
+        try {
+            $result = $this->driverService->suspend($driver, $request->validated('reason'));
+        } catch (DomainException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
-
-        $oldStatus = $driver->status->value;
-        // Wrap both writes (drivers + users) in one transaction so a mid-way
-        // failure can't leave the driver suspended while the user stays active.
-        DB::transaction(function () use ($driver) {
-            $driver->update(['status' => DriverStatusEnum::Suspended]);
-            $driver->user()->update(['is_active' => false]);
-        });
 
         $this->auditLog->log(
             action: 'suspend_driver',
-            model: $driver,
-            description: "Đã tạm đình chỉ hoạt động tài xế: {$driver->user->full_name} (SĐT: {$driver->user->phone})",
-            oldValues: ['status' => $oldStatus, 'user_is_active' => true],
-            newValues: ['status' => DriverStatusEnum::Suspended->value, 'user_is_active' => false]
+            model: $result->driver,
+            description: "Đã tạm đình chỉ hoạt động tài xế: {$result->driver->user->full_name} (SĐT: {$result->driver->user->phone}). Lý do: {$request->validated('reason')}",
+            oldValues: ['status' => $result->oldStatus->value, 'user_is_active' => true],
+            newValues: [
+                'status' => $result->newStatus->value,
+                'user_is_active' => false,
+                'suspend_reason' => $request->validated('reason'),
+            ]
         );
 
         return response()->json(['success' => true, 'message' => 'Đã tạm đình chỉ tài xế']);
