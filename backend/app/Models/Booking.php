@@ -157,6 +157,16 @@ class Booking extends Model
             ->where('booking_status', BookingStatusEnum::Pending);
     }
 
+    public function scopeCompleted(Builder $query): Builder
+    {
+        return $query->where('booking_status', BookingStatusEnum::Completed);
+    }
+
+    public function scopePaid(Builder $query): Builder
+    {
+        return $query->where('payment_status', BookingPaymentStatusEnum::Paid);
+    }
+
     // ─── Accessors ────────────────────────────────────────────────────────────
 
     public function getFormattedAmountAttribute(): string
