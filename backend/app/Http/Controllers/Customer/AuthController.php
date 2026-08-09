@@ -12,6 +12,7 @@ use App\Http\Requests\Customer\SendOtpRequest;
 use App\Http\Requests\Customer\UpdateProfileRequest;
 use App\Jobs\SendSmsNotificationJob;
 use App\Models\User;
+use App\Rules\VietnamesePhoneRule;
 use App\Services\CustomerRegistrationService;
 use App\Services\OtpService;
 use Illuminate\Http\JsonResponse;
@@ -53,7 +54,7 @@ class AuthController extends Controller
     public function verifyOtp(Request $request): JsonResponse
     {
         $request->validate([
-            'phone' => ['required', 'regex:/^(0[35789])[0-9]{8}$/'],
+            'phone' => ['required', 'regex:'.VietnamesePhoneRule::PATTERN],
             'otp' => ['required', 'digits:6'],
         ]);
 

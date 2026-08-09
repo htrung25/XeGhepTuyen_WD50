@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Customer;
 
+use App\Rules\VietnamesePhoneRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreBookingRequest extends FormRequest
@@ -27,13 +28,13 @@ class StoreBookingRequest extends FormRequest
             'dropoff_lng' => ['required', 'numeric', 'between:-180,180'],
             'passenger_count' => ['required', 'integer', 'min:1', 'max:4'],
             'contact_name' => ['required', 'string', 'min:2', 'max:100'],
-            'contact_phone' => ['required', 'regex:/^(0[35789])[0-9]{8}$/'],
+            'contact_phone' => ['required', 'regex:'.VietnamesePhoneRule::PATTERN],
             'note' => ['nullable', 'string', 'max:500'],
             'payment_method' => ['required', 'in:momo,vnpay,wallet,cash'],
             'voucher_code' => ['nullable', 'string', 'max:20'],
             'passengers' => ['required', 'array', 'min:1', 'max:4'],
             'passengers.*.full_name' => ['required', 'string', 'min:2', 'max:100'],
-            'passengers.*.phone' => ['nullable', 'regex:/^(0[35789])[0-9]{8}$/'],
+            'passengers.*.phone' => ['nullable', 'regex:'.VietnamesePhoneRule::PATTERN],
         ];
     }
 
