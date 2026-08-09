@@ -404,9 +404,13 @@ class PaymentService
 
     public function handleSepayWebhook(array $payload): bool
     {
-        $content = $payload['transactionContent'] ?? '';
+        // SePay POST thực tế dùng field "content" (không phải "transactionContent")
+        // — https://docs.sepay.vn tích hợp Webhooks. Field sai khiến webhook thật
+        // từ gateway luôn rơi vào nhánh rỗng này, KHÔNG BAO GIỜ xác nhận được
+        // thanh toán chuyển khoản tự động dù mọi logic xác thực còn lại đều đúng.
+        $content = $payload['content'] ?? '';
         if (empty($content)) {
-            Log::warning('SePay Webhook: transactionContent rỗng');
+            Log::warning('SePay Webhook: content rỗng');
 
             return false;
         }
@@ -418,7 +422,8 @@ class PaymentService
         }
 
         $orderId = strtoupper($matches[0]);
-        $amountIn = (int) ($payload['amountIn'] ?? 0);
+        // Field thật của SePay là "transferAmount" (không phải "amountIn").
+        $amountIn = (int) ($payload['transferAmount'] ?? 0);
         $gatewayTxnId = $payload['id'] ?? null;
 
         if (($payload['transferType'] ?? null) !== 'in') {
