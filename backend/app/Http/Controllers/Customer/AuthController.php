@@ -177,7 +177,11 @@ class AuthController extends Controller
             'new_password.confirmed' => 'Xác nhận mật khẩu mới không khớp',
         ]);
 
-        $user = auth('customer')->user();
+        $user = $request->user();
+
+        if (! $user instanceof User) {
+            abort(401, 'Unauthenticated.');
+        }
 
         if (! Hash::check($request->input('old_password'), $user->password)) {
             return response()->json([
