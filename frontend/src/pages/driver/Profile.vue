@@ -6,6 +6,8 @@ import { useDriverAuthStore } from '@/stores/driver.auth.store';
 
 const auth = useDriverAuthStore();
 
+const SUCCESS_MSG_TIMEOUT_MS = 3000;
+
 const profile = ref<any>(null);
 const reviews = ref<any[]>([]);
 const isLoading = ref(true);
@@ -123,7 +125,7 @@ async function saveProfile() {
         toast.success('Cập nhật thông tin thành công!');
         setTimeout(() => {
             saveMsg.value = '';
-        }, 3000);
+        }, SUCCESS_MSG_TIMEOUT_MS);
     }
 }
 
@@ -217,7 +219,7 @@ async function updatePassword() {
         toast.success('Cập nhật mật khẩu thành công!');
         setTimeout(() => {
             pwMsg.value = '';
-        }, 3000);
+        }, SUCCESS_MSG_TIMEOUT_MS);
     }
 }
 

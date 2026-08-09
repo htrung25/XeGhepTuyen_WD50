@@ -36,9 +36,6 @@ const stats = ref<SupportStats>({
 const currentPage = ref(1);
 const lastPage = ref(1);
 
-// ─── Computed ────────────────────────────────────────────────────────────────
-const filteredTickets = computed(() => tickets.value);
-
 const hasActiveFilter = computed(
     () =>
         statusFilter.value !== 'all' ||
@@ -293,7 +290,7 @@ onMounted(() => void fetchTickets());
                 class="flex items-center gap-2 border-b border-slate-100 px-5 py-3"
             >
                 <span class="text-sm text-slate-500"
-                    >{{ filteredTickets.length }} ticket</span
+                    >{{ tickets.length }} ticket</span
                 >
                 <span
                     v-if="statusFilter !== 'all'"
@@ -314,10 +311,7 @@ onMounted(() => void fetchTickets());
             </div>
 
             <!-- Empty -->
-            <div
-                v-else-if="filteredTickets.length === 0"
-                class="py-16 text-center"
-            >
+            <div v-else-if="tickets.length === 0" class="py-16 text-center">
                 <p class="text-4xl">🎫</p>
                 <p class="mt-3 text-base font-bold text-slate-800">
                     Không tìm thấy ticket
@@ -330,7 +324,7 @@ onMounted(() => void fetchTickets());
             <!-- Rows -->
             <div v-else class="divide-y divide-slate-100">
                 <div
-                    v-for="ticket in filteredTickets"
+                    v-for="ticket in tickets"
                     :key="ticket.id"
                     class="group flex cursor-pointer items-stretch transition hover:bg-slate-50"
                     @click="router.push(`/admin/support/${ticket.id}`)"

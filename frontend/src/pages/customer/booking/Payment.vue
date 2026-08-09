@@ -373,9 +373,9 @@ onUnmounted(() => {
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-500">Tuyến</span>
-                            <span class="font-medium text-gray-900"
-                                >{{ bookingData?.trip?.route ?? '—' }}</span
-                            >
+                            <span class="font-medium text-gray-900">{{
+                                bookingData?.trip?.route ?? '—'
+                            }}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-500">Ghế</span>

@@ -44,9 +44,6 @@ const form = ref({
     priority: 'normal' as TicketPriority,
 });
 
-// ─── Computed ───────────────────────────────────────────────────────────────
-const filteredTickets = computed(() => tickets.value);
-
 const openCount = computed(() => stats.value.open);
 const inProgressCount = computed(() => stats.value.in_progress);
 const resolvedCount = computed(() => stats.value.resolved + stats.value.closed);
@@ -388,7 +385,7 @@ watch(statusFilter, () => void loadTickets(1));
 
                 <!-- Empty state -->
                 <div
-                    v-else-if="filteredTickets.length === 0"
+                    v-else-if="tickets.length === 0"
                     class="rounded-xl border border-slate-200 bg-white px-6 py-16 text-center shadow-sm"
                 >
                     <p class="text-4xl">🎫</p>
@@ -410,7 +407,7 @@ watch(statusFilter, () => void loadTickets(1));
                 <!-- Ticket Cards -->
                 <div v-else class="space-y-3">
                     <div
-                        v-for="ticket in filteredTickets"
+                        v-for="ticket in tickets"
                         :key="ticket.id"
                         class="group cursor-pointer rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md"
                         @click="router.push(`/support/${ticket.id}`)"

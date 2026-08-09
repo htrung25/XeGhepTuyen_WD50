@@ -15,6 +15,8 @@ const { can } = useCan();
 
 const sidebarCollapsed = ref(false);
 
+const POLL_INTERVAL_MS = 20000;
+
 // Thông báo admin (polling 20 giây)
 const {
     items: notifItems,
@@ -22,7 +24,7 @@ const {
     load: loadNotifs,
     markRead: markNotifRead,
     markAllRead: markAllNotifsRead,
-} = useAdminNotifications(20000);
+} = useAdminNotifications(POLL_INTERVAL_MS);
 const notifOpen = ref(false);
 const notifRef = ref<HTMLElement | null>(null);
 
@@ -78,7 +80,7 @@ let pendingTimer: ReturnType<typeof setInterval> | null = null;
 onMounted(async () => {
     document.addEventListener('click', handleClickOutside);
     loadPendingCounts();
-    pendingTimer = setInterval(loadPendingCounts, 20000); // 20 giây — đồng bộ với notification polling
+    pendingTimer = setInterval(loadPendingCounts, POLL_INTERVAL_MS); // đồng bộ với notification polling
     // Làm mới quyền hiện tại (phòng khi vai trò bị admin khác thay đổi).
     const { data } = await adminApi.me();
     if (data) authStore.updateUser(data);
