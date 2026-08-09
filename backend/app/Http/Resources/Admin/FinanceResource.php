@@ -12,7 +12,7 @@ class FinanceResource extends JsonResource
         return [
             'id' => $this->id,
             'booking_code' => $this->booking?->booking_code,
-            'payment_method' => $this->payment_method->value,
+            'payment_method' => $this->method->value,
             'amount' => $this->amount,
             'status' => $this->status->value,
             'gateway_txn_id' => $this->gateway_txn_id,
