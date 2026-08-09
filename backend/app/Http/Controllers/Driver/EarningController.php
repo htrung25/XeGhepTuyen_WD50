@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Driver;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -90,7 +91,7 @@ class EarningController extends Controller
     }
 
     /** Query vé thực nhận trên tập chuyến */
-    private function realizedBookings($tripIds)
+    private function realizedBookings($tripIds): Builder
     {
         return Booking::whereIn('trip_id', $tripIds)
             ->where('booking_status', self::REALIZED['booking_status']);
