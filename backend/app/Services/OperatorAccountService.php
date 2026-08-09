@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Jobs\SendSmsNotificationJob;
+use App\Jobs\Notification\SendSmsNotificationJob;
 use App\Models\Operator;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;

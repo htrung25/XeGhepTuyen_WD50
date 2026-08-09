@@ -1,6 +1,6 @@
 <?php
 
-use App\Jobs\ExpireLockedSeatsJob;
+use App\Jobs\Booking\ExpireLockedSeatsJob;
 use App\Models\OtpVerification;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;

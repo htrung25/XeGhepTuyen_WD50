@@ -57,11 +57,11 @@
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74,#fb7185\" \"php artisan serve --host=localhost\" \"php artisan queue:listen --queue=high,notifications,default --tries=1 --timeout=0\" \"php artisan schedule:work\" \"php artisan pail --timeout=0\" --names=server,queue,schedule,logs --kill-others"
+            "npx concurrently -c \"#93c5fd,#86efac,#c4b5fd,#fdba74,#fb7185\" \"php artisan serve --host=localhost\" \"php artisan queue:listen --queue=notifications --tries=1 --timeout=0\" \"php artisan queue:listen --queue=high,default --tries=1 --timeout=0\" \"php artisan schedule:work\" \"php artisan pail --timeout=0\" --names=server,notifications,queue,schedule,logs --kill-others"
         ],
         "dev:win": [
             "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \"php artisan serve --host=localhost\" \"php artisan queue:listen --queue=high,notifications,default --tries=1 --timeout=0\" \"php artisan schedule:work\" --names=server,queue,schedule --kill-others"
+            "npx concurrently -c \"#93c5fd,#86efac,#c4b5fd,#fdba74\" \"php artisan serve --host=localhost\" \"php artisan queue:listen --queue=notifications --tries=1 --timeout=0\" \"php artisan queue:listen --queue=high,default --tries=1 --timeout=0\" \"php artisan schedule:work\" --names=server,notifications,queue,schedule --kill-others"
         ],
         "lint": [
             "pint --parallel"

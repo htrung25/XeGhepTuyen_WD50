@@ -10,7 +10,7 @@ use App\Http\Requests\Customer\LoginRequest;
 use App\Http\Requests\Customer\RegisterRequest;
 use App\Http\Requests\Customer\SendOtpRequest;
 use App\Http\Requests\Customer\UpdateProfileRequest;
-use App\Jobs\SendSmsNotificationJob;
+use App\Jobs\Notification\SendSmsNotificationJob;
 use App\Models\User;
 use App\Rules\VietnamesePhoneRule;
 use App\Services\CustomerRegistrationService;

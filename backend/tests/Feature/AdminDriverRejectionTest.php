@@ -2,7 +2,7 @@
 
 use App\Enums\DriverStatusEnum;
 use App\Enums\UserRoleEnum;
-use App\Jobs\SendSmsNotificationJob;
+use App\Jobs\Notification\SendSmsNotificationJob;
 use App\Models\AuditLog;
 use App\Models\Driver;
 use App\Models\Operator;

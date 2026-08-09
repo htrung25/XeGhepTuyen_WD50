@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\BookingPaymentStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\RefundBookingRequest;
-use App\Jobs\SendSmsNotificationJob;
+use App\Jobs\Notification\SendSmsNotificationJob;
 use App\Models\Booking;
 use App\Models\Operator;
 use App\Models\Payment;

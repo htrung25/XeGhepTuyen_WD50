@@ -2,7 +2,7 @@
 
 use App\Enums\PartnerApplicationStatusEnum;
 use App\Enums\UserRoleEnum;
-use App\Jobs\SendSmsNotificationJob;
+use App\Jobs\Notification\SendSmsNotificationJob;
 use App\Models\PartnerApplication;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;

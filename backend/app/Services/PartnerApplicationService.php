@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Enums\OperatorStatusEnum;
 use App\Enums\PartnerApplicationStatusEnum;
 use App\Enums\UserRoleEnum;
-use App\Jobs\SendSmsNotificationJob;
+use App\Jobs\Notification\SendSmsNotificationJob;
 use App\Models\Operator;
 use App\Models\PartnerApplication;
 use App\Models\User;

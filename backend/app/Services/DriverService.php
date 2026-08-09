@@ -5,7 +5,7 @@ namespace App\Services;
 use App\DTOs\DriverTransitionResultDTO;
 use App\Enums\DriverStatusEnum;
 use App\Enums\UserRoleEnum;
-use App\Jobs\SendSmsNotificationJob;
+use App\Jobs\Notification\SendSmsNotificationJob;
 use App\Models\Driver;
 use App\Models\Operator;
 use App\Models\User;

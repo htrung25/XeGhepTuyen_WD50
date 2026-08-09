@@ -4,8 +4,8 @@ namespace App\Services;
 
 use App\Enums\NotificationChannelEnum;
 use App\Enums\NotificationTypeEnum;
+use App\Jobs\Notification\SendSmsNotificationJob;
 use App\Jobs\SendEmailNotificationJob;
-use App\Jobs\SendSmsNotificationJob;
 use App\Jobs\SendZaloNotificationJob;
 use App\Models\Notification;
 use App\Models\User;
