@@ -19,9 +19,6 @@ use Illuminate\Support\Facades\DB;
 
 class RevenueController extends Controller
 {
-    /** Trạng thái vé tính là doanh thu THỰC NHẬN (đã hoàn tất + đã thanh toán) */
-    private const REALIZED = ['booking_status' => 'completed', 'payment_status' => 'paid'];
-
     public function __construct(private readonly SettlementService $settlementService) {}
 
     // ── Helpers ────────────────────────────────────────────────────────────
@@ -64,9 +61,7 @@ class RevenueController extends Controller
     /** Query vé doanh thu thực nhận trên tập chuyến */
     private function realizedBookings($tripIds): Builder
     {
-        return Booking::whereIn('trip_id', $tripIds)
-            ->where('booking_status', self::REALIZED['booking_status'])
-            ->where('payment_status', self::REALIZED['payment_status']);
+        return Booking::whereIn('trip_id', $tripIds)->completed()->paid();
     }
 
     // ── Endpoints ──────────────────────────────────────────────────────────
