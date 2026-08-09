@@ -6,6 +6,7 @@ use App\Enums\WalletTransactionTypeEnum;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class WalletService
 {
@@ -37,7 +38,7 @@ class WalletService
         return $this->getOrCreate($user)->balance;
     }
 
-    public function getTransactions(User $user, int $perPage = 20)
+    public function getTransactions(User $user, int $perPage = 20): LengthAwarePaginator
     {
         return $this->getOrCreate($user)
             ->transactions()

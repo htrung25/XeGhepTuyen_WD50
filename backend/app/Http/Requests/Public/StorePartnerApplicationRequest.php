@@ -25,7 +25,7 @@ class StorePartnerApplicationRequest extends FormRequest
             'fleet_breakdown.van_9' => ['nullable', 'integer', 'min:0', 'max:1000'],
             'fleet_breakdown.minibus_16' => ['nullable', 'integer', 'min:0', 'max:1000'],
             'representative_name' => ['required', 'string', 'min:2', 'max:100'],
-            'phone' => ['required', 'regex:/^(0[3|5|7|8|9])+([0-9]{8})$/'],
+            'phone' => ['required', 'regex:/^(0[35789])[0-9]{8}$/'],
             'email' => ['nullable', 'email', 'max:100'],
             'business_license' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
             'fleet_images' => ['nullable', 'array', 'max:5'],
