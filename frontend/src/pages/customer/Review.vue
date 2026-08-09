@@ -112,7 +112,8 @@ onMounted(async () => {
             </div>
             <h2 class="mb-2 text-2xl font-bold text-gray-900">Cảm ơn bạn!</h2>
             <p class="mb-8 text-gray-500">
-                Đánh giá của bạn giúp cộng đồng XeGhep.vn ngày càng tốt hơn.
+                Đánh giá của bạn giúp cộng đồng XeGhepTuyen-Fgroup ngày càng tốt
+                hơn.
             </p>
             <router-link
                 to="/bookings"

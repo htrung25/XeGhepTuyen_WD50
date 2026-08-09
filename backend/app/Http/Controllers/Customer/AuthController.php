@@ -34,7 +34,7 @@ class AuthController extends Controller
 
             SendSmsNotificationJob::dispatch(
                 $request->phone,
-                "[XeGhep] Mã OTP của bạn là: {$otp}. Có hiệu lực trong 5 phút. Không chia sẻ mã này."
+                "[XeGhepTuyen-Fgroup] Mã OTP của bạn là: {$otp}. Có hiệu lực trong 5 phút. Không chia sẻ mã này."
             )->onQueue('notifications');
 
             return response()->json([

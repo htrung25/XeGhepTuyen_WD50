@@ -57,7 +57,7 @@ async function handleLogin() {
                     </div>
                     <div>
                         <span class="text-xl font-bold text-gray-900"
-                            >XeGhep</span
+                            >XeGhepTuyen-Fgroup</span
                         >
                         <span class="text-xl font-bold text-red-600"
                             >&nbsp;Admin</span
@@ -69,7 +69,7 @@ async function handleLogin() {
                     Đăng nhập Quản trị viên
                 </h1>
                 <p class="mb-8 text-center text-sm text-gray-500">
-                    Truy cập hệ thống quản trị XeGhep
+                    Truy cập hệ thống quản trị XeGhepTuyen-Fgroup
                 </p>
 
                 <!-- Error alert -->

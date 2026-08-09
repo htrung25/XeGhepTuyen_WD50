@@ -62,7 +62,9 @@ const handleLogin = async () => {
                         </svg>
                     </div>
                     <span class="text-2xl font-bold text-slate-800"
-                        >XeGhep<span class="text-amber-500">.vn</span></span
+                        >XeGhepTuyen<span class="text-amber-500"
+                            >-Fgroup</span
+                        ></span
                     >
                 </div>
 
@@ -215,7 +217,7 @@ const handleLogin = async () => {
 
             <!-- Footer note -->
             <p class="mt-6 text-center text-xs text-slate-400">
-                © 2024 XeGhep.vn · Nền tảng ghép xe tuyến cố định
+                © 2026 XeGhepTuyen-Fgroup · Nền tảng ghép xe tuyến cố định
             </p>
         </div>
     </div>

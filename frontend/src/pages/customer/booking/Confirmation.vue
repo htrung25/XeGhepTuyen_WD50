@@ -82,7 +82,7 @@ async function shareTicket() {
     isSharing.value = true;
     const shareUrl = window.location.href;
     const shareData = {
-        title: `Vé XeGhep.vn ${booking.value?.booking_code || ''}`.trim(),
+        title: `Vé XeGhepTuyen-Fgroup ${booking.value?.booking_code || ''}`.trim(),
         text: `Thông tin vé ${booking.value?.trip?.route || ''}`.trim(),
         url: shareUrl,
     };
@@ -197,7 +197,9 @@ onBeforeUnmount(() => {
                                     />
                                 </svg>
                             </div>
-                            <span class="font-bold text-white">XeGhep.vn</span>
+                            <span class="font-bold text-white"
+                                >XeGhepTuyen-Fgroup</span
+                            >
                         </div>
                         <span
                             class="rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium text-blue-100"
@@ -323,16 +325,17 @@ onBeforeUnmount(() => {
                             </div>
                         </div>
                         <div
-                            v-if="booking?.trip?.driver_name || booking?.trip?.vehicle"
+                            v-if="
+                                booking?.trip?.driver_name ||
+                                booking?.trip?.vehicle
+                            "
                             class="flex items-start gap-2"
                         >
                             <span class="mt-0.5">🚗</span>
                             <div>
                                 <p class="text-xs text-gray-400">Tài xế</p>
                                 <p class="font-medium text-gray-900">
-                                    {{
-                                        booking.trip.driver_name ?? '—'
-                                    }}
+                                    {{ booking.trip.driver_name ?? '—' }}
                                     <span class="font-normal text-gray-400">
                                         ·
                                         {{
@@ -377,7 +380,11 @@ onBeforeUnmount(() => {
                             @click="downloadTicket"
                             class="flex-1 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            {{ isDownloading ? 'Đang tạo PDF...' : '📥 Tải vé PDF' }}
+                            {{
+                                isDownloading
+                                    ? 'Đang tạo PDF...'
+                                    : '📥 Tải vé PDF'
+                            }}
                         </button>
                         <button
                             type="button"
@@ -385,7 +392,9 @@ onBeforeUnmount(() => {
                             @click="shareTicket"
                             class="flex-1 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            {{ isSharing ? 'Đang chia sẻ...' : '🔗 Chia sẻ vé' }}
+                            {{
+                                isSharing ? 'Đang chia sẻ...' : '🔗 Chia sẻ vé'
+                            }}
                         </button>
                     </div>
                 </div>

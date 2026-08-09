@@ -82,7 +82,9 @@ async function handleLogin() {
                     </svg>
                 </div>
                 <span class="text-3xl font-black text-white"
-                    >XeGhep<span class="text-green-300">.vn</span></span
+                    >XeGhepTuyen<span class="text-green-300"
+                        >-Fgroup</span
+                    ></span
                 >
             </div>
 
@@ -98,13 +100,13 @@ async function handleLogin() {
                         <div class="h-8 flex-1 rounded-lg bg-white/25" />
                         <div class="h-8 flex-1 rounded-lg bg-white/25" />
                     </div>
-                    <!-- XeGhep label -->
+                    <!-- XeGhepTuyen-Fgroup label -->
                     <div
                         class="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-green-500 px-4 py-1"
                     >
                         <span
                             class="text-xs font-black tracking-widest text-white"
-                            >XeGhep</span
+                            >XeGhepTuyen-Fgroup</span
                         >
                     </div>
                     <!-- Wheels -->
@@ -215,7 +217,9 @@ async function handleLogin() {
                     </svg>
                 </div>
                 <span class="text-xl font-black text-gray-900"
-                    >XeGhep<span class="text-green-600">.vn</span></span
+                    >XeGhepTuyen<span class="text-green-600"
+                        >-Fgroup</span
+                    ></span
                 >
             </div>
 

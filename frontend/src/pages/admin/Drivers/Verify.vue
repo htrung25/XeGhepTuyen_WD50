@@ -558,10 +558,14 @@ onMounted(loadDrivers);
                             v-if="d.status === 'suspended' && d.suspend_reason"
                             class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3"
                         >
-                            <p class="text-xs font-semibold tracking-wide text-amber-700 uppercase">
+                            <p
+                                class="text-xs font-semibold tracking-wide text-amber-700 uppercase"
+                            >
                                 Lý do đình chỉ
                             </p>
-                            <p class="mt-1 text-sm break-words whitespace-pre-wrap text-amber-800">
+                            <p
+                                class="mt-1 text-sm break-words whitespace-pre-wrap text-amber-800"
+                            >
                                 {{ d.suspend_reason }}
                             </p>
                         </div>

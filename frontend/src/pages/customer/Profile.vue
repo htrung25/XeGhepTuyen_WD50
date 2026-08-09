@@ -32,7 +32,7 @@ const passwordForm = ref({
 const menuItems: { key: Section; icon: string; label: string }[] = [
     { key: 'profile', icon: '👤', label: 'Thông tin cá nhân' },
     { key: 'password', icon: '🔒', label: 'Đổi mật khẩu' },
-    { key: 'wallet', icon: '💳', label: 'Ví XeGhep' },
+    { key: 'wallet', icon: '💳', label: 'Ví XeGhepTuyen-Fgroup' },
 ];
 
 const memberSince = computed(() => {
@@ -375,7 +375,9 @@ onMounted(async () => {
                     <div
                         class="rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white"
                     >
-                        <p class="mb-1 text-sm text-blue-100">Ví XeGhep</p>
+                        <p class="mb-1 text-sm text-blue-100">
+                            Ví XeGhepTuyen-Fgroup
+                        </p>
                         <p class="mb-4 text-3xl font-bold">
                             {{ wallet ? fmt(wallet.balance) : '—' }}
                         </p>

@@ -75,7 +75,7 @@ onUnmounted(() => {
                     </svg>
                 </div>
                 <span v-if="sidebarOpen" class="font-bold text-white">
-                    XeGhep<span class="text-green-400">.vn</span>
+                    XeGhepTuyen<span class="text-green-400">-Fgroup</span>
                 </span>
             </div>
 

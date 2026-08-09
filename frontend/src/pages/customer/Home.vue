@@ -128,7 +128,7 @@ onMounted(() => {
                     <p
                         class="mt-6 max-w-xl text-base leading-7 text-pretty text-slate-600 sm:text-lg"
                     >
-                        Xe ghép tuyến FGroup đưa bạn đến đúng nơi, đúng giờ với
+                        XeGhepTuyen-Fgroup đưa bạn đến đúng nơi, đúng giờ với
                         trải nghiệm đặt chỗ minh bạch và tiện lợi hơn.
                     </p>
                     <div
@@ -516,7 +516,7 @@ onMounted(() => {
                         SẴN SÀNG LÊN ĐƯỜNG?
                     </p>
                     <h2 class="mt-2 text-3xl font-extrabold text-balance">
-                        Để FGroup lo phần đường còn lại.
+                        Để XeGhepTuyen-Fgroup lo phần đường còn lại.
                     </h2>
                     <p class="mt-3 text-pretty text-blue-100">
                         Chọn lịch trình phù hợp và giữ chỗ cho chuyến đi hôm

@@ -68,7 +68,7 @@ async function handleLogin() {
                     </svg>
                 </div>
                 <span class="text-2xl font-bold tracking-tight text-white">
-                    XeGhep<span class="text-blue-200">.vn</span>
+                    XeGhepTuyen<span class="text-blue-200">-Fgroup</span>
                 </span>
             </div>
 
@@ -327,7 +327,9 @@ async function handleLogin() {
                         </svg>
                     </div>
                     <span class="text-xl font-bold text-gray-900"
-                        >XeGhep<span class="text-blue-600">.vn</span></span
+                        >XeGhepTuyen<span class="text-blue-600"
+                            >-Fgroup</span
+                        ></span
                     >
                 </div>
 
@@ -551,7 +553,7 @@ async function handleLogin() {
 
                 <!-- Footer -->
                 <p class="mt-5 text-center text-xs text-gray-400">
-                    © 2024 XeGhep.vn · Nền tảng ghép xe tuyến cố định
+                    © 2026 XeGhepTuyen-Fgroup · Nền tảng ghép xe tuyến cố định
                 </p>
             </div>
         </div>

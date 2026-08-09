@@ -181,7 +181,8 @@ function scrollToForm() {
                     <h1
                         class="text-3xl leading-tight font-bold text-gray-900 md:text-5xl"
                     >
-                        Hợp tác cùng <span class="text-blue-600">XeGhep.vn</span
+                        Hợp tác cùng
+                        <span class="text-blue-600">XeGhepTuyen-Fgroup</span
                         ><br />
                         Nâng tầm dịch vụ vận tải của bạn
                     </h1>
@@ -336,8 +337,8 @@ function scrollToForm() {
                         Gửi yêu cầu thành công!
                     </h2>
                     <p class="mx-auto max-w-md text-gray-600">
-                        Cảm ơn bạn đã quan tâm hợp tác cùng XeGhep.vn. Đội ngũ
-                        của chúng tôi sẽ liên hệ lại trong vòng
+                        Cảm ơn bạn đã quan tâm hợp tác cùng XeGhepTuyen-Fgroup.
+                        Đội ngũ của chúng tôi sẽ liên hệ lại trong vòng
                         <strong>24h làm việc</strong> để hoàn tất quy trình.
                     </p>
                 </div>

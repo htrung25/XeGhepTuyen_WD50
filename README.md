@@ -1,4 +1,4 @@
-# XeGhep.vn — Đặt xe ghép liên tỉnh (DATN WD50)
+# XeGhepTuyen-Fgroup — Đặt xe ghép liên tỉnh (DATN WD50)
 
 Monorepo gồm 2 ứng dụng độc lập:
 

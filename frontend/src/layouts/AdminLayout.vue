@@ -209,7 +209,7 @@ async function handleLogout() {
                     v-if="!sidebarCollapsed"
                     class="truncate text-base font-bold text-white"
                 >
-                    XeGhep Admin
+                    XeGhepTuyen-Fgroup Admin
                 </span>
             </div>
 
@@ -458,7 +458,7 @@ async function handleLogout() {
                         </svg>
                     </button>
                     <span class="text-sm font-medium text-gray-700"
-                        >Hệ thống quản trị XeGhep</span
+                        >Hệ thống quản trị XeGhepTuyen-Fgroup</span
                     >
                 </div>
 

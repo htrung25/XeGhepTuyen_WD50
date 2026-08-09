@@ -182,14 +182,14 @@ async function handleRegister() {
                     </svg>
                 </div>
                 <span class="text-2xl font-bold tracking-tight text-white">
-                    XeGhep<span class="text-blue-200">.vn</span>
+                    XeGhepTuyen<span class="text-blue-200">-Fgroup</span>
                 </span>
             </div>
 
             <!-- Content -->
             <div class="relative z-10 flex flex-1 flex-col justify-center py-8">
                 <h2 class="text-3xl leading-tight font-bold text-white">
-                    Tham gia<br />XeGhep.vn ngay
+                    Tham gia<br />XeGhepTuyen-Fgroup ngay
                 </h2>
                 <p class="mt-3 leading-relaxed text-blue-200">
                     Tạo tài khoản miễn phí và trải nghiệm đặt vé nhanh nhất cho
@@ -276,7 +276,9 @@ async function handleRegister() {
                         </svg>
                     </div>
                     <span class="text-xl font-bold text-gray-900"
-                        >XeGhep<span class="text-blue-600">.vn</span></span
+                        >XeGhepTuyen<span class="text-blue-600"
+                            >-Fgroup</span
+                        ></span
                     >
                 </div>
 
@@ -704,7 +706,7 @@ async function handleRegister() {
                 </div>
 
                 <p class="mt-5 text-center text-xs text-gray-400">
-                    © 2024 XeGhep.vn · Nền tảng ghép xe tuyến cố định
+                    © 2026 XeGhepTuyen-Fgroup · Nền tảng ghép xe tuyến cố định
                 </p>
             </div>
         </div>

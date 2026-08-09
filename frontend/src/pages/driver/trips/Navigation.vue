@@ -200,7 +200,9 @@ onUnmounted(() => {
 <template>
     <div class="mx-auto max-w-[1400px] p-4 sm:p-6">
         <!-- Header -->
-        <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div
+            class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+        >
             <div>
                 <div class="mb-1 flex items-center gap-2 text-sm text-gray-500">
                     <router-link
@@ -281,13 +283,19 @@ onUnmounted(() => {
                 <div
                     class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
                 >
-                    <div class="relative h-[420px] w-full bg-slate-100 sm:h-[560px]">
+                    <div
+                        class="relative h-[420px] w-full bg-slate-100 sm:h-[560px]"
+                    >
                         <MapboxMap
                             :markers="mapMarkers"
                             :route-coordinates="
                                 navigationRoute?.coordinates ?? []
                             "
-                            :center="currentPos ? [currentPos.lng, currentPos.lat] : undefined"
+                            :center="
+                                currentPos
+                                    ? [currentPos.lng, currentPos.lat]
+                                    : undefined
+                            "
                             :zoom="currentPos ? 13 : 8.5"
                         />
                         <div
@@ -563,6 +571,5 @@ onUnmounted(() => {
                 </div>
             </div>
         </div>
-
     </div>
 </template>

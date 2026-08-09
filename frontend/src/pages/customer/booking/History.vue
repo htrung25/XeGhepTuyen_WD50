@@ -78,7 +78,7 @@ function statusLabel(s: string) {
 function payMethodIcon(m: string) {
     if (m === 'momo') return '💜 MoMo';
     if (m === 'vnpay') return '🏦 VNPay';
-    if (m === 'wallet') return '👛 Ví XeGhep';
+    if (m === 'wallet') return '👛 Ví XeGhepTuyen-Fgroup';
     if (m === 'cash') return '💵 Tiền mặt';
     return m;
 }
@@ -207,7 +207,7 @@ onMounted(() => loadBookings('upcoming'));
                 v-if="activeTab === 'upcoming'"
                 class="mb-6 text-sm text-gray-500"
             >
-                Đặt vé ngay để có chuyến đi đầu tiên với XeGhep.vn
+                Đặt vé ngay để có chuyến đi đầu tiên với XeGhepTuyen-Fgroup
             </p>
             <router-link
                 v-if="activeTab === 'upcoming'"
@@ -384,7 +384,7 @@ onMounted(() => loadBookings('upcoming'));
                     >
                     <DialogDescription class="text-pretty text-gray-600">
                         Bạn chắc chắn muốn hủy vé này? Tiền hoàn sẽ được xử lý
-                        theo chính sách hoàn tiền của XeGhep.vn.
+                        theo chính sách hoàn tiền của XeGhepTuyen-Fgroup.
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter

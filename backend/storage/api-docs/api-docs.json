@@ -1,8 +1,8 @@
 {
     "openapi": "3.0.0",
     "info": {
-        "title": "XeGhépTuyến API (DATN_WD50)",
-        "description": "Hệ thống API quản lý và đặt xe ghép tuyến XeGhépTuyến",
+        "title": "XeGhepTuyen-Fgroup API (DATN_WD50)",
+        "description": "Hệ thống API quản lý và đặt xe ghép tuyến XeGhepTuyen-Fgroup",
         "version": "1.0.0"
     },
     "servers": [

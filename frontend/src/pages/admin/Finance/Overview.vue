@@ -173,7 +173,7 @@ const paymentMethodMap: Record<string, string> = {
     momo: 'MoMo',
     vnpay: 'VNPay',
     zalopay: 'ZaloPay',
-    wallet: 'Ví XeGhep',
+    wallet: 'Ví XeGhepTuyen-Fgroup',
     cash: 'Tiền mặt',
 };
 

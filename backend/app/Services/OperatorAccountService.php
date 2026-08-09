@@ -42,7 +42,7 @@ class OperatorAccountService
     {
         try {
             $loginUrl = rtrim((string) config('app.url'), '/').'/operator/login';
-            $message = "[XeGhep] Mật khẩu đăng nhập nhà xe \"{$companyName}\" đã được đặt lại. "
+            $message = "[XeGhepTuyen-Fgroup] Mật khẩu đăng nhập nhà xe \"{$companyName}\" đã được đặt lại. "
                 ."Đăng nhập tại {$loginUrl} — SĐT: {$user->phone}, Mật khẩu mới: {$password}. "
                 .'Vui lòng đổi mật khẩu sau khi đăng nhập.';
 

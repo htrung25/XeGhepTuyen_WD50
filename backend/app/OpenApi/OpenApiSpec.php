@@ -5,9 +5,9 @@ namespace App\OpenApi;
 use OpenApi\Attributes as OA;
 
 #[OA\Info(
-    title: 'XeGhépTuyến API (DATN_WD50)',
+    title: 'XeGhepTuyen-Fgroup API (DATN_WD50)',
     version: '1.0.0',
-    description: 'Hệ thống API quản lý và đặt xe ghép tuyến XeGhépTuyến'
+    description: 'Hệ thống API quản lý và đặt xe ghép tuyến XeGhepTuyen-Fgroup'
 )]
 #[OA\Server(
     url: 'http://localhost:8000',

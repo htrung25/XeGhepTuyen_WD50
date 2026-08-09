@@ -303,7 +303,7 @@ class FinanceController extends Controller
         // Thông báo khách qua SMS (môi trường dev: hiện ở terminal).
         SendSmsNotificationJob::dispatch(
             $bookingModel->contact_phone,
-            "[XeGhep] Vé {$bookingModel->booking_code} đã được hoàn ".number_format($amount, 0, ',', '.')."đ. Lý do: {$reason}",
+            "[XeGhepTuyen-Fgroup] Vé {$bookingModel->booking_code} đã được hoàn ".number_format($amount, 0, ',', '.')."đ. Lý do: {$reason}",
             $bookingModel->id,
         )->onQueue('notifications');
 

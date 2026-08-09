@@ -66,12 +66,10 @@ watch(
                         </svg>
                     </div>
                     <span
-                        class="text-sm font-extrabold text-slate-950 sm:text-lg"
+                        class="text-xs font-extrabold text-slate-950 min-[360px]:text-sm sm:text-lg"
                     >
-                        Xe ghép tuyến
-                        <span class="hidden text-blue-600 min-[360px]:inline"
-                            >FGroup</span
-                        >
+                        XeGhepTuyen
+                        <span class="text-blue-600">-Fgroup</span>
                     </span>
                 </router-link>
 
@@ -278,8 +276,9 @@ watch(
                                 </svg>
                             </div>
                             <span class="text-lg font-bold text-white"
-                                >Xe ghép tuyến
-                                <span class="text-blue-400">FGroup</span></span
+                                >XeGhepTuyen<span class="text-blue-400"
+                                    >-Fgroup</span
+                                ></span
                             >
                         </div>
                         <p
@@ -323,7 +322,7 @@ watch(
                                 <a
                                     href="#"
                                     class="transition-colors hover:text-white"
-                                    >Ví FGroup</a
+                                    >Ví XeGhepTuyen-Fgroup</a
                                 >
                             </li>
                         </ul>
@@ -368,7 +367,7 @@ watch(
                     class="flex flex-col items-center justify-between gap-3 border-t border-gray-800 pt-6 md:flex-row"
                 >
                     <p class="text-xs text-gray-500">
-                        © 2026 Xe ghép tuyến FGroup. Tất cả quyền được bảo lưu.
+                        © 2026 XeGhepTuyen-Fgroup. Tất cả quyền được bảo lưu.
                     </p>
                     <div class="flex gap-4 text-xs text-gray-500">
                         <a href="#" class="transition-colors hover:text-white"

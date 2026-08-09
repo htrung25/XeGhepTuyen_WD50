@@ -16,7 +16,7 @@ enum PaymentMethodEnum: string
             self::Momo => 'MoMo',
             self::Vnpay => 'Chuyển khoản VietQR (SePay)',
             self::Zalopay => 'ZaloPay',
-            self::Wallet => 'Ví XeGhep',
+            self::Wallet => 'Ví XeGhepTuyen-Fgroup',
             self::Cash => 'Tiền mặt',
         };
     }

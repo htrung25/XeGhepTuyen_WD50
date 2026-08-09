@@ -63,7 +63,7 @@ const paymentMethods = computed(() => [
     },
     {
         key: 'wallet' as const,
-        label: 'Ví XeGhep',
+        label: 'Ví XeGhepTuyen-Fgroup',
         desc:
             walletBalance.value >= total.value
                 ? `Số dư: ${fmt(walletBalance.value)}`

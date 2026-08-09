@@ -108,7 +108,9 @@ async function handleSubmit() {
                     </svg>
                 </div>
                 <span class="text-2xl font-black text-slate-900"
-                    >XeGhep<span class="text-green-600">.vn</span></span
+                    >XeGhepTuyen<span class="text-green-600"
+                        >-Fgroup</span
+                    ></span
                 >
             </div>
 

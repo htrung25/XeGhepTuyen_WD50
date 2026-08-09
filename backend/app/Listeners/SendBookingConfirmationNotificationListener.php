@@ -21,7 +21,7 @@ class SendBookingConfirmationNotificationListener
         $pickup = $booking->pickupStop ? $booking->pickupStop->stop_name : $booking->pickup_address;
         $trackUrl = config('app.url')."/track/{$booking->booking_code}";
 
-        $body = "[XeGhep] Đặt vé thành công! Mã vé: {$booking->booking_code}\n"
+        $body = "[XeGhepTuyen-Fgroup] Đặt vé thành công! Mã vé: {$booking->booking_code}\n"
               ."Tuyến: {$route}\n"
               ."Ngày: {$departAt}\n"
               ."Điểm đón: {$pickup}\n"

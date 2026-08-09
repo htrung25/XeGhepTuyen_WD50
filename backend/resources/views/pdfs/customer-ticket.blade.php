@@ -23,7 +23,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="brand">XeGhep.vn — Vé điện tử</div>
+        <div class="brand">XeGhepTuyen-Fgroup — Vé điện tử</div>
         <div class="code-label">Mã đặt vé</div>
         <div class="code">{{ $booking->booking_code }}</div>
     </div>

@@ -155,7 +155,7 @@ class PartnerApplicationService
     {
         try {
             $loginUrl = rtrim((string) config('app.url'), '/').'/operator/login';
-            $message = "[XeGhep] Hồ sơ đối tác \"{$companyName}\" đã được duyệt. "
+            $message = "[XeGhepTuyen-Fgroup] Hồ sơ đối tác \"{$companyName}\" đã được duyệt. "
                 ."Đăng nhập tại {$loginUrl} — SĐT: {$user->phone}, Mật khẩu tạm: {$password}. "
                 .'Vui lòng đổi mật khẩu sau khi đăng nhập.';
 

@@ -217,7 +217,7 @@ class DriverService
     {
         try {
             $company = $companyName ?? 'nhà xe';
-            $message = "[XeGhep] Đã nhận hồ sơ tài xế của bạn tại {$company}. "
+            $message = "[XeGhepTuyen-Fgroup] Đã nhận hồ sơ tài xế của bạn tại {$company}. "
                 .'Tài khoản sẽ được kích hoạt và gửi mật khẩu sau khi admin duyệt GPLX.';
 
             SendSmsNotificationJob::dispatch($user->phone, $message)->onQueue('notifications');
@@ -237,7 +237,7 @@ class DriverService
                 ? 'Tài khoản tài xế của bạn đã được duyệt.'
                 : 'Mật khẩu đăng nhập tài xế của bạn vừa được cấp lại.';
 
-            $message = "[XeGhep] {$intro} "
+            $message = "[XeGhepTuyen-Fgroup] {$intro} "
                 ."Đăng nhập tại {$loginUrl} — SĐT: {$user->phone}, Mật khẩu: {$password}. "
                 .'Vui lòng đổi mật khẩu sau khi đăng nhập.';
 

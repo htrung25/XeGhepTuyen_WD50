@@ -31,7 +31,7 @@ class SendEmailNotificationJob implements ShouldQueue
         Mail::html($this->body, function ($message) {
             $message->to($this->email)
                 ->subject($this->subject)
-                ->from(config('mail.from.address'), config('mail.from.name', 'XeGhep'));
+                ->from(config('mail.from.address'), config('mail.from.name', 'XeGhepTuyen-Fgroup'));
         });
     }
 

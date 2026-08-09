@@ -19,7 +19,7 @@ class NotifyPassengersOnTripStartListener
         $plate = $trip->vehicle->plate_number;
         $phone = $trip->driver->user->phone;
 
-        $body = "[XeGhep] Chuyến của bạn đã xuất phát! Tài xế: {$driver} - {$phone}. Biển số: {$plate}";
+        $body = "[XeGhepTuyen-Fgroup] Chuyến của bạn đã xuất phát! Tài xế: {$driver} - {$phone}. Biển số: {$plate}";
 
         foreach ($trip->bookings->where('booking_status', BookingStatusEnum::Confirmed) as $booking) {
             $this->notificationService->send(
