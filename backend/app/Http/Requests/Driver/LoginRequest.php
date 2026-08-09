@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Driver;
 
+use App\Rules\VietnamesePhoneRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class LoginRequest extends FormRequest
@@ -14,7 +15,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'phone' => ['required', 'regex:/^(0[35789])[0-9]{8}$/'],
+            'phone' => ['required', 'regex:'.VietnamesePhoneRule::PATTERN],
             'password' => ['required', 'string'],
         ];
     }
