@@ -10,9 +10,6 @@ use Illuminate\Http\Request;
 
 class EarningController extends Controller
 {
-    /** Vé tính là thu nhập THỰC NHẬN của tài xế */
-    private const REALIZED = ['booking_status' => 'completed'];
-
     /**
      * Bảng kê thu nhập tài xế (CHỈ XEM).
      * Nền tảng quyết toán cho nhà xe; nhà xe trả tài xế trực tiếp — nền tảng
@@ -93,8 +90,7 @@ class EarningController extends Controller
     /** Query vé thực nhận trên tập chuyến */
     private function realizedBookings($tripIds): Builder
     {
-        return Booking::whereIn('trip_id', $tripIds)
-            ->where('booking_status', self::REALIZED['booking_status']);
+        return Booking::whereIn('trip_id', $tripIds)->completed();
     }
 
     /** Doanh thu 7 ngày gần nhất (index 0 = 6 ngày trước … index 6 = hôm nay) */
@@ -106,7 +102,7 @@ class EarningController extends Controller
             ->pluck('id');
 
         $byDay = Booking::whereIn('trip_id', $tripIds)
-            ->where('booking_status', self::REALIZED['booking_status'])
+            ->completed()
             ->join('trips', 'bookings.trip_id', '=', 'trips.id')
             ->selectRaw('DATE(trips.completed_at) as d, SUM(bookings.final_amount) as amt')
             ->groupByRaw('DATE(trips.completed_at)')
