@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Driver;
 
+use App\Rules\VietnamesePhoneRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class RegisterDriverRequest extends FormRequest
@@ -14,7 +15,7 @@ class RegisterDriverRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'phone' => ['required', 'regex:/^(0[35789])[0-9]{8}$/', 'unique:users,phone'],
+            'phone' => ['required', 'regex:'.VietnamesePhoneRule::PATTERN, 'unique:users,phone'],
             'full_name' => ['required', 'string', 'min:2', 'max:100'],
             'password' => ['required', 'string', 'min:6', 'confirmed'],
             'operator_id' => ['required', 'uuid', 'exists:operators,id'],
