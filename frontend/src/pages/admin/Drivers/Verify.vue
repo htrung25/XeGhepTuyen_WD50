@@ -624,6 +624,7 @@ onMounted(loadDrivers);
         >
             <img
                 :src="zoomedImage"
+                alt="Ảnh phóng to"
                 class="max-h-[80vh] max-w-2xl rounded-xl object-contain"
             />
         </div>
