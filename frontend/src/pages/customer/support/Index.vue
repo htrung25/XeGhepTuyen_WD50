@@ -44,7 +44,6 @@ const form = ref({
     priority: 'normal' as TicketPriority,
 });
 
-
 const openCount = computed(() => stats.value.open);
 const inProgressCount = computed(() => stats.value.in_progress);
 const resolvedCount = computed(() => stats.value.resolved + stats.value.closed);

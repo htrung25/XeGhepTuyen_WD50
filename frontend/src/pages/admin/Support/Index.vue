@@ -36,7 +36,6 @@ const stats = ref<SupportStats>({
 const currentPage = ref(1);
 const lastPage = ref(1);
 
-
 const hasActiveFilter = computed(
     () =>
         statusFilter.value !== 'all' ||
@@ -312,10 +311,7 @@ onMounted(() => void fetchTickets());
             </div>
 
             <!-- Empty -->
-            <div
-                v-else-if="tickets.length === 0"
-                class="py-16 text-center"
-            >
+            <div v-else-if="tickets.length === 0" class="py-16 text-center">
                 <p class="text-4xl">🎫</p>
                 <p class="mt-3 text-base font-bold text-slate-800">
                     Không tìm thấy ticket
