@@ -9,7 +9,8 @@ const route = useRoute();
 const router = useRouter();
 const auth = useDriverAuthStore();
 
-const sidebarOpen = ref(true);
+// Desktop: sidebar luôn hiển thị. Mobile: đây là trạng thái đóng/mở drawer (mặc định đóng).
+const sidebarOpen = ref(false);
 const dropdownOpen = ref(false);
 const dropdownRef = ref<HTMLElement | null>(null);
 
@@ -48,10 +49,19 @@ onUnmounted(() => {
 
 <template>
     <div class="flex h-screen overflow-hidden bg-gray-100">
+        <!-- ─── Mobile backdrop (đóng drawer khi chạm ra ngoài) ────── -->
+        <div
+            v-if="sidebarOpen"
+            class="fixed inset-0 z-30 bg-black/50 md:hidden"
+            @click="sidebarOpen = false"
+        />
+
         <!-- ─── Sidebar ──────────────────────────────────────────── -->
+        <!-- Mobile: drawer trượt vào/ra ngoài màn hình (không chiếm chỗ khi đóng).
+             Desktop (md+): luôn hiển thị cố định trong layout. -->
         <aside
-            :class="sidebarOpen ? 'w-60' : 'w-16'"
-            class="flex flex-shrink-0 flex-col bg-gray-900 transition-all duration-200"
+            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+            class="fixed inset-y-0 left-0 z-40 flex w-60 flex-shrink-0 flex-col bg-gray-900 transition-transform duration-200 md:relative md:z-auto md:w-60 md:translate-x-0"
         >
             <!-- Logo -->
             <div
@@ -74,7 +84,7 @@ onUnmounted(() => {
                         />
                     </svg>
                 </div>
-                <span v-if="sidebarOpen" class="font-bold text-white">
+                <span class="font-bold text-white">
                     XeGhepTuyen<span class="text-green-400">-Fgroup</span>
                 </span>
             </div>
@@ -85,6 +95,7 @@ onUnmounted(() => {
                     v-for="item in navItems"
                     :key="item.path"
                     :to="item.path"
+                    @click="sidebarOpen = false"
                     class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors"
                     :class="
                         isActive(item.path)
@@ -153,7 +164,7 @@ onUnmounted(() => {
                         />
                     </svg>
 
-                    <span v-if="sidebarOpen">{{ item.label }}</span>
+                    <span>{{ item.label }}</span>
                 </router-link>
             </nav>
         </aside>
