@@ -275,15 +275,15 @@ onMounted(load);
 
                 <!-- Legend -->
                 <div
-                    class="flex items-center gap-4 border-t border-gray-100 px-4 py-3"
+                    class="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-gray-100 px-4 py-3"
                 >
-                    <span class="text-xs font-medium text-gray-400"
+                    <span class="shrink-0 text-xs font-medium text-gray-400"
                         >Trạng thái:</span
                     >
                     <div
                         v-for="(color, key) in statusColors"
                         :key="key"
-                        class="flex items-center gap-1.5"
+                        class="flex shrink-0 items-center gap-1.5"
                     >
                         <div :class="['h-3 w-3 rounded-sm', color]" />
                         <span class="text-xs text-gray-500">{{
