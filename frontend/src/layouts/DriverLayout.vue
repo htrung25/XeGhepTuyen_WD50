@@ -2,8 +2,8 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { driverApi } from '@/api/driver.api';
-import { Toaster } from '@/components/ui/sonner';
 import LiveClock from '@/components/LiveClock.vue';
+import { Toaster } from '@/components/ui/sonner';
 import { useDriverAuthStore } from '@/stores/driver.auth.store';
 
 const route = useRoute();

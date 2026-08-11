@@ -2,8 +2,8 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { adminApi } from '@/api/admin.api';
-import { Toaster } from '@/components/ui/sonner';
 import LiveClock from '@/components/LiveClock.vue';
+import { Toaster } from '@/components/ui/sonner';
 import { useAdminNotifications } from '@/composables/useAdminNotifications';
 import type { AdminNotification } from '@/composables/useAdminNotifications';
 import { useCan } from '@/composables/useCan';

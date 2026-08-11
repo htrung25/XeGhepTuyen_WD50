@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { operatorApi } from '@/api/operator.api';
+
+const currentRoute = useRoute();
 
 interface TripBlock {
     id: string;
@@ -9,13 +12,16 @@ interface TripBlock {
     arrive_at?: string;
     status: string;
     base_price?: number;
-    route?: { origin_city: string; dest_city: string };
-    vehicle?: { plate: string; type?: string } | null;
-    driver?: { full_name: string; phone?: string } | null;
+    route?: { id?: string; origin_city: string; dest_city: string };
+    vehicle?: { id?: string; plate: string; type?: string } | null;
+    driver?: { id?: string; full_name: string; phone?: string } | null;
     booking_count?: number;
     passengers_count?: number;
     total_seats?: number;
     notes?: string | null;
+    is_awaiting_reassignment?: boolean;
+    driver_unavailable_reason?: string | null;
+    driver_unavailable_at?: string | null;
 }
 
 // Nhãn + màu trạng thái hành khách trong manifest
@@ -145,11 +151,16 @@ const selectedTrip = ref<TripBlock | null>(null);
 const cancelReason = ref('');
 const cancelLoading = ref(false);
 const showCancel = ref(false);
+const reassignDriverId = ref('');
+const reassignLoading = ref(false);
+const reassignError = ref('');
 
 const openTrip = (trip: TripBlock) => {
     selectedTrip.value = trip;
     showCancel.value = false;
     cancelReason.value = '';
+    reassignDriverId.value = '';
+    reassignError.value = '';
 };
 const closeTrip = () => {
     selectedTrip.value = null;
@@ -161,6 +172,36 @@ const isOverdue = (trip: TripBlock) =>
     new Date(trip.depart_at).getTime() < Date.now();
 
 const overdueTrips = computed(() => trips.value.filter(isOverdue));
+const awaitingReassignmentTrips = computed(() =>
+    trips.value.filter((trip) => trip.is_awaiting_reassignment),
+);
+
+const replacementDrivers = computed(() =>
+    drivers.value.filter(
+        (driver) => driver.id !== selectedTrip.value?.driver?.id,
+    ),
+);
+
+const confirmReassignDriver = async () => {
+    if (!selectedTrip.value || !reassignDriverId.value) return;
+
+    reassignLoading.value = true;
+    reassignError.value = '';
+    const { data, error } = await operatorApi.reassignTripDriver(
+        selectedTrip.value.id,
+        reassignDriverId.value,
+    );
+    reassignLoading.value = false;
+
+    if (error) {
+        reassignError.value = error;
+        return;
+    }
+
+    if (data) selectedTrip.value = data as TripBlock;
+    await load();
+    window.dispatchEvent(new CustomEvent('operator:work-updated'));
+};
 
 const completeLoading = ref(false);
 const confirmCompleteTrip = async () => {
@@ -281,6 +322,20 @@ const load = async () => {
         }));
 };
 
+const openTripFromRoute = async () => {
+    const tripId = currentRoute.query.trip;
+    if (typeof tripId !== 'string' || !tripId) return;
+
+    const loadedTrip = trips.value.find((trip) => trip.id === tripId);
+    if (loadedTrip) {
+        openTrip(loadedTrip);
+        return;
+    }
+
+    const { data } = await operatorApi.getTrip(tripId);
+    if (data) openTrip(data as TripBlock);
+};
+
 // Option 3 hybrid: tự điền chéo xe ↔ tài xế mặc định (vẫn cho phép đổi)
 watch(
     () => form.value.driver_id,
@@ -333,8 +388,15 @@ const createTrip = async () => {
 
 // Đổi tuần → tải lại chuyến của tuần đó
 watch(weekStart, () => load());
+watch(
+    () => currentRoute.query.trip,
+    () => openTripFromRoute(),
+);
 
-onMounted(() => load());
+onMounted(async () => {
+    await load();
+    await openTripFromRoute();
+});
 </script>
 
 <template>
@@ -355,6 +417,40 @@ onMounted(() => load());
         >
             {{ errorMsg }}
             <button class="underline" @click="load">Thử lại</button>
+        </div>
+
+        <!-- Tài xế báo không thể chạy: ưu tiên xử lý trước giờ khởi hành -->
+        <div
+            v-if="awaitingReassignmentTrips.length > 0"
+            class="mb-4 rounded-xl border border-orange-300 bg-orange-50 p-4"
+        >
+            <div class="flex items-start gap-3">
+                <span class="text-xl" aria-hidden="true">⚠️</span>
+                <div class="min-w-0 flex-1">
+                    <p class="font-semibold text-orange-900">
+                        {{ awaitingReassignmentTrips.length }} chuyến đang chờ
+                        phân lại tài xế
+                    </p>
+                    <p class="mt-0.5 text-sm text-orange-700">
+                        Tài xế đã báo không thể chạy. Chọn chuyến bên dưới để
+                        xem lý do và phân công tài xế thay thế.
+                    </p>
+                    <div class="mt-3 flex flex-wrap gap-2">
+                        <button
+                            v-for="trip in awaitingReassignmentTrips"
+                            :key="trip.id"
+                            type="button"
+                            @click="openTrip(trip)"
+                            class="rounded-lg border border-orange-300 bg-white px-3 py-1.5 text-xs font-semibold text-orange-800 hover:bg-orange-100"
+                        >
+                            {{ fmtDateTime(trip.depart_at) }} ·
+                            {{ trip.route?.origin_city }}→{{
+                                trip.route?.dest_city
+                            }}
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Cảnh báo chuyến quá giờ cần xử lý -->
@@ -491,15 +587,22 @@ onMounted(() => load());
                                     @click="openTrip(trip)"
                                     class="w-full cursor-pointer rounded-md px-1.5 py-1 text-left transition hover:ring-2 hover:ring-amber-300"
                                     :class="
-                                        isOverdue(trip)
-                                            ? 'border border-red-300 bg-red-100 text-red-800 ring-1 ring-red-300'
-                                            : (statusColor[trip.status] ??
-                                              'bg-slate-100 text-slate-600')
+                                        trip.is_awaiting_reassignment
+                                            ? 'border border-orange-400 bg-orange-100 text-orange-900 ring-2 ring-orange-300'
+                                            : isOverdue(trip)
+                                              ? 'border border-red-300 bg-red-100 text-red-800 ring-1 ring-red-300'
+                                              : (statusColor[trip.status] ??
+                                                'bg-slate-100 text-slate-600')
                                     "
                                 >
                                     <span
                                         class="block text-xs leading-tight font-bold"
                                         >{{ fmtTime(trip.depart_at) }}</span
+                                    >
+                                    <span
+                                        v-if="trip.is_awaiting_reassignment"
+                                        class="block text-[10px] leading-tight font-semibold"
+                                        >⚠️ Cần đổi tài xế</span
                                     >
                                     <span
                                         v-if="isOverdue(trip)"
@@ -791,6 +894,71 @@ onMounted(() => load());
                             <span class="text-slate-700">{{
                                 selectedTrip.notes
                             }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Tài xế báo không thể chạy: phân tài xế thay thế -->
+                    <div
+                        v-if="selectedTrip.is_awaiting_reassignment"
+                        class="px-6 pb-3"
+                    >
+                        <div
+                            class="rounded-xl border border-orange-300 bg-orange-50 p-4"
+                        >
+                            <p class="text-sm font-semibold text-orange-900">
+                                ⚠️ Tài xế báo không thể chạy chuyến
+                            </p>
+                            <p
+                                class="mt-1 text-xs leading-relaxed text-orange-700"
+                            >
+                                Lý do:
+                                <strong>{{
+                                    selectedTrip.driver_unavailable_reason ??
+                                    'Không cung cấp'
+                                }}</strong>
+                            </p>
+                            <label
+                                class="mt-3 mb-1 block text-xs font-semibold text-slate-700"
+                                >Tài xế thay thế</label
+                            >
+                            <div class="flex flex-col gap-2 sm:flex-row">
+                                <select
+                                    v-model="reassignDriverId"
+                                    class="min-w-0 flex-1 rounded-lg border border-orange-200 bg-white px-3 py-2 text-sm focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 focus:outline-none"
+                                >
+                                    <option value="">
+                                        Chọn tài xế phù hợp
+                                    </option>
+                                    <option
+                                        v-for="driver in replacementDrivers"
+                                        :key="driver.id"
+                                        :value="driver.id"
+                                    >
+                                        {{ driver.label }} · ⭐
+                                        {{ driver.rating ?? '—' }}
+                                    </option>
+                                </select>
+                                <button
+                                    type="button"
+                                    :disabled="
+                                        !reassignDriverId || reassignLoading
+                                    "
+                                    @click="confirmReassignDriver"
+                                    class="rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {{
+                                        reassignLoading
+                                            ? 'Đang phân công...'
+                                            : 'Phân lại tài xế'
+                                    }}
+                                </button>
+                            </div>
+                            <p
+                                v-if="reassignError"
+                                class="mt-2 text-xs font-medium text-red-600"
+                            >
+                                {{ reassignError }}
+                            </p>
                         </div>
                     </div>
 

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Operator\AuthController;
 use App\Http\Controllers\Operator\BookingController;
 use App\Http\Controllers\Operator\DriverController;
+use App\Http\Controllers\Operator\NotificationController;
 use App\Http\Controllers\Operator\OnboardingController;
 use App\Http\Controllers\Operator\RevenueController;
 use App\Http\Controllers\Operator\RouteController;
@@ -25,6 +26,12 @@ Route::middleware(['auth:sanctum', 'role:operator'])->group(function () {
     Route::post('auth/logout', [AuthController::class, 'logout']);
     Route::put('auth/profile', [AuthController::class, 'updateProfile']);
     Route::put('auth/password', [AuthController::class, 'changePassword']);
+
+    // Notifications + số công việc cần xử lý ở sidebar
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::get('pending-counts', [NotificationController::class, 'pendingCounts']);
+    Route::put('notifications/read-all', [NotificationController::class, 'markAllRead']);
+    Route::put('notifications/{id}/read', [NotificationController::class, 'markRead']);
 
     // Onboarding — tiến độ thêm xe so với cơ cấu đã khai lúc đăng ký
     Route::get('onboarding/fleet', [OnboardingController::class, 'fleet']);

@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { Toaster } from '@/components/ui/sonner';
 import LiveClock from '@/components/LiveClock.vue';
+import { Toaster } from '@/components/ui/sonner';
+import { useOperatorNotifications } from '@/composables/useOperatorNotifications';
+import type { OperatorNotification } from '@/composables/useOperatorNotifications';
 import { useOperatorAuthStore } from '@/stores/operator.auth.store';
 
 const route = useRoute();
@@ -12,6 +14,16 @@ const auth = useOperatorAuthStore();
 const sidebarOpen = ref(true);
 const dropdownOpen = ref(false);
 const dropdownRef = ref<HTMLElement | null>(null);
+const notifOpen = ref(false);
+const notifRef = ref<HTMLElement | null>(null);
+const {
+    items: notifItems,
+    unreadCount: notifCount,
+    pendingCounts,
+    load: loadNotifications,
+    markRead: markNotificationRead,
+    markAllRead: markAllNotificationsRead,
+} = useOperatorNotifications();
 
 const operatorName = computed(() => auth.user?.full_name ?? 'Nhà xe');
 const operatorInitial = computed(() =>
@@ -29,6 +41,21 @@ const navItems = [
 
 const isActive = (path: string) => route.path.startsWith(path);
 
+function toggleNotifications() {
+    notifOpen.value = !notifOpen.value;
+    if (notifOpen.value) loadNotifications();
+}
+
+async function onNotificationClick(notification: OperatorNotification) {
+    await markNotificationRead(notification);
+    notifOpen.value = false;
+    if (notification.data?.link) await router.push(notification.data.link);
+}
+
+function refreshOperatorWork() {
+    loadNotifications();
+}
+
 const logout = async () => {
     auth.logout();
     router.push('/operator/login');
@@ -39,14 +66,19 @@ function handleClickOutside(event: MouseEvent) {
     if (dropdownRef.value && !dropdownRef.value.contains(target)) {
         dropdownOpen.value = false;
     }
+    if (notifRef.value && !notifRef.value.contains(target)) {
+        notifOpen.value = false;
+    }
 }
 
 onMounted(() => {
     document.addEventListener('click', handleClickOutside);
+    window.addEventListener('operator:work-updated', refreshOperatorWork);
 });
 
 onUnmounted(() => {
     document.removeEventListener('click', handleClickOutside);
+    window.removeEventListener('operator:work-updated', refreshOperatorWork);
 });
 </script>
 
@@ -89,7 +121,7 @@ onUnmounted(() => {
                     v-for="item in navItems"
                     :key="item.path"
                     :to="item.path"
-                    class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors"
+                    class="relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors"
                     :class="
                         isActive(item.path)
                             ? 'border border-amber-200 bg-amber-50 text-amber-700'
@@ -203,6 +235,19 @@ onUnmounted(() => {
                     </svg>
 
                     <span v-if="sidebarOpen">{{ item.label }}</span>
+                    <span
+                        v-if="(pendingCounts[item.path] ?? 0) > 0"
+                        class="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white"
+                        :class="
+                            sidebarOpen ? 'ml-auto' : 'absolute -top-1 -right-1'
+                        "
+                    >
+                        {{
+                            (pendingCounts[item.path] ?? 0) > 99
+                                ? '99+'
+                                : pendingCounts[item.path]
+                        }}
+                    </span>
                 </router-link>
             </nav>
         </aside>
@@ -241,27 +286,102 @@ onUnmounted(() => {
                     <LiveClock />
 
                     <!-- Notification bell -->
-                    <button
-                        class="relative text-slate-400 transition-colors hover:text-slate-600"
-                    >
-                        <svg
-                            class="h-5 w-5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
+                    <div class="relative" ref="notifRef">
+                        <button
+                            type="button"
+                            aria-label="Mở thông báo"
+                            @click="toggleNotifications"
+                            class="relative rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
                         >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                            />
-                        </svg>
-                        <span
-                            class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white"
-                            >3</span
+                            <svg
+                                class="h-5 w-5"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                                />
+                            </svg>
+                            <span
+                                v-if="notifCount > 0"
+                                class="absolute top-0 right-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] text-white"
+                                >{{ notifCount > 9 ? '9+' : notifCount }}</span
+                            >
+                        </button>
+
+                        <div
+                            v-if="notifOpen"
+                            class="absolute right-0 z-50 mt-2 w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg"
                         >
-                    </button>
+                            <div
+                                class="flex items-center justify-between border-b border-slate-100 px-4 py-3"
+                            >
+                                <span
+                                    class="text-sm font-semibold text-slate-800"
+                                    >Thông báo</span
+                                >
+                                <button
+                                    v-if="notifCount > 0"
+                                    type="button"
+                                    @click="markAllNotificationsRead"
+                                    class="text-xs font-medium text-amber-600 hover:text-amber-700"
+                                >
+                                    Đọc tất cả
+                                </button>
+                            </div>
+                            <div class="max-h-96 overflow-y-auto">
+                                <p
+                                    v-if="notifItems.length === 0"
+                                    class="px-4 py-8 text-center text-sm text-slate-400"
+                                >
+                                    Chưa có thông báo
+                                </p>
+                                <button
+                                    v-for="notification in notifItems"
+                                    :key="notification.id"
+                                    type="button"
+                                    @click="onNotificationClick(notification)"
+                                    class="flex w-full gap-3 border-b border-slate-50 px-4 py-3 text-left transition-colors hover:bg-slate-50"
+                                    :class="
+                                        !notification.is_read
+                                            ? 'bg-amber-50/60'
+                                            : ''
+                                    "
+                                >
+                                    <span
+                                        class="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+                                        :class="
+                                            !notification.is_read
+                                                ? 'bg-amber-500'
+                                                : 'bg-transparent'
+                                        "
+                                    />
+                                    <span class="min-w-0 flex-1">
+                                        <span
+                                            class="block text-sm font-semibold text-slate-800"
+                                            >{{ notification.title }}</span
+                                        >
+                                        <span
+                                            class="block text-xs leading-snug text-slate-500"
+                                            >{{ notification.body }}</span
+                                        >
+                                        <span
+                                            class="mt-1 block text-[10px] text-slate-400"
+                                            >{{
+                                                new Date(
+                                                    notification.sent_at,
+                                                ).toLocaleString('vi-VN')
+                                            }}</span
+                                        >
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Avatar with Dropdown -->
                     <div class="relative" ref="dropdownRef">

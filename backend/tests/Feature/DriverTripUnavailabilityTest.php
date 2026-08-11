@@ -26,6 +26,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\Sanctum;
 
 /**
  * Chức năng: tài xế báo không chạy được chuyến → nhà xe đổi tài xế (giữ chuyến, không hoàn tiền).
@@ -108,6 +109,57 @@ it('tài xế báo nghỉ: set cờ + tạo incident open + gửi thông báo', 
     // Nhà xe + hành khách nhận thông báo TripDriverUnavailable (in-app)
     expect(Notification::where('user_id', $c['opUser']->id)->where('type', NotificationTypeEnum::TripDriverUnavailable->value)->exists())->toBeTrue();
     expect(Notification::where('user_id', $pax->user_id)->where('type', NotificationTypeEnum::TripDriverUnavailable->value)->exists())->toBeTrue();
+});
+
+it('operator xem thông báo in-app và đánh dấu đã đọc', function () {
+    $c = unavailCtx();
+    $trip = mkTrip($c);
+    app(TripService::class)->reportDriverUnavailable($trip->id, $c['driver']->id, 'Xe hỏng');
+    Sanctum::actingAs($c['opUser'], ['*'], 'sanctum');
+    Sanctum::actingAs($c['opUser'], ['*'], 'operator');
+
+    $response = $this->getJson('/api/operator/notifications')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('meta.unread_count', 1)
+        ->assertJsonPath('data.0.data.link', "/operator/trips?trip={$trip->id}");
+
+    $this->putJson('/api/operator/notifications/'.$response->json('data.0.id').'/read')->assertOk();
+    $this->getJson('/api/operator/notifications')->assertJsonPath('meta.unread_count', 0);
+});
+
+it('operator pending-count phản ánh chuyến thực tế đang chờ phân lại tài xế', function () {
+    $c = unavailCtx();
+    $trip = mkTrip($c);
+    app(TripService::class)->reportDriverUnavailable($trip->id, $c['driver']->id, 'Bị ốm');
+    Sanctum::actingAs($c['opUser'], ['*'], 'sanctum');
+    Sanctum::actingAs($c['opUser'], ['*'], 'operator');
+
+    $this->getJson('/api/operator/pending-counts')
+        ->assertOk()
+        ->assertJsonPath('data./operator/trips', 1);
+
+    app(TripService::class)->reassignDriver($trip->id, $c['operator']->id, $c['driver2']->id, $c['opUser']->id);
+
+    $this->getJson('/api/operator/pending-counts')
+        ->assertOk()
+        ->assertJsonPath('data./operator/trips', 0);
+});
+
+it('notification tài xế nghỉ chứa deep link tới đúng chuyến operator', function () {
+    $c = unavailCtx();
+    $trip = mkTrip($c);
+    app(TripService::class)->reportDriverUnavailable($trip->id, $c['driver']->id, 'Xe hỏng');
+
+    $notification = Notification::query()
+        ->forUser($c['opUser']->id)
+        ->inApp()
+        ->where('type', NotificationTypeEnum::TripDriverUnavailable)
+        ->firstOrFail();
+
+    expect($notification->data['kind'])->toBe('trip_driver_unavailable')
+        ->and($notification->data['trip_id'])->toBe($trip->id)
+        ->and($notification->data['link'])->toBe("/operator/trips?trip={$trip->id}");
 });
 
 it('báo nghỉ chuyến in_progress → TRIP_NOT_REPORTABLE (422)', function () {

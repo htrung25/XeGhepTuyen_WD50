@@ -131,6 +131,10 @@ export const operatorApi = {
     cancelTrip: (id: string, reason: string) =>
         apiClient.send(tripCancel(id), { reason }),
     completeTrip: (id: string) => apiClient.send(tripComplete(id)),
+    reassignTripDriver: (id: string, driverId: string) =>
+        apiClient.post(`/operator/trips/${id}/reassign-driver`, {
+            driver_id: driverId,
+        }),
     getTripManifest: (id: string) => apiClient.send(manifest(id)),
     exportManifestExcel: (id: string) =>
         apiClient.send(exportManifest(id), undefined, { blob: true }),
@@ -151,4 +155,12 @@ export const operatorApi = {
         apiClient.send(byDriver({ query: params as QueryParams })),
     getPayouts: () => apiClient.send(payouts()),
     requestPayout: () => apiClient.send(requestPayoutRoute()),
+
+    // Notifications + badge công việc cần xử lý
+    getNotifications: () => apiClient.get('/operator/notifications'),
+    getPendingCounts: () => apiClient.get('/operator/pending-counts'),
+    markNotificationRead: (id: string) =>
+        apiClient.put(`/operator/notifications/${id}/read`),
+    markAllNotificationsRead: () =>
+        apiClient.put('/operator/notifications/read-all'),
 };

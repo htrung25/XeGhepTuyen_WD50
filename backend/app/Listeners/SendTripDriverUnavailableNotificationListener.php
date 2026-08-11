@@ -52,7 +52,9 @@ class SendTripDriverUnavailableNotificationListener implements ShouldQueue
                 [
                     'title' => 'Tài xế báo không chạy được chuyến',
                     'body' => "Tài xế {$driverName} báo không chạy được chuyến {$route} {$when} — lý do: {$event->reason}. Cần sắp xếp lại tài xế.",
+                    'kind' => 'trip_driver_unavailable',
                     'trip_id' => $trip->id,
+                    'link' => "/operator/trips?trip={$trip->id}",
                 ],
                 $channels,
                 "tdu:{$seed}:{$operatorUser->id}:{$type->value}",
