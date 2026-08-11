@@ -74,10 +74,8 @@ describe('useWebSocket', () => {
         echoInstances.length = 0;
         localStorage.clear();
         window.history.replaceState({}, '', '/');
-        vi.stubEnv('VITE_REVERB_APP_KEY', 'test-key');
-        vi.stubEnv('VITE_REVERB_HOST', 'ws.example.test');
-        vi.stubEnv('VITE_REVERB_PORT', '443');
-        vi.stubEnv('VITE_REVERB_SCHEME', 'https');
+        vi.stubEnv('VITE_PUSHER_APP_KEY', 'test-key');
+        vi.stubEnv('VITE_PUSHER_APP_CLUSTER', 'ap1');
         vi.resetModules();
     });
 
@@ -88,6 +86,12 @@ describe('useWebSocket', () => {
         useWebSocket().watchTrip('trip-1', vi.fn());
 
         expect(echoInstances).toHaveLength(1);
+        expect(echoInstances[0].config).toMatchObject({
+            broadcaster: 'pusher',
+            key: 'test-key',
+            cluster: 'ap1',
+            forceTLS: true,
+        });
         expect(echoInstances[0].joined).toEqual(['trips.trip-1']);
         expect(
             echoInstances[0].channels.get('presence-trips.trip-1')?.listeners,

@@ -11,7 +11,7 @@ export interface AdminNotification {
 }
 
 /**
- * Thông báo admin: tải danh sách + đếm chưa đọc, polling định kỳ (chưa có Reverb).
+ * Thông báo admin: tải danh sách + đếm chưa đọc, polling định kỳ (chưa dùng WebSocket).
  */
 export function useAdminNotifications(pollMs = 45000) {
     const items = ref<AdminNotification[]>([]);

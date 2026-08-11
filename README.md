@@ -19,7 +19,7 @@ Frontend Vue 3 + Vite (Vercel)  https://<app>.vercel.app
 Backend Laravel (Laravel Cloud) https://<app>.laravel.cloud
         │
         ▼
-MySQL · Redis (cache/queue/session) · Reverb WebSocket · Storage
+MySQL · Redis (cache/queue/session) · Pusher Channels · Storage
 ```
 
 Frontend là **4 SPA** phục vụ theo prefix URL: `/` (khách), `/driver`, `/operator`, `/admin` — mỗi SPA một HTML entry (Vite MPA + rewrites trong `frontend/vercel.json`).
@@ -42,7 +42,6 @@ php artisan key:generate
 php artisan migrate --seed  # seed bắt buộc để có vai trò RBAC admin
 composer dev                # serve + queue + schedule + pail
 # hoặc tối thiểu: php artisan serve
-# WebSocket (tùy chọn): php artisan reverb:start
 ```
 
 ### Frontend (http://localhost:5173)
@@ -58,8 +57,8 @@ Mở http://localhost:5173 (khách) · /driver · /operator · /admin.
 
 ## Biến môi trường
 
-- `backend/.env` — DB, Redis, Reverb, SePay/MoMo/VNPay, **`FRONTEND_URL`** (origin FE cho CORS + trang kết quả thanh toán). Không bao giờ commit `.env`.
-- `frontend/.env` — chỉ biến `VITE_*` (được nhúng vào bundle công khai — **không đặt secret**): `VITE_API_BASE_URL` (origin backend, không kèm `/api`), `VITE_MAPBOX_TOKEN` (public token), `VITE_REVERB_*`.
+- `backend/.env` — DB, Redis, Pusher Channels, SePay/MoMo/VNPay, **`FRONTEND_URL`** (origin FE cho CORS + trang kết quả thanh toán). Không bao giờ commit `.env`.
+- `frontend/.env` — chỉ biến `VITE_*` (được nhúng vào bundle công khai — **không đặt secret**): `VITE_API_BASE_URL` (origin backend, không kèm `/api`), `VITE_MAPBOX_TOKEN` (public token), `VITE_PUSHER_APP_KEY`, `VITE_PUSHER_APP_CLUSTER`.
 
 ## Typed routes (Wayfinder)
 
@@ -95,7 +94,7 @@ CI GitHub Actions chạy pipeline tương ứng khi `backend/**` hoặc `fronten
 ### Backend → Laravel Cloud
 
 - **Application root: `backend`** (cấu hình trong dashboard Laravel Cloud — phải verify vì repo là monorepo).
-- Env production tối thiểu: `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://<api-domain>`, `FRONTEND_URL=https://<fe-domain>`, `SESSION_SECURE_COOKIE=true`, `LOG_LEVEL=error`, DB/Redis do Cloud cấp, `REVERB_*` nếu bật WebSocket.
+- Env production tối thiểu: `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://<api-domain>`, `FRONTEND_URL=https://<fe-domain>`, `SESSION_SECURE_COOKIE=true`, `LOG_LEVEL=error`, DB/Redis do Cloud cấp, `BROADCAST_CONNECTION=pusher` và `PUSHER_*` nếu bật realtime.
 - Deploy command: `php artisan migrate --force && php artisan optimize`.
 - Queue worker: `php artisan queue:work --queue=high,notifications,default --sleep=3 --tries=3 --timeout=90` — **`high` phải đứng đầu và không được bỏ sót**: hủy vé quá hạn (`ExpireUnpaidBookingJob`), hoàn tiền (`ProcessRefundJob`), giải phóng ghế giữ tạm (`ExpireLockedSeatsJob`) đều chạy ở queue này. Scheduler: bật scheduler của Cloud (`trips:auto-resolve` + dọn ghế theo lịch).
 - Sau deploy kiểm tra: `https://<api-domain>/api/public/health` và `/up`.
@@ -103,7 +102,7 @@ CI GitHub Actions chạy pipeline tương ứng khi `backend/**` hoặc `fronten
 ### Frontend → Vercel
 
 - Import repo, **Root Directory: `frontend`**, Framework Preset: Vite, Build `npm run build`, Output `dist` (rewrites đọc từ `frontend/vercel.json`).
-- Environment Variables: `VITE_API_BASE_URL=https://<api-domain>`, `VITE_MAPBOX_TOKEN`, `VITE_REVERB_*` (nếu dùng realtime).
+- Environment Variables: `VITE_API_BASE_URL=https://<api-domain>`, `VITE_MAPBOX_TOKEN`, `VITE_PUSHER_APP_KEY`, `VITE_PUSHER_APP_CLUSTER` (nếu dùng realtime).
 - Sau deploy: refresh `/admin/...` không được 404 (rewrites), console không lỗi CORS.
 
 ## Xử lý lỗi thường gặp
@@ -116,4 +115,4 @@ CI GitHub Actions chạy pipeline tương ứng khi `backend/**` hoặc `fronten
 
 **Refresh trang 404** — local: middleware `multi-spa-fallback` trong `frontend/vite.config.ts`; production: `frontend/vercel.json` rewrites.
 
-**Realtime không chạy** — cần `php artisan reverb:start` (local) và `VITE_REVERB_APP_KEY` khớp `REVERB_APP_KEY`; FE tự tắt WebSocket nếu key trống.
+**Realtime không chạy** — kiểm tra `BROADCAST_CONNECTION=pusher`, bộ `PUSHER_*` ở backend và `VITE_PUSHER_APP_KEY`/`VITE_PUSHER_APP_CLUSTER` ở frontend; FE tự tắt WebSocket nếu key trống.

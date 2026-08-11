@@ -14,7 +14,13 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 
 beforeEach(function () {
-    config(['broadcasting.default' => 'reverb']);
+    config([
+        'broadcasting.default' => 'pusher',
+        'broadcasting.connections.pusher.key' => 'test-key',
+        'broadcasting.connections.pusher.secret' => 'test-secret',
+        'broadcasting.connections.pusher.app_id' => 'test-app-id',
+        'broadcasting.connections.pusher.options.cluster' => 'ap1',
+    ]);
     require base_path('routes/channels.php');
 });
 

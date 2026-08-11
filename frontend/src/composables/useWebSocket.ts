@@ -11,7 +11,7 @@ import type {
 declare global {
     interface Window {
         Pusher: typeof Pusher;
-        Echo?: Echo<'reverb'>;
+        Echo?: Echo<'pusher'>;
     }
 }
 
@@ -22,7 +22,7 @@ interface LocationUpdate {
     eta_minutes: number | null;
 }
 
-let echoInstance: Echo<'reverb'> | null = null;
+let echoInstance: Echo<'pusher'> | null = null;
 let echoToken: string | null = null;
 
 function websocketToken(): string {
@@ -38,11 +38,9 @@ function websocketToken(): string {
     return localStorage.getItem(`${portal}_token`) ?? '';
 }
 
-function getEcho(): Echo<'reverb'> | null {
-    const key = import.meta.env.VITE_REVERB_APP_KEY;
-    const host = import.meta.env.VITE_REVERB_HOST ?? 'localhost';
-    const port = import.meta.env.VITE_REVERB_PORT ?? 8080;
-    const scheme = import.meta.env.VITE_REVERB_SCHEME ?? 'http';
+function getEcho(): Echo<'pusher'> | null {
+    const key = import.meta.env.VITE_PUSHER_APP_KEY;
+    const cluster = import.meta.env.VITE_PUSHER_APP_CLUSTER ?? 'ap1';
     const token = websocketToken();
 
     if (!key || !token) return null;
@@ -58,12 +56,10 @@ function getEcho(): Echo<'reverb'> | null {
     echoToken = token;
 
     echoInstance = new Echo({
-        broadcaster: 'reverb',
+        broadcaster: 'pusher',
         key,
-        wsHost: host,
-        wsPort: Number(port),
-        wssPort: Number(port),
-        forceTLS: scheme === 'https',
+        cluster,
+        forceTLS: true,
         enabledTransports: ['ws', 'wss'],
         authEndpoint: `${API_ORIGIN}/api/broadcasting/auth`,
         auth: {
