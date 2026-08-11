@@ -391,7 +391,7 @@ onMounted(async () => {
                     <div
                         v-for="trip in filtered"
                         :key="trip.id"
-                        class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:border-blue-200 hover:shadow-md"
+                        class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
                     >
                         <div class="p-5">
                             <div class="flex items-start gap-5">
@@ -577,7 +577,7 @@ onMounted(async () => {
                                     <button
                                         @click="selectTrip(trip)"
                                         :disabled="trip.available_seats === 0"
-                                        class="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold whitespace-nowrap text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
+                                        class="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold whitespace-nowrap text-white transition-all hover:bg-blue-700 active:scale-[0.97] disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400 disabled:active:scale-100"
                                     >
                                         {{
                                             trip.available_seats === 0

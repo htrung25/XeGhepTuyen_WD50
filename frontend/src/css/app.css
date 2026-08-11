@@ -167,3 +167,16 @@
         @apply bg-background text-foreground;
     }
 }
+
+/* Chuyển trang mượt cho router-view (CustomerApp/DriverApp) — thay vì cắt cứng. */
+.page-transition-enter-active,
+.page-transition-leave-active {
+    transition:
+        opacity 0.18s ease,
+        transform 0.18s ease;
+}
+.page-transition-enter-from,
+.page-transition-leave-to {
+    opacity: 0;
+    transform: translateY(6px);
+}

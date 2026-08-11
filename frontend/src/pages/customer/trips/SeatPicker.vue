@@ -275,7 +275,7 @@ onMounted(async () => {
                                 @click="toggleSeat(seat)"
                                 :disabled="seat.status !== 'available'"
                                 :class="[
-                                    'h-12 w-14 rounded-lg border-2 text-sm font-bold transition-all',
+                                    'h-12 w-14 rounded-lg border-2 text-sm font-bold transition-all active:scale-90',
                                     seatClasses(seat),
                                 ]"
                             >
@@ -459,7 +459,7 @@ onMounted(async () => {
                     <button
                         @click="proceedToCheckout"
                         :disabled="selected.length === 0 || lockLoading"
-                        class="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
+                        class="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white transition-all hover:bg-blue-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400 disabled:active:scale-100"
                     >
                         <div
                             v-if="lockLoading"

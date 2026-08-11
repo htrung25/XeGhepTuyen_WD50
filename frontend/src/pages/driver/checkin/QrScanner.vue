@@ -216,7 +216,7 @@ onUnmounted(() => {
                         <button
                             @click="handleManualSubmit"
                             :disabled="!manualCode.trim() || isProcessing"
-                            class="flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold whitespace-nowrap text-white transition-colors hover:bg-green-700 disabled:opacity-60"
+                            class="flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold whitespace-nowrap text-white transition-all hover:bg-green-700 active:scale-[0.97] disabled:opacity-60 disabled:active:scale-100"
                         >
                             <div
                                 v-if="isProcessing"
