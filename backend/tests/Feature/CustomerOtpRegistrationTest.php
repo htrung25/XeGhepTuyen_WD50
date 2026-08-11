@@ -5,6 +5,24 @@ use App\Models\OtpVerification;
 use App\Models\User;
 use App\Services\OtpService;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Queue;
+
+it('logs the complete otp message immediately when local otp logging is enabled', function (): void {
+    config()->set('services.otp.log_message', true);
+    Queue::fake();
+    Log::spy();
+
+    $this->postJson('/api/customer/auth/send-otp', [
+        'phone' => '0901234099',
+    ])->assertOk();
+
+    Log::shouldHaveReceived('info')
+        ->once()
+        ->withArgs(fn (string $event, array $context): bool => $event === '[OTP][LOCAL] Nội dung tin nhắn'
+            && $context['phone'] === '0901234099'
+            && preg_match('/Mã OTP của bạn là: \d{6}/', $context['message']) === 1);
+});
 
 it('requires a verified one-time proof before customer registration', function (): void {
     $this->postJson('/api/customer/auth/register', [

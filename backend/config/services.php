@@ -44,6 +44,11 @@ return [
         'base_url' => 'https://rest.esms.vn/MainService.svc/json',
     ],
 
+    // Chỉ bật ở local khi cần xem trực tiếp nội dung OTP trong log Laravel.
+    'otp' => [
+        'log_message' => env('OTP_LOG_MESSAGE', false),
+    ],
+
     // Zalo OA
     'zalo' => [
         'oa_id' => env('ZALO_OA_ID'),
