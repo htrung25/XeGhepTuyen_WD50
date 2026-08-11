@@ -8,8 +8,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 
-it('logs the complete otp message immediately when local otp logging is enabled', function (): void {
-    config()->set('services.otp.log_message', true);
+it('logs issued otp immediately using the same structured dev format as temporary passwords', function (): void {
     Queue::fake();
     Log::spy();
 
@@ -19,9 +18,10 @@ it('logs the complete otp message immediately when local otp logging is enabled'
 
     Log::shouldHaveReceived('info')
         ->once()
-        ->withArgs(fn (string $event, array $context): bool => $event === '[OTP][LOCAL] Nội dung tin nhắn'
+        ->withArgs(fn (string $event, array $context): bool => $event === '[DEV] Cấp mã OTP khách hàng'
             && $context['phone'] === '0901234099'
-            && preg_match('/Mã OTP của bạn là: \d{6}/', $context['message']) === 1);
+            && preg_match('/^\d{6}$/', $context['otp']) === 1
+            && is_string($context['expires_at']));
 });
 
 it('requires a verified one-time proof before customer registration', function (): void {

@@ -34,12 +34,12 @@ class AuthController extends Controller
             $otp = $this->otpService->send($request->phone);
             $message = "[XeGhepTuyen-Fgroup] Mã OTP của bạn là: {$otp}. Có hiệu lực trong 5 phút. Không chia sẻ mã này.";
 
-            if (config('services.otp.log_message')) {
-                Log::info('[OTP][LOCAL] Nội dung tin nhắn', [
-                    'phone' => $request->phone,
-                    'message' => $message,
-                ]);
-            }
+            // Log rõ ràng để dev xem OTP khi chưa cấu hình SMS thật.
+            Log::info('[DEV] Cấp mã OTP khách hàng', [
+                'phone' => $request->phone,
+                'otp' => $otp,
+                'expires_at' => now()->addMinutes(5)->toDateTimeString(),
+            ]);
 
             SendSmsNotificationJob::dispatch(
                 $request->phone,
