@@ -3,6 +3,7 @@ import { watchDebounced } from '@vueuse/core';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { adminApi } from '@/api/admin.api';
+import { useWebSocket } from '@/composables/useWebSocket';
 import { supportCategories } from '@/types/support';
 import type {
     SupportStats,
@@ -35,6 +36,8 @@ const stats = ref<SupportStats>({
 });
 const currentPage = ref(1);
 const lastPage = ref(1);
+const { watchAdminSupport } = useWebSocket();
+let realtimeRefreshTimer: ReturnType<typeof setTimeout> | null = null;
 
 const hasActiveFilter = computed(
     () =>
@@ -119,12 +122,23 @@ async function fetchTickets(page = 1) {
     loading.value = false;
 }
 
+function refreshFromRealtime() {
+    if (realtimeRefreshTimer) clearTimeout(realtimeRefreshTimer);
+    realtimeRefreshTimer = setTimeout(
+        () => void fetchTickets(currentPage.value),
+        150,
+    );
+}
+
 watchDebounced(search, () => void fetchTickets(), { debounce: 400 });
 watch(
     [statusFilter, categoryFilter, priorityFilter],
     () => void fetchTickets(),
 );
-onMounted(() => void fetchTickets());
+onMounted(() => {
+    watchAdminSupport(refreshFromRealtime, refreshFromRealtime);
+    void fetchTickets();
+});
 </script>
 
 <template>

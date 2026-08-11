@@ -52,6 +52,34 @@ export interface SupportStats {
     closed: number;
 }
 
+export interface WebSocketEnvelope<TType extends string, TPayload> {
+    v: 1;
+    type: TType;
+    payload: TPayload;
+}
+
+export type SupportMessageCreatedEvent = WebSocketEnvelope<
+    'support_message.created',
+    { ticket_id: string; message: SupportMessage }
+>;
+
+export type SupportTicketUpdatedEvent = WebSocketEnvelope<
+    'support_ticket.updated',
+    {
+        ticket_id: string;
+        status: TicketStatus;
+        priority: TicketPriority;
+        assigned_to: string | null;
+        changed: Array<'status' | 'priority' | 'assigned_to'>;
+        updated_at: string;
+    }
+>;
+
+export type SupportTicketCreatedEvent = WebSocketEnvelope<
+    'support_ticket.created',
+    { ticket: SupportTicket }
+>;
+
 export const supportCategories: {
     value: TicketCategory;
     label: string;

@@ -2,6 +2,11 @@ import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 import { onUnmounted } from 'vue';
 import { API_ORIGIN } from '@/api/client';
+import type {
+    SupportMessageCreatedEvent,
+    SupportTicketCreatedEvent,
+    SupportTicketUpdatedEvent,
+} from '@/types/support';
 
 declare global {
     interface Window {
@@ -21,6 +26,19 @@ interface LocationUpdate {
 }
 
 let echoInstance: Echo<'reverb'> | null = null;
+
+function websocketToken(): string {
+    const path = window.location.pathname;
+    const portal = path.startsWith('/admin')
+        ? 'admin'
+        : path.startsWith('/operator')
+          ? 'operator'
+          : path.startsWith('/driver')
+            ? 'driver'
+            : 'customer';
+
+    return localStorage.getItem(`${portal}_token`) ?? '';
+}
 
 function getEcho(): Echo<'reverb'> | null {
     if (echoInstance) return echoInstance;
@@ -45,13 +63,7 @@ function getEcho(): Echo<'reverb'> | null {
         authEndpoint: `${API_ORIGIN}/api/broadcasting/auth`,
         auth: {
             headers: {
-                Authorization: `Bearer ${
-                    localStorage.getItem('admin_token') ??
-                    localStorage.getItem('operator_token') ??
-                    localStorage.getItem('driver_token') ??
-                    localStorage.getItem('customer_token') ??
-                    ''
-                }`,
+                Authorization: `Bearer ${websocketToken()}`,
             },
         },
     });
@@ -98,9 +110,57 @@ export function useWebSocket() {
         subscriptions.push(() => echo.leaveChannel(`private-users.${userId}`));
     }
 
+    function watchSupportTicket(
+        ticketId: string,
+        onMessage: (event: SupportMessageCreatedEvent) => void,
+        onUpdated: (event: SupportTicketUpdatedEvent) => void,
+        includeInternal = false,
+    ) {
+        const echo = getEcho();
+        if (!echo) return;
+
+        echo.private(`support.tickets.${ticketId}`)
+            .listen('.support.ticket.message.created', onMessage)
+            .listen('.support.ticket.updated', onUpdated);
+
+        if (includeInternal) {
+            echo.private(`admin.support.tickets.${ticketId}`).listen(
+                '.support.ticket.message.created',
+                onMessage,
+            );
+        }
+
+        subscriptions.push(() => {
+            echo.leave(`support.tickets.${ticketId}`);
+            if (includeInternal) {
+                echo.leave(`admin.support.tickets.${ticketId}`);
+            }
+        });
+    }
+
+    function watchAdminSupport(
+        onCreated: (event: SupportTicketCreatedEvent) => void,
+        onUpdated: (event: SupportTicketUpdatedEvent) => void,
+    ) {
+        const echo = getEcho();
+        if (!echo) return;
+
+        echo.private('admin.support')
+            .listen('.support.ticket.created', onCreated)
+            .listen('.support.ticket.updated', onUpdated);
+
+        subscriptions.push(() => echo.leave('admin.support'));
+    }
+
     onUnmounted(() => {
         subscriptions.forEach((fn) => fn());
     });
 
-    return { watchAdminMonitor, watchTrip, watchUserNotifications };
+    return {
+        watchAdminMonitor,
+        watchTrip,
+        watchUserNotifications,
+        watchSupportTicket,
+        watchAdminSupport,
+    };
 }

@@ -2,6 +2,7 @@
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { adminApi } from '@/api/admin.api';
+import { useWebSocket } from '@/composables/useWebSocket';
 import type {
     SupportMessage,
     SupportTicket,
@@ -37,6 +38,7 @@ const showStatusPanel = ref(false);
 const staff = ref<AdminStaffOption[]>([]);
 const assignedTo = ref('');
 const assignLoading = ref(false);
+const { watchSupportTicket } = useWebSocket();
 const canPublicReply = computed(
     () =>
         ticket.value?.status === 'open' ||
@@ -107,6 +109,13 @@ function scrollToBottom() {
     messagesEnd.value?.scrollIntoView({ behavior: 'smooth' });
 }
 
+function appendMessage(message: SupportMessage) {
+    if (!ticket.value) return;
+    if (ticket.value.messages.some((item) => item.id === message.id)) return;
+    ticket.value.messages.push(message);
+    void nextTick(scrollToBottom);
+}
+
 async function loadTicket() {
     loading.value = true;
     errorMsg.value = '';
@@ -151,7 +160,7 @@ async function sendReply() {
             errorMsg.value = error ?? 'Gửi phản hồi thất bại.';
             return;
         }
-        ticket.value!.messages.push(data as SupportMessage);
+        appendMessage(data as SupportMessage);
         if (!isInternal.value && ticket.value!.status === 'open') {
             ticket.value!.status = 'in_progress';
             newStatus.value = 'in_progress';
@@ -212,6 +221,23 @@ async function assignTicket() {
 }
 
 onMounted(() => {
+    const ticketId = String(route.params.id);
+    watchSupportTicket(
+        ticketId,
+        ({ payload }) => appendMessage(payload.message),
+        ({ payload }) => {
+            if (!ticket.value || payload.ticket_id !== ticket.value.id) return;
+            ticket.value.status = payload.status;
+            ticket.value.priority = payload.priority;
+            ticket.value.assigned_to = payload.assigned_to;
+            ticket.value.updated_at = payload.updated_at;
+            newStatus.value = payload.status;
+            newPriority.value = payload.priority;
+            assignedTo.value = payload.assigned_to ?? '';
+            if (!canPublicReply.value) isInternal.value = true;
+        },
+        true,
+    );
     void Promise.all([loadTicket(), loadStaff()]);
 });
 </script>

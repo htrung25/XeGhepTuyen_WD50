@@ -2,6 +2,7 @@
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { customerApi } from '@/api/customer.api';
+import { useWebSocket } from '@/composables/useWebSocket';
 import { useCustomerAuthStore } from '@/stores/customer.auth.store';
 import type { SupportMessage, SupportTicket } from '@/types/support';
 
@@ -17,6 +18,7 @@ const showCloseConfirm = ref(false);
 const successMsg = ref('');
 const errorMsg = ref('');
 const messagesEnd = ref<HTMLElement | null>(null);
+const { watchSupportTicket } = useWebSocket();
 
 // ─── Computed ────────────────────────────────────────────────────────────────
 const statusLabel = computed(
@@ -91,6 +93,14 @@ function scrollToBottom() {
     messagesEnd.value?.scrollIntoView({ behavior: 'smooth' });
 }
 
+function appendMessage(message: SupportMessage) {
+    if (!ticket.value) return;
+    ticket.value.messages ??= [];
+    if (ticket.value.messages.some((item) => item.id === message.id)) return;
+    ticket.value.messages.push(message);
+    void nextTick(scrollToBottom);
+}
+
 async function loadTicket() {
     loading.value = true;
     errorMsg.value = '';
@@ -117,8 +127,7 @@ async function sendReply() {
             errorMsg.value = error ?? 'Gửi tin nhắn thất bại.';
             return;
         }
-        ticket.value!.messages ??= [];
-        ticket.value!.messages.push(data as SupportMessage);
+        appendMessage(data as SupportMessage);
         replyText.value = '';
         await nextTick();
         scrollToBottom();
@@ -145,7 +154,21 @@ async function closeTicket() {
     }
 }
 
-onMounted(() => void loadTicket());
+onMounted(() => {
+    const ticketId = String(route.params.id);
+    watchSupportTicket(
+        ticketId,
+        ({ payload }) => appendMessage(payload.message),
+        ({ payload }) => {
+            if (!ticket.value || payload.ticket_id !== ticket.value.id) return;
+            ticket.value.status = payload.status;
+            ticket.value.priority = payload.priority;
+            ticket.value.assigned_to = payload.assigned_to;
+            ticket.value.updated_at = payload.updated_at;
+        },
+    );
+    void loadTicket();
+});
 </script>
 
 <template>

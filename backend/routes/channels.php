@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Booking;
+use App\Models\SupportTicket;
 use App\Models\Trip;
 use Illuminate\Support\Facades\Broadcast;
 
@@ -45,3 +46,25 @@ Broadcast::channel('admin.monitor', function ($user) {
 Broadcast::channel('users.{userId}', function ($user, string $userId) {
     return $user->id === $userId;
 });
+
+// Room hội thoại công khai của một ticket: chỉ chủ ticket hoặc admin có quyền xem.
+Broadcast::channel('support.tickets.{ticketId}', function ($user, string $ticketId) {
+    if ($user->hasPermission('support_tickets.view')) {
+        return true;
+    }
+
+    return SupportTicket::whereKey($ticketId)
+        ->where('user_id', $user->id)
+        ->exists();
+}, ['guards' => ['sanctum']]);
+
+// Kênh ghi chú nội bộ tuyệt đối không cho customer tham gia.
+Broadcast::channel('admin.support.tickets.{ticketId}', function ($user, string $ticketId) {
+    return $user->hasPermission('support_tickets.view')
+        && SupportTicket::whereKey($ticketId)->exists();
+}, ['guards' => ['sanctum']]);
+
+// Feed realtime danh sách ticket dành cho bộ phận hỗ trợ.
+Broadcast::channel('admin.support', function ($user) {
+    return $user->hasPermission('support_tickets.view');
+}, ['guards' => ['sanctum']]);

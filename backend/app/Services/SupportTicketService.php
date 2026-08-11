@@ -7,6 +7,9 @@ use App\Enums\NotificationChannelEnum;
 use App\Enums\NotificationTypeEnum;
 use App\Enums\TicketPriorityEnum;
 use App\Enums\TicketStatusEnum;
+use App\Events\SupportTicketCreatedEvent;
+use App\Events\SupportTicketMessageCreatedEvent;
+use App\Events\SupportTicketUpdatedEvent;
 use App\Models\SupportMessage;
 use App\Models\SupportTicket;
 use App\Models\User;
@@ -52,6 +55,7 @@ class SupportTicketService
             "{$user->full_name} vừa tạo yêu cầu {$ticket->ticket_code}.",
             ['kind' => 'support_ticket_created', 'ticket_id' => $ticket->id, 'link' => "/admin/support/{$ticket->id}"],
         );
+        SupportTicketCreatedEvent::dispatch($ticket);
 
         return $ticket;
     }
@@ -61,7 +65,7 @@ class SupportTicketService
      */
     public function replyAsCustomer(User $customer, string $ticketId, string $body): SupportTicketMutationResultDTO
     {
-        return DB::transaction(function () use ($customer, $ticketId, $body) {
+        $result = DB::transaction(function () use ($customer, $ticketId, $body) {
             $ticket = SupportTicket::lockForUpdate()->findOrFail($ticketId);
 
             if ($ticket->user_id !== $customer->id) {
@@ -87,6 +91,10 @@ class SupportTicketService
                 message: $message,
             );
         });
+
+        SupportTicketMessageCreatedEvent::dispatch($result->message);
+
+        return $result;
     }
 
     /**
@@ -94,7 +102,7 @@ class SupportTicketService
      */
     public function replyAsAdmin(User $admin, string $ticketId, string $body, bool $isInternal = false): SupportTicketMutationResultDTO
     {
-        return DB::transaction(function () use ($admin, $ticketId, $body, $isInternal) {
+        $result = DB::transaction(function () use ($admin, $ticketId, $body, $isInternal) {
             $ticket = SupportTicket::lockForUpdate()->findOrFail($ticketId);
             $oldStatus = $ticket->status;
 
@@ -137,6 +145,13 @@ class SupportTicketService
                 message: $message,
             );
         });
+
+        SupportTicketMessageCreatedEvent::dispatch($result->message);
+        if ($result->oldValues['status'] !== $result->newValues['status']) {
+            SupportTicketUpdatedEvent::dispatch($result->ticket, ['status']);
+        }
+
+        return $result;
     }
 
     /**
@@ -144,7 +159,7 @@ class SupportTicketService
      */
     public function assignTicket(string $ticketId, string $adminId): SupportTicketMutationResultDTO
     {
-        return DB::transaction(function () use ($ticketId, $adminId) {
+        $result = DB::transaction(function () use ($ticketId, $adminId) {
             $ticket = SupportTicket::lockForUpdate()->findOrFail($ticketId);
 
             if ($ticket->status === TicketStatusEnum::Closed) {
@@ -161,6 +176,10 @@ class SupportTicketService
                 newValues: ['assigned_to' => $adminId],
             );
         });
+
+        SupportTicketUpdatedEvent::dispatch($result->ticket, ['assigned_to']);
+
+        return $result;
     }
 
     /**
@@ -171,7 +190,7 @@ class SupportTicketService
         ?TicketStatusEnum $status = null,
         ?TicketPriorityEnum $priority = null,
     ): SupportTicketMutationResultDTO {
-        return DB::transaction(function () use ($ticketId, $status, $priority) {
+        $result = DB::transaction(function () use ($ticketId, $status, $priority) {
             $ticket = SupportTicket::lockForUpdate()->findOrFail($ticketId);
             $oldValues = [
                 'status' => $ticket->status->value,
@@ -200,11 +219,22 @@ class SupportTicketService
                 ],
             );
         });
+
+        $changed = array_keys(array_filter(
+            $result->newValues,
+            fn ($value, $key) => ($result->oldValues[$key] ?? null) !== $value,
+            ARRAY_FILTER_USE_BOTH,
+        ));
+        if ($changed !== []) {
+            SupportTicketUpdatedEvent::dispatch($result->ticket, $changed);
+        }
+
+        return $result;
     }
 
     public function closeAsCustomer(User $customer, string $ticketId): SupportTicketMutationResultDTO
     {
-        return DB::transaction(function () use ($customer, $ticketId) {
+        $result = DB::transaction(function () use ($customer, $ticketId) {
             $ticket = SupportTicket::lockForUpdate()->findOrFail($ticketId);
 
             if ($ticket->user_id !== $customer->id) {
@@ -213,6 +243,10 @@ class SupportTicketService
 
             return $this->transitionLockedTicket($ticket, TicketStatusEnum::Closed);
         });
+
+        SupportTicketUpdatedEvent::dispatch($result->ticket, ['status']);
+
+        return $result;
     }
 
     public function resolveTicket(string $ticketId): SupportTicketMutationResultDTO
