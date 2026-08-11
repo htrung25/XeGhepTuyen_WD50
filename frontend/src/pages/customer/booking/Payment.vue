@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { customerApi } from '@/api/customer.api';
 import { useCustomerStore } from '@/stores/customer.store';
 
 const router = useRouter();
+const route = useRoute();
 const store = useCustomerStore();
 const draft = store.bookingDraft;
 
@@ -31,12 +32,31 @@ const countdownLabel = computed(() => {
 });
 const countdownUrgent = computed(() => paySeconds.value < 180);
 
-const subtotal = computed(() =>
-    draft.seats.reduce((sum, s) => sum + s.price, 0),
+const bookingId = computed(() => {
+    const queryId = route.query.booking_id;
+
+    return (typeof queryId === 'string' && queryId) || store.currentBookingId;
+});
+const subtotal = computed(
+    () =>
+        Number(bookingData.value?.base_amount) ||
+        draft.seats.reduce((sum, s) => sum + s.price, 0),
 );
-const total = computed(() =>
-    Math.max(0, subtotal.value - draft.voucher_discount),
+const discount = computed(
+    () => Number(bookingData.value?.discount_amount) || draft.voucher_discount,
 );
+const total = computed(
+    () =>
+        Number(bookingData.value?.final_amount) ||
+        Math.max(0, subtotal.value - discount.value),
+);
+const seatCodes = computed(() => {
+    const codes = bookingData.value?.passengers
+        ?.map((passenger: { seat_code?: string }) => passenger.seat_code)
+        .filter(Boolean);
+
+    return codes?.length ? codes : draft.seat_codes;
+});
 
 function fmt(v: number) {
     return new Intl.NumberFormat('vi-VN').format(v) + 'đ';
@@ -77,10 +97,10 @@ const paymentMethods = computed(() => [
         key: 'cash' as const,
         label: 'Tiền mặt',
         desc: 'Thanh toán tiền mặt khi lên xe',
-        badge: draft.voucher_discount > 0 ? 'Không áp dụng với voucher' : null,
+        badge: discount.value > 0 ? 'Không áp dụng với voucher' : null,
         badgeColor: 'bg-amber-100 text-amber-700',
         icon: '💵',
-        disabled: draft.voucher_discount > 0,
+        disabled: discount.value > 0,
     },
 ]);
 
@@ -112,14 +132,14 @@ async function pay() {
     if (isLoading.value) return;
     isLoading.value = true;
     errorMsg.value = '';
-    const bookingId = store.currentBookingId;
-    if (!bookingId) {
+    const currentBookingId = bookingId.value;
+    if (!currentBookingId) {
         errorMsg.value = 'Không tìm thấy thông tin đặt vé. Vui lòng thử lại.';
         isLoading.value = false;
         return;
     }
     const { data, error } = await customerApi.initiatePayment({
-        booking_id: bookingId,
+        booking_id: currentBookingId,
         method: selectedMethod.value,
     });
     isLoading.value = false;
@@ -128,7 +148,7 @@ async function pay() {
         return;
     }
     if (selectedMethod.value === 'cash' || selectedMethod.value === 'wallet') {
-        router.push(`/booking/${bookingId}/confirmation`);
+        router.push(`/booking/${currentBookingId}/confirmation`);
         return;
     }
 
@@ -137,7 +157,7 @@ async function pay() {
             sepayQrUrl.value = data.payment_url;
             sepayBankInfo.value = data.bank_info;
             showSepayModal.value = true;
-            startSepayPolling(bookingId);
+            startSepayPolling(currentBookingId);
         } else {
             errorMsg.value =
                 'Không thể khởi tạo mã QR chuyển khoản. Vui lòng thử lại.';
@@ -153,13 +173,33 @@ async function pay() {
 }
 
 onMounted(async () => {
-    if (!store.currentBookingId) {
-        router.replace('/home');
+    const currentBookingId = bookingId.value;
+    if (!currentBookingId) {
+        router.replace('/bookings');
         return;
     }
-    const { data } = await customerApi.getBooking(store.currentBookingId);
+    store.currentBookingId = currentBookingId;
+    const { data, error } = await customerApi.getBooking(currentBookingId);
     loadingBooking.value = false;
+    if (error || !data) {
+        errorMsg.value = 'Không thể tải thông tin vé. Vui lòng thử lại.';
+        return;
+    }
     bookingData.value = data;
+    if (data.booking_status !== 'pending' || data.payment_status !== 'unpaid') {
+        router.replace(`/booking/${currentBookingId}/confirmation`);
+        return;
+    }
+    if (data.expires_at) {
+        paySeconds.value = Math.max(
+            0,
+            Math.floor(
+                (new Date(data.expires_at.replace(' ', 'T')).getTime() -
+                    Date.now()) /
+                    1000,
+            ),
+        );
+    }
     const { data: wallet } = await customerApi.getWallet();
     if (wallet) {
         walletBalance.value = wallet.balance;
@@ -169,7 +209,7 @@ onMounted(async () => {
         if (paySeconds.value > 0) paySeconds.value--;
         else {
             clearInterval(countdown!);
-            router.replace('/home');
+            router.replace('/bookings');
         }
     }, 1000);
 });
@@ -380,7 +420,7 @@ onUnmounted(() => {
                         <div class="flex justify-between">
                             <span class="text-gray-500">Ghế</span>
                             <span class="font-medium">{{
-                                draft.seat_codes.join(', ')
+                                seatCodes.join(', ')
                             }}</span>
                         </div>
                     </div>
@@ -397,11 +437,11 @@ onUnmounted(() => {
                             <span>{{ fmt(subtotal) }}</span>
                         </div>
                         <div
-                            v-if="draft.voucher_discount > 0"
+                            v-if="discount > 0"
                             class="flex justify-between text-green-600"
                         >
                             <span>Giảm giá</span>
-                            <span>–{{ fmt(draft.voucher_discount) }}</span>
+                            <span>–{{ fmt(discount) }}</span>
                         </div>
                     </div>
                     <div

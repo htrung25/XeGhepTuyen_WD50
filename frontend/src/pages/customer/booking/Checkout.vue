@@ -111,7 +111,10 @@ async function submit() {
         return;
     }
     store.currentBookingId = data?.id ?? null;
-    router.push('/booking/payment');
+    router.push({
+        path: '/booking/payment',
+        query: { booking_id: store.currentBookingId ?? undefined },
+    });
 }
 
 onMounted(async () => {

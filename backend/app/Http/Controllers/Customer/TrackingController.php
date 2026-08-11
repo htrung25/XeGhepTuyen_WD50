@@ -28,6 +28,14 @@ class TrackingController extends Controller
             return response()->json(['success' => false, 'message' => 'Vé không tồn tại'], 404);
         }
 
+        if (! $booking->canAccessTicket()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vui lòng hoàn tất thanh toán trước khi theo dõi chuyến xe',
+                'code' => 'PAYMENT_REQUIRED',
+            ], 409);
+        }
+
         $trip = $booking->trip->loadMissing(['route.stops', 'driver.user', 'vehicle']);
         $driver = $trip->driver;
         $location = $driver ? $this->trackingService->getLocation($driver) : null;

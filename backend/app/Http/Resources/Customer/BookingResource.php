@@ -24,8 +24,10 @@ class BookingResource extends JsonResource
             'pickup_address' => $this->pickup_address,
             'dropoff_address' => $this->dropoff_address,
             'expires_at' => $this->expires_at?->format('Y-m-d H:i:s'),
-            'qr_code' => $this->qr_code,
-            'qr_url' => $this->qr_code,
+            'can_continue_payment' => $this->canContinuePayment(),
+            'can_access_ticket' => $this->canAccessTicket(),
+            'qr_code' => $this->canAccessTicket() ? $this->qr_code : null,
+            'qr_url' => $this->canAccessTicket() ? $this->qr_code : null,
             'trip' => [
                 'id' => $this->trip->id,
                 'depart_at' => $this->trip->depart_at->format('Y-m-d H:i:s'),

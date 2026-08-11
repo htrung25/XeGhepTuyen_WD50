@@ -46,6 +46,8 @@ it('trả đúng contract vé để trang xác nhận hiển thị tuyến xe t�
 
     $this->getJson("/api/customer/bookings/{$booking->id}")
         ->assertOk()
+        ->assertJsonPath('data.can_access_ticket', true)
+        ->assertJsonPath('data.can_continue_payment', false)
         ->assertJsonPath('data.trip.route', 'Hà Nội → Hải Phòng')
         ->assertJsonPath('data.trip.vehicle.plate', $booking->trip->vehicle->plate_number)
         ->assertJsonPath('data.trip.driver_name', $booking->trip->driver->user->full_name)
@@ -75,6 +77,45 @@ it('trả QR dạng data URI không phụ thuộc filesystem public của cloud'
 
     expect($response->json('data.qr_code'))
         ->toStartWith('data:image/svg+xml;base64,');
+});
+
+it('chặn QR và PDF khi vé online vẫn đang chờ thanh toán', function () {
+    $booking = makeCustomerTicketBooking();
+    $booking->update([
+        'booking_status' => 'pending',
+        'payment_status' => 'unpaid',
+        'payment_method' => 'momo',
+        'expires_at' => now()->addMinutes(10),
+    ]);
+    Sanctum::actingAs($booking->user, ['*'], 'sanctum');
+    Sanctum::actingAs($booking->user, ['*'], 'customer');
+
+    $this->getJson("/api/customer/bookings/{$booking->id}")
+        ->assertOk()
+        ->assertJsonPath('data.can_access_ticket', false)
+        ->assertJsonPath('data.can_continue_payment', true)
+        ->assertJsonPath('data.qr_code', null);
+
+    $this->getJson("/api/customer/bookings/{$booking->id}/qr")
+        ->assertStatus(409)
+        ->assertJsonPath('code', 'PAYMENT_REQUIRED');
+    $this->getJson("/api/customer/bookings/{$booking->id}/ticket.pdf")
+        ->assertStatus(409)
+        ->assertJsonPath('code', 'PAYMENT_REQUIRED');
+});
+
+it('cho vé tiền mặt đã xác nhận xem QR dù trạng thái tiền vẫn là unpaid', function () {
+    $booking = makeCustomerTicketBooking();
+    $booking->update([
+        'booking_status' => 'confirmed',
+        'payment_status' => 'unpaid',
+        'payment_method' => 'cash',
+        'expires_at' => null,
+    ]);
+    Sanctum::actingAs($booking->user, ['*'], 'sanctum');
+    Sanctum::actingAs($booking->user, ['*'], 'customer');
+
+    $this->getJson("/api/customer/bookings/{$booking->id}/qr")->assertOk();
 });
 
 it('không cho khách tải vé của người khác', function () {

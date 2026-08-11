@@ -207,4 +207,25 @@ class Booking extends Model
         return $this->expires_at && $this->expires_at->isPast()
             && $this->payment_status === BookingPaymentStatusEnum::Unpaid;
     }
+
+    public function canAccessTicket(): bool
+    {
+        if (! in_array($this->booking_status, [
+            BookingStatusEnum::Confirmed,
+            BookingStatusEnum::CheckedIn,
+            BookingStatusEnum::Completed,
+        ], true)) {
+            return false;
+        }
+
+        return $this->payment_status === BookingPaymentStatusEnum::Paid
+            || $this->payment_method === PaymentMethodEnum::Cash;
+    }
+
+    public function canContinuePayment(): bool
+    {
+        return $this->booking_status === BookingStatusEnum::Pending
+            && $this->payment_status === BookingPaymentStatusEnum::Unpaid
+            && ! $this->isExpired();
+    }
 }

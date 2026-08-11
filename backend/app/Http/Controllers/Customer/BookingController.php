@@ -152,6 +152,14 @@ class BookingController extends Controller
             return response()->json(['success' => false, 'message' => 'Vé không tồn tại'], 404);
         }
 
+        if (! $booking->canAccessTicket()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vui lòng hoàn tất thanh toán trước khi xem mã QR',
+                'code' => 'PAYMENT_REQUIRED',
+            ], 409);
+        }
+
         return response()->json([
             'success' => true,
             // Sinh trực tiếp từ token đã lưu: không phụ thuộc file public trên
@@ -170,6 +178,14 @@ class BookingController extends Controller
 
         if (! $booking || $booking->user_id !== auth('customer')->id()) {
             return response()->json(['success' => false, 'message' => 'Vé không tồn tại'], 404);
+        }
+
+        if (! $booking->canAccessTicket()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vui lòng hoàn tất thanh toán trước khi tải vé',
+                'code' => 'PAYMENT_REQUIRED',
+            ], 409);
         }
 
         $qrDataUri = 'data:image/svg+xml;base64,'.base64_encode(

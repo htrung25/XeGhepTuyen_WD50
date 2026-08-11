@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { customerApi } from '@/api/customer.api';
 import {
     Dialog,
@@ -9,6 +10,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { useCustomerStore } from '@/stores/customer.store';
 
 type BookingTab = 'upcoming' | 'past' | 'cancelled';
 interface Booking {
@@ -25,9 +27,13 @@ interface Booking {
     final_amount: number;
     contact_name: string;
     qr_code?: string;
+    can_continue_payment?: boolean;
+    can_access_ticket?: boolean;
 }
 
 const activeTab = ref<BookingTab>('upcoming');
+const router = useRouter();
+const customerStore = useCustomerStore();
 const bookings = ref<Booking[]>([]);
 const isLoading = ref(true);
 const errorMsg = ref('');
@@ -81,6 +87,40 @@ function payMethodIcon(m: string) {
     if (m === 'wallet') return '👛 Ví XeGhepTuyen-Fgroup';
     if (m === 'cash') return '💵 Tiền mặt';
     return m;
+}
+
+function canContinuePayment(booking: Booking) {
+    if (typeof booking.can_continue_payment === 'boolean') {
+        return booking.can_continue_payment;
+    }
+
+    return (
+        booking.booking_status === 'pending' &&
+        booking.payment_status === 'unpaid'
+    );
+}
+
+function canAccessTicket(booking: Booking) {
+    if (typeof booking.can_access_ticket === 'boolean') {
+        return booking.can_access_ticket;
+    }
+
+    const usableStatus = ['confirmed', 'checked_in', 'completed'].includes(
+        booking.booking_status,
+    );
+
+    return (
+        usableStatus &&
+        (booking.payment_status === 'paid' || booking.payment_method === 'cash')
+    );
+}
+
+function continuePayment(booking: Booking) {
+    customerStore.currentBookingId = booking.id;
+    router.push({
+        path: '/booking/payment',
+        query: { booking_id: booking.id },
+    });
 }
 
 async function loadBookings(tab: BookingTab, page = 1) {
@@ -303,13 +343,23 @@ onMounted(() => loadBookings('upcoming'));
                     >
                         <!-- Upcoming actions -->
                         <template v-if="activeTab === 'upcoming'">
+                            <button
+                                v-if="canContinuePayment(b)"
+                                type="button"
+                                @click="continuePayment(b)"
+                                class="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold whitespace-nowrap text-white transition-colors hover:bg-blue-700"
+                            >
+                                Tiếp tục thanh toán
+                            </button>
                             <router-link
-                                :to="`/customer/bookings/${b.id}`"
+                                v-if="canAccessTicket(b)"
+                                :to="`/booking/${b.id}/confirmation`"
                                 class="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold whitespace-nowrap text-white transition-colors hover:bg-blue-700"
                             >
                                 Xem vé QR
                             </router-link>
                             <router-link
+                                v-if="canAccessTicket(b)"
                                 :to="`/customer/bookings/${b.id}/track`"
                                 class="rounded-lg border border-gray-300 px-4 py-2 text-xs font-medium whitespace-nowrap text-gray-700 transition-colors hover:bg-gray-50"
                             >

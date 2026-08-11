@@ -132,6 +132,20 @@ it('chặn xem tracking vé của người khác', function () {
     $this->getJson("/api/customer/bookings/{$booking->id}/track")->assertNotFound();
 });
 
+it('chặn tracking khi vé online vẫn đang chờ thanh toán', function () {
+    [$booking] = setupTrackingContext('scheduled', now()->addHours(2));
+    $booking->update([
+        'booking_status' => 'pending',
+        'payment_status' => 'unpaid',
+        'payment_method' => 'momo',
+        'expires_at' => now()->addMinutes(10),
+    ]);
+
+    $this->getJson("/api/customer/bookings/{$booking->id}/track")
+        ->assertStatus(409)
+        ->assertJsonPath('code', 'PAYMENT_REQUIRED');
+});
+
 it('tính ETA bằng đúng google_maps.api_key và trả ETA ở API tracking', function () {
     Event::fake([DriverLocationUpdatedEvent::class]);
     Http::fake([
