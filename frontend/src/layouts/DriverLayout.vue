@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { driverApi } from '@/api/driver.api';
 import { Toaster } from '@/components/ui/sonner';
+import LiveClock from '@/components/LiveClock.vue';
 import { useDriverAuthStore } from '@/stores/driver.auth.store';
 
 const route = useRoute();
@@ -198,6 +199,8 @@ onUnmounted(() => {
                 </div>
 
                 <div class="flex items-center gap-3">
+                    <LiveClock />
+
                     <!-- Stars -->
                     <div
                         v-if="auth.user?.rating_avg"

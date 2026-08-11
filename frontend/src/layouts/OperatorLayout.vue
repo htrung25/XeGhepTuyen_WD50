@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Toaster } from '@/components/ui/sonner';
+import LiveClock from '@/components/LiveClock.vue';
 import { useOperatorAuthStore } from '@/stores/operator.auth.store';
 
 const route = useRoute();
@@ -237,6 +238,8 @@ onUnmounted(() => {
                 </div>
 
                 <div class="flex items-center gap-3">
+                    <LiveClock />
+
                     <!-- Notification bell -->
                     <button
                         class="relative text-slate-400 transition-colors hover:text-slate-600"

@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { adminApi } from '@/api/admin.api';
 import { Toaster } from '@/components/ui/sonner';
+import LiveClock from '@/components/LiveClock.vue';
 import { useAdminNotifications } from '@/composables/useAdminNotifications';
 import type { AdminNotification } from '@/composables/useAdminNotifications';
 import { useCan } from '@/composables/useCan';
@@ -465,6 +466,8 @@ async function handleLogout() {
                 </div>
 
                 <div class="flex items-center gap-3">
+                    <LiveClock />
+
                     <!-- Notification bell -->
                     <div class="relative" ref="notifRef">
                         <button
