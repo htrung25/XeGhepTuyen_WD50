@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "skills": {
+    "websocket": {
+      "source": "smithery.ai",
+      "sourceUrl": "https://smithery.ai/skills/adelabdelgawad/websocket",
+      "sourceType": "well-known",
+      "computedHash": "c280167705f6e177ba2d28938c47e3242304e99da65d2a27e597aa9dabd35bd7",
+      "wellKnownDigest": "sha256:79695260a6cf9bd9c67926d29fbf296e9543e3a000193a81fc2f6efab2a90966"
+    }
+  }
+}

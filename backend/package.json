@@ -1,0 +1,10 @@
+{
+  "devDependencies": {
+    "laravel-echo": "^2.4.0",
+    "pusher-js": "^8.6.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  }
+}
