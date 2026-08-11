@@ -11,6 +11,7 @@ use App\Services\PrivateDocumentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class DriverController extends Controller
 {
@@ -107,16 +108,24 @@ class DriverController extends Controller
 
     public function assignVehicle(Request $request, string $id): JsonResponse
     {
-        $request->validate(['vehicle_id' => ['required', 'uuid', 'exists:vehicles,id']]);
-
         $operator = auth('operator')->user()->operator;
+        $validated = $request->validate([
+            'vehicle_id' => [
+                'required',
+                'uuid',
+                Rule::exists('vehicles', 'id')->where('operator_id', $operator->id),
+            ],
+        ], [
+            'vehicle_id.exists' => 'Xe không tồn tại hoặc không thuộc nhà xe của bạn',
+        ]);
+
         $driver = Driver::where('id', $id)->where('operator_id', $operator->id)->first();
 
         if (! $driver) {
             return response()->json(['success' => false, 'message' => 'Tài xế không tồn tại'], 404);
         }
 
-        $driver->update(['current_vehicle_id' => $request->vehicle_id]);
+        $this->driverService->assignVehicle($driver, $validated['vehicle_id'], $operator->id);
 
         return response()->json(['success' => true, 'message' => 'Đã phân công xe cho tài xế']);
     }

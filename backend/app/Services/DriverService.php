@@ -9,6 +9,7 @@ use App\Jobs\Notification\SendSmsNotificationJob;
 use App\Models\Driver;
 use App\Models\Operator;
 use App\Models\User;
+use App\Models\Vehicle;
 use Closure;
 use DomainException;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,38 @@ use Illuminate\Support\Str;
 
 class DriverService
 {
+    /**
+     * Gán cố định một xe cho tài xế.
+     *
+     * Khóa hàng xe giúp tuần tự hóa hai request cùng gán một xe. Assignment cũ
+     * được gỡ trong cùng transaction, bảo đảm mỗi xe chỉ thuộc một tài xế.
+     */
+    public function assignVehicle(Driver $driver, string $vehicleId, string $operatorId): Driver
+    {
+        return DB::transaction(function () use ($driver, $vehicleId, $operatorId): Driver {
+            Vehicle::query()
+                ->whereKey($vehicleId)
+                ->where('operator_id', $operatorId)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $lockedDriver = Driver::query()
+                ->whereKey($driver->id)
+                ->where('operator_id', $operatorId)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            Driver::query()
+                ->where('current_vehicle_id', $vehicleId)
+                ->whereKeyNot($lockedDriver->id)
+                ->update(['current_vehicle_id' => null]);
+
+            $lockedDriver->update(['current_vehicle_id' => $vehicleId]);
+
+            return $lockedDriver->refresh();
+        }, attempts: 3);
+    }
+
     /**
      * Nhà xe thêm tài xế → tạo tài khoản (User role=driver) + hồ sơ Driver status=pending.
      *
