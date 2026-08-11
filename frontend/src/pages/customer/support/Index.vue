@@ -103,12 +103,15 @@ function timeAgo(dateStr: string) {
     return `${Math.floor(hours / 24)} ngày trước`;
 }
 
-function isFormValid() {
-    return (
-        form.value.category &&
-        form.value.subject.trim().length >= 5 &&
-        form.value.body.trim().length >= 20
-    );
+function formValidationError(): string | null {
+    if (!form.value.category) return 'Vui lòng chọn loại yêu cầu.';
+    if (form.value.subject.trim().length < 5) {
+        return 'Tiêu đề phải có ít nhất 5 ký tự.';
+    }
+    if (form.value.body.trim().length < 20) {
+        return 'Mô tả chi tiết phải có ít nhất 20 ký tự.';
+    }
+    return null;
 }
 
 async function loadTickets(page = 1) {
@@ -142,7 +145,11 @@ async function loadBookings() {
 }
 
 async function submitTicket() {
-    if (!isFormValid()) return;
+    const validationError = formValidationError();
+    if (validationError) {
+        errorMsg.value = validationError;
+        return;
+    }
     createLoading.value = true;
     errorMsg.value = '';
     const booking = myBookings.value.find(
@@ -611,7 +618,9 @@ watch(statusFilter, () => void loadTickets(1));
                             class="w-full rounded-lg border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 transition outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20"
                         />
                         <p class="mt-1 text-right text-xs text-slate-400">
-                            {{ form.subject.length }}/255
+                            Tối thiểu 5 ký tự ({{
+                                form.subject.trim().length
+                            }}/255)
                         </p>
                     </div>
 
@@ -717,12 +726,12 @@ watch(statusFilter, () => void loadTickets(1));
                         </button>
                         <button
                             type="submit"
-                            :disabled="!isFormValid() || createLoading"
+                            :disabled="createLoading"
                             :class="[
                                 'inline-flex items-center gap-2 rounded-lg px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition',
-                                isFormValid() && !createLoading
-                                    ? 'bg-blue-600 hover:bg-blue-700'
-                                    : 'cursor-not-allowed bg-blue-300',
+                                createLoading
+                                    ? 'cursor-not-allowed bg-blue-300'
+                                    : 'bg-blue-600 hover:bg-blue-700',
                             ]"
                         >
                             <svg
