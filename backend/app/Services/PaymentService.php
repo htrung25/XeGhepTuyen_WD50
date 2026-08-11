@@ -246,6 +246,12 @@ class PaymentService
 
             $booking = Booking::whereKey($payment->booking_id)->lockForUpdate()->firstOrFail();
 
+            // Callback đến sau khi booking hết hạn/đã bị hủy không được hồi sinh vé và
+            // chiếm lại ghế đã trả cho người khác. Giao dịch đến muộn cần đối soát riêng.
+            if ($booking->booking_status !== BookingStatusEnum::Pending || $booking->isExpired()) {
+                throw new PaymentVerificationException('Booking đã hết hạn hoặc không còn chờ thanh toán');
+            }
+
             if ($gatewayTxnId !== null) {
                 $duplicateGatewayTransaction = Payment::where('method', $payment->method)
                     ->where('gateway_txn_id', $gatewayTxnId)

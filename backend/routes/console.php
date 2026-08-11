@@ -16,6 +16,10 @@ Schedule::command('trips:auto-resolve')->everyTenMinutes()->withoutOverlapping()
 // Giải phóng ghế giữ tạm quá 10' (dọn DB; tầng đọc đã tự liền qua SeatMap::isAvailable)
 Schedule::job(new ExpireLockedSeatsJob)->everyMinute()->withoutOverlapping();
 
+// Quét bù booking quá hạn trực tiếp trong scheduler. Delayed job vẫn là đường chính,
+// command này bảo đảm queue high bị backlog/khởi động lại không giữ ghế vô thời hạn.
+Schedule::command('bookings:expire-unpaid')->everyMinute()->withoutOverlapping();
+
 // Xóa proof OTP đã hết hạn/đã dùng; model chỉ prune bản ghi cũ hơn 24 giờ.
 Schedule::command('model:prune', ['--model' => [OtpVerification::class]])
     ->dailyAt('02:15')

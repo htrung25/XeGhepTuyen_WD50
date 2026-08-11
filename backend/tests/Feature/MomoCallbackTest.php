@@ -126,6 +126,24 @@ it('confirm vé khi MoMo resultCode == 0 (thành công)', function () {
     Event::assertDispatched(PaymentProcessedEvent::class);
 });
 
+it('không hồi sinh booking đã hết hạn khi callback thành công đến muộn', function () {
+    $payment = makePendingMomoPayment();
+    $payment->booking->update([
+        'booking_status' => 'cancelled',
+        'cancelled_at' => now(),
+        'cancel_reason' => 'Hết hạn thanh toán',
+        'expires_at' => now()->subMinute(),
+    ]);
+
+    expect(fn () => app(PaymentService::class)->handleMomoCallback(
+        momoPayload($payment, 0)
+    ))->toThrow(PaymentVerificationException::class);
+
+    expect($payment->fresh()->status->value)->toBe('pending')
+        ->and($payment->booking->fresh()->booking_status->value)->toBe('cancelled')
+        ->and($payment->booking->fresh()->payment_status->value)->toBe('unpaid');
+});
+
 it('từ chối callback MoMo sai chữ ký', function () {
     $payment = makePendingMomoPayment();
     $payload = momoPayload($payment, 0);

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\DTOs\GeoCoordinate;
 use App\Enums\BookingPaymentStatusEnum;
 use App\Enums\BookingStatusEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\SeatStatusEnum;
 use App\Exceptions\SeatNotAvailableException;
 use App\Exceptions\TripNotAvailableException;
@@ -263,6 +264,10 @@ class BookingService
                 'cancelled_at' => now(),
                 'cancel_reason' => 'Hết hạn thanh toán',
             ]);
+
+            $booking->payment()
+                ->where('status', PaymentStatusEnum::Pending)
+                ->update(['status' => PaymentStatusEnum::Failed]);
 
             $seatIds = $booking->passengers()->pluck('seat_map_id');
             SeatMap::whereIn('id', $seatIds)->update(['status' => SeatStatusEnum::Available]);

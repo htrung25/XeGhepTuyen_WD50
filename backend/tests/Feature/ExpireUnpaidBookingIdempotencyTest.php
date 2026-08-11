@@ -2,8 +2,10 @@
 
 use App\Enums\UserRoleEnum;
 use App\Models\Booking;
+use App\Models\BookingPassenger;
 use App\Models\Driver;
 use App\Models\Operator;
+use App\Models\Payment;
 use App\Models\Route;
 use App\Models\RouteStop;
 use App\Models\SeatMap;
@@ -53,16 +55,47 @@ function makeExpiredUnpaidBooking(): array
         'qr_token' => Str::random(32), 'expires_at' => now()->subMinute(), // đã quá hạn
     ]);
 
-    return [$trip, $booking];
+    Payment::create([
+        'booking_id' => $booking->id,
+        'user_id' => $booking->user_id,
+        'amount' => 150000,
+        'method' => 'momo',
+        'status' => 'pending',
+        'gateway_order_id' => 'XEGHEP-'.Str::random(12),
+    ]);
+    BookingPassenger::create([
+        'booking_id' => $booking->id,
+        'seat_map_id' => $seat->id,
+        'full_name' => 'Khách hết hạn',
+        'phone' => '0900000000',
+        'is_primary' => true,
+    ]);
+
+    return [$trip, $booking, $seat];
 }
 
 it('expire() hủy vé quá hạn và trả ghế đúng 1 lần', function () {
-    [$trip, $booking] = makeExpiredUnpaidBooking();
+    [$trip, $booking, $seat] = makeExpiredUnpaidBooking();
 
     app(BookingService::class)->expire($booking);
 
     expect($trip->refresh()->available_seats)->toBe(9)
-        ->and($booking->refresh()->booking_status->value)->toBe('cancelled');
+        ->and($booking->refresh()->booking_status->value)->toBe('cancelled')
+        ->and($booking->cancel_reason)->toBe('Hết hạn thanh toán')
+        ->and($seat->refresh()->status->value)->toBe('available')
+        ->and($booking->payment->refresh()->status->value)->toBe('failed');
+});
+
+it('command quét bù hủy booking quá hạn khi delayed queue job không chạy', function () {
+    [$trip, $booking, $seat] = makeExpiredUnpaidBooking();
+
+    $this->artisan('bookings:expire-unpaid')
+        ->expectsOutput('Đã xử lý 1 booking quá hạn; lỗi: 0.')
+        ->assertSuccessful();
+
+    expect($booking->refresh()->booking_status->value)->toBe('cancelled')
+        ->and($seat->refresh()->status->value)->toBe('available')
+        ->and($trip->refresh()->available_seats)->toBe(9);
 });
 
 it('chạy expire() lần hai KHÔNG cộng thêm ghế (an toàn khi drain backlog)', function () {

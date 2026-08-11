@@ -14,7 +14,9 @@ class ExpireUnpaidBookingJob implements ShouldQueue
 {
     use InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries = 1;
+    public int $tries = 3;
+
+    public array $backoff = [10, 30, 60];
 
     public function __construct(public readonly Booking $booking)
     {
