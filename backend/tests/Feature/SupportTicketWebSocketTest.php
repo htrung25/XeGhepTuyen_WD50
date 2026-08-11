@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\SupportTicketService;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Route;
 
 beforeEach(function () {
     config(['broadcasting.default' => 'reverb']);
@@ -46,8 +47,10 @@ it('phát message public vào đúng private room với contract có version typ
     $event = new SupportTicketMessageCreatedEvent($message);
 
     expect($event->broadcastAs())->toBe('support.ticket.message.created')
+        ->and($event->queue)->toBe('broadcasts')
         ->and($event->broadcastOn()[0])->toBeInstanceOf(PrivateChannel::class)
         ->and($event->broadcastOn()[0]->name)->toBe("private-support.tickets.{$ticket->id}")
+        ->and($event->broadcastOn()[1]->name)->toBe('private-admin.support')
         ->and($event->broadcastWith()['v'])->toBe(1)
         ->and($event->broadcastWith()['type'])->toBe('support_message.created')
         ->and($event->broadcastWith()['payload']['message']['body'])->toBe('Xin hỗ trợ realtime');
@@ -66,8 +69,11 @@ it('cô lập ghi chú nội bộ sang room chỉ dành cho admin', function () 
 
     $event = new SupportTicketMessageCreatedEvent($message);
 
-    expect($event->broadcastOn()[0]->name)
-        ->toBe("private-admin.support.tickets.{$ticket->id}");
+    expect(array_map(fn ($channel) => $channel->name, $event->broadcastOn()))
+        ->toBe([
+            "private-admin.support.tickets.{$ticket->id}",
+            'private-admin.support',
+        ]);
 });
 
 it('phát ticket mới và thay đổi trạng thái vào feed admin và room ticket', function () {
@@ -127,6 +133,15 @@ it('không cho customer xác thực room ghi chú nội bộ hoặc feed admin',
         'socket_id' => '123.456',
         'channel_name' => 'private-admin.support',
     ])->assertForbidden();
+});
+
+it('giới hạn tần suất endpoint xác thực broadcasting', function () {
+    $route = collect(Route::getRoutes())->first(
+        fn ($route) => $route->uri() === 'api/broadcasting/auth',
+    );
+
+    expect($route)->not->toBeNull()
+        ->and($route->gatherMiddleware())->toContain('throttle:60,1');
 });
 
 it('service phát event realtime sau khi ghi dữ liệu ticket thành công', function () {

@@ -11,21 +11,19 @@ import type {
 declare global {
     interface Window {
         Pusher: typeof Pusher;
-        Echo: Echo<'reverb'>;
+        Echo?: Echo<'reverb'>;
     }
 }
 
 interface LocationUpdate {
-    trip_id: string;
-    driver_id: string;
     lat: number;
     lng: number;
-    speed: number;
-    heading: number;
-    timestamp: string;
+    updated_at: string;
+    eta_minutes: number | null;
 }
 
 let echoInstance: Echo<'reverb'> | null = null;
+let echoToken: string | null = null;
 
 function websocketToken(): string {
     const path = window.location.pathname;
@@ -41,16 +39,23 @@ function websocketToken(): string {
 }
 
 function getEcho(): Echo<'reverb'> | null {
-    if (echoInstance) return echoInstance;
-
     const key = import.meta.env.VITE_REVERB_APP_KEY;
     const host = import.meta.env.VITE_REVERB_HOST ?? 'localhost';
     const port = import.meta.env.VITE_REVERB_PORT ?? 8080;
     const scheme = import.meta.env.VITE_REVERB_SCHEME ?? 'http';
+    const token = websocketToken();
 
-    if (!key) return null;
+    if (!key || !token) return null;
+    if (echoInstance && echoToken === token) return echoInstance;
+
+    if (echoInstance) {
+        echoInstance.disconnect();
+        echoInstance = null;
+        window.Echo = undefined;
+    }
 
     window.Pusher = Pusher;
+    echoToken = token;
 
     echoInstance = new Echo({
         broadcaster: 'reverb',
@@ -63,10 +68,11 @@ function getEcho(): Echo<'reverb'> | null {
         authEndpoint: `${API_ORIGIN}/api/broadcasting/auth`,
         auth: {
             headers: {
-                Authorization: `Bearer ${websocketToken()}`,
+                Authorization: `Bearer ${token}`,
             },
         },
     });
+    window.Echo = echoInstance;
 
     return echoInstance;
 }
@@ -90,11 +96,11 @@ export function useWebSocket() {
     ) {
         const echo = getEcho();
         if (!echo) return;
-        echo.channel(`trips.${tripId}`).listen(
+        echo.join(`trips.${tripId}`).listen(
             '.driver.location.updated',
             onLocation,
         );
-        subscriptions.push(() => echo.leaveChannel(`trips.${tripId}`));
+        subscriptions.push(() => echo.leave(`trips.${tripId}`));
     }
 
     function watchUserNotifications(
@@ -141,6 +147,7 @@ export function useWebSocket() {
     function watchAdminSupport(
         onCreated: (event: SupportTicketCreatedEvent) => void,
         onUpdated: (event: SupportTicketUpdatedEvent) => void,
+        onMessage?: (event: SupportMessageCreatedEvent) => void,
     ) {
         const echo = getEcho();
         if (!echo) return;
@@ -148,6 +155,12 @@ export function useWebSocket() {
         echo.private('admin.support')
             .listen('.support.ticket.created', onCreated)
             .listen('.support.ticket.updated', onUpdated);
+        if (onMessage) {
+            echo.private('admin.support').listen(
+                '.support.ticket.message.created',
+                onMessage,
+            );
+        }
 
         subscriptions.push(() => echo.leave('admin.support'));
     }

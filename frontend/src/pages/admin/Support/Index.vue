@@ -136,7 +136,11 @@ watch(
     () => void fetchTickets(),
 );
 onMounted(() => {
-    watchAdminSupport(refreshFromRealtime, refreshFromRealtime);
+    watchAdminSupport(
+        refreshFromRealtime,
+        refreshFromRealtime,
+        refreshFromRealtime,
+    );
     void fetchTickets();
 });
 </script>

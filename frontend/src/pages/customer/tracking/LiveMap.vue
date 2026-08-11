@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router';
 import { customerApi } from '@/api/customer.api';
 import MapboxMap from '@/components/MapboxMap.vue';
 import type { MapMarker } from '@/components/MapboxMap.vue';
+import { useWebSocket } from '@/composables/useWebSocket';
 
 const route = useRoute();
 const bookingId = route.params.id as string;
@@ -14,7 +15,8 @@ const driverLat = ref<number | null>(null);
 const driverLng = ref<number | null>(null);
 const etaMinutes = ref<number | null>(null);
 const lastUpdate = ref<string | null>(null);
-let echoChannel: any = null;
+const { watchTrip } = useWebSocket();
+let fallbackTimer: ReturnType<typeof setInterval> | null = null;
 
 const mapMarkers = computed<MapMarker[]>(() => {
     if (driverLat.value === null || driverLng.value === null) return [];
@@ -39,20 +41,32 @@ interface TimelineStop {
 const stops = ref<TimelineStop[]>([]);
 
 function setupWebSocket(tripId: string) {
-    if (!(window as any).Echo) return;
-    echoChannel = (window as any).Echo.channel(`trips.${tripId}`).listen(
-        '.driver.location.updated',
-        (e: any) => {
-            driverLat.value = e.lat;
-            driverLng.value = e.lng;
-            etaMinutes.value = e.eta_minutes;
-            lastUpdate.value = new Date().toLocaleTimeString('vi-VN', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false,
-            });
-        },
-    );
+    watchTrip(tripId, (e) => {
+        driverLat.value = e.lat;
+        driverLng.value = e.lng;
+        etaMinutes.value = e.eta_minutes;
+        lastUpdate.value = new Date(e.updated_at).toLocaleTimeString('vi-VN', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+        });
+    });
+}
+
+async function refreshLocationFallback() {
+    const { data, error } = await customerApi.trackBooking(bookingId);
+    if (error || !data?.driver_lat || !data?.driver_lng) return;
+
+    driverLat.value = data.driver_lat;
+    driverLng.value = data.driver_lng;
+    etaMinutes.value = data.eta_minutes ?? null;
+    lastUpdate.value = new Date(
+        data.location_updated_at ?? Date.now(),
+    ).toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+    });
 }
 
 function copyPhone(phone: string) {
@@ -94,11 +108,11 @@ onMounted(async () => {
     }
 
     if (data?.trip_id) setupWebSocket(data.trip_id);
+    fallbackTimer = setInterval(() => void refreshLocationFallback(), 30_000);
 });
 
 onUnmounted(() => {
-    if (echoChannel && tracking.value?.trip_id)
-        (window as any).Echo?.leave(`trips.${tracking.value.trip_id}`);
+    if (fallbackTimer) clearInterval(fallbackTimer);
 });
 </script>
 

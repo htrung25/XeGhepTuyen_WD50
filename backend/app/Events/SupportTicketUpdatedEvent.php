@@ -13,7 +13,7 @@ class SupportTicketUpdatedEvent implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public string $queue = 'default';
+    public string $queue = 'broadcasts';
 
     public function __construct(
         public readonly SupportTicket $ticket,

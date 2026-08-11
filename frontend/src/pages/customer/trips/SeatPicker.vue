@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { customerApi } from '@/api/customer.api';
 import { useCustomerAuthStore } from '@/stores/customer.auth.store';
@@ -83,8 +83,6 @@ async function proceedToCheckout() {
     router.push('/booking/checkout');
 }
 
-let echoChannel: any = null;
-
 onMounted(async () => {
     // Đảm bảo draft luôn có trip_id (hỗ trợ vào thẳng link /trips/:id/seats,
     // không qua trang kết quả tìm kiếm) — nếu thiếu, Checkout sẽ đá về /home.
@@ -111,31 +109,6 @@ onMounted(async () => {
             return seat && seat.status === 'available';
         });
     }
-
-    // WebSocket real-time seat updates
-    if ((window as any).Echo) {
-        echoChannel = (window as any).Echo.channel(`trips.${tripId}`).listen(
-            '.seat.status.updated',
-            (e: any) => {
-                const seat = seats.value.find((s) => s.id === e.seat_id);
-                if (seat) {
-                    seat.status = e.status;
-                    if (
-                        e.status !== 'available' &&
-                        selected.value.includes(seat.seat_code)
-                    ) {
-                        selected.value = selected.value.filter(
-                            (c) => c !== seat.seat_code,
-                        );
-                    }
-                }
-            },
-        );
-    }
-});
-
-onUnmounted(() => {
-    if (echoChannel) (window as any).Echo?.leave(`trips.${tripId}`);
 });
 </script>
 

@@ -40,7 +40,7 @@ return Application::configure(basePath: dirname(__DIR__))
     // không dùng web/session mặc định.
     ->withBroadcasting(
         __DIR__.'/../routes/channels.php',
-        ['prefix' => 'api', 'middleware' => ['api', 'auth:sanctum']],
+        ['prefix' => 'api', 'middleware' => ['api', 'auth:sanctum', 'throttle:60,1']],
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // Tin proxy (ngrok/reverse proxy) để nhận diện đúng scheme HTTPS từ X-Forwarded-*.

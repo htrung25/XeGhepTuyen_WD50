@@ -13,7 +13,7 @@ class SupportTicketMessageCreatedEvent implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public string $queue = 'default';
+    public string $queue = 'broadcasts';
 
     public function __construct(public readonly SupportMessage $message) {}
 
@@ -23,7 +23,10 @@ class SupportTicketMessageCreatedEvent implements ShouldBroadcast
             ? "admin.support.tickets.{$this->message->support_ticket_id}"
             : "support.tickets.{$this->message->support_ticket_id}";
 
-        return [new PrivateChannel($channel)];
+        return [
+            new PrivateChannel($channel),
+            new PrivateChannel('admin.support'),
+        ];
     }
 
     public function broadcastAs(): string
