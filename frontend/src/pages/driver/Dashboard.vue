@@ -120,7 +120,7 @@ onMounted(load);
 
         <!-- Loading -->
         <div v-if="isLoading" class="space-y-4">
-            <div class="grid grid-cols-4 gap-4">
+            <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
                 <div
                     v-for="i in 4"
                     :key="i"
@@ -147,7 +147,7 @@ onMounted(load);
 
         <div v-else class="space-y-5">
             <!-- ─── KPI cards row ─────────────────────────────────── -->
-            <div class="grid grid-cols-4 gap-4">
+            <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
                 <div
                     v-for="kpi in kpis"
                     :key="kpi.label"
@@ -194,36 +194,36 @@ onMounted(load);
 
                 <!-- Table -->
                 <div v-else class="overflow-x-auto">
-                    <table class="w-full text-sm">
+                    <table class="w-full min-w-[720px] text-sm">
                         <thead>
                             <tr class="border-b border-gray-100 bg-gray-50">
                                 <th
-                                    class="px-5 py-3 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase"
+                                    class="px-5 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap text-gray-500 uppercase"
                                 >
                                     Giờ
                                 </th>
                                 <th
-                                    class="px-5 py-3 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase"
+                                    class="px-5 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap text-gray-500 uppercase"
                                 >
                                     Tuyến
                                 </th>
                                 <th
-                                    class="px-5 py-3 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase"
+                                    class="px-5 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap text-gray-500 uppercase"
                                 >
                                     Số khách
                                 </th>
                                 <th
-                                    class="px-5 py-3 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase"
+                                    class="px-5 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap text-gray-500 uppercase"
                                 >
                                     Xe
                                 </th>
                                 <th
-                                    class="px-5 py-3 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase"
+                                    class="px-5 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap text-gray-500 uppercase"
                                 >
                                     Trạng thái
                                 </th>
                                 <th
-                                    class="px-5 py-3 text-left text-xs font-semibold tracking-wider text-gray-500 uppercase"
+                                    class="px-5 py-3 text-left text-xs font-semibold tracking-wider whitespace-nowrap text-gray-500 uppercase"
                                 >
                                     Hành động
                                 </th>
