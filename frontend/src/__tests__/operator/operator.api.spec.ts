@@ -2,6 +2,9 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/api/client', () => ({
     apiClient: {
+        get: vi.fn(() =>
+            Promise.resolve({ data: null, meta: null, error: null }),
+        ),
         send: vi.fn(() =>
             Promise.resolve({ data: null, message: null, error: null }),
         ),
@@ -141,5 +144,15 @@ describe('operatorApi → Wayfinder route contract', () => {
             url: '/api/operator/revenue/payout-request',
             method: 'post',
         });
+    });
+
+    it('getRevenueTransactions forwards filters to the detail REST endpoint', () => {
+        operatorApi.getRevenueTransactions({ period: 'week', page: 2 });
+        expect(apiClient.get).toHaveBeenCalledWith(
+            '/operator/revenue/transactions',
+            {
+                params: { period: 'week', page: 2 },
+            },
+        );
     });
 });

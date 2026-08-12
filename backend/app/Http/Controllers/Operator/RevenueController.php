@@ -113,6 +113,7 @@ class RevenueController extends Controller
             'to' => $to->format('Y-m-d'),
             'total_trips' => $completedTrips->count(),
             'total_bookings' => $realized->count(),
+            'total_passengers' => $totalPax,
             'gross_revenue' => $grossRevenue,
             'commission' => $commission,
             'commission_rate' => $rate,
@@ -144,6 +145,61 @@ class RevenueController extends Controller
             ->values();
 
         return response()->json(['success' => true, 'data' => $daily]);
+    }
+
+    /**
+     * Chi tiết doanh thu theo chuyến để màn báo cáo hiển thị đúng tuyến, tài xế,
+     * số khách/số ghế và số tiền quyết toán. Chỉ các vé đã hoàn thành + đã thanh
+     * toán mới được tính, đồng nhất với summary/daily và SettlementService.
+     */
+    public function transactions(Request $request): JsonResponse
+    {
+        $operator = auth('operator')->user()->operator;
+        [$from, $to] = $this->resolvePeriod($request);
+        $rate = (float) $operator->commission_rate;
+        $perPage = min(50, max(5, (int) $request->integer('per_page', 10)));
+        $tripIds = $this->operatorTripIds($operator->id, $from, $to);
+
+        $trips = Trip::whereIn('id', $tripIds)
+            ->where('status', 'completed')
+            ->whereHas('bookings', fn ($q) => $q->completed()->paid())
+            ->with([
+                'route:id,origin_city,dest_city',
+                'driver.user:id,full_name',
+                'vehicle:id,seat_count',
+                'bookings' => fn ($q) => $q->completed()->paid()
+                    ->select(['id', 'trip_id', 'passenger_count', 'final_amount']),
+            ])
+            ->orderByDesc('depart_at')
+            ->paginate($perPage);
+
+        $rows = $trips->getCollection()->map(function (Trip $trip) use ($rate) {
+            $gross = (int) $trip->bookings->sum('final_amount');
+            $commission = (int) round($gross * $rate / 100);
+
+            return [
+                'id' => $trip->id,
+                'date' => $trip->depart_at->toDateString(),
+                'route' => "{$trip->route->origin_city} → {$trip->route->dest_city}",
+                'driver' => $trip->driver?->user?->full_name ?? 'Chưa phân công',
+                'passengers' => (int) $trip->bookings->sum('passenger_count'),
+                'seat_count' => (int) ($trip->vehicle?->seat_count ?? 0),
+                'gross_revenue' => $gross,
+                'commission' => $commission,
+                'net_revenue' => $gross - $commission,
+            ];
+        })->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => $rows,
+            'meta' => [
+                'current_page' => $trips->currentPage(),
+                'last_page' => $trips->lastPage(),
+                'per_page' => $trips->perPage(),
+                'total' => $trips->total(),
+            ],
+        ]);
     }
 
     public function byRoute(Request $request): JsonResponse

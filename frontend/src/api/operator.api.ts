@@ -149,6 +149,8 @@ export const operatorApi = {
         apiClient.send(revenueSummary({ query: params as QueryParams })),
     getRevenueDaily: (params?: Params) =>
         apiClient.send(daily({ query: params as QueryParams })),
+    getRevenueTransactions: (params?: Params) =>
+        apiClient.get('/operator/revenue/transactions', { params }),
     getRevenueByRoute: (params?: Params) =>
         apiClient.send(byRoute({ query: params as QueryParams })),
     getRevenueByDriver: (params?: Params) =>

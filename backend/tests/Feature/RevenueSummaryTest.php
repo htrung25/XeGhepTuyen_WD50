@@ -18,6 +18,7 @@ it('summary đồng bộ SettlementService + có cash_collected/settlement', fun
     $this->getJson($url, $headers)
         ->assertOk()
         ->assertJsonPath('data.gross_revenue', 300000)   // 2 × 150.000
+        ->assertJsonPath('data.total_passengers', 2)
         ->assertJsonPath('data.commission', 30000)        // 10%
         ->assertJsonPath('data.net_revenue', 270000)      // gross − commission
         ->assertJsonPath('data.cash_collected', 150000)   // tiền mặt nhà xe giữ

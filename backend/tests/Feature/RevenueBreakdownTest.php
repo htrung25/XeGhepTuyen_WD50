@@ -27,6 +27,20 @@ it('daily gộp theo ngày chạy (không raw SQL)', function () {
     expect($data[0]['revenue'])->toBe(300000);
 });
 
+it('transactions trả chi tiết doanh thu theo chuyến và có phân trang', function () {
+    $operator = makeOperatorWithRevenue(online: 1, cash: 1);
+
+    $this->getJson('/api/operator/revenue/transactions'.revCustomRange(), opHeaders($operator))
+        ->assertOk()
+        ->assertJsonPath('meta.total', 1)
+        ->assertJsonPath('data.0.route', 'Hà Nội → Hải Phòng')
+        ->assertJsonPath('data.0.passengers', 2)
+        ->assertJsonPath('data.0.seat_count', 9)
+        ->assertJsonPath('data.0.gross_revenue', 300000)
+        ->assertJsonPath('data.0.commission', 30000)
+        ->assertJsonPath('data.0.net_revenue', 270000);
+});
+
 it('byRoute gộp theo tuyến', function () {
     $operator = makeOperatorWithRevenue(online: 1, cash: 1);
     $data = $this->getJson('/api/operator/revenue/by-route'.revCustomRange(), opHeaders($operator))

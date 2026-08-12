@@ -75,6 +75,7 @@ Route::middleware(['auth:sanctum', 'role:operator'])->group(function () {
     // Revenue
     Route::get('revenue/summary', [RevenueController::class, 'summary']);
     Route::get('revenue/daily', [RevenueController::class, 'daily']);
+    Route::get('revenue/transactions', [RevenueController::class, 'transactions']);
     Route::get('revenue/by-route', [RevenueController::class, 'byRoute']);
     Route::get('revenue/by-driver', [RevenueController::class, 'byDriver']);
     Route::get('revenue/payouts', [RevenueController::class, 'payouts']);
