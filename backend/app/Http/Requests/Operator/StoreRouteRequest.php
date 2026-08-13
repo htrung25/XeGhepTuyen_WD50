@@ -2,8 +2,14 @@
 
 namespace App\Http\Requests\Operator;
 
+use App\Services\VietnamAdministrative;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Nhà xe chọn TỈNH + HUYỆN cho điểm đi/điểm đến (không nhập text tự do), không
+ * nhập giá vé (BE tính theo bảng giá km) và không khai điểm dừng nữa.
+ */
 class StoreRouteRequest extends FormRequest
 {
     public function authorize(): bool
@@ -15,37 +21,51 @@ class StoreRouteRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:200'],
-            'origin_city' => ['required', 'string', 'max:100'],
-            'dest_city' => ['required', 'string', 'max:100'],
+            'origin_province_code' => ['required', 'string', 'max:10'],
+            'origin_district_code' => ['required', 'string', 'max:10'],
+            'dest_province_code' => ['required', 'string', 'max:10'],
+            'dest_district_code' => ['required', 'string', 'max:10'],
             'distance_km' => ['required', 'integer', 'min:1', 'max:2000'],
             'est_duration_min' => ['required', 'integer', 'min:1', 'max:1440'],
-            'base_price' => ['required', 'integer', 'min:50000', 'max:500000'],
             'is_round_trip' => ['boolean'],
             'is_active' => ['boolean'],
-            'stops' => ['required', 'array', 'min:2'],
-            'stops.*.stop_name' => ['required', 'string', 'max:100'],
-            'stops.*.address' => ['required', 'string', 'max:300'],
-            'stops.*.lat' => ['required', 'numeric', 'between:8,24'],
-            'stops.*.lng' => ['required', 'numeric', 'between:102,110'],
-            'stops.*.stop_order' => ['required', 'integer', 'min:1', 'distinct'],
-            'stops.*.offset_minutes' => ['required', 'integer', 'min:0'],
-            'stops.*.is_pickup' => ['sometimes', 'boolean'],
-            'stops.*.is_dropoff' => ['sometimes', 'boolean'],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            $originProvince = $this->input('origin_province_code');
+            $destProvince = $this->input('dest_province_code');
+
+            if (! VietnamAdministrative::provinceExists($originProvince)) {
+                $validator->errors()->add('origin_province_code', 'Tỉnh/thành điểm đi không hợp lệ');
+            } elseif (! VietnamAdministrative::districtExists($originProvince, $this->input('origin_district_code'))) {
+                $validator->errors()->add('origin_district_code', 'Quận/huyện điểm đi không thuộc tỉnh đã chọn');
+            }
+
+            if (! VietnamAdministrative::provinceExists($destProvince)) {
+                $validator->errors()->add('dest_province_code', 'Tỉnh/thành điểm đến không hợp lệ');
+            } elseif (! VietnamAdministrative::districtExists($destProvince, $this->input('dest_district_code'))) {
+                $validator->errors()->add('dest_district_code', 'Quận/huyện điểm đến không thuộc tỉnh đã chọn');
+            }
+
+            if ($originProvince === $destProvince
+                && $this->input('origin_district_code') === $this->input('dest_district_code')) {
+                $validator->errors()->add('dest_district_code', 'Điểm đến phải khác điểm đi');
+            }
+        });
     }
 
     public function messages(): array
     {
         return [
             'name.required' => 'Vui lòng nhập tên tuyến đường',
-            'base_price.required' => 'Vui lòng nhập giá vé cơ bản',
-            'base_price.min' => 'Giá vé tối thiểu 50.000đ',
-            'base_price.max' => 'Giá vé tối đa 500.000đ',
-            'stops.required' => 'Tuyến phải có ít nhất 2 điểm dừng',
-            'stops.min' => 'Tuyến phải có ít nhất 2 điểm dừng',
-            'stops.*.stop_name.required' => 'Vui lòng nhập tên điểm dừng',
-            'stops.*.lat.between' => 'Vĩ độ không hợp lệ',
-            'stops.*.lng.between' => 'Kinh độ không hợp lệ',
+            'origin_province_code.required' => 'Vui lòng chọn tỉnh/thành điểm đi',
+            'origin_district_code.required' => 'Vui lòng chọn quận/huyện điểm đi',
+            'dest_province_code.required' => 'Vui lòng chọn tỉnh/thành điểm đến',
+            'dest_district_code.required' => 'Vui lòng chọn quận/huyện điểm đến',
+            'distance_km.required' => 'Vui lòng nhập khoảng cách (km)',
         ];
     }
 }

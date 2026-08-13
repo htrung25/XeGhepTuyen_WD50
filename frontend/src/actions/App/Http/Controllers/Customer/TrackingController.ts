@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Customer\TrackingController::trackByCode
-* @see app/Http/Controllers/Customer/TrackingController.php:101
+* @see app/Http/Controllers/Customer/TrackingController.php:109
 * @route '/api/customer/trips/{trackingCode}/track'
 */
 export const trackByCode = (args: { trackingCode: string | number } | [trackingCode: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ trackByCode.definition = {
 
 /**
 * @see \App\Http\Controllers\Customer\TrackingController::trackByCode
-* @see app/Http/Controllers/Customer/TrackingController.php:101
+* @see app/Http/Controllers/Customer/TrackingController.php:109
 * @route '/api/customer/trips/{trackingCode}/track'
 */
 trackByCode.url = (args: { trackingCode: string | number } | [trackingCode: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -43,7 +43,7 @@ trackByCode.url = (args: { trackingCode: string | number } | [trackingCode: stri
 
 /**
 * @see \App\Http\Controllers\Customer\TrackingController::trackByCode
-* @see app/Http/Controllers/Customer/TrackingController.php:101
+* @see app/Http/Controllers/Customer/TrackingController.php:109
 * @route '/api/customer/trips/{trackingCode}/track'
 */
 trackByCode.get = (args: { trackingCode: string | number } | [trackingCode: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -53,7 +53,7 @@ trackByCode.get = (args: { trackingCode: string | number } | [trackingCode: stri
 
 /**
 * @see \App\Http\Controllers\Customer\TrackingController::trackByCode
-* @see app/Http/Controllers/Customer/TrackingController.php:101
+* @see app/Http/Controllers/Customer/TrackingController.php:109
 * @route '/api/customer/trips/{trackingCode}/track'
 */
 trackByCode.head = (args: { trackingCode: string | number } | [trackingCode: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -63,7 +63,7 @@ trackByCode.head = (args: { trackingCode: string | number } | [trackingCode: str
 
 /**
 * @see \App\Http\Controllers\Customer\TrackingController::trackByCode
-* @see app/Http/Controllers/Customer/TrackingController.php:101
+* @see app/Http/Controllers/Customer/TrackingController.php:109
 * @route '/api/customer/trips/{trackingCode}/track'
 */
 const trackByCodeForm = (args: { trackingCode: string | number } | [trackingCode: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -73,7 +73,7 @@ const trackByCodeForm = (args: { trackingCode: string | number } | [trackingCode
 
 /**
 * @see \App\Http\Controllers\Customer\TrackingController::trackByCode
-* @see app/Http/Controllers/Customer/TrackingController.php:101
+* @see app/Http/Controllers/Customer/TrackingController.php:109
 * @route '/api/customer/trips/{trackingCode}/track'
 */
 trackByCodeForm.get = (args: { trackingCode: string | number } | [trackingCode: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -83,7 +83,7 @@ trackByCodeForm.get = (args: { trackingCode: string | number } | [trackingCode: 
 
 /**
 * @see \App\Http\Controllers\Customer\TrackingController::trackByCode
-* @see app/Http/Controllers/Customer/TrackingController.php:101
+* @see app/Http/Controllers/Customer/TrackingController.php:109
 * @route '/api/customer/trips/{trackingCode}/track'
 */
 trackByCodeForm.head = (args: { trackingCode: string | number } | [trackingCode: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

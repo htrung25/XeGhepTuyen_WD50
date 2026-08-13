@@ -1,35 +1,30 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import { geoApi } from '@/api/geo.api';
 import { operatorApi } from '@/api/operator.api';
-import type {
-    OperatorRoutePayload,
-    OperatorRouteStopPayload,
-} from '@/api/operator.api';
-
-interface StopForm {
-    id?: string;
-    stop_name: string;
-    address: string;
-    stop_order: number;
-    lat: string;
-    lng: string;
-    offset_minutes: number;
-    is_pickup: boolean;
-    is_dropoff: boolean;
-}
+import type { OperatorRoutePayload } from '@/api/operator.api';
+import FareRateModal from '@/components/operator/FareRateModal.vue';
+import ProvinceDistrictPicker from '@/components/operator/ProvinceDistrictPicker.vue';
 
 interface RouteRow {
     id: string;
     name: string;
     origin_city: string;
+    origin_district?: string | null;
     dest_city: string;
+    dest_district?: string | null;
     distance_km: number;
     est_duration_min: number;
     base_price: number;
-    stops_count?: number;
-    stops?: StopForm[];
     is_active: boolean;
     is_round_trip: boolean;
+}
+
+interface FareRate {
+    province_code: string | null;
+    district_code: string | null;
+    base_fare: number;
+    price_per_km: number;
 }
 
 const routes = ref<RouteRow[]>([]);
@@ -38,61 +33,67 @@ const errorMsg = ref('');
 
 // Modal state
 const showModal = ref(false);
+const showFareModal = ref(false);
 const saving = ref(false);
 const saveError = ref('');
 const editingId = ref<string | null>(null);
 
-const form = ref({
-    name: 'Hà Nội → Hải Phòng',
-    origin_city: 'Hà Nội',
-    dest_city: 'Hải Phòng',
+// Bảng giá dùng để hiện giá dự kiến ngay trên form — nguồn tính giá thật vẫn
+// là backend, đây chỉ là bản sao để xem trước.
+const fareRates = ref<FareRate[]>([]);
+const roundingStep = ref(1000);
+
+const emptyForm = () => ({
+    name: '',
+    origin_province_code: '',
+    origin_district_code: '',
+    dest_province_code: '',
+    dest_district_code: '',
     distance_km: 105,
     est_duration_min: 150,
-    base_price: 120000,
     is_round_trip: false,
     is_active: true,
-    stops: [] as StopForm[],
 });
 
-const addStop = () => {
-    if (form.value.stops.length > 0) {
-        form.value.stops[form.value.stops.length - 1].is_dropoff = false;
-    }
-    const isFirst = form.value.stops.length === 0;
-    form.value.stops.push({
-        stop_name: '',
-        address: '',
-        stop_order: form.value.stops.length + 1,
-        lat: '',
-        lng: '',
-        offset_minutes: form.value.stops.length === 0 ? 0 : 60,
-        is_pickup: isFirst,
-        is_dropoff: !isFirst,
-    });
-};
+const form = ref(emptyForm());
 
-const removeStop = (idx: number) => {
-    form.value.stops.splice(idx, 1);
-    form.value.stops.forEach((stop, index) => {
-        stop.stop_order = index + 1;
-    });
-    // Chỉ gán lại pickup/dropoff mặc định khi sau khi xoá KHÔNG còn điểm nào
-    // được đánh dấu (vd xoá đúng điểm pickup/dropoff duy nhất) — trước đây
-    // code này gán lại cho MỌI điểm dừng theo vị trí đầu/cuối mỗi lần xoá,
-    // xoá mất tuỳ chỉnh thủ công (checkbox) của nhà xe trên các điểm còn lại.
-    if (
-        form.value.stops.length > 0 &&
-        !form.value.stops.some((s) => s.is_pickup)
-    ) {
-        form.value.stops[0].is_pickup = true;
-    }
-    if (
-        form.value.stops.length > 0 &&
-        !form.value.stops.some((s) => s.is_dropoff)
-    ) {
-        form.value.stops[form.value.stops.length - 1].is_dropoff = true;
-    }
-};
+const fmtMoney = (n: number) => new Intl.NumberFormat('vi-VN').format(n) + 'đ';
+
+/** Cùng thứ tự ưu tiên với FarePricingService::resolveRate ở backend */
+const resolveRate = (
+    provinceCode: string,
+    districtCode: string,
+): FareRate | null =>
+    fareRates.value.find(
+        (r) =>
+            r.province_code === provinceCode &&
+            r.district_code === districtCode &&
+            districtCode !== '',
+    ) ??
+    fareRates.value.find(
+        (r) =>
+            r.province_code === provinceCode &&
+            r.district_code === null &&
+            provinceCode !== '',
+    ) ??
+    fareRates.value.find(
+        (r) => r.province_code === null && r.district_code === null,
+    ) ??
+    null;
+
+const estimatedPrice = computed(() => {
+    const rate = resolveRate(
+        form.value.origin_province_code,
+        form.value.origin_district_code,
+    );
+    if (!rate) return null;
+
+    const raw =
+        Number(rate.base_fare) +
+        Number(rate.price_per_km) * Number(form.value.distance_km || 0);
+    const step = roundingStep.value || 1;
+    return Math.ceil(raw / step) * step;
+});
 
 const loadRoutes = async () => {
     isLoading.value = true;
@@ -106,23 +107,22 @@ const loadRoutes = async () => {
     routes.value = data ?? [];
 };
 
+const loadFareRates = async () => {
+    const { data } = await operatorApi.getFareRates();
+    fareRates.value = (data?.rates ?? []).map((r: any) => ({
+        province_code: r.province_code ?? null,
+        district_code: r.district_code ?? null,
+        base_fare: Number(r.base_fare),
+        price_per_km: Number(r.price_per_km),
+    }));
+    roundingStep.value = Number(data?.rounding_step ?? 1000);
+};
+
 const openCreate = () => {
     editingId.value = null;
-    form.value = {
-        name: 'Hà Nội → Hải Phòng',
-        origin_city: 'Hà Nội',
-        dest_city: 'Hải Phòng',
-        distance_km: 105,
-        est_duration_min: 150,
-        base_price: 120000,
-        is_round_trip: false,
-        is_active: true,
-        stops: [],
-    };
-    addStop();
-    addStop();
-    showModal.value = true;
+    form.value = emptyForm();
     saveError.value = '';
+    showModal.value = true;
 };
 
 const openEdit = async (row: RouteRow) => {
@@ -133,102 +133,103 @@ const openEdit = async (row: RouteRow) => {
         return;
     }
 
+    // routes chỉ lưu TÊN tỉnh/huyện; dropdown làm việc bằng mã nên phải tra ngược.
+    const origin = await geoApi.resolveCodes(
+        data.origin_city,
+        data.origin_district,
+    );
+    const dest = await geoApi.resolveCodes(data.dest_city, data.dest_district);
+
     editingId.value = row.id;
     form.value = {
         name: data.name,
-        origin_city: data.origin_city,
-        dest_city: data.dest_city,
+        origin_province_code: origin.provinceCode,
+        origin_district_code: origin.districtCode,
+        dest_province_code: dest.provinceCode,
+        dest_district_code: dest.districtCode,
         distance_km: Number(data.distance_km),
         est_duration_min: Number(data.est_duration_min),
-        base_price: Number(data.base_price),
         is_round_trip: Boolean(data.is_round_trip),
         is_active: Boolean(data.is_active),
-        stops: (data.stops ?? []).map((stop: any) => ({
-            id: stop.id,
-            stop_name: stop.stop_name,
-            address: stop.address,
-            stop_order: Number(stop.stop_order),
-            lat: String(stop.lat),
-            lng: String(stop.lng),
-            offset_minutes: Number(stop.offset_minutes),
-            is_pickup: Boolean(stop.is_pickup),
-            is_dropoff: Boolean(stop.is_dropoff),
-        })),
     };
     showModal.value = true;
 };
 
+const suggestedName = computed(() => {
+    const label = (provinceCode: string, districtCode: string) => {
+        const province = provincesCache.value.find(
+            (p) => p.code === provinceCode,
+        );
+        if (!province) return '';
+        const district = province.districts.find(
+            (d) => d.code === districtCode,
+        );
+        return district ? `${district.name}, ${province.name}` : province.name;
+    };
+
+    const from = label(
+        form.value.origin_province_code,
+        form.value.origin_district_code,
+    );
+    const to = label(
+        form.value.dest_province_code,
+        form.value.dest_district_code,
+    );
+
+    return from && to ? `${from} → ${to}` : '';
+});
+
+const provincesCache = ref<Awaited<ReturnType<typeof geoApi.getProvinces>>>([]);
+
+const applySuggestedName = () => {
+    if (suggestedName.value) form.value.name = suggestedName.value;
+};
+
 const saveRoute = async () => {
-    if (!form.value.name.trim()) {
-        saveError.value = 'Vui lòng nhập tên tuyến';
-        return;
-    }
-    if (!editingId.value && form.value.stops.length < 2) {
-        saveError.value = 'Tuyến phải có ít nhất 2 điểm dừng';
-        return;
-    }
+    saveError.value = '';
+
     if (
-        !editingId.value &&
-        form.value.stops.some(
-            (stop) =>
-                !stop.stop_name.trim() ||
-                !stop.address.trim() ||
-                stop.lat.trim() === '' ||
-                stop.lng.trim() === '',
-        )
+        !form.value.origin_province_code ||
+        !form.value.origin_district_code ||
+        !form.value.dest_province_code ||
+        !form.value.dest_district_code
     ) {
-        saveError.value =
-            'Vui lòng nhập đủ tên, địa chỉ và tọa độ cho mọi điểm dừng';
-        return;
-    }
-    // Tọa độ nhập kiểu dấu phẩy thập phân (vd "20,9") hoặc ký tự lạ ->
-    // Number() ra NaN -> JSON.stringify thành null -> BE từ chối "required"
-    // dù ô đã có dữ liệu, rất khó hiểu với người dùng. Bắt lỗi này ở FE với
-    // thông báo rõ ràng thay vì để lọt xuống BE.
-    if (
-        !editingId.value &&
-        form.value.stops.some(
-            (stop) =>
-                !Number.isFinite(Number(stop.lat)) ||
-                !Number.isFinite(Number(stop.lng)),
-        )
-    ) {
-        saveError.value =
-            'Tọa độ (lat/lng) không hợp lệ — dùng dấu chấm thập phân (vd 20.9), không dùng dấu phẩy';
+        saveError.value = 'Vui lòng chọn đủ tỉnh và huyện cho điểm đi/điểm đến';
         return;
     }
 
-    const routeFields = {
-        name: form.value.name.trim(),
-        origin_city: form.value.origin_city.trim(),
-        dest_city: form.value.dest_city.trim(),
+    if (
+        form.value.origin_province_code === form.value.dest_province_code &&
+        form.value.origin_district_code === form.value.dest_district_code
+    ) {
+        saveError.value = 'Điểm đến phải khác điểm đi';
+        return;
+    }
+
+    const name = form.value.name.trim() || suggestedName.value;
+    if (!name) {
+        saveError.value = 'Vui lòng nhập tên tuyến';
+        return;
+    }
+
+    const payload: OperatorRoutePayload = {
+        name,
+        origin_province_code: form.value.origin_province_code,
+        origin_district_code: form.value.origin_district_code,
+        dest_province_code: form.value.dest_province_code,
+        dest_district_code: form.value.dest_district_code,
         distance_km: Number(form.value.distance_km),
         est_duration_min: Number(form.value.est_duration_min),
-        base_price: Number(form.value.base_price),
         is_round_trip: form.value.is_round_trip,
         is_active: form.value.is_active,
     };
 
-    const stops: OperatorRouteStopPayload[] = form.value.stops.map((stop) => ({
-        stop_name: stop.stop_name.trim(),
-        address: stop.address.trim(),
-        lat: Number(stop.lat),
-        lng: Number(stop.lng),
-        stop_order: stop.stop_order,
-        offset_minutes: Number(stop.offset_minutes),
-        is_pickup: stop.is_pickup,
-        is_dropoff: stop.is_dropoff,
-    }));
-
     saving.value = true;
-    saveError.value = '';
     const { error } = editingId.value
-        ? await operatorApi.updateRoute(editingId.value, routeFields)
-        : await operatorApi.createRoute({
-              ...routeFields,
-              stops,
-          } satisfies OperatorRoutePayload);
+        ? await operatorApi.updateRoute(editingId.value, payload)
+        : await operatorApi.createRoute(payload);
     saving.value = false;
+
     if (error) {
         saveError.value = error;
         return;
@@ -248,7 +249,13 @@ const deleteRoute = async (id: string) => {
     await loadRoutes();
 };
 
-onMounted(() => loadRoutes());
+const placeLabel = (city: string, district?: string | null) =>
+    district ? `${district}, ${city}` : city;
+
+onMounted(async () => {
+    provincesCache.value = await geoApi.getProvinces();
+    await Promise.all([loadRoutes(), loadFareRates()]);
+});
 </script>
 
 <template>
@@ -260,28 +267,49 @@ onMounted(() => loadRoutes());
                     Quản lý tuyến đường
                 </h1>
                 <p class="mt-0.5 text-sm text-slate-500">
-                    Thiết lập tuyến và điểm dừng
+                    Thiết lập tuyến theo tỉnh/huyện, giá vé tính theo km
                 </p>
             </div>
-            <button
-                class="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
-                @click="openCreate"
-            >
-                <svg
-                    class="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+            <div class="flex items-center gap-3">
+                <button
+                    class="flex items-center gap-2 rounded-lg border border-amber-500 px-4 py-2 text-sm font-medium text-amber-600 transition-colors hover:bg-amber-50"
+                    @click="showFareModal = true"
                 >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M12 4v16m8-8H4"
-                    />
-                </svg>
-                Thêm tuyến mới
-            </button>
+                    <svg
+                        class="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 9v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                    </svg>
+                    Cấu hình giá vé
+                </button>
+                <button
+                    class="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
+                    @click="openCreate"
+                >
+                    <svg
+                        class="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 4v16m8-8H4"
+                        />
+                    </svg>
+                    Thêm tuyến mới
+                </button>
+            </div>
         </div>
 
         <!-- Loading -->
@@ -371,12 +399,12 @@ onMounted(() => loadRoutes());
                             <th
                                 class="px-6 py-3 text-left text-xs font-medium tracking-wider text-slate-500 uppercase"
                             >
-                                Số điểm dừng
+                                Khoảng cách
                             </th>
                             <th
                                 class="px-6 py-3 text-left text-xs font-medium tracking-wider text-slate-500 uppercase"
                             >
-                                Khoảng cách
+                                Giá vé
                             </th>
                             <th
                                 class="px-6 py-3 text-left text-xs font-medium tracking-wider text-slate-500 uppercase"
@@ -400,21 +428,28 @@ onMounted(() => loadRoutes());
                                 {{ route.name }}
                             </td>
                             <td class="px-6 py-4 text-sm text-slate-700">
-                                {{ route.origin_city }}
+                                {{
+                                    placeLabel(
+                                        route.origin_city,
+                                        route.origin_district,
+                                    )
+                                }}
                             </td>
                             <td class="px-6 py-4 text-sm text-slate-700">
-                                {{ route.dest_city }}
-                            </td>
-                            <td class="px-6 py-4 text-sm text-slate-600">
                                 {{
-                                    route.stops_count ??
-                                    route.stops?.length ??
-                                    0
+                                    placeLabel(
+                                        route.dest_city,
+                                        route.dest_district,
+                                    )
                                 }}
-                                điểm
                             </td>
                             <td class="px-6 py-4 text-sm text-slate-600">
                                 {{ route.distance_km }} km
+                            </td>
+                            <td
+                                class="px-6 py-4 text-sm font-medium text-slate-700"
+                            >
+                                {{ fmtMoney(Number(route.base_price)) }}
                             </td>
                             <td class="px-6 py-4">
                                 <span
@@ -455,7 +490,14 @@ onMounted(() => loadRoutes());
             </div>
         </template>
 
-        <!-- Create Modal -->
+        <!-- Cấu hình giá vé -->
+        <FareRateModal
+            v-if="showFareModal"
+            @close="showFareModal = false"
+            @saved="loadFareRates"
+        />
+
+        <!-- Create / Edit Modal -->
         <Teleport to="body">
             <div
                 v-if="showModal"
@@ -505,17 +547,40 @@ onMounted(() => loadRoutes());
                             {{ saveError }}
                         </div>
 
+                        <ProvinceDistrictPicker
+                            v-model:province-code="form.origin_province_code"
+                            v-model:district-code="form.origin_district_code"
+                            label="Điểm đi"
+                        />
+                        <ProvinceDistrictPicker
+                            v-model:province-code="form.dest_province_code"
+                            v-model:district-code="form.dest_district_code"
+                            label="Điểm đến"
+                        />
+
                         <div class="grid gap-4 sm:grid-cols-2">
-                            <div>
+                            <div class="sm:col-span-2">
                                 <label
                                     class="mb-1.5 block text-sm font-semibold text-slate-700"
                                     >Tên tuyến *</label
                                 >
-                                <input
-                                    v-model="form.name"
-                                    placeholder="VD: Hà Nội → Hải Phòng"
-                                    class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none"
-                                />
+                                <div class="flex gap-2">
+                                    <input
+                                        v-model="form.name"
+                                        :placeholder="
+                                            suggestedName ||
+                                            'VD: Hà Nội → Hải Phòng'
+                                        "
+                                        class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none"
+                                    />
+                                    <button
+                                        v-if="suggestedName"
+                                        class="flex-shrink-0 rounded-lg border border-slate-200 px-3 text-sm text-slate-600 hover:bg-slate-50"
+                                        @click="applySuggestedName"
+                                    >
+                                        Dùng gợi ý
+                                    </button>
+                                </div>
                             </div>
                             <div>
                                 <label
@@ -533,26 +598,6 @@ onMounted(() => loadRoutes());
                             <div>
                                 <label
                                     class="mb-1.5 block text-sm font-semibold text-slate-700"
-                                    >Điểm đi</label
-                                >
-                                <input
-                                    v-model="form.origin_city"
-                                    class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none"
-                                />
-                            </div>
-                            <div>
-                                <label
-                                    class="mb-1.5 block text-sm font-semibold text-slate-700"
-                                    >Điểm đến</label
-                                >
-                                <input
-                                    v-model="form.dest_city"
-                                    class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none"
-                                />
-                            </div>
-                            <div>
-                                <label
-                                    class="mb-1.5 block text-sm font-semibold text-slate-700"
                                     >Thời gian dự kiến (phút)</label
                                 >
                                 <input
@@ -560,20 +605,6 @@ onMounted(() => loadRoutes());
                                     type="number"
                                     min="1"
                                     max="1440"
-                                    class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none"
-                                />
-                            </div>
-                            <div>
-                                <label
-                                    class="mb-1.5 block text-sm font-semibold text-slate-700"
-                                    >Giá vé cơ bản (đ)</label
-                                >
-                                <input
-                                    v-model.number="form.base_price"
-                                    type="number"
-                                    min="50000"
-                                    max="500000"
-                                    step="1000"
                                     class="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none"
                                 />
                             </div>
@@ -599,150 +630,32 @@ onMounted(() => loadRoutes());
                             </label>
                         </div>
 
-                        <!-- Stops timeline -->
-                        <div v-if="!editingId">
-                            <div class="mb-3 flex items-center justify-between">
-                                <label
-                                    class="text-sm font-semibold text-slate-700"
-                                    >Điểm dừng</label
-                                >
-                                <button
-                                    class="flex items-center gap-1 text-sm font-medium text-amber-600 hover:text-amber-700"
-                                    @click="addStop"
-                                >
-                                    <svg
-                                        class="h-4 w-4"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M12 4v16m8-8H4"
-                                        />
-                                    </svg>
-                                    Thêm điểm dừng
-                                </button>
-                            </div>
-
-                            <div class="space-y-3">
-                                <div
-                                    v-for="(stop, idx) in form.stops"
-                                    :key="idx"
-                                    class="flex items-start gap-3"
-                                >
-                                    <!-- Timeline dot -->
-                                    <div
-                                        class="flex flex-shrink-0 flex-col items-center pt-3"
-                                    >
-                                        <div
-                                            :class="
-                                                idx === 0
-                                                    ? 'bg-green-500'
-                                                    : idx ===
-                                                        form.stops.length - 1
-                                                      ? 'bg-red-500'
-                                                      : 'bg-amber-500'
-                                            "
-                                            class="h-3 w-3 rounded-full"
-                                        />
-                                        <div
-                                            v-if="idx < form.stops.length - 1"
-                                            class="mt-1 h-8 w-0.5 bg-slate-200"
-                                        />
-                                    </div>
-
-                                    <!-- Stop form -->
-                                    <div
-                                        class="flex-1 space-y-2 rounded-lg bg-slate-50 p-3"
-                                    >
-                                        <div class="flex gap-2">
-                                            <input
-                                                v-model="stop.stop_name"
-                                                placeholder="Tên điểm dừng"
-                                                class="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-amber-500 focus:outline-none"
-                                            />
-                                            <button
-                                                class="text-slate-400 transition-colors hover:text-red-500"
-                                                @click="removeStop(idx)"
-                                            >
-                                                <svg
-                                                    class="h-5 w-5"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                    stroke="currentColor"
-                                                >
-                                                    <path
-                                                        stroke-linecap="round"
-                                                        stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                                    />
-                                                </svg>
-                                            </button>
-                                        </div>
-                                        <input
-                                            v-model="stop.address"
-                                            placeholder="Địa chỉ"
-                                            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-amber-500 focus:outline-none"
-                                        />
-                                        <div class="grid gap-2 sm:grid-cols-3">
-                                            <input
-                                                v-model="stop.lat"
-                                                inputmode="decimal"
-                                                placeholder="Vĩ độ"
-                                                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-amber-500 focus:outline-none"
-                                            />
-                                            <input
-                                                v-model="stop.lng"
-                                                inputmode="decimal"
-                                                placeholder="Kinh độ"
-                                                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-amber-500 focus:outline-none"
-                                            />
-                                            <input
-                                                v-model.number="
-                                                    stop.offset_minutes
-                                                "
-                                                type="number"
-                                                min="0"
-                                                placeholder="Phút từ điểm đầu"
-                                                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-amber-500 focus:outline-none"
-                                            />
-                                        </div>
-                                        <div class="flex gap-4">
-                                            <label
-                                                class="flex cursor-pointer items-center gap-2 text-sm text-slate-600"
-                                            >
-                                                <input
-                                                    v-model="stop.is_pickup"
-                                                    type="checkbox"
-                                                    class="accent-amber-500"
-                                                />
-                                                Điểm đón
-                                            </label>
-                                            <label
-                                                class="flex cursor-pointer items-center gap-2 text-sm text-slate-600"
-                                            >
-                                                <input
-                                                    v-model="stop.is_dropoff"
-                                                    type="checkbox"
-                                                    class="accent-amber-500"
-                                                />
-                                                Điểm trả
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        <!-- Giá vé: hệ thống tính, nhà xe không nhập tay -->
+                        <div
+                            v-if="estimatedPrice !== null"
+                            class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+                        >
+                            Giá vé dự kiến:
+                            <strong class="text-slate-900">{{
+                                fmtMoney(estimatedPrice)
+                            }}</strong>
+                            — tính theo bảng giá của khu vực điểm đi và
+                            {{ form.distance_km }} km.
                         </div>
                         <div
                             v-else
-                            class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700"
+                            class="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
                         >
-                            Điểm dừng không được thay đổi tại màn hình này để
-                            bảo toàn lịch chuyến đã tạo.
+                            <span>
+                                Chưa có bảng giá áp dụng cho khu vực điểm đi —
+                                tuyến sẽ không lưu được.
+                            </span>
+                            <button
+                                class="flex-shrink-0 font-medium underline"
+                                @click="showFareModal = true"
+                            >
+                                Cấu hình giá vé
+                            </button>
                         </div>
                     </div>
 

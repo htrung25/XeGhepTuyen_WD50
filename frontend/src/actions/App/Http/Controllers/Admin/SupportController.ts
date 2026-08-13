@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::show
-* @see app/Http/Controllers/Admin/SupportController.php:90
+* @see app/Http/Controllers/Admin/SupportController.php:91
 * @route '/api/admin/support/tickets/{id}'
 */
 export const show = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -97,7 +97,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::show
-* @see app/Http/Controllers/Admin/SupportController.php:90
+* @see app/Http/Controllers/Admin/SupportController.php:91
 * @route '/api/admin/support/tickets/{id}'
 */
 show.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -124,7 +124,7 @@ show.url = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::show
-* @see app/Http/Controllers/Admin/SupportController.php:90
+* @see app/Http/Controllers/Admin/SupportController.php:91
 * @route '/api/admin/support/tickets/{id}'
 */
 show.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -134,7 +134,7 @@ show.get = (args: { id: string | number } | [id: string | number ] | string | nu
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::show
-* @see app/Http/Controllers/Admin/SupportController.php:90
+* @see app/Http/Controllers/Admin/SupportController.php:91
 * @route '/api/admin/support/tickets/{id}'
 */
 show.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -144,7 +144,7 @@ show.head = (args: { id: string | number } | [id: string | number ] | string | n
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::show
-* @see app/Http/Controllers/Admin/SupportController.php:90
+* @see app/Http/Controllers/Admin/SupportController.php:91
 * @route '/api/admin/support/tickets/{id}'
 */
 const showForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -154,7 +154,7 @@ const showForm = (args: { id: string | number } | [id: string | number ] | strin
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::show
-* @see app/Http/Controllers/Admin/SupportController.php:90
+* @see app/Http/Controllers/Admin/SupportController.php:91
 * @route '/api/admin/support/tickets/{id}'
 */
 showForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -164,7 +164,7 @@ showForm.get = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::show
-* @see app/Http/Controllers/Admin/SupportController.php:90
+* @see app/Http/Controllers/Admin/SupportController.php:91
 * @route '/api/admin/support/tickets/{id}'
 */
 showForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -181,7 +181,7 @@ show.form = showForm
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::update
-* @see app/Http/Controllers/Admin/SupportController.php:228
+* @see app/Http/Controllers/Admin/SupportController.php:229
 * @route '/api/admin/support/tickets/{id}'
 */
 export const update = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -196,7 +196,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::update
-* @see app/Http/Controllers/Admin/SupportController.php:228
+* @see app/Http/Controllers/Admin/SupportController.php:229
 * @route '/api/admin/support/tickets/{id}'
 */
 update.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -223,7 +223,7 @@ update.url = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::update
-* @see app/Http/Controllers/Admin/SupportController.php:228
+* @see app/Http/Controllers/Admin/SupportController.php:229
 * @route '/api/admin/support/tickets/{id}'
 */
 update.patch = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
@@ -233,7 +233,7 @@ update.patch = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::update
-* @see app/Http/Controllers/Admin/SupportController.php:228
+* @see app/Http/Controllers/Admin/SupportController.php:229
 * @route '/api/admin/support/tickets/{id}'
 */
 const updateForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -248,7 +248,7 @@ const updateForm = (args: { id: string | number } | [id: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::update
-* @see app/Http/Controllers/Admin/SupportController.php:228
+* @see app/Http/Controllers/Admin/SupportController.php:229
 * @route '/api/admin/support/tickets/{id}'
 */
 updateForm.patch = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -265,7 +265,7 @@ update.form = updateForm
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::reply
-* @see app/Http/Controllers/Admin/SupportController.php:109
+* @see app/Http/Controllers/Admin/SupportController.php:110
 * @route '/api/admin/support/tickets/{id}/reply'
 */
 export const reply = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -280,7 +280,7 @@ reply.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::reply
-* @see app/Http/Controllers/Admin/SupportController.php:109
+* @see app/Http/Controllers/Admin/SupportController.php:110
 * @route '/api/admin/support/tickets/{id}/reply'
 */
 reply.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -307,7 +307,7 @@ reply.url = (args: { id: string | number } | [id: string | number ] | string | n
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::reply
-* @see app/Http/Controllers/Admin/SupportController.php:109
+* @see app/Http/Controllers/Admin/SupportController.php:110
 * @route '/api/admin/support/tickets/{id}/reply'
 */
 reply.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -317,7 +317,7 @@ reply.post = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::reply
-* @see app/Http/Controllers/Admin/SupportController.php:109
+* @see app/Http/Controllers/Admin/SupportController.php:110
 * @route '/api/admin/support/tickets/{id}/reply'
 */
 const replyForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -327,7 +327,7 @@ const replyForm = (args: { id: string | number } | [id: string | number ] | stri
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::reply
-* @see app/Http/Controllers/Admin/SupportController.php:109
+* @see app/Http/Controllers/Admin/SupportController.php:110
 * @route '/api/admin/support/tickets/{id}/reply'
 */
 replyForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -339,7 +339,7 @@ reply.form = replyForm
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::assign
-* @see app/Http/Controllers/Admin/SupportController.php:147
+* @see app/Http/Controllers/Admin/SupportController.php:148
 * @route '/api/admin/support/tickets/{id}/assign'
 */
 export const assign = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -354,7 +354,7 @@ assign.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::assign
-* @see app/Http/Controllers/Admin/SupportController.php:147
+* @see app/Http/Controllers/Admin/SupportController.php:148
 * @route '/api/admin/support/tickets/{id}/assign'
 */
 assign.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -381,7 +381,7 @@ assign.url = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::assign
-* @see app/Http/Controllers/Admin/SupportController.php:147
+* @see app/Http/Controllers/Admin/SupportController.php:148
 * @route '/api/admin/support/tickets/{id}/assign'
 */
 assign.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -391,7 +391,7 @@ assign.post = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::assign
-* @see app/Http/Controllers/Admin/SupportController.php:147
+* @see app/Http/Controllers/Admin/SupportController.php:148
 * @route '/api/admin/support/tickets/{id}/assign'
 */
 const assignForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -401,7 +401,7 @@ const assignForm = (args: { id: string | number } | [id: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::assign
-* @see app/Http/Controllers/Admin/SupportController.php:147
+* @see app/Http/Controllers/Admin/SupportController.php:148
 * @route '/api/admin/support/tickets/{id}/assign'
 */
 assignForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -413,7 +413,7 @@ assign.form = assignForm
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::resolve
-* @see app/Http/Controllers/Admin/SupportController.php:174
+* @see app/Http/Controllers/Admin/SupportController.php:175
 * @route '/api/admin/support/tickets/{id}/resolve'
 */
 export const resolve = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -428,7 +428,7 @@ resolve.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::resolve
-* @see app/Http/Controllers/Admin/SupportController.php:174
+* @see app/Http/Controllers/Admin/SupportController.php:175
 * @route '/api/admin/support/tickets/{id}/resolve'
 */
 resolve.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -455,7 +455,7 @@ resolve.url = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::resolve
-* @see app/Http/Controllers/Admin/SupportController.php:174
+* @see app/Http/Controllers/Admin/SupportController.php:175
 * @route '/api/admin/support/tickets/{id}/resolve'
 */
 resolve.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -465,7 +465,7 @@ resolve.post = (args: { id: string | number } | [id: string | number ] | string 
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::resolve
-* @see app/Http/Controllers/Admin/SupportController.php:174
+* @see app/Http/Controllers/Admin/SupportController.php:175
 * @route '/api/admin/support/tickets/{id}/resolve'
 */
 const resolveForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -475,7 +475,7 @@ const resolveForm = (args: { id: string | number } | [id: string | number ] | st
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::resolve
-* @see app/Http/Controllers/Admin/SupportController.php:174
+* @see app/Http/Controllers/Admin/SupportController.php:175
 * @route '/api/admin/support/tickets/{id}/resolve'
 */
 resolveForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -487,7 +487,7 @@ resolve.form = resolveForm
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::close
-* @see app/Http/Controllers/Admin/SupportController.php:201
+* @see app/Http/Controllers/Admin/SupportController.php:202
 * @route '/api/admin/support/tickets/{id}/close'
 */
 export const close = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -502,7 +502,7 @@ close.definition = {
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::close
-* @see app/Http/Controllers/Admin/SupportController.php:201
+* @see app/Http/Controllers/Admin/SupportController.php:202
 * @route '/api/admin/support/tickets/{id}/close'
 */
 close.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -529,7 +529,7 @@ close.url = (args: { id: string | number } | [id: string | number ] | string | n
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::close
-* @see app/Http/Controllers/Admin/SupportController.php:201
+* @see app/Http/Controllers/Admin/SupportController.php:202
 * @route '/api/admin/support/tickets/{id}/close'
 */
 close.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -539,7 +539,7 @@ close.post = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::close
-* @see app/Http/Controllers/Admin/SupportController.php:201
+* @see app/Http/Controllers/Admin/SupportController.php:202
 * @route '/api/admin/support/tickets/{id}/close'
 */
 const closeForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -549,7 +549,7 @@ const closeForm = (args: { id: string | number } | [id: string | number ] | stri
 
 /**
 * @see \App\Http\Controllers\Admin\SupportController::close
-* @see app/Http/Controllers/Admin/SupportController.php:201
+* @see app/Http/Controllers/Admin/SupportController.php:202
 * @route '/api/admin/support/tickets/{id}/close'
 */
 closeForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

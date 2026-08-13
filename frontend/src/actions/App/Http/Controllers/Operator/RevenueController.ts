@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::summary
-* @see app/Http/Controllers/Operator/RevenueController.php:72
+* @see app/Http/Controllers/Operator/RevenueController.php:69
 * @route '/api/operator/revenue/summary'
 */
 export const summary = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ summary.definition = {
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::summary
-* @see app/Http/Controllers/Operator/RevenueController.php:72
+* @see app/Http/Controllers/Operator/RevenueController.php:69
 * @route '/api/operator/revenue/summary'
 */
 summary.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ summary.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::summary
-* @see app/Http/Controllers/Operator/RevenueController.php:72
+* @see app/Http/Controllers/Operator/RevenueController.php:69
 * @route '/api/operator/revenue/summary'
 */
 summary.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ summary.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::summary
-* @see app/Http/Controllers/Operator/RevenueController.php:72
+* @see app/Http/Controllers/Operator/RevenueController.php:69
 * @route '/api/operator/revenue/summary'
 */
 summary.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ summary.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::summary
-* @see app/Http/Controllers/Operator/RevenueController.php:72
+* @see app/Http/Controllers/Operator/RevenueController.php:69
 * @route '/api/operator/revenue/summary'
 */
 const summaryForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const summaryForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::summary
-* @see app/Http/Controllers/Operator/RevenueController.php:72
+* @see app/Http/Controllers/Operator/RevenueController.php:69
 * @route '/api/operator/revenue/summary'
 */
 summaryForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ summaryForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::summary
-* @see app/Http/Controllers/Operator/RevenueController.php:72
+* @see app/Http/Controllers/Operator/RevenueController.php:69
 * @route '/api/operator/revenue/summary'
 */
 summaryForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ summary.form = summaryForm
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::daily
-* @see app/Http/Controllers/Operator/RevenueController.php:130
+* @see app/Http/Controllers/Operator/RevenueController.php:128
 * @route '/api/operator/revenue/daily'
 */
 export const daily = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -97,7 +97,7 @@ daily.definition = {
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::daily
-* @see app/Http/Controllers/Operator/RevenueController.php:130
+* @see app/Http/Controllers/Operator/RevenueController.php:128
 * @route '/api/operator/revenue/daily'
 */
 daily.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ daily.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::daily
-* @see app/Http/Controllers/Operator/RevenueController.php:130
+* @see app/Http/Controllers/Operator/RevenueController.php:128
 * @route '/api/operator/revenue/daily'
 */
 daily.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -116,7 +116,7 @@ daily.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::daily
-* @see app/Http/Controllers/Operator/RevenueController.php:130
+* @see app/Http/Controllers/Operator/RevenueController.php:128
 * @route '/api/operator/revenue/daily'
 */
 daily.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -126,7 +126,7 @@ daily.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::daily
-* @see app/Http/Controllers/Operator/RevenueController.php:130
+* @see app/Http/Controllers/Operator/RevenueController.php:128
 * @route '/api/operator/revenue/daily'
 */
 const dailyForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -136,7 +136,7 @@ const dailyForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::daily
-* @see app/Http/Controllers/Operator/RevenueController.php:130
+* @see app/Http/Controllers/Operator/RevenueController.php:128
 * @route '/api/operator/revenue/daily'
 */
 dailyForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -146,7 +146,7 @@ dailyForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::daily
-* @see app/Http/Controllers/Operator/RevenueController.php:130
+* @see app/Http/Controllers/Operator/RevenueController.php:128
 * @route '/api/operator/revenue/daily'
 */
 dailyForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -162,8 +162,89 @@ dailyForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 daily.form = dailyForm
 
 /**
+* @see \App\Http\Controllers\Operator\RevenueController::transactions
+* @see app/Http/Controllers/Operator/RevenueController.php:155
+* @route '/api/operator/revenue/transactions'
+*/
+export const transactions = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: transactions.url(options),
+    method: 'get',
+})
+
+transactions.definition = {
+    methods: ["get","head"],
+    url: '/api/operator/revenue/transactions',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Operator\RevenueController::transactions
+* @see app/Http/Controllers/Operator/RevenueController.php:155
+* @route '/api/operator/revenue/transactions'
+*/
+transactions.url = (options?: RouteQueryOptions) => {
+    return transactions.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Operator\RevenueController::transactions
+* @see app/Http/Controllers/Operator/RevenueController.php:155
+* @route '/api/operator/revenue/transactions'
+*/
+transactions.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: transactions.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Operator\RevenueController::transactions
+* @see app/Http/Controllers/Operator/RevenueController.php:155
+* @route '/api/operator/revenue/transactions'
+*/
+transactions.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: transactions.url(options),
+    method: 'head',
+})
+
+/**
+* @see \App\Http\Controllers\Operator\RevenueController::transactions
+* @see app/Http/Controllers/Operator/RevenueController.php:155
+* @route '/api/operator/revenue/transactions'
+*/
+const transactionsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: transactions.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Operator\RevenueController::transactions
+* @see app/Http/Controllers/Operator/RevenueController.php:155
+* @route '/api/operator/revenue/transactions'
+*/
+transactionsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: transactions.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\Operator\RevenueController::transactions
+* @see app/Http/Controllers/Operator/RevenueController.php:155
+* @route '/api/operator/revenue/transactions'
+*/
+transactionsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+    action: transactions.url({
+        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+            _method: 'HEAD',
+            ...(options?.query ?? options?.mergeQuery ?? {}),
+        }
+    }),
+    method: 'get',
+})
+
+transactions.form = transactionsForm
+
+/**
 * @see \App\Http\Controllers\Operator\RevenueController::byRoute
-* @see app/Http/Controllers/Operator/RevenueController.php:152
+* @see app/Http/Controllers/Operator/RevenueController.php:215
 * @route '/api/operator/revenue/by-route'
 */
 export const byRoute = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -178,7 +259,7 @@ byRoute.definition = {
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::byRoute
-* @see app/Http/Controllers/Operator/RevenueController.php:152
+* @see app/Http/Controllers/Operator/RevenueController.php:215
 * @route '/api/operator/revenue/by-route'
 */
 byRoute.url = (options?: RouteQueryOptions) => {
@@ -187,7 +268,7 @@ byRoute.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::byRoute
-* @see app/Http/Controllers/Operator/RevenueController.php:152
+* @see app/Http/Controllers/Operator/RevenueController.php:215
 * @route '/api/operator/revenue/by-route'
 */
 byRoute.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -197,7 +278,7 @@ byRoute.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::byRoute
-* @see app/Http/Controllers/Operator/RevenueController.php:152
+* @see app/Http/Controllers/Operator/RevenueController.php:215
 * @route '/api/operator/revenue/by-route'
 */
 byRoute.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -207,7 +288,7 @@ byRoute.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::byRoute
-* @see app/Http/Controllers/Operator/RevenueController.php:152
+* @see app/Http/Controllers/Operator/RevenueController.php:215
 * @route '/api/operator/revenue/by-route'
 */
 const byRouteForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -217,7 +298,7 @@ const byRouteForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::byRoute
-* @see app/Http/Controllers/Operator/RevenueController.php:152
+* @see app/Http/Controllers/Operator/RevenueController.php:215
 * @route '/api/operator/revenue/by-route'
 */
 byRouteForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -227,7 +308,7 @@ byRouteForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::byRoute
-* @see app/Http/Controllers/Operator/RevenueController.php:152
+* @see app/Http/Controllers/Operator/RevenueController.php:215
 * @route '/api/operator/revenue/by-route'
 */
 byRouteForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -244,7 +325,7 @@ byRoute.form = byRouteForm
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::byDriver
-* @see app/Http/Controllers/Operator/RevenueController.php:178
+* @see app/Http/Controllers/Operator/RevenueController.php:241
 * @route '/api/operator/revenue/by-driver'
 */
 export const byDriver = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -259,7 +340,7 @@ byDriver.definition = {
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::byDriver
-* @see app/Http/Controllers/Operator/RevenueController.php:178
+* @see app/Http/Controllers/Operator/RevenueController.php:241
 * @route '/api/operator/revenue/by-driver'
 */
 byDriver.url = (options?: RouteQueryOptions) => {
@@ -268,7 +349,7 @@ byDriver.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::byDriver
-* @see app/Http/Controllers/Operator/RevenueController.php:178
+* @see app/Http/Controllers/Operator/RevenueController.php:241
 * @route '/api/operator/revenue/by-driver'
 */
 byDriver.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -278,7 +359,7 @@ byDriver.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::byDriver
-* @see app/Http/Controllers/Operator/RevenueController.php:178
+* @see app/Http/Controllers/Operator/RevenueController.php:241
 * @route '/api/operator/revenue/by-driver'
 */
 byDriver.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -288,7 +369,7 @@ byDriver.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::byDriver
-* @see app/Http/Controllers/Operator/RevenueController.php:178
+* @see app/Http/Controllers/Operator/RevenueController.php:241
 * @route '/api/operator/revenue/by-driver'
 */
 const byDriverForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -298,7 +379,7 @@ const byDriverForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::byDriver
-* @see app/Http/Controllers/Operator/RevenueController.php:178
+* @see app/Http/Controllers/Operator/RevenueController.php:241
 * @route '/api/operator/revenue/by-driver'
 */
 byDriverForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -308,7 +389,7 @@ byDriverForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => 
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::byDriver
-* @see app/Http/Controllers/Operator/RevenueController.php:178
+* @see app/Http/Controllers/Operator/RevenueController.php:241
 * @route '/api/operator/revenue/by-driver'
 */
 byDriverForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -325,7 +406,7 @@ byDriver.form = byDriverForm
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::payouts
-* @see app/Http/Controllers/Operator/RevenueController.php:219
+* @see app/Http/Controllers/Operator/RevenueController.php:282
 * @route '/api/operator/revenue/payouts'
 */
 export const payouts = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -340,7 +421,7 @@ payouts.definition = {
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::payouts
-* @see app/Http/Controllers/Operator/RevenueController.php:219
+* @see app/Http/Controllers/Operator/RevenueController.php:282
 * @route '/api/operator/revenue/payouts'
 */
 payouts.url = (options?: RouteQueryOptions) => {
@@ -349,7 +430,7 @@ payouts.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::payouts
-* @see app/Http/Controllers/Operator/RevenueController.php:219
+* @see app/Http/Controllers/Operator/RevenueController.php:282
 * @route '/api/operator/revenue/payouts'
 */
 payouts.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -359,7 +440,7 @@ payouts.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::payouts
-* @see app/Http/Controllers/Operator/RevenueController.php:219
+* @see app/Http/Controllers/Operator/RevenueController.php:282
 * @route '/api/operator/revenue/payouts'
 */
 payouts.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -369,7 +450,7 @@ payouts.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::payouts
-* @see app/Http/Controllers/Operator/RevenueController.php:219
+* @see app/Http/Controllers/Operator/RevenueController.php:282
 * @route '/api/operator/revenue/payouts'
 */
 const payoutsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -379,7 +460,7 @@ const payoutsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::payouts
-* @see app/Http/Controllers/Operator/RevenueController.php:219
+* @see app/Http/Controllers/Operator/RevenueController.php:282
 * @route '/api/operator/revenue/payouts'
 */
 payoutsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -389,7 +470,7 @@ payoutsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::payouts
-* @see app/Http/Controllers/Operator/RevenueController.php:219
+* @see app/Http/Controllers/Operator/RevenueController.php:282
 * @route '/api/operator/revenue/payouts'
 */
 payoutsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -406,7 +487,7 @@ payouts.form = payoutsForm
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::requestPayout
-* @see app/Http/Controllers/Operator/RevenueController.php:245
+* @see app/Http/Controllers/Operator/RevenueController.php:308
 * @route '/api/operator/revenue/payout-request'
 */
 export const requestPayout = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -421,7 +502,7 @@ requestPayout.definition = {
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::requestPayout
-* @see app/Http/Controllers/Operator/RevenueController.php:245
+* @see app/Http/Controllers/Operator/RevenueController.php:308
 * @route '/api/operator/revenue/payout-request'
 */
 requestPayout.url = (options?: RouteQueryOptions) => {
@@ -430,7 +511,7 @@ requestPayout.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::requestPayout
-* @see app/Http/Controllers/Operator/RevenueController.php:245
+* @see app/Http/Controllers/Operator/RevenueController.php:308
 * @route '/api/operator/revenue/payout-request'
 */
 requestPayout.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -440,7 +521,7 @@ requestPayout.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => (
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::requestPayout
-* @see app/Http/Controllers/Operator/RevenueController.php:245
+* @see app/Http/Controllers/Operator/RevenueController.php:308
 * @route '/api/operator/revenue/payout-request'
 */
 const requestPayoutForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -450,7 +531,7 @@ const requestPayoutForm = (options?: RouteQueryOptions): RouteFormDefinition<'po
 
 /**
 * @see \App\Http\Controllers\Operator\RevenueController::requestPayout
-* @see app/Http/Controllers/Operator/RevenueController.php:245
+* @see app/Http/Controllers/Operator/RevenueController.php:308
 * @route '/api/operator/revenue/payout-request'
 */
 requestPayoutForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -460,6 +541,6 @@ requestPayoutForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'pos
 
 requestPayout.form = requestPayoutForm
 
-const RevenueController = { summary, daily, byRoute, byDriver, payouts, requestPayout }
+const RevenueController = { summary, daily, transactions, byRoute, byDriver, payouts, requestPayout }
 
 export default RevenueController
