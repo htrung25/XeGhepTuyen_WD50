@@ -120,7 +120,7 @@ onMounted(() => {
                         Tuyến Hà Nội – Hải Phòng mỗi ngày
                     </div>
                     <h1
-                        class="max-w-3xl text-4xl leading-tight font-extrabold text-balance sm:text-5xl lg:text-6xl"
+                        class="max-w-3xl text-4xl leading-snug font-extrabold text-balance sm:text-5xl lg:text-6xl"
                     >
                         Đi chung tuyến,<br />
                         <span class="text-blue-600">nhẹ mọi hành trình.</span>
@@ -398,7 +398,7 @@ onMounted(() => {
                         TRẢI NGHIỆM KHÁC BIỆT
                     </p>
                     <h2
-                        class="mt-3 text-3xl font-extrabold text-balance sm:text-4xl"
+                        class="mt-3 text-3xl leading-snug font-extrabold text-balance sm:text-4xl"
                     >
                         Chuyến đi nhẹ nhàng ngay từ lúc đặt xe
                     </h2>
@@ -437,7 +437,9 @@ onMounted(() => {
                         <p class="text-sm font-bold text-blue-600">
                             LỊCH TRÌNH NỔI BẬT
                         </p>
-                        <h2 class="mt-2 text-3xl font-extrabold text-balance">
+                        <h2
+                            class="mt-2 text-3xl leading-snug font-extrabold text-balance"
+                        >
                             Chọn chuyến, lên đường
                         </h2>
                     </div>
@@ -515,7 +517,9 @@ onMounted(() => {
                     <p class="text-sm font-bold text-blue-200">
                         SẴN SÀNG LÊN ĐƯỜNG?
                     </p>
-                    <h2 class="mt-2 text-3xl font-extrabold text-balance">
+                    <h2
+                        class="mt-2 text-3xl leading-snug font-extrabold text-balance"
+                    >
                         Để XeGhepTuyen-Fgroup lo phần đường còn lại.
                     </h2>
                     <p class="mt-3 text-pretty text-blue-100">

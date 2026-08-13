@@ -225,6 +225,7 @@ class FinanceController extends Controller
                 'booking_id' => $payment->booking?->id,
                 'type' => $payment->status->value === 'refunded' ? 'refund' : 'booking',
                 'amount' => $payment->amount,
+                'refund_amount' => (int) $payment->refund_amount,
                 'booking_code' => $payment->booking ? $payment->booking->booking_code : 'N/A',
                 'customer' => $payment->booking && $payment->booking->user ? $payment->booking->user->full_name : ($payment->user ? $payment->user->full_name : 'N/A'),
                 'operator' => $operatorName,
