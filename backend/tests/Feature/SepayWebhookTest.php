@@ -126,8 +126,8 @@ it('initiates SePay VietQR payment info and processes callback webhook successfu
         'transactionDate' => '2026-07-08 15:00:00',
         'accountNumber' => '0935555555',
         'transferType' => 'in',
-        'amountIn' => $amount,
-        'transactionContent' => "Chuyen khoan thanh toan don hang {$gatewayOrderId} tren XeGhep",
+        'transferAmount' => $amount,
+        'content' => "Chuyen khoan thanh toan don hang {$gatewayOrderId} tren XeGhep",
         'code' => 'SEPAYTX9999',
     ]);
 
@@ -145,8 +145,8 @@ it('rejects SePay webhook with invalid webhook token', function () {
         'Authorization' => 'Bearer invalid_token_here',
     ])->postJson('/api/customer/payments/sepay/webhook', [
         'id' => 999999,
-        'amountIn' => 150000,
-        'transactionContent' => 'XEGHEP-ABC123XYZ',
+        'transferAmount' => 150000,
+        'content' => 'XEGHEP-ABC123XYZ',
     ]);
 
     $webhookResponse->assertStatus(401);
@@ -193,8 +193,8 @@ it('fails SePay webhook if payment amount is mismatched', function () {
         'Authorization' => "Bearer {$webhookToken}",
     ])->postJson('/api/customer/payments/sepay/webhook', [
         'id' => 888888,
-        'amountIn' => 50000,
-        'transactionContent' => "Chuyen khoan thanh toan don hang {$gatewayOrderId}",
+        'transferAmount' => 50000,
+        'content' => "Chuyen khoan thanh toan don hang {$gatewayOrderId}",
     ]);
 
     $webhookResponse->assertStatus(400); // PaymentVerificationException maps to 400
@@ -226,8 +226,8 @@ it('rejects SePay outgoing transfer even when content and amount match', functio
         'gateway' => config('services.sepay.bank_name'),
         'accountNumber' => config('services.sepay.bank_acc'),
         'transferType' => 'out',
-        'amountIn' => 150000,
-        'transactionContent' => "Thanh toan {$orderId}",
+        'transferAmount' => 150000,
+        'content' => "Thanh toan {$orderId}",
     ])->assertStatus(400);
 
     expect($booking->fresh()->payment_status->value)->toBe('unpaid');
@@ -258,8 +258,8 @@ it('rejects SePay webhook sent to a different beneficiary account', function () 
         'gateway' => config('services.sepay.bank_name'),
         'accountNumber' => '0000000000',
         'transferType' => 'in',
-        'amountIn' => 150000,
-        'transactionContent' => "Thanh toan {$orderId}",
+        'transferAmount' => 150000,
+        'content' => "Thanh toan {$orderId}",
     ])->assertStatus(400);
 
     expect($booking->fresh()->payment_status->value)->toBe('unpaid');

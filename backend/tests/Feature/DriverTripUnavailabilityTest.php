@@ -551,7 +551,7 @@ it('webhook SePay trùng: idempotent — không confirm/không phát PaymentProc
     $svc = app(PaymentService::class);
 
     $payload = fn (string $txn) => [
-        'transactionContent' => "Thanh toan {$payment->gateway_order_id}", 'amountIn' => 120000, 'id' => $txn,
+        'content' => "Thanh toan {$payment->gateway_order_id}", 'transferAmount' => 120000, 'id' => $txn,
         'transferType' => 'in', 'accountNumber' => config('services.sepay.bank_acc'),
     ];
 
@@ -576,7 +576,7 @@ it('callback in-flight trên chuyến đã có cờ: giữ ghế + báo khách �
 
     // Callback đến sau: confirm vé, GIỮ ghế (không tự hủy), báo riêng cho khách.
     $svc->handleSepayWebhook([
-        'transactionContent' => "Thanh toan {$payment->gateway_order_id}", 'amountIn' => 120000, 'id' => 'TXN-1',
+        'content' => "Thanh toan {$payment->gateway_order_id}", 'transferAmount' => 120000, 'id' => 'TXN-1',
         'transferType' => 'in', 'accountNumber' => config('services.sepay.bank_acc'),
     ]);
 
@@ -590,7 +590,7 @@ it('callback in-flight trên chuyến đã có cờ: giữ ghế + báo khách �
 
     // Webhook trùng lần 2 KHÔNG tạo thêm thông báo (idempotent + dedupe).
     $svc->handleSepayWebhook([
-        'transactionContent' => "Thanh toan {$payment->gateway_order_id}", 'amountIn' => 120000, 'id' => 'TXN-2',
+        'content' => "Thanh toan {$payment->gateway_order_id}", 'transferAmount' => 120000, 'id' => 'TXN-2',
         'transferType' => 'in', 'accountNumber' => config('services.sepay.bank_acc'),
     ]);
     expect(Notification::where('user_id', $booking->user_id)
