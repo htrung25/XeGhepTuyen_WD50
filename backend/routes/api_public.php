@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Customer\TripSearchController;
 use App\Http\Controllers\Public\PartnerApplicationController;
+use App\Http\Controllers\Public\ProvinceController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,6 +17,9 @@ Route::get('health', fn () => response()->json([
     'success' => true,
     'message' => 'API is running',
 ]));
+
+// Danh mục hành chính (63 tỉnh + huyện) cho dropdown chọn điểm đi/đến
+Route::get('provinces', [ProvinceController::class, 'index']);
 
 Route::get('trips', [TripSearchController::class, 'search']);
 Route::get('trips/{id}', [TripSearchController::class, 'show']);

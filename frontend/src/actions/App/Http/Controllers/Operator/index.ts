@@ -1,5 +1,7 @@
 import AuthController from './AuthController'
+import NotificationController from './NotificationController'
 import OnboardingController from './OnboardingController'
+import FareRateController from './FareRateController'
 import RouteController from './RouteController'
 import VehicleController from './VehicleController'
 import DriverController from './DriverController'
@@ -9,7 +11,9 @@ import RevenueController from './RevenueController'
 
 const Operator = {
     AuthController: Object.assign(AuthController, AuthController),
+    NotificationController: Object.assign(NotificationController, NotificationController),
     OnboardingController: Object.assign(OnboardingController, OnboardingController),
+    FareRateController: Object.assign(FareRateController, FareRateController),
     RouteController: Object.assign(RouteController, RouteController),
     VehicleController: Object.assign(VehicleController, VehicleController),
     DriverController: Object.assign(DriverController, DriverController),

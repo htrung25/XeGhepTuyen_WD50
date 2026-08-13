@@ -68,6 +68,12 @@ class Operator extends Model
         return $this->hasMany(Voucher::class);
     }
 
+    /** Bảng giá vé theo km, phân theo tỉnh/huyện điểm đi */
+    public function fareRates(): HasMany
+    {
+        return $this->hasMany(OperatorFareRate::class);
+    }
+
     /**
      * Đơn đăng ký đối tác đã được duyệt để tạo ra nhà xe này (nếu có).
      */

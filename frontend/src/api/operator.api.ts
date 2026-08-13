@@ -16,6 +16,10 @@ import {
     assignVehicle as assignVehicleRoute,
     resetPassword as driverResetPassword,
 } from '@/actions/App/Http/Controllers/Operator/DriverController';
+import {
+    index as fareRatesIndex,
+    save as fareRatesSave,
+} from '@/actions/App/Http/Controllers/Operator/FareRateController';
 import { fleet } from '@/actions/App/Http/Controllers/Operator/OnboardingController';
 import {
     summary as revenueSummary,
@@ -55,27 +59,27 @@ import { apiClient } from './client';
 // Callers pass loose filter records; cast to Wayfinder's QueryParams at the boundary.
 type Params = Record<string, unknown>;
 
-export interface OperatorRouteStopPayload {
-    stop_name: string;
-    address: string;
-    lat: number;
-    lng: number;
-    stop_order: number;
-    offset_minutes: number;
-    is_pickup: boolean;
-    is_dropoff: boolean;
-}
-
+/**
+ * Tuyến gửi lên bằng MÃ tỉnh/huyện (BE đổi ra tên và tự tính giá vé theo bảng
+ * giá km) — không còn base_price nhập tay, không còn điểm dừng.
+ */
 export interface OperatorRoutePayload {
     name: string;
-    origin_city: string;
-    dest_city: string;
+    origin_province_code: string;
+    origin_district_code: string;
+    dest_province_code: string;
+    dest_district_code: string;
     distance_km: number;
     est_duration_min: number;
-    base_price: number;
     is_round_trip: boolean;
     is_active: boolean;
-    stops: OperatorRouteStopPayload[];
+}
+
+export interface OperatorFareRatePayload {
+    province_code: string | null;
+    district_code: string | null;
+    base_fare: number;
+    price_per_km: number;
 }
 
 export const operatorApi = {
@@ -96,11 +100,14 @@ export const operatorApi = {
     getRoute: (id: string) => apiClient.send(routeShow(id)),
     createRoute: (data: OperatorRoutePayload) =>
         apiClient.send(routeStore(), data),
-    updateRoute: (
-        id: string,
-        data: Partial<Omit<OperatorRoutePayload, 'stops'>>,
-    ) => apiClient.send(routeUpdate(id), data),
+    updateRoute: (id: string, data: Partial<OperatorRoutePayload>) =>
+        apiClient.send(routeUpdate(id), data),
     deleteRoute: (id: string) => apiClient.send(routeDestroy(id)),
+
+    // Bảng giá vé theo km (phân theo tỉnh/huyện điểm đi)
+    getFareRates: () => apiClient.send(fareRatesIndex()),
+    saveFareRates: (rates: OperatorFareRatePayload[]) =>
+        apiClient.send(fareRatesSave(), { rates }),
 
     // Vehicles
     getVehicles: () => apiClient.send(vehiclesIndex()),
