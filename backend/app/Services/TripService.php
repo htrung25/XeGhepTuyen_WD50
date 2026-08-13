@@ -83,6 +83,14 @@ class TripService
             throw new \InvalidArgumentException('Tuyến đường không thuộc nhà xe của bạn');
         }
 
+        // Giá vé chuyến LẤY TỪ TUYẾN (tuyến lấy từ bảng giá theo km), nhà xe
+        // không nhập tay. Tuyến chưa có giá ⇒ chặn lên lịch, buộc cấu hình giá
+        // trước — đây là chốt chặn duy nhất, tạo tuyến thì vẫn cho phép.
+        $data['price'] = (int) $route->base_price;
+        if ($data['price'] <= 0) {
+            throw new \InvalidArgumentException("Tuyến \"{$route->name}\" chưa được cấu hình giá vé. Vào mục Tuyến đường → Cấu hình giá vé trước khi lên lịch chạy.");
+        }
+
         if (empty($data['arrive_at'])) {
             $data['arrive_at'] = Carbon::parse($data['depart_at'])
                 ->addMinutes($route->est_duration_min);
@@ -213,7 +221,7 @@ class TripService
                     'vehicle_id' => $t['vehicle_id'],
                     'driver_id' => $t['driver_id'],
                     'depart_at' => $t['depart_at'],
-                    'price' => $t['base_price'] ?? $t['price'] ?? null,
+                    // giá lấy từ tuyến trong create()
                     'operator_id' => $operatorId,
                 ]);
                 $created++;

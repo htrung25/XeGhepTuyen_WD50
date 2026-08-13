@@ -35,8 +35,10 @@ class RouteController extends Controller
             $operator = auth('operator')->user()->operator;
             $validated = $request->validated();
 
-            // Giá vé KHÔNG do nhà xe nhập — luôn tính từ bảng giá theo km của
-            // huyện điểm đi. Chưa cấu hình bảng giá thì dừng lại, không đoán giá.
+            // Giá vé KHÔNG do nhà xe nhập — tính từ bảng giá theo km của huyện
+            // điểm đi. Chưa cấu hình bảng giá vẫn tạo được tuyến (giá = 0, coi
+            // như "chưa có giá"); ràng buộc bắt buộc nằm ở bước lên lịch chạy
+            // (TripService::create) và giá sẽ tự lấy khi lưu bảng giá.
             $basePrice = $this->pricing->priceFor(
                 $operator,
                 $validated['origin_province_code'],
@@ -44,15 +46,8 @@ class RouteController extends Controller
                 (int) $validated['distance_km'],
             );
 
-            if ($basePrice === null) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Chưa cấu hình giá vé cho khu vực này. Vui lòng vào "Cấu hình giá vé" trước khi tạo tuyến.',
-                ], 422);
-            }
-
             $route = $operator->routes()->create(
-                $this->routeAttributes($validated) + ['base_price' => $basePrice]
+                $this->routeAttributes($validated) + ['base_price' => $basePrice ?? 0]
             );
 
             return response()->json([
@@ -103,19 +98,14 @@ class RouteController extends Controller
 
             $basePrice = $this->pricing->priceFor(
                 $operator,
-                $validated['origin_province_code'] ?? $this->provinceCodeOf($route->origin_city),
-                $validated['origin_district_code'] ?? $this->districtCodeOf($route->origin_city, $route->origin_district),
+                $validated['origin_province_code'] ?? VietnamAdministrative::provinceCodeOfName($route->origin_city),
+                $validated['origin_district_code'] ?? VietnamAdministrative::districtCodeOfName($route->origin_city, $route->origin_district),
                 (int) ($validated['distance_km'] ?? $route->distance_km),
             );
 
-            if ($basePrice === null) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Chưa cấu hình giá vé cho khu vực này. Vui lòng vào "Cấu hình giá vé" trước khi lưu tuyến.',
-                ], 422);
-            }
-
-            $attributes['base_price'] = $basePrice;
+            // Chưa có bảng giá cho khu vực mới ⇒ giá về 0 ("chưa cấu hình"),
+            // chặn ở bước lên lịch chạy chứ không chặn ở đây.
+            $attributes['base_price'] = $basePrice ?? 0;
         }
 
         $route->update($attributes);
@@ -180,35 +170,6 @@ class RouteController extends Controller
         }
 
         return $attributes;
-    }
-
-    /** Tra ngược mã tỉnh từ tên đã lưu (tuyến cũ chỉ có tên) */
-    private function provinceCodeOf(?string $provinceName): ?string
-    {
-        foreach (VietnamAdministrative::provinces() as $province) {
-            if ($province['name'] === $provinceName) {
-                return $province['code'];
-            }
-        }
-
-        return null;
-    }
-
-    private function districtCodeOf(?string $provinceName, ?string $districtName): ?string
-    {
-        $code = $this->provinceCodeOf($provinceName);
-
-        if ($code === null || $districtName === null) {
-            return null;
-        }
-
-        foreach (VietnamAdministrative::findProvince($code)['districts'] as $district) {
-            if ($district['name'] === $districtName) {
-                return $district['code'];
-            }
-        }
-
-        return null;
     }
 
     private function findOwnedRoute(string $id, array $with = []): ?Route

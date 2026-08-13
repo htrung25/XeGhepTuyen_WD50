@@ -255,3 +255,34 @@ it('fails to insert a trip between two existing trips if succeeding trip buffer 
         'operator_id' => $entities['operator']->id,
     ]);
 });
+
+it('chặn lên lịch chạy khi tuyến chưa được cấu hình giá vé', function () {
+    $entities = setupTripTestEntities();
+    // Tuyến tạo trước, giá vé cấu hình sau ⇒ base_price = 0 cho tới khi nhà xe
+    // lưu bảng giá. Chốt chặn nằm ở bước lên lịch, không phải lúc tạo tuyến.
+    $entities['routeHnHp']->update(['base_price' => 0]);
+
+    app(TripService::class)->create([
+        'route_id' => $entities['routeHnHp']->id,
+        'vehicle_id' => $entities['vehicle']->id,
+        'driver_id' => $entities['driver']->id,
+        'depart_at' => now()->addHours(2)->toDateTimeString(),
+        'operator_id' => $entities['operator']->id,
+    ]);
+})->throws(InvalidArgumentException::class, 'chưa được cấu hình giá vé');
+
+it('giá vé chuyến lấy từ tuyến, bỏ qua giá client gửi lên', function () {
+    $entities = setupTripTestEntities();
+    $entities['routeHnHp']->update(['base_price' => 175000]);
+
+    $trip = app(TripService::class)->create([
+        'route_id' => $entities['routeHnHp']->id,
+        'vehicle_id' => $entities['vehicle']->id,
+        'driver_id' => $entities['driver']->id,
+        'depart_at' => now()->addHours(2)->toDateTimeString(),
+        'price' => 999000, // client cố nhập giá khác — phải bị bỏ qua
+        'operator_id' => $entities['operator']->id,
+    ]);
+
+    expect((int) $trip->price)->toBe(175000);
+});

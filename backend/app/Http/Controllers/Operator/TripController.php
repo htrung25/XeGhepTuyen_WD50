@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Operator\ReassignDriverRequest;
 use App\Http\Requests\Operator\StoreTripRequest;
 use App\Http\Resources\Operator\TripResource;
+use App\Models\Route;
 use App\Repositories\Contracts\TripRepositoryInterface;
 use App\Services\TripService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -67,10 +68,26 @@ class TripController extends Controller
             'trips.*.vehicle_id' => ['required', 'uuid', 'exists:vehicles,id'],
             'trips.*.driver_id' => ['required', 'uuid', 'exists:drivers,id'],
             'trips.*.depart_at' => ['required', 'date', 'after:now'],
-            'trips.*.base_price' => ['required', 'integer', 'min:1000'],
+            // base_price không nhận từ client — giá lấy từ tuyến.
         ]);
 
         $operator = auth('operator')->user()->operator;
+
+        // bulkCreate là best-effort (bỏ qua chuyến lỗi), nên tuyến chưa cấu hình
+        // giá phải chặn TRƯỚC cả lô — nếu không nhà xe chỉ thấy "đã bỏ qua N
+        // chuyến" mà không biết vì sao.
+        $unpriced = Route::whereIn('id', collect($request->trips)->pluck('route_id')->unique())
+            ->where('operator_id', $operator->id)
+            ->where('base_price', '<=', 0)
+            ->pluck('name');
+
+        if ($unpriced->isNotEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chưa cấu hình giá vé cho tuyến: '.$unpriced->implode(', ')
+                    .'. Vào mục Tuyến đường → Cấu hình giá vé trước khi lên lịch chạy.',
+            ], 422);
+        }
 
         try {
             ['created' => $created, 'skipped' => $skipped] = $this->tripService->bulkCreate($request->trips, $operator->id);

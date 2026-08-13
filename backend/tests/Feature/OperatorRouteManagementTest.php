@@ -104,13 +104,28 @@ it('ưu tiên bảng giá của huyện điểm đi trước bảng giá tỉnh 
         ->assertJsonPath('data.base_price', 210000); // 10.000 + 100 × 2.000
 });
 
-it('từ chối tạo tuyến khi nhà xe chưa cấu hình bảng giá', function () {
+it('vẫn tạo được tuyến khi chưa cấu hình bảng giá — giá để 0', function () {
     $operator = makeRouteOperator('A');
     actingAsRouteOperator($operator);
 
     $this->postJson('/api/operator/routes', routePayload())
-        ->assertStatus(422)
-        ->assertJsonPath('success', false);
+        ->assertCreated()
+        ->assertJsonPath('data.base_price', 0);
+});
+
+it('lưu bảng giá thì các tuyến sẵn có tự lấy lại giá', function () {
+    $operator = makeRouteOperator('A');
+    actingAsRouteOperator($operator);
+
+    $routeId = $this->postJson('/api/operator/routes', routePayload(['distance_km' => 100]))
+        ->assertCreated()
+        ->json('data.id');
+
+    $this->putJson('/api/operator/fare-rates', ['rates' => [
+        ['province_code' => null, 'district_code' => null, 'base_fare' => 20000, 'price_per_km' => 1000],
+    ]])->assertOk();
+
+    expect((int) Route::findOrFail($routeId)->base_price)->toBe(120000);
 });
 
 it('từ chối mã tỉnh huyện không hợp lệ và điểm đến trùng điểm đi', function () {

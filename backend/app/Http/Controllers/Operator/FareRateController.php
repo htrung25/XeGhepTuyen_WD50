@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 
 class FareRateController extends Controller
 {
+    public function __construct(private readonly FarePricingService $pricing) {}
+
     public function index(): JsonResponse
     {
         /** @var Operator $operator */
@@ -52,6 +54,8 @@ class FareRateController extends Controller
                     'price_per_km' => $rate['price_per_km'],
                 ]);
             }
+
+            $this->repriceRoutes($operator);
         });
 
         return response()->json([
@@ -59,5 +63,29 @@ class FareRateController extends Controller
             'message' => 'Đã lưu bảng giá vé',
             'data' => $operator->fareRates()->get(),
         ]);
+    }
+
+    /**
+     * Bảng giá đổi ⇒ mọi tuyến của nhà xe lấy lại giá theo bảng mới. Nhờ vậy
+     * nhà xe có thể tạo tuyến trước, cấu hình giá sau — giá tự được điền.
+     * Tuyến không tra được dòng giá nào giữ base_price = 0 ("chưa có giá") và
+     * sẽ bị chặn khi lên lịch chạy.
+     */
+    private function repriceRoutes(Operator $operator): void
+    {
+        $operator->routes()->chunkById(200, function ($routes) use ($operator) {
+            foreach ($routes as $route) {
+                $price = $this->pricing->priceFor(
+                    $operator,
+                    VietnamAdministrative::provinceCodeOfName($route->origin_city),
+                    VietnamAdministrative::districtCodeOfName($route->origin_city, $route->origin_district),
+                    (int) $route->distance_km,
+                ) ?? 0;
+
+                if ((int) $route->base_price !== $price) {
+                    $route->update(['base_price' => $price]);
+                }
+            }
+        });
     }
 }

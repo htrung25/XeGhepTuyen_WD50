@@ -118,6 +118,12 @@ const loadFareRates = async () => {
     roundingStep.value = Number(data?.rounding_step ?? 1000);
 };
 
+// Backend tính lại giá cho mọi tuyến khi bảng giá đổi ⇒ phải nạp lại danh sách
+// tuyến, không chỉ bảng giá.
+const onFareRatesSaved = async () => {
+    await Promise.all([loadFareRates(), loadRoutes()]);
+};
+
 const openCreate = () => {
     editingId.value = null;
     form.value = emptyForm();
@@ -446,10 +452,20 @@ onMounted(async () => {
                             <td class="px-6 py-4 text-sm text-slate-600">
                                 {{ route.distance_km }} km
                             </td>
-                            <td
-                                class="px-6 py-4 text-sm font-medium text-slate-700"
-                            >
-                                {{ fmtMoney(Number(route.base_price)) }}
+                            <td class="px-6 py-4 text-sm font-medium">
+                                <span
+                                    v-if="Number(route.base_price) > 0"
+                                    class="text-slate-700"
+                                >
+                                    {{ fmtMoney(Number(route.base_price)) }}
+                                </span>
+                                <button
+                                    v-else
+                                    class="text-amber-600 underline"
+                                    @click="showFareModal = true"
+                                >
+                                    Chưa cấu hình
+                                </button>
                             </td>
                             <td class="px-6 py-4">
                                 <span
@@ -494,7 +510,7 @@ onMounted(async () => {
         <FareRateModal
             v-if="showFareModal"
             @close="showFareModal = false"
-            @saved="loadFareRates"
+            @saved="onFareRatesSaved"
         />
 
         <!-- Create / Edit Modal -->
@@ -647,8 +663,9 @@ onMounted(async () => {
                             class="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
                         >
                             <span>
-                                Chưa có bảng giá áp dụng cho khu vực điểm đi —
-                                tuyến sẽ không lưu được.
+                                Chưa có bảng giá cho khu vực điểm đi — vẫn lưu
+                                được tuyến, giá sẽ tự lấy khi bạn cấu hình. Chưa
+                                có giá thì không lên lịch chạy được.
                             </span>
                             <button
                                 class="flex-shrink-0 font-medium underline"
