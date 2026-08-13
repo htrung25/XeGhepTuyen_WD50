@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
-use App\Models\Operator;
 use App\Models\OperatorFareRate;
+use App\Models\Route;
 
 /**
- * Tính giá vé tuyến theo km từ bảng giá của nhà xe. Nhà xe không nhập giá
- * tuyến bằng tay nữa — giá luôn là hàm của (bảng giá huyện điểm đi, số km).
+ * Tính giá vé của tuyến theo km từ đơn giá nhà xe gán cho CHÍNH tuyến đó.
+ * Nhà xe không nhập giá vé tay: giá luôn là hàm của (đơn giá tuyến, số km).
  */
 final class FarePricingService
 {
@@ -19,34 +19,6 @@ final class FarePricingService
 
     public const MAX_PRICE = 5000000;
 
-    /**
-     * Tra dòng giá áp dụng cho một điểm đi, ưu tiên từ hẹp đến rộng:
-     * (tỉnh + huyện) → (tỉnh) → (mặc định nhà xe). Trả null nếu nhà xe
-     * chưa cấu hình gì cả — nơi gọi phải báo lỗi thay vì tự đoán giá.
-     */
-    public function resolveRate(Operator $operator, ?string $provinceCode, ?string $districtCode): ?OperatorFareRate
-    {
-        $rates = $operator->fareRates()->get();
-
-        $exact = $rates->first(fn (OperatorFareRate $r) => $r->province_code === $provinceCode
-            && $r->district_code === $districtCode
-            && $districtCode !== null);
-
-        if ($exact) {
-            return $exact;
-        }
-
-        $province = $rates->first(fn (OperatorFareRate $r) => $r->province_code === $provinceCode
-            && $r->district_code === null
-            && $provinceCode !== null);
-
-        if ($province) {
-            return $province;
-        }
-
-        return $rates->first(fn (OperatorFareRate $r) => $r->province_code === null && $r->district_code === null);
-    }
-
     /** Giá vé = làm tròn lên bội số 1.000 của (phí mở cửa + đơn giá × km), kẹp biên. */
     public function calculate(OperatorFareRate $rate, int $distanceKm): int
     {
@@ -57,13 +29,13 @@ final class FarePricingService
     }
 
     /**
-     * Tiện ích cho controller: tra bảng giá rồi tính luôn.
-     * Trả null khi nhà xe chưa cấu hình giá cho phạm vi nào phù hợp.
+     * Giá vé của một tuyến theo đơn giá đã gán. Trả null khi tuyến chưa được
+     * gán giá — nơi gọi phải coi là "chưa có giá", không được tự đoán.
      */
-    public function priceFor(Operator $operator, ?string $provinceCode, ?string $districtCode, int $distanceKm): ?int
+    public function priceForRoute(Route $route): ?int
     {
-        $rate = $this->resolveRate($operator, $provinceCode, $districtCode);
+        $rate = $route->fareRate()->first();
 
-        return $rate ? $this->calculate($rate, $distanceKm) : null;
+        return $rate ? $this->calculate($rate, (int) $route->distance_km) : null;
     }
 }

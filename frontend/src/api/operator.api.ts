@@ -75,9 +75,9 @@ export interface OperatorRoutePayload {
     is_active: boolean;
 }
 
+/** Đơn giá/km gán cho MỘT tuyến (bảng giá theo tuyến) */
 export interface OperatorFareRatePayload {
-    province_code: string | null;
-    district_code: string | null;
+    route_id: string;
     base_fare: number;
     price_per_km: number;
 }

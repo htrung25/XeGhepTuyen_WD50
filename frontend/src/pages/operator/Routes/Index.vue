@@ -20,13 +20,6 @@ interface RouteRow {
     is_round_trip: boolean;
 }
 
-interface FareRate {
-    province_code: string | null;
-    district_code: string | null;
-    base_fare: number;
-    price_per_km: number;
-}
-
 const routes = ref<RouteRow[]>([]);
 const isLoading = ref(true);
 const errorMsg = ref('');
@@ -37,11 +30,6 @@ const showFareModal = ref(false);
 const saving = ref(false);
 const saveError = ref('');
 const editingId = ref<string | null>(null);
-
-// Bảng giá dùng để hiện giá dự kiến ngay trên form — nguồn tính giá thật vẫn
-// là backend, đây chỉ là bản sao để xem trước.
-const fareRates = ref<FareRate[]>([]);
-const roundingStep = ref(1000);
 
 const emptyForm = () => ({
     name: '',
@@ -59,42 +47,6 @@ const form = ref(emptyForm());
 
 const fmtMoney = (n: number) => new Intl.NumberFormat('vi-VN').format(n) + 'đ';
 
-/** Cùng thứ tự ưu tiên với FarePricingService::resolveRate ở backend */
-const resolveRate = (
-    provinceCode: string,
-    districtCode: string,
-): FareRate | null =>
-    fareRates.value.find(
-        (r) =>
-            r.province_code === provinceCode &&
-            r.district_code === districtCode &&
-            districtCode !== '',
-    ) ??
-    fareRates.value.find(
-        (r) =>
-            r.province_code === provinceCode &&
-            r.district_code === null &&
-            provinceCode !== '',
-    ) ??
-    fareRates.value.find(
-        (r) => r.province_code === null && r.district_code === null,
-    ) ??
-    null;
-
-const estimatedPrice = computed(() => {
-    const rate = resolveRate(
-        form.value.origin_province_code,
-        form.value.origin_district_code,
-    );
-    if (!rate) return null;
-
-    const raw =
-        Number(rate.base_fare) +
-        Number(rate.price_per_km) * Number(form.value.distance_km || 0);
-    const step = roundingStep.value || 1;
-    return Math.ceil(raw / step) * step;
-});
-
 const loadRoutes = async () => {
     isLoading.value = true;
     errorMsg.value = '';
@@ -107,22 +59,8 @@ const loadRoutes = async () => {
     routes.value = data ?? [];
 };
 
-const loadFareRates = async () => {
-    const { data } = await operatorApi.getFareRates();
-    fareRates.value = (data?.rates ?? []).map((r: any) => ({
-        province_code: r.province_code ?? null,
-        district_code: r.district_code ?? null,
-        base_fare: Number(r.base_fare),
-        price_per_km: Number(r.price_per_km),
-    }));
-    roundingStep.value = Number(data?.rounding_step ?? 1000);
-};
-
-// Backend tính lại giá cho mọi tuyến khi bảng giá đổi ⇒ phải nạp lại danh sách
-// tuyến, không chỉ bảng giá.
-const onFareRatesSaved = async () => {
-    await Promise.all([loadFareRates(), loadRoutes()]);
-};
+// Backend tính lại giá vé của các tuyến khi bảng giá đổi ⇒ nạp lại danh sách.
+const onFareRatesSaved = () => loadRoutes();
 
 const openCreate = () => {
     editingId.value = null;
@@ -260,7 +198,7 @@ const placeLabel = (city: string, district?: string | null) =>
 
 onMounted(async () => {
     provincesCache.value = await geoApi.getProvinces();
-    await Promise.all([loadRoutes(), loadFareRates()]);
+    await loadRoutes();
 });
 </script>
 
@@ -646,29 +584,18 @@ onMounted(async () => {
                             </label>
                         </div>
 
-                        <!-- Giá vé: hệ thống tính, nhà xe không nhập tay -->
+                        <!-- Giá vé gán sau, ở màn Cấu hình giá vé (chọn tuyến) -->
                         <div
-                            v-if="estimatedPrice !== null"
-                            class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
-                        >
-                            Giá vé dự kiến:
-                            <strong class="text-slate-900">{{
-                                fmtMoney(estimatedPrice)
-                            }}</strong>
-                            — tính theo bảng giá của khu vực điểm đi và
-                            {{ form.distance_km }} km.
-                        </div>
-                        <div
-                            v-else
-                            class="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+                            class="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600"
                         >
                             <span>
-                                Chưa có bảng giá cho khu vực điểm đi — vẫn lưu
-                                được tuyến, giá sẽ tự lấy khi bạn cấu hình. Chưa
-                                có giá thì không lên lịch chạy được.
+                                Giá vé không nhập ở đây: lưu tuyến xong, vào
+                                <strong>Cấu hình giá vé</strong> chọn tuyến này
+                                và đặt đơn giá mỗi km. Chưa có giá thì không lên
+                                lịch chạy được.
                             </span>
                             <button
-                                class="flex-shrink-0 font-medium underline"
+                                class="flex-shrink-0 font-medium text-amber-600 underline"
                                 @click="showFareModal = true"
                             >
                                 Cấu hình giá vé

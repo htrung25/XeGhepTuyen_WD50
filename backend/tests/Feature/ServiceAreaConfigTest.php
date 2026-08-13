@@ -104,13 +104,7 @@ it('operator sửa tuyến qua API thì vùng đồng bộ theo thành phố m�
     Sanctum::actingAs($opUser, ['*'], 'sanctum');
     Sanctum::actingAs($opUser, ['*'], 'operator');
 
-    // API nhận MÃ tỉnh/huyện (31 = Hải Phòng, 303 = Quận Hồng Bàng) và tính lại
-    // giá vé theo bảng giá — nên nhà xe phải có ít nhất dòng giá mặc định.
-    $route->operator->fareRates()->create([
-        'province_code' => null, 'district_code' => null,
-        'base_fare' => 0, 'price_per_km' => 1000,
-    ]);
-
+    // API nhận MÃ tỉnh/huyện (31 = Hải Phòng, 303 = Quận Hồng Bàng)
     $this->putJson("/api/operator/routes/{$route->id}", [
         'origin_province_code' => '31',
         'origin_district_code' => '303',

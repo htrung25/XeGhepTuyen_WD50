@@ -35,19 +35,11 @@ class RouteController extends Controller
             $operator = auth('operator')->user()->operator;
             $validated = $request->validated();
 
-            // Giá vé KHÔNG do nhà xe nhập — tính từ bảng giá theo km của huyện
-            // điểm đi. Chưa cấu hình bảng giá vẫn tạo được tuyến (giá = 0, coi
-            // như "chưa có giá"); ràng buộc bắt buộc nằm ở bước lên lịch chạy
-            // (TripService::create) và giá sẽ tự lấy khi lưu bảng giá.
-            $basePrice = $this->pricing->priceFor(
-                $operator,
-                $validated['origin_province_code'],
-                $validated['origin_district_code'],
-                (int) $validated['distance_km'],
-            );
-
+            // Tuyến mới luôn ở trạng thái "chưa có giá" (base_price = 0): nhà xe
+            // tạo tuyến trước, rồi vào Cấu hình giá vé gán đơn giá/km cho tuyến
+            // đó. Chốt chặn nằm ở bước lên lịch chạy (TripService::create).
             $route = $operator->routes()->create(
-                $this->routeAttributes($validated) + ['base_price' => $basePrice ?? 0]
+                $this->routeAttributes($validated) + ['base_price' => 0]
             );
 
             return response()->json([
@@ -88,27 +80,13 @@ class RouteController extends Controller
         $validated = $request->validated();
         $attributes = $this->routeAttributes($validated);
 
-        // Đổi km hoặc đổi điểm đi ⇒ giá vé cũ không còn đúng với bảng giá.
-        $originChanged = isset($validated['origin_province_code']);
-        $distanceChanged = isset($validated['distance_km']);
-
-        if ($originChanged || $distanceChanged) {
-            /** @var Operator $operator */
-            $operator = auth('operator')->user()->operator;
-
-            $basePrice = $this->pricing->priceFor(
-                $operator,
-                $validated['origin_province_code'] ?? VietnamAdministrative::provinceCodeOfName($route->origin_city),
-                $validated['origin_district_code'] ?? VietnamAdministrative::districtCodeOfName($route->origin_city, $route->origin_district),
-                (int) ($validated['distance_km'] ?? $route->distance_km),
-            );
-
-            // Chưa có bảng giá cho khu vực mới ⇒ giá về 0 ("chưa cấu hình"),
-            // chặn ở bước lên lịch chạy chứ không chặn ở đây.
-            $attributes['base_price'] = $basePrice ?? 0;
-        }
-
         $route->update($attributes);
+
+        // Đổi số km ⇒ giá vé cũ không còn khớp đơn giá/km đã gán cho tuyến.
+        // Tuyến chưa gán đơn giá vẫn giữ 0 ("chưa có giá").
+        if (isset($validated['distance_km'])) {
+            $route->update(['base_price' => $this->pricing->priceForRoute($route) ?? 0]);
+        }
 
         return response()->json([
             'success' => true,

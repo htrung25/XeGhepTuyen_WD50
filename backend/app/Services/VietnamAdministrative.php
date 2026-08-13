@@ -61,35 +61,6 @@ final class VietnamAdministrative
         return null;
     }
 
-    /** Tra ngược mã tỉnh từ tên đã lưu trong DB (routes chỉ lưu tên) */
-    public static function provinceCodeOfName(?string $provinceName): ?string
-    {
-        foreach (self::provinces() as $province) {
-            if ($province['name'] === $provinceName) {
-                return $province['code'];
-            }
-        }
-
-        return null;
-    }
-
-    public static function districtCodeOfName(?string $provinceName, ?string $districtName): ?string
-    {
-        $provinceCode = self::provinceCodeOfName($provinceName);
-
-        if ($provinceCode === null || $districtName === null) {
-            return null;
-        }
-
-        foreach (self::findProvince($provinceCode)['districts'] as $district) {
-            if ($district['name'] === $districtName) {
-                return $district['code'];
-            }
-        }
-
-        return null;
-    }
-
     public static function provinceExists(?string $code): bool
     {
         return self::findProvince($code) !== null;

@@ -7,8 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Một dòng bảng giá của nhà xe. Phạm vi áp dụng theo độ ưu tiên:
- * (tỉnh + huyện) > (tỉnh) > (mặc định nhà xe). Xem FarePricingService.
+ * Đơn giá vé của MỘT tuyến: giá vé tuyến = phí mở cửa + đơn giá/km × số km.
+ * Tuyến chưa có dòng nào ⇒ chưa có giá ⇒ không lên lịch chạy được.
  */
 class OperatorFareRate extends Model
 {
@@ -18,10 +18,7 @@ class OperatorFareRate extends Model
 
     protected $fillable = [
         'operator_id',
-        'province_code',
-        'district_code',
-        'province_name',
-        'district_name',
+        'route_id',
         'base_fare',
         'price_per_km',
     ];
@@ -39,13 +36,8 @@ class OperatorFareRate extends Model
         return $this->belongsTo(Operator::class);
     }
 
-    /** Nhãn hiển thị phạm vi áp dụng của dòng giá */
-    public function scopeLabel(): string
+    public function route(): BelongsTo
     {
-        if ($this->district_name && $this->province_name) {
-            return "{$this->district_name}, {$this->province_name}";
-        }
-
-        return $this->province_name ? "Toàn bộ {$this->province_name}" : 'Mặc định (mọi tuyến)';
+        return $this->belongsTo(Route::class);
     }
 }

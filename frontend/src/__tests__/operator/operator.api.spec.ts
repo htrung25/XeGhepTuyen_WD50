@@ -82,8 +82,7 @@ describe('operatorApi → Wayfinder route contract', () => {
 
         const rates = [
             {
-                province_code: '01',
-                district_code: '001',
+                route_id: 'route-1',
                 base_fare: 10000,
                 price_per_km: 2000,
             },
