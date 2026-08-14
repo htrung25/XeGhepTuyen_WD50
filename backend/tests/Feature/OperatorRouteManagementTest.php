@@ -212,3 +212,50 @@ it('không cho sửa mỗi tỉnh mà giữ huyện cũ', function () {
         ->assertStatus(422)
         ->assertJsonValidationErrors('origin_district_code');
 });
+
+it('chặn tạo trùng tuyến trong cùng một nhà xe', function () {
+    $operator = makeRouteOperator('A');
+    actingAsRouteOperator($operator);
+
+    $this->postJson('/api/operator/routes', routePayload())->assertCreated();
+
+    // Cùng cặp (huyện đi, huyện đến) dù đặt tên khác ⇒ trùng
+    $this->postJson('/api/operator/routes', routePayload(['name' => 'Tên khác']))
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('dest_district_code');
+
+    expect(Route::where('operator_id', $operator->id)->count())->toBe(1);
+});
+
+it('cho phép hai nhà xe khác nhau cùng khai thác một tuyến', function () {
+    $a = makeRouteOperator('A');
+    actingAsRouteOperator($a);
+    $this->postJson('/api/operator/routes', routePayload())->assertCreated();
+
+    $b = makeRouteOperator('B');
+    actingAsRouteOperator($b);
+    $this->postJson('/api/operator/routes', routePayload())->assertCreated();
+
+    expect(Route::count())->toBe(2);
+});
+
+it('chặn sửa tuyến thành trùng với tuyến khác nhưng cho lưu lại chính nó', function () {
+    $operator = makeRouteOperator('A');
+    actingAsRouteOperator($operator);
+
+    $this->postJson('/api/operator/routes', routePayload())->assertCreated();
+    $secondId = $this->postJson('/api/operator/routes', routePayload([
+        'name' => 'Ba Đình → Ngô Quyền',
+        'dest_district_code' => '304', // Quận Ngô Quyền
+    ]))->assertCreated()->json('data.id');
+
+    // Sửa tuyến 2 về đúng cặp của tuyến 1 ⇒ chặn
+    $this->putJson("/api/operator/routes/{$secondId}", [
+        'dest_province_code' => HP_PROVINCE,
+        'dest_district_code' => HP_DISTRICT,
+    ])->assertStatus(422)->assertJsonValidationErrors('dest_district_code');
+
+    // Lưu lại chính nó (không đổi điểm đi/đến) vẫn phải được
+    $this->putJson("/api/operator/routes/{$secondId}", ['est_duration_min' => 170])
+        ->assertOk();
+});

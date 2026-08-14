@@ -8,6 +8,7 @@ use App\Http\Requests\Operator\UpdateRouteRequest;
 use App\Models\Operator;
 use App\Models\Route;
 use App\Services\FarePricingService;
+use App\Services\RouteUniquenessService;
 use App\Services\VietnamAdministrative;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +16,10 @@ use Illuminate\Support\Facades\Log;
 
 class RouteController extends Controller
 {
-    public function __construct(private readonly FarePricingService $pricing) {}
+    public function __construct(
+        private readonly FarePricingService $pricing,
+        private readonly RouteUniquenessService $uniqueness,
+    ) {}
 
     public function index(): JsonResponse
     {
@@ -30,17 +34,26 @@ class RouteController extends Controller
 
     public function store(StoreRouteRequest $request): JsonResponse
     {
-        try {
-            /** @var Operator $operator */
-            $operator = auth('operator')->user()->operator;
-            $validated = $request->validated();
+        /** @var Operator $operator */
+        $operator = auth('operator')->user()->operator;
+        $validated = $request->validated();
+        $attributes = $this->routeAttributes($validated);
 
+        // Ngoài try: ValidationException phải bay lên thành 422, không bị khối
+        // catch bên dưới nuốt thành "Có lỗi xảy ra" 500.
+        $this->uniqueness->assertUnique(
+            $operator,
+            $attributes['origin_city'] ?? null,
+            $attributes['origin_district'] ?? null,
+            $attributes['dest_city'] ?? null,
+            $attributes['dest_district'] ?? null,
+        );
+
+        try {
             // Tuyến mới luôn ở trạng thái "chưa có giá" (base_price = 0): nhà xe
             // tạo tuyến trước, rồi vào Cấu hình giá vé gán đơn giá/km cho tuyến
             // đó. Chốt chặn nằm ở bước lên lịch chạy (TripService::create).
-            $route = $operator->routes()->create(
-                $this->routeAttributes($validated) + ['base_price' => 0]
-            );
+            $route = $operator->routes()->create($attributes + ['base_price' => 0]);
 
             return response()->json([
                 'success' => true,
@@ -79,6 +92,17 @@ class RouteController extends Controller
 
         $validated = $request->validated();
         $attributes = $this->routeAttributes($validated);
+
+        // Chỉ những cột có trong payload mới đổi ⇒ so trùng theo giá trị SAU khi
+        // gộp, và loại chính tuyến đang sửa ra khỏi phép so.
+        $this->uniqueness->assertUnique(
+            auth('operator')->user()->operator,
+            $attributes['origin_city'] ?? $route->origin_city,
+            $attributes['origin_district'] ?? $route->origin_district,
+            $attributes['dest_city'] ?? $route->dest_city,
+            $attributes['dest_district'] ?? $route->dest_district,
+            $route->id,
+        );
 
         $route->update($attributes);
 
