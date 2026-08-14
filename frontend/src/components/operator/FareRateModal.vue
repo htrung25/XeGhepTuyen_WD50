@@ -21,8 +21,6 @@ const roundingStep = ref(1000);
 const loading = ref(true);
 const saving = ref(false);
 const errorMsg = ref('');
-// Tuyến đang được chọn để gán giá — mặc định là tuyến chưa có giá đầu tiên.
-const selectedId = ref('');
 
 onMounted(async () => {
     const { data, error } = await operatorApi.getFareRates();
@@ -43,15 +41,10 @@ onMounted(async () => {
         base_fare: r.price_per_km === null ? null : Number(r.base_fare ?? 0),
         price_per_km: r.price_per_km === null ? null : Number(r.price_per_km),
     }));
-    selectedId.value = (unpricedRoutes.value[0] ?? rows.value[0])?.id ?? '';
 });
 
 const unpricedRoutes = computed(() =>
     rows.value.filter((r) => r.price_per_km === null),
-);
-
-const selected = computed(
-    () => rows.value.find((r) => r.id === selectedId.value) ?? null,
 );
 
 const place = (city: string, district: string | null) =>
@@ -66,11 +59,10 @@ const priceOf = (row: RouteRow) => {
     return Math.ceil(raw / step) * step;
 };
 
-/** Bắt đầu gán giá cho tuyến đang chọn (đơn giá mặc định gợi ý) */
-const startPricing = () => {
-    if (!selected.value) return;
-    selected.value.base_fare = 0;
-    selected.value.price_per_km = 1000;
+/** Mở ô nhập giá cho một tuyến (đơn giá mặc định gợi ý) */
+const startPricing = (row: RouteRow) => {
+    row.base_fare = 0;
+    row.price_per_km = 1000;
 };
 
 const clearPricing = (row: RouteRow) => {
@@ -182,50 +174,13 @@ const inputClass =
                     </div>
 
                     <template v-else>
-                        <!-- Chọn tuyến để cấu hình -->
-                        <div>
-                            <label
-                                class="mb-1.5 block text-xs font-semibold tracking-wider text-slate-500 uppercase"
-                            >
-                                Chọn tuyến
-                            </label>
-                            <div class="flex gap-2">
-                                <select
-                                    v-model="selectedId"
-                                    :class="inputClass"
-                                >
-                                    <option
-                                        v-for="row in rows"
-                                        :key="row.id"
-                                        :value="row.id"
-                                    >
-                                        {{ row.name }} —
-                                        {{ row.distance_km }} km{{
-                                            row.price_per_km === null
-                                                ? ' (chưa có giá)'
-                                                : ''
-                                        }}
-                                    </option>
-                                </select>
-                                <button
-                                    v-if="
-                                        selected &&
-                                        selected.price_per_km === null
-                                    "
-                                    class="flex-shrink-0 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
-                                    @click="startPricing"
-                                >
-                                    Gán giá cho tuyến này
-                                </button>
-                            </div>
-                            <p
-                                v-if="unpricedRoutes.length"
-                                class="mt-2 text-sm text-amber-700"
-                            >
-                                {{ unpricedRoutes.length }} tuyến chưa có giá vé
-                                — chưa gán giá thì không lên lịch chạy được.
-                            </p>
-                        </div>
+                        <p
+                            v-if="unpricedRoutes.length"
+                            class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+                        >
+                            {{ unpricedRoutes.length }} tuyến chưa có giá vé —
+                            chưa gán giá thì không lên lịch chạy được.
+                        </p>
 
                         <!-- Bảng giá theo tuyến -->
                         <table class="w-full">
@@ -245,12 +200,7 @@ const inputClass =
                                 <tr
                                     v-for="row in rows"
                                     :key="row.id"
-                                    :class="[
-                                        'align-top',
-                                        row.id === selectedId
-                                            ? 'bg-amber-50/60'
-                                            : '',
-                                    ]"
+                                    class="align-top"
                                 >
                                     <td class="py-3 pr-2 text-sm">
                                         <div class="font-medium text-slate-800">
@@ -304,10 +254,7 @@ const inputClass =
                                         <button
                                             v-else
                                             class="text-sm font-medium text-amber-600 underline"
-                                            @click="
-                                                selectedId = row.id;
-                                                startPricing();
-                                            "
+                                            @click="startPricing(row)"
                                         >
                                             Chưa có giá — gán ngay
                                         </button>
