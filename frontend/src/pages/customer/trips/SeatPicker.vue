@@ -21,9 +21,10 @@ const tripInfo = ref<any>(null);
 
 const maxSeats = computed(() => store.searchParams.passengers || 1);
 
+// Màu ghế theo trạng thái — dùng chung cho cả phần lưng ghế (có hover/cursor)
+// lẫn 2 tay vịn (chỉ cần màu nền, không cần hover riêng để tránh nhấp nháy
+// lệch giữa lưng ghế và tay vịn khi rê chuột).
 function seatClasses(s: SeatInfo) {
-    if (s.status === 'driver')
-        return 'bg-gray-200 text-gray-400 cursor-not-allowed border-gray-200';
     if (s.status === 'booked')
         return 'bg-red-100 text-red-400 cursor-not-allowed border-red-200';
     if (s.status === 'locked')
@@ -31,6 +32,14 @@ function seatClasses(s: SeatInfo) {
     if (selected.value.includes(s.seat_code))
         return 'bg-blue-600 text-white border-blue-600 shadow-md';
     return 'bg-white text-gray-700 border-gray-300 hover:border-blue-400 hover:bg-blue-50 cursor-pointer';
+}
+
+function seatArmClasses(s: SeatInfo) {
+    if (s.status === 'booked') return 'bg-red-100 border-red-200';
+    if (s.status === 'locked') return 'bg-yellow-100 border-yellow-300';
+    if (selected.value.includes(s.seat_code))
+        return 'bg-blue-600 border-blue-600';
+    return 'bg-white border-gray-300';
 }
 
 function toggleSeat(s: SeatInfo) {
@@ -337,22 +346,49 @@ onMounted(async () => {
                     <!-- Car visual: mặt cắt ngang xe thật theo từng loại xe -->
                     <div
                         v-else
-                        class="flex flex-col items-center gap-2 rounded-2xl border border-gray-100 bg-gray-50/50 py-4"
+                        class="flex flex-col items-center gap-3 rounded-2xl border border-gray-100 bg-gray-50/50 py-5"
                     >
-                        <div class="mb-1 text-xs text-gray-400 italic">
-                            Đầu xe
+                        <div class="flex flex-col items-center gap-1">
+                            <svg
+                                class="h-6 w-6 text-gray-300"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.5"
+                                viewBox="0 0 24 24"
+                            >
+                                <circle cx="12" cy="12" r="8.25" />
+                                <circle cx="12" cy="12" r="2" />
+                                <path
+                                    stroke-linecap="round"
+                                    d="M12 3.75v6.25M12 14v7.25M5.05 7.05l4.6 3.7M18.95 7.05l-4.6 3.7M5.05 16.95l4.6-3.7M18.95 16.95l-4.6-3.7"
+                                />
+                            </svg>
+                            <span class="text-xs text-gray-400 italic"
+                                >Đầu xe</span
+                            >
                         </div>
 
                         <div
                             v-for="(row, ri) in renderRows"
                             :key="ri"
-                            class="flex w-full max-w-xs items-center justify-center gap-2"
+                            class="flex w-full max-w-xs items-end justify-center gap-2"
                         >
+                            <!-- Ghế lái — cùng khung ghế nhưng màu trung tính, không bấm được -->
                             <div
                                 v-if="row.front"
-                                class="flex h-12 w-14 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-gray-200 text-xs font-medium text-gray-400"
+                                class="flex h-14 shrink-0 items-end justify-center gap-0.5"
                             >
-                                Tài xế
+                                <div
+                                    class="h-6 w-2 shrink-0 rounded-md border-2 border-gray-200 bg-gray-200"
+                                />
+                                <div
+                                    class="flex h-14 w-9 shrink-0 items-center justify-center rounded-t-xl rounded-b-md border-2 border-gray-200 bg-gray-200 text-[10px] leading-tight font-medium text-gray-400"
+                                >
+                                    Tài<br />xế
+                                </div>
+                                <div
+                                    class="h-6 w-2 shrink-0 rounded-md border-2 border-gray-200 bg-gray-200"
+                                />
                             </div>
 
                             <template v-for="(slot, si) in row.slots" :key="si">
@@ -360,17 +396,36 @@ onMounted(async () => {
                                     v-if="slot.type === 'aisle'"
                                     class="w-5 shrink-0"
                                 />
-                                <button
+                                <!-- Ghế hình armchair: tựa lưng (bấm được) + 2 tay vịn trang trí -->
+                                <div
                                     v-else
-                                    @click="toggleSeat(slot.seat)"
-                                    :disabled="slot.seat.status !== 'available'"
-                                    :class="[
-                                        'h-12 w-14 shrink-0 rounded-lg border-2 text-sm font-bold transition-all active:scale-90',
-                                        seatClasses(slot.seat),
-                                    ]"
+                                    class="flex h-14 shrink-0 items-end justify-center gap-0.5"
                                 >
-                                    {{ slot.seat.seat_code }}
-                                </button>
+                                    <div
+                                        :class="[
+                                            'h-6 w-2 shrink-0 rounded-md border-2 transition-colors',
+                                            seatArmClasses(slot.seat),
+                                        ]"
+                                    />
+                                    <button
+                                        @click="toggleSeat(slot.seat)"
+                                        :disabled="
+                                            slot.seat.status !== 'available'
+                                        "
+                                        :class="[
+                                            'h-14 w-9 shrink-0 rounded-t-xl rounded-b-md border-2 text-sm font-bold transition-all active:scale-90',
+                                            seatClasses(slot.seat),
+                                        ]"
+                                    >
+                                        {{ slot.seat.seat_code }}
+                                    </button>
+                                    <div
+                                        :class="[
+                                            'h-6 w-2 shrink-0 rounded-md border-2 transition-colors',
+                                            seatArmClasses(slot.seat),
+                                        ]"
+                                    />
+                                </div>
                             </template>
                         </div>
 
