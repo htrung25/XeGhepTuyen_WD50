@@ -21,25 +21,29 @@ const tripInfo = ref<any>(null);
 
 const maxSeats = computed(() => store.searchParams.passengers || 1);
 
-// Màu ghế theo trạng thái — dùng chung cho cả phần lưng ghế (có hover/cursor)
-// lẫn 2 tay vịn (chỉ cần màu nền, không cần hover riêng để tránh nhấp nháy
-// lệch giữa lưng ghế và tay vịn khi rê chuột).
-function seatClasses(s: SeatInfo) {
+// Hình dáng ghế thật (tựa lưng bo tròn + 2 tay vịn) vẽ bằng MỘT path SVG liền
+// mạch duy nhất — tránh kiểu ghép 3 khối rời rạc (lưng + tay trái + tay phải)
+// nhìn như 3 hộp cạnh nhau. viewBox 48x56, vẽ theo chiều kim đồng hồ.
+const SEAT_PATH =
+    'M 10,16 Q 10,2 24,2 Q 38,2 38,16 L 38,28 Q 46,28 46,34 L 46,40 Q 46,46 38,46 Q 38,52 32,52 L 16,52 Q 10,52 10,46 Q 2,46 2,40 L 2,34 Q 2,28 10,28 L 10,16 Z';
+
+// Màu phần thân ghế (fill/stroke của path SVG) theo trạng thái.
+function seatFillClasses(s: SeatInfo) {
     if (s.status === 'booked')
-        return 'bg-red-100 text-red-400 cursor-not-allowed border-red-200';
+        return 'fill-red-100 stroke-red-200 cursor-not-allowed';
     if (s.status === 'locked')
-        return 'bg-yellow-100 text-yellow-600 cursor-not-allowed border-yellow-300';
+        return 'fill-yellow-100 stroke-yellow-300 cursor-not-allowed';
     if (selected.value.includes(s.seat_code))
-        return 'bg-blue-600 text-white border-blue-600 shadow-md';
-    return 'bg-white text-gray-700 border-gray-300 hover:border-blue-400 hover:bg-blue-50 cursor-pointer';
+        return 'fill-blue-600 stroke-blue-600 drop-shadow-md';
+    return 'fill-white stroke-gray-300 hover:fill-blue-50 hover:stroke-blue-400 cursor-pointer';
 }
 
-function seatArmClasses(s: SeatInfo) {
-    if (s.status === 'booked') return 'bg-red-100 border-red-200';
-    if (s.status === 'locked') return 'bg-yellow-100 border-yellow-300';
-    if (selected.value.includes(s.seat_code))
-        return 'bg-blue-600 border-blue-600';
-    return 'bg-white border-gray-300';
+// Màu chữ mã ghế đặt chồng lên giữa hình ghế.
+function seatTextClasses(s: SeatInfo) {
+    if (s.status === 'booked') return 'text-red-400';
+    if (s.status === 'locked') return 'text-yellow-600';
+    if (selected.value.includes(s.seat_code)) return 'text-white';
+    return 'text-gray-700';
 }
 
 function toggleSeat(s: SeatInfo) {
@@ -373,22 +377,24 @@ onMounted(async () => {
                             :key="ri"
                             class="flex w-full max-w-xs items-end justify-center gap-2"
                         >
-                            <!-- Ghế lái — cùng khung ghế nhưng màu trung tính, không bấm được -->
+                            <!-- Ghế lái — cùng hình ghế thật nhưng màu trung tính, không bấm được -->
                             <div
                                 v-if="row.front"
-                                class="flex h-14 shrink-0 items-end justify-center gap-0.5"
+                                class="relative h-14 w-12 shrink-0"
                             >
-                                <div
-                                    class="h-6 w-2 shrink-0 rounded-md border-2 border-gray-200 bg-gray-200"
-                                />
-                                <div
-                                    class="flex h-14 w-9 shrink-0 items-center justify-center rounded-t-xl rounded-b-md border-2 border-gray-200 bg-gray-200 text-[10px] leading-tight font-medium text-gray-400"
+                                <svg viewBox="0 0 48 56" class="h-full w-full">
+                                    <path
+                                        :d="SEAT_PATH"
+                                        class="fill-gray-200 stroke-gray-300"
+                                        stroke-width="2.5"
+                                        stroke-linejoin="round"
+                                    />
+                                </svg>
+                                <span
+                                    class="pointer-events-none absolute inset-0 flex items-center justify-center pt-1 text-[9px] leading-tight font-medium text-gray-400"
                                 >
                                     Tài<br />xế
-                                </div>
-                                <div
-                                    class="h-6 w-2 shrink-0 rounded-md border-2 border-gray-200 bg-gray-200"
-                                />
+                                </span>
                             </div>
 
                             <template v-for="(slot, si) in row.slots" :key="si">
@@ -396,36 +402,36 @@ onMounted(async () => {
                                     v-if="slot.type === 'aisle'"
                                     class="w-5 shrink-0"
                                 />
-                                <!-- Ghế hình armchair: tựa lưng (bấm được) + 2 tay vịn trang trí -->
-                                <div
+                                <!-- Ghế hình armchair thật: 1 path SVG liền mạch (tựa lưng + 2 tay vịn) -->
+                                <button
                                     v-else
-                                    class="flex h-14 shrink-0 items-end justify-center gap-0.5"
+                                    @click="toggleSeat(slot.seat)"
+                                    :disabled="slot.seat.status !== 'available'"
+                                    class="relative h-14 w-12 shrink-0 transition-transform active:scale-90"
                                 >
-                                    <div
+                                    <svg
+                                        viewBox="0 0 48 56"
+                                        class="h-full w-full"
+                                    >
+                                        <path
+                                            :d="SEAT_PATH"
+                                            :class="[
+                                                'transition-colors',
+                                                seatFillClasses(slot.seat),
+                                            ]"
+                                            stroke-width="2.5"
+                                            stroke-linejoin="round"
+                                        />
+                                    </svg>
+                                    <span
                                         :class="[
-                                            'h-6 w-2 shrink-0 rounded-md border-2 transition-colors',
-                                            seatArmClasses(slot.seat),
-                                        ]"
-                                    />
-                                    <button
-                                        @click="toggleSeat(slot.seat)"
-                                        :disabled="
-                                            slot.seat.status !== 'available'
-                                        "
-                                        :class="[
-                                            'h-14 w-9 shrink-0 rounded-t-xl rounded-b-md border-2 text-sm font-bold transition-all active:scale-90',
-                                            seatClasses(slot.seat),
+                                            'pointer-events-none absolute inset-0 flex items-center justify-center pt-1 text-xs font-bold',
+                                            seatTextClasses(slot.seat),
                                         ]"
                                     >
                                         {{ slot.seat.seat_code }}
-                                    </button>
-                                    <div
-                                        :class="[
-                                            'h-6 w-2 shrink-0 rounded-md border-2 transition-colors',
-                                            seatArmClasses(slot.seat),
-                                        ]"
-                                    />
-                                </div>
+                                    </span>
+                                </button>
                             </template>
                         </div>
 
