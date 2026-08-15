@@ -368,7 +368,8 @@ onBeforeUnmount(() => {
                             </div>
                         </div>
                         <p class="text-center text-xs text-gray-500">
-                            Tài xế sẽ quét mã này khi đón bạn
+                            Xuất trình vé này hoặc đọc tên khi lên xe — tài xế
+                            sẽ xác nhận check-in cho bạn
                         </p>
                     </div>
 

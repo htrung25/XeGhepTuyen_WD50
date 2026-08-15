@@ -17,6 +17,7 @@ use App\Models\SeatMap;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Services\TripService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -91,7 +92,10 @@ class TripSeeder extends Seeder
                 'model' => 'Solati',
                 'year' => 2022,
                 'color' => 'Bạc',
-                'seat_count' => 12,
+                // seat_count PHẢI khớp VehicleTypeEnum::Minibus16->seatCount() (16) — trước
+                // đây để 12, lệch với sơ đồ ghế thật 16 chỗ do TripService sinh ra cho loại
+                // xe này, khiến available_seats/sơ đồ ghế hiển thị sai lệch nhau.
+                'seat_count' => 16,
                 'registration_expiry' => now()->addYear(),
                 'amenities' => ['wifi', 'usb', 'điều_hoà', 'cửa_sổ_panoramic'],
                 'status' => VehicleStatusEnum::Active,
@@ -193,12 +197,15 @@ class TripSeeder extends Seeder
                     ]
                 );
 
-                // Generate seat map if not exists
+                // Sinh sơ đồ ghế đúng mặt cắt ngang xe thật — dùng CHUNG template với
+                // TripService::getSeatTemplate() (trước đây seeder tự đánh số phẳng
+                // A01..A09 kiểu 1-hàng-duy-nhất, không khớp bố trí xe thật, khiến demo
+                // luôn hiển thị sơ đồ ghế sai bất kể loại xe).
                 if ($trip->seatMaps()->count() === 0) {
-                    for ($seat = 1; $seat <= $seats; $seat++) {
+                    foreach (TripService::getSeatTemplate($vehicle) as $seatCode) {
                         SeatMap::create([
                             'trip_id' => $trip->id,
-                            'seat_code' => 'A'.str_pad($seat, 2, '0', STR_PAD_LEFT),
+                            'seat_code' => $seatCode,
                             'seat_type' => SeatTypeEnum::Standard,
                             'price' => 120000,
                             'status' => SeatStatusEnum::Available,

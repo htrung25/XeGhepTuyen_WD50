@@ -92,7 +92,7 @@ describe('apiClient envelope handling', () => {
         http.post.mockRejectedValueOnce({});
 
         const res = await apiClient.post('/driver/checkin', {
-            qr_token: 'bad',
+            booking_id: 'bad',
         });
 
         expect(res.error).toBe('Có lỗi xảy ra');

@@ -19,21 +19,20 @@ class CheckinController extends Controller
     public function checkin(Request $request): JsonResponse
     {
         $request->validate([
-            'qr_token' => ['required', 'string'],
+            'trip_id' => ['required', 'uuid'],
+            'booking_id' => ['required', 'uuid'],
             'cash_collected' => ['sometimes', 'boolean'],
         ]);
 
         $driver = auth('driver')->user()->driver;
-        $booking = Booking::where('qr_token', $request->qr_token)
-            ->with(['trip', 'user'])
-            ->first();
+        $booking = Booking::with(['trip', 'user'])->find($request->booking_id);
 
-        if (! $booking) {
-            return response()->json(['success' => false, 'message' => 'Mã QR không hợp lệ'], 404);
+        if (! $booking || $booking->trip_id !== $request->trip_id) {
+            return response()->json(['success' => false, 'message' => 'Không tìm thấy vé trong chuyến này'], 404);
         }
 
         if ($booking->trip->driver_id !== $driver->id) {
-            return response()->json(['success' => false, 'message' => 'Mã QR không thuộc chuyến này'], 403);
+            return response()->json(['success' => false, 'message' => 'Vé không thuộc chuyến của bạn'], 403);
         }
 
         if ($booking->booking_status !== BookingStatusEnum::Confirmed) {
@@ -92,7 +91,7 @@ class CheckinController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
-            Log::error('Checkin failed', ['error' => $e->getMessage(), 'qr_token' => $request->qr_token]);
+            Log::error('Checkin failed', ['error' => $e->getMessage(), 'booking_id' => $request->booking_id]);
 
             return response()->json(['success' => false, 'message' => 'Có lỗi xảy ra'], 500);
         }

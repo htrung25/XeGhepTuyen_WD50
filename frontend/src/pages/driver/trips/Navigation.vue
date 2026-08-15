@@ -480,10 +480,10 @@ onUnmounted(() => {
 
                     <!-- Arrived button -->
                     <router-link
-                        :to="`/driver/checkin/${tripId}`"
+                        :to="`/driver/trips/${tripId}`"
                         class="block w-full rounded-xl bg-green-600 py-3.5 text-center font-bold text-white transition-colors hover:bg-green-700"
                     >
-                        ✅ Đã đến — Quét QR
+                        ✅ Đã đến — Check-in khách
                     </router-link>
                 </div>
 

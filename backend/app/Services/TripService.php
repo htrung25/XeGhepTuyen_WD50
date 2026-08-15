@@ -599,7 +599,7 @@ class TripService
 
     private function generateSeatMap(Trip $trip, Vehicle $vehicle): void
     {
-        $templates = $this->getSeatTemplate($vehicle);
+        $templates = self::getSeatTemplate($vehicle);
 
         foreach ($templates as $seatCode) {
             SeatMap::create([
@@ -612,15 +612,31 @@ class TripService
         }
     }
 
-    private function getSeatTemplate(Vehicle $vehicle): array
+    /**
+     * Sơ đồ ghế theo MẶT CẮT NGANG THẬT của từng loại xe (mỗi chữ cái = đúng
+     * một hàng ghế vật lý, theo thứ tự từ đầu xe xuống đuôi xe):
+     *  - sedan_4:   đầu xe (tài xế + A1) → hàng ghế sau 3 chỗ (B1-B3)
+     *  - mpv_7:     đầu xe (tài xế + A1) → 2 hàng ghế sau, mỗi hàng 3 chỗ
+     *  - van_9:     đầu xe (tài xế + A1,A2) → 2 hàng ghế đơn có lối đi giữa
+     *               (B1|B2, C1|C2) → hàng ghế cuối 3 chỗ (D1-D3) — đúng bố
+     *               trí limousine 9 chỗ thực tế
+     *  - minibus_16: đầu xe (tài xế + A1) → 4 hàng ghế đơn+đôi có lối đi giữa
+     *               (B-E, mỗi hàng 3 chỗ) → hàng ghế cuối 3 chỗ (F1-F3)
+     * Dùng chung cho cả TripService (sinh ghế lúc tạo chuyến) lẫn seeder demo,
+     * tránh lệch bố trí giữa 2 nơi như trước đây (frontend suy hàng theo tiền
+     * tố chữ cái nên một chữ cái PHẢI ứng với đúng một hàng ghế vật lý).
+     */
+    public static function getSeatTemplate(Vehicle $vehicle): array
     {
         return match ($vehicle->vehicle_type->value) {
-            'mpv_7' => ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'D1'],
-            'van_9' => ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'D1', 'D2', 'E1'],
+            'sedan_4' => ['A1', 'B1', 'B2', 'B3'],
+            'mpv_7' => ['A1', 'B1', 'B2', 'B3', 'C1', 'C2', 'C3'],
+            'van_9' => ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'D1', 'D2', 'D3'],
             'minibus_16' => array_merge(
-                ...array_map(fn ($r) => ["{$r}1", "{$r}2", "{$r}3", "{$r}4"], ['A', 'B', 'C', 'D'])
+                ['A1'],
+                ...array_map(fn ($r) => ["{$r}1", "{$r}2", "{$r}3"], ['B', 'C', 'D', 'E', 'F'])
             ),
-            default => ['A1', 'A2', 'B1', 'B2'],
+            default => ['A1', 'B1', 'B2', 'B3'],
         };
     }
 }
