@@ -149,7 +149,7 @@ class RevenueController extends Controller
 
     /**
      * Chi tiết doanh thu theo chuyến để màn báo cáo hiển thị đúng tuyến, tài xế,
-     * số khách/số ghế và số tiền quyết toán. Chỉ các vé đã hoàn thành + đã thanh
+     * tổng khách trong ngày và số tiền quyết toán. Chỉ các vé đã hoàn thành + đã thanh
      * toán mới được tính, đồng nhất với summary/daily và SettlementService.
      */
     public function transactions(Request $request): JsonResponse
@@ -173,16 +173,26 @@ class RevenueController extends Controller
             ->orderByDesc('depart_at')
             ->paginate($perPage);
 
-        $rows = $trips->getCollection()->map(function (Trip $trip) use ($rate) {
+        // Tính trên toàn kỳ, không chỉ trang hiện tại, để tổng khách theo ngày vẫn
+        // chính xác khi các chuyến cùng ngày nằm ở hai trang phân trang khác nhau.
+        $dailyPassengers = $this->realizedBookings($tripIds)
+            ->with('trip:id,depart_at')
+            ->get(['id', 'trip_id', 'passenger_count'])
+            ->groupBy(fn ($booking) => $booking->trip->depart_at->toDateString())
+            ->map(fn ($bookings) => (int) $bookings->sum('passenger_count'));
+
+        $rows = $trips->getCollection()->map(function (Trip $trip) use ($rate, $dailyPassengers) {
             $gross = (int) $trip->bookings->sum('final_amount');
             $commission = (int) round($gross * $rate / 100);
+            $date = $trip->depart_at->toDateString();
 
             return [
                 'id' => $trip->id,
-                'date' => $trip->depart_at->toDateString(),
+                'date' => $date,
                 'route' => "{$trip->route->origin_city} → {$trip->route->dest_city}",
                 'driver' => $trip->driver?->user?->full_name ?? 'Chưa phân công',
                 'passengers' => (int) $trip->bookings->sum('passenger_count'),
+                'daily_passengers' => (int) $dailyPassengers->get($date, 0),
                 'seat_count' => (int) ($trip->vehicle?->seat_count ?? 0),
                 'gross_revenue' => $gross,
                 'commission' => $commission,

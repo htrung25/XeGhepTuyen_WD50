@@ -3,6 +3,7 @@
 use App\Http\Controllers\Operator\AuthController;
 use App\Http\Controllers\Operator\BookingController;
 use App\Http\Controllers\Operator\DriverController;
+use App\Http\Controllers\Operator\FareRateController;
 use App\Http\Controllers\Operator\NotificationController;
 use App\Http\Controllers\Operator\OnboardingController;
 use App\Http\Controllers\Operator\RevenueController;
@@ -35,6 +36,10 @@ Route::middleware(['auth:sanctum', 'role:operator'])->group(function () {
 
     // Onboarding — tiến độ thêm xe so với cơ cấu đã khai lúc đăng ký
     Route::get('onboarding/fleet', [OnboardingController::class, 'fleet']);
+
+    // Bảng giá vé theo km (phân theo tỉnh/huyện điểm đi)
+    Route::get('fare-rates', [FareRateController::class, 'index']);
+    Route::put('fare-rates', [FareRateController::class, 'save']);
 
     // Routes
     Route::get('routes', [RouteController::class, 'index']);

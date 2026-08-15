@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[ObservedBy(RouteObserver::class)]
 class Route extends Model
@@ -22,7 +23,9 @@ class Route extends Model
         'operator_id',
         'name',
         'origin_city',
+        'origin_district',
         'dest_city',
+        'dest_district',
         'distance_km',
         'est_duration_min',
         'base_price',
@@ -60,6 +63,12 @@ class Route extends Model
     public function trips(): HasMany
     {
         return $this->hasMany(Trip::class);
+    }
+
+    /** Đơn giá/km nhà xe gán cho tuyến này (chưa gán ⇒ tuyến chưa có giá) */
+    public function fareRate(): HasOne
+    {
+        return $this->hasOne(OperatorFareRate::class);
     }
 
     public function pickupServiceArea(): BelongsTo

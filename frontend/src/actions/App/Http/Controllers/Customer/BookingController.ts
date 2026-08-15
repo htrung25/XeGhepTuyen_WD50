@@ -466,7 +466,7 @@ qr.form = qrForm
 
 /**
 * @see \App\Http\Controllers\Customer\BookingController::downloadTicket
-* @see app/Http/Controllers/Customer/BookingController.php:167
+* @see app/Http/Controllers/Customer/BookingController.php:175
 * @route '/api/customer/bookings/{id}/ticket.pdf'
 */
 export const downloadTicket = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -481,7 +481,7 @@ downloadTicket.definition = {
 
 /**
 * @see \App\Http\Controllers\Customer\BookingController::downloadTicket
-* @see app/Http/Controllers/Customer/BookingController.php:167
+* @see app/Http/Controllers/Customer/BookingController.php:175
 * @route '/api/customer/bookings/{id}/ticket.pdf'
 */
 downloadTicket.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -508,7 +508,7 @@ downloadTicket.url = (args: { id: string | number } | [id: string | number ] | s
 
 /**
 * @see \App\Http\Controllers\Customer\BookingController::downloadTicket
-* @see app/Http/Controllers/Customer/BookingController.php:167
+* @see app/Http/Controllers/Customer/BookingController.php:175
 * @route '/api/customer/bookings/{id}/ticket.pdf'
 */
 downloadTicket.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -518,7 +518,7 @@ downloadTicket.get = (args: { id: string | number } | [id: string | number ] | s
 
 /**
 * @see \App\Http\Controllers\Customer\BookingController::downloadTicket
-* @see app/Http/Controllers/Customer/BookingController.php:167
+* @see app/Http/Controllers/Customer/BookingController.php:175
 * @route '/api/customer/bookings/{id}/ticket.pdf'
 */
 downloadTicket.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -528,7 +528,7 @@ downloadTicket.head = (args: { id: string | number } | [id: string | number ] | 
 
 /**
 * @see \App\Http\Controllers\Customer\BookingController::downloadTicket
-* @see app/Http/Controllers/Customer/BookingController.php:167
+* @see app/Http/Controllers/Customer/BookingController.php:175
 * @route '/api/customer/bookings/{id}/ticket.pdf'
 */
 const downloadTicketForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -538,7 +538,7 @@ const downloadTicketForm = (args: { id: string | number } | [id: string | number
 
 /**
 * @see \App\Http\Controllers\Customer\BookingController::downloadTicket
-* @see app/Http/Controllers/Customer/BookingController.php:167
+* @see app/Http/Controllers/Customer/BookingController.php:175
 * @route '/api/customer/bookings/{id}/ticket.pdf'
 */
 downloadTicketForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -548,7 +548,7 @@ downloadTicketForm.get = (args: { id: string | number } | [id: string | number ]
 
 /**
 * @see \App\Http\Controllers\Customer\BookingController::downloadTicket
-* @see app/Http/Controllers/Customer/BookingController.php:167
+* @see app/Http/Controllers/Customer/BookingController.php:175
 * @route '/api/customer/bookings/{id}/ticket.pdf'
 */
 downloadTicketForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

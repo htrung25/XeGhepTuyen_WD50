@@ -7,6 +7,12 @@ use App\Models\ServiceArea;
 use App\Models\User;
 use Laravel\Sanctum\Sanctum;
 
+// Mã hành chính lấy từ resources/data/vn-provinces.json
+const HN_PROVINCE = '01';      // Hà Nội
+const HN_DISTRICT = '001';     // Quận Ba Đình
+const HP_PROVINCE = '31';      // Hải Phòng
+const HP_DISTRICT = '303';     // Quận Hồng Bàng
+
 function makeRouteOperator(string $suffix): Operator
 {
     $user = User::factory()->create(['role' => UserRoleEnum::Operator]);
@@ -25,39 +31,28 @@ function actingAsRouteOperator(Operator $operator): void
     Sanctum::actingAs($operator->user, ['*'], 'operator');
 }
 
-function routePayload(): array
+/** Gán đơn giá/km cho một tuyến cụ thể (bảng giá theo tuyến) */
+function giveFareRate(Operator $operator, string $routeId, array $attrs = []): void
 {
-    return [
+    $operator->fareRates()->create(array_merge([
+        'route_id' => $routeId,
+        'base_fare' => 20000,
+        'price_per_km' => 1000,
+    ], $attrs));
+}
+
+function routePayload(array $overrides = []): array
+{
+    return array_merge([
         'name' => 'Hà Nội → Hải Phòng',
-        'origin_city' => 'Hà Nội',
-        'dest_city' => 'Hải Phòng',
+        'origin_province_code' => HN_PROVINCE,
+        'origin_district_code' => HN_DISTRICT,
+        'dest_province_code' => HP_PROVINCE,
+        'dest_district_code' => HP_DISTRICT,
         'distance_km' => 105,
         'est_duration_min' => 150,
-        'base_price' => 120000,
         'is_round_trip' => false,
-        'stops' => [
-            [
-                'stop_name' => 'Hồ Gươm',
-                'address' => 'Hoàn Kiếm, Hà Nội',
-                'lat' => 21.0285,
-                'lng' => 105.8542,
-                'stop_order' => 1,
-                'offset_minutes' => 0,
-                'is_pickup' => true,
-                'is_dropoff' => false,
-            ],
-            [
-                'stop_name' => 'Nhà hát lớn Hải Phòng',
-                'address' => 'Hồng Bàng, Hải Phòng',
-                'lat' => 20.8609,
-                'lng' => 106.6822,
-                'stop_order' => 2,
-                'offset_minutes' => 150,
-                'is_pickup' => false,
-                'is_dropoff' => true,
-            ],
-        ],
-    ];
+    ], $overrides);
 }
 
 beforeEach(function () {
@@ -71,7 +66,7 @@ beforeEach(function () {
     ]);
 });
 
-it('tạo route bằng đúng contract và tự gán service area', function () {
+it('tạo route từ mã tỉnh huyện, không cần điểm dừng, chưa có giá', function () {
     $operator = makeRouteOperator('A');
     actingAsRouteOperator($operator);
 
@@ -79,20 +74,67 @@ it('tạo route bằng đúng contract và tự gán service area', function () 
         ->assertCreated()
         ->assertJsonPath('success', true)
         ->assertJsonPath('data.operator_id', $operator->id)
-        ->assertJsonPath('data.name', 'Hà Nội → Hải Phòng')
-        ->assertJsonPath('data.est_duration_min', 150)
-        ->assertJsonPath('data.base_price', 120000)
+        ->assertJsonPath('data.origin_city', 'Hà Nội')
+        ->assertJsonPath('data.origin_district', 'Quận Ba Đình')
+        ->assertJsonPath('data.dest_city', 'Hải Phòng')
+        ->assertJsonPath('data.dest_district', 'Quận Hồng Bàng')
+        // Tuyến tạo trước, gán giá sau ⇒ luôn bắt đầu ở "chưa có giá"
+        ->assertJsonPath('data.base_price', 0)
         ->assertJsonPath('data.pickup_service_area.code', 'HN')
-        ->assertJsonPath('data.dropoff_service_area.code', 'HP')
-        ->assertJsonCount(2, 'data.stops');
+        ->assertJsonPath('data.dropoff_service_area.code', 'HP');
 
     $routeId = $response->json('data.id');
     expect(Route::findOrFail($routeId)->operator_id)->toBe($operator->id);
-    $this->assertDatabaseHas('route_stops', [
-        'route_id' => $routeId,
-        'address' => 'Hoàn Kiếm, Hà Nội',
-        'offset_minutes' => 0,
-    ]);
+    $this->assertDatabaseCount('route_stops', 0);
+});
+
+it('gán đơn giá cho tuyến thì tuyến lấy lại giá theo km', function () {
+    $operator = makeRouteOperator('A');
+    actingAsRouteOperator($operator);
+
+    $routeId = $this->postJson('/api/operator/routes', routePayload(['distance_km' => 100]))
+        ->assertCreated()
+        ->json('data.id');
+
+    $this->putJson('/api/operator/fare-rates', ['rates' => [
+        ['route_id' => $routeId, 'base_fare' => 20000, 'price_per_km' => 1000],
+    ]])->assertOk();
+
+    expect((int) Route::findOrFail($routeId)->base_price)->toBe(120000);
+});
+
+it('bỏ tuyến khỏi bảng giá thì tuyến quay lại chưa có giá', function () {
+    $operator = makeRouteOperator('A');
+    actingAsRouteOperator($operator);
+
+    $routeId = $this->postJson('/api/operator/routes', routePayload())->json('data.id');
+    giveFareRate($operator, $routeId);
+    $this->putJson('/api/operator/fare-rates', ['rates' => [
+        ['route_id' => $routeId, 'base_fare' => 0, 'price_per_km' => 1000],
+    ]])->assertOk();
+
+    $this->putJson('/api/operator/fare-rates', ['rates' => []])->assertOk();
+
+    expect((int) Route::findOrFail($routeId)->base_price)->toBe(0);
+});
+
+it('từ chối mã tỉnh huyện không hợp lệ và điểm đến trùng điểm đi', function () {
+    $operator = makeRouteOperator('A');
+    actingAsRouteOperator($operator);
+
+    $this->postJson('/api/operator/routes', routePayload(['origin_province_code' => '99']))
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('origin_province_code');
+
+    // Huyện có thật nhưng không thuộc tỉnh đã chọn
+    $this->postJson('/api/operator/routes', routePayload(['origin_district_code' => HP_DISTRICT]))
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('origin_district_code');
+
+    $this->postJson('/api/operator/routes', routePayload([
+        'dest_province_code' => HN_PROVINCE,
+        'dest_district_code' => HN_DISTRICT,
+    ]))->assertStatus(422)->assertJsonValidationErrors('dest_district_code');
 });
 
 it('chỉ liệt kê route thuộc operator đang đăng nhập', function () {
@@ -127,25 +169,93 @@ it('ẩn route của operator khác trên show update và destroy', function () 
     expect($foreignRoute->fresh()->name)->toBe('Tuyến B');
 });
 
-it('validate payload cập nhật route và đồng bộ lại service area', function () {
+it('cập nhật route đổi chiều thì đồng bộ lại service area và tính lại giá theo km', function () {
     $operator = makeRouteOperator('A');
     $route = Route::create([
         'operator_id' => $operator->id,
         'name' => 'Hà Nội → Hải Phòng',
         'origin_city' => 'Hà Nội',
+        'origin_district' => 'Quận Ba Đình',
         'dest_city' => 'Hải Phòng',
+        'dest_district' => 'Quận Hồng Bàng',
+        'distance_km' => 105,
         'base_price' => 120000,
     ]);
+    giveFareRate($operator, $route->id, ['base_fare' => 0, 'price_per_km' => 1000]);
     actingAsRouteOperator($operator);
 
     $this->putJson("/api/operator/routes/{$route->id}", [
         'name' => 'Hải Phòng → Hà Nội',
-        'origin_city' => 'Hải Phòng',
-        'dest_city' => 'Hà Nội',
+        'origin_province_code' => HP_PROVINCE,
+        'origin_district_code' => HP_DISTRICT,
+        'dest_province_code' => HN_PROVINCE,
+        'dest_district_code' => HN_DISTRICT,
+        'distance_km' => 120,
         'est_duration_min' => 160,
     ])->assertOk()
         ->assertJsonPath('data.pickup_service_area.code', 'HP')
-        ->assertJsonPath('data.dropoff_service_area.code', 'HN');
+        ->assertJsonPath('data.dropoff_service_area.code', 'HN')
+        ->assertJsonPath('data.base_price', 120000); // 120 km × 1.000đ
 
     expect($route->refresh()->est_duration_min)->toBe(160);
+    expect($route->origin_district)->toBe('Quận Hồng Bàng');
+});
+
+it('không cho sửa mỗi tỉnh mà giữ huyện cũ', function () {
+    $operator = makeRouteOperator('A');
+    $route = Route::create([
+        'operator_id' => $operator->id, 'name' => 'Tuyến A', 'base_price' => 100000,
+    ]);
+    actingAsRouteOperator($operator);
+
+    $this->putJson("/api/operator/routes/{$route->id}", ['origin_province_code' => HP_PROVINCE])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('origin_district_code');
+});
+
+it('chặn tạo trùng tuyến trong cùng một nhà xe', function () {
+    $operator = makeRouteOperator('A');
+    actingAsRouteOperator($operator);
+
+    $this->postJson('/api/operator/routes', routePayload())->assertCreated();
+
+    // Cùng cặp (huyện đi, huyện đến) dù đặt tên khác ⇒ trùng
+    $this->postJson('/api/operator/routes', routePayload(['name' => 'Tên khác']))
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('dest_district_code');
+
+    expect(Route::where('operator_id', $operator->id)->count())->toBe(1);
+});
+
+it('cho phép hai nhà xe khác nhau cùng khai thác một tuyến', function () {
+    $a = makeRouteOperator('A');
+    actingAsRouteOperator($a);
+    $this->postJson('/api/operator/routes', routePayload())->assertCreated();
+
+    $b = makeRouteOperator('B');
+    actingAsRouteOperator($b);
+    $this->postJson('/api/operator/routes', routePayload())->assertCreated();
+
+    expect(Route::count())->toBe(2);
+});
+
+it('chặn sửa tuyến thành trùng với tuyến khác nhưng cho lưu lại chính nó', function () {
+    $operator = makeRouteOperator('A');
+    actingAsRouteOperator($operator);
+
+    $this->postJson('/api/operator/routes', routePayload())->assertCreated();
+    $secondId = $this->postJson('/api/operator/routes', routePayload([
+        'name' => 'Ba Đình → Ngô Quyền',
+        'dest_district_code' => '304', // Quận Ngô Quyền
+    ]))->assertCreated()->json('data.id');
+
+    // Sửa tuyến 2 về đúng cặp của tuyến 1 ⇒ chặn
+    $this->putJson("/api/operator/routes/{$secondId}", [
+        'dest_province_code' => HP_PROVINCE,
+        'dest_district_code' => HP_DISTRICT,
+    ])->assertStatus(422)->assertJsonValidationErrors('dest_district_code');
+
+    // Lưu lại chính nó (không đổi điểm đi/đến) vẫn phải được
+    $this->putJson("/api/operator/routes/{$secondId}", ['est_duration_min' => 170])
+        ->assertOk();
 });

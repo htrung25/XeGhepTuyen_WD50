@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Driver\EarningController::index
-* @see app/Http/Controllers/Driver/EarningController.php:20
+* @see app/Http/Controllers/Driver/EarningController.php:18
 * @route '/api/driver/earnings'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Driver\EarningController::index
-* @see app/Http/Controllers/Driver/EarningController.php:20
+* @see app/Http/Controllers/Driver/EarningController.php:18
 * @route '/api/driver/earnings'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Driver\EarningController::index
-* @see app/Http/Controllers/Driver/EarningController.php:20
+* @see app/Http/Controllers/Driver/EarningController.php:18
 * @route '/api/driver/earnings'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Driver\EarningController::index
-* @see app/Http/Controllers/Driver/EarningController.php:20
+* @see app/Http/Controllers/Driver/EarningController.php:18
 * @route '/api/driver/earnings'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Driver\EarningController::index
-* @see app/Http/Controllers/Driver/EarningController.php:20
+* @see app/Http/Controllers/Driver/EarningController.php:18
 * @route '/api/driver/earnings'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Driver\EarningController::index
-* @see app/Http/Controllers/Driver/EarningController.php:20
+* @see app/Http/Controllers/Driver/EarningController.php:18
 * @route '/api/driver/earnings'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Driver\EarningController::index
-* @see app/Http/Controllers/Driver/EarningController.php:20
+* @see app/Http/Controllers/Driver/EarningController.php:18
 * @route '/api/driver/earnings'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Driver\EarningController::transactions
-* @see app/Http/Controllers/Driver/EarningController.php:64
+* @see app/Http/Controllers/Driver/EarningController.php:62
 * @route '/api/driver/earnings/transactions'
 */
 export const transactions = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -97,7 +97,7 @@ transactions.definition = {
 
 /**
 * @see \App\Http\Controllers\Driver\EarningController::transactions
-* @see app/Http/Controllers/Driver/EarningController.php:64
+* @see app/Http/Controllers/Driver/EarningController.php:62
 * @route '/api/driver/earnings/transactions'
 */
 transactions.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ transactions.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Driver\EarningController::transactions
-* @see app/Http/Controllers/Driver/EarningController.php:64
+* @see app/Http/Controllers/Driver/EarningController.php:62
 * @route '/api/driver/earnings/transactions'
 */
 transactions.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -116,7 +116,7 @@ transactions.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Driver\EarningController::transactions
-* @see app/Http/Controllers/Driver/EarningController.php:64
+* @see app/Http/Controllers/Driver/EarningController.php:62
 * @route '/api/driver/earnings/transactions'
 */
 transactions.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -126,7 +126,7 @@ transactions.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Driver\EarningController::transactions
-* @see app/Http/Controllers/Driver/EarningController.php:64
+* @see app/Http/Controllers/Driver/EarningController.php:62
 * @route '/api/driver/earnings/transactions'
 */
 const transactionsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -136,7 +136,7 @@ const transactionsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get
 
 /**
 * @see \App\Http\Controllers\Driver\EarningController::transactions
-* @see app/Http/Controllers/Driver/EarningController.php:64
+* @see app/Http/Controllers/Driver/EarningController.php:62
 * @route '/api/driver/earnings/transactions'
 */
 transactionsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -146,7 +146,7 @@ transactionsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'>
 
 /**
 * @see \App\Http\Controllers\Driver\EarningController::transactions
-* @see app/Http/Controllers/Driver/EarningController.php:64
+* @see app/Http/Controllers/Driver/EarningController.php:62
 * @route '/api/driver/earnings/transactions'
 */
 transactionsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

@@ -35,6 +35,7 @@ const paxStatusMap: Record<string, { label: string; class: string }> = {
 interface RouteOption {
     id: string;
     label: string;
+    base_price: number;
 }
 interface VehicleOption {
     id: string;
@@ -60,12 +61,13 @@ const saveError = ref('');
 const saveSuccess = ref(false);
 
 // Single trip form
+// Không có `price`: giá vé chuyến do backend lấy từ tuyến (tuyến lấy từ bảng
+// giá theo km). Tuyến chưa cấu hình giá sẽ bị backend chặn khi lên lịch.
 const form = ref({
     route_id: '',
     vehicle_id: '',
     driver_id: '',
     depart_at: '',
-    price: 150000,
     note: '',
 });
 
@@ -305,6 +307,7 @@ const load = async () => {
     routes.value = ((routesRes.data as any[]) ?? []).map((r: any) => ({
         id: r.id,
         label: `${r.origin_city} → ${r.dest_city}`,
+        base_price: Number(r.base_price ?? 0),
     }));
     vehicles.value = ((vehiclesRes.data as any[]) ?? []).map((v: any) => ({
         id: v.id,
@@ -354,6 +357,10 @@ watch(
             form.value.driver_id = vehicle.driver_id;
         }
     },
+);
+
+const selectedRoute = computed(
+    () => routes.value.find((r) => r.id === form.value.route_id) ?? null,
 );
 
 const createTrip = async () => {
@@ -748,18 +755,26 @@ onMounted(async () => {
                         </p>
                     </div>
 
-                    <!-- Price -->
+                    <!-- Giá vé: lấy từ cấu hình giá của tuyến, không nhập tay -->
                     <div>
                         <label
                             class="mb-1.5 block text-xs font-semibold text-slate-600"
                             >Giá vé (đ)</label
                         >
-                        <input
-                            v-model.number="form.price"
-                            type="number"
-                            step="10000"
-                            class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none"
-                        />
+                        <div
+                            class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700"
+                        >
+                            <template v-if="!selectedRoute">
+                                Chọn tuyến để xem giá
+                            </template>
+                            <template v-else-if="selectedRoute.base_price > 0">
+                                {{ fmtMoney(selectedRoute.base_price) }}
+                            </template>
+                            <span v-else class="text-amber-700">
+                                Tuyến chưa cấu hình giá vé — vào Tuyến đường →
+                                Cấu hình giá vé trước khi lên lịch
+                            </span>
+                        </div>
                     </div>
 
                     <!-- Notes -->

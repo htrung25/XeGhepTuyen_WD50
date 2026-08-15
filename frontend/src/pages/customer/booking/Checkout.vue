@@ -4,14 +4,11 @@ import { useRouter } from 'vue-router';
 import { customerApi } from '@/api/customer.api';
 import LocationInput from '@/components/customer/LocationInput.vue';
 import { useCustomerStore } from '@/stores/customer.store';
-import type { RouteStop } from '@/stores/customer.store';
 
 const router = useRouter();
 const store = useCustomerStore();
 const draft = store.bookingDraft;
 
-const pickupStops = ref<RouteStop[]>([]);
-const dropoffStops = ref<RouteStop[]>([]);
 const tripData = ref<any>(null);
 const isLoading = ref(true);
 const submitLoading = ref(false);
@@ -127,9 +124,8 @@ onMounted(async () => {
     isLoading.value = false;
     tripData.value = data;
 
-    // Build stop lists từ chi tiết chuyến (BE trả pickup_stops/dropoff_stops đã lọc sẵn)
-    pickupStops.value = (data?.pickup_stops ?? []) as RouteStop[];
-    dropoffStops.value = (data?.dropoff_stops ?? []) as RouteStop[];
+    // Khách nhập điểm đón/trả tự do (LocationInput) — tuyến không còn khai báo
+    // điểm dừng nên pickup_stops/dropoff_stops của BE không dùng ở đây nữa.
 
     // Start lock countdown
     countdownInterval = setInterval(() => {

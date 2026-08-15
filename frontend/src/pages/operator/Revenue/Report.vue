@@ -40,7 +40,7 @@ interface TransactionRow {
     route: string;
     driver: string;
     passengers: number;
-    seat_count: number;
+    daily_passengers: number;
     gross_revenue: number;
     commission: number;
     net_revenue: number;
@@ -777,7 +777,7 @@ onMounted(() => load(1));
                                     Tài xế
                                 </th>
                                 <th class="px-6 py-4 text-center font-semibold">
-                                    Số khách
+                                    Số khách trong ngày
                                 </th>
                                 <th class="px-6 py-4 text-right font-semibold">
                                     Doanh thu
@@ -812,9 +812,7 @@ onMounted(() => load(1));
                                 <td
                                     class="px-6 py-5 text-center text-slate-700"
                                 >
-                                    {{ row.passengers }}/{{
-                                        row.seat_count || '—'
-                                    }}
+                                    {{ row.daily_passengers }}
                                 </td>
                                 <td
                                     class="px-6 py-5 text-right font-medium whitespace-nowrap text-slate-900"

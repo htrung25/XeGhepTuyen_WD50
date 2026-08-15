@@ -51,44 +51,46 @@ describe('operatorApi → Wayfinder route contract', () => {
         });
     });
 
-    it('createRoute forwards the backend route and stop contract', () => {
+    // Tuyến gửi bằng MÃ tỉnh/huyện; giá vé do BE tính theo bảng giá km nên
+    // payload không còn base_price, và điểm dừng đã bị bỏ khỏi hợp đồng API.
+    it('createRoute forwards province/district codes without price or stops', () => {
         const payload = {
-            name: 'Hà Nội → Hải Phòng',
-            origin_city: 'Hà Nội',
-            dest_city: 'Hải Phòng',
+            name: 'Quận Ba Đình, Hà Nội → Quận Hồng Bàng, Hải Phòng',
+            origin_province_code: '01',
+            origin_district_code: '001',
+            dest_province_code: '31',
+            dest_district_code: '303',
             distance_km: 105,
             est_duration_min: 150,
-            base_price: 120000,
             is_round_trip: false,
             is_active: true,
-            stops: [
-                {
-                    stop_name: 'Hồ Gươm',
-                    address: 'Hoàn Kiếm, Hà Nội',
-                    lat: 21.0285,
-                    lng: 105.8542,
-                    stop_order: 1,
-                    offset_minutes: 0,
-                    is_pickup: true,
-                    is_dropoff: false,
-                },
-                {
-                    stop_name: 'Nhà hát lớn Hải Phòng',
-                    address: 'Hồng Bàng, Hải Phòng',
-                    lat: 20.8609,
-                    lng: 106.6822,
-                    stop_order: 2,
-                    offset_minutes: 150,
-                    is_pickup: false,
-                    is_dropoff: true,
-                },
-            ],
         };
 
         operatorApi.createRoute(payload);
         expect(apiClient.send).toHaveBeenCalledWith(
             { url: '/api/operator/routes', method: 'post' },
             payload,
+        );
+    });
+
+    it('getFareRates / saveFareRates resolve to /api/operator/fare-rates', () => {
+        operatorApi.getFareRates();
+        expect(apiClient.send).toHaveBeenCalledWith({
+            url: '/api/operator/fare-rates',
+            method: 'get',
+        });
+
+        const rates = [
+            {
+                route_id: 'route-1',
+                base_fare: 10000,
+                price_per_km: 2000,
+            },
+        ];
+        operatorApi.saveFareRates(rates);
+        expect(apiClient.send).toHaveBeenCalledWith(
+            { url: '/api/operator/fare-rates', method: 'put' },
+            { rates },
         );
     });
 
