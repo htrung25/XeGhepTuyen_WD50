@@ -19,6 +19,7 @@ const toDistrictCode = ref('');
 const passengers = ref(1);
 const travelDate = ref(store.getLocalDateString());
 const loadingPopular = ref(true);
+const searchAttempted = ref(false);
 const vouchers = ref<Voucher[]>([]);
 const loadingVouchers = ref(true);
 
@@ -100,8 +101,18 @@ const minDate = computed(() => store.getLocalDateString());
 // (BE vẫn là nguồn sự thật: trả 422 nếu lọt qua).
 const sameLocation = computed(
     () =>
-        fromProvinceCode.value === toProvinceCode.value &&
-        fromDistrictCode.value === toDistrictCode.value,
+        Boolean(fromProvinceCode.value && toProvinceCode.value) &&
+        fromProvinceCode.value === toProvinceCode.value,
+);
+const missingOrigin = computed(
+    () =>
+        searchAttempted.value &&
+        (!fromProvinceCode.value || !fromDistrictCode.value),
+);
+const missingDestination = computed(
+    () =>
+        searchAttempted.value &&
+        (!toProvinceCode.value || !toDistrictCode.value),
 );
 
 function syncDistrict(code: 'from' | 'to') {
@@ -136,6 +147,7 @@ function adjustPassengers(delta: number) {
 }
 
 function search() {
+    searchAttempted.value = true;
     if (
         !fromProvinceCode.value ||
         !fromDistrictCode.value ||
@@ -334,7 +346,12 @@ onMounted(async () => {
 
                         <div class="relative grid gap-3 sm:grid-cols-2">
                             <label
-                                class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100"
+                                :class="[
+                                    'rounded-2xl border bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100',
+                                    missingOrigin
+                                        ? 'border-red-300'
+                                        : 'border-slate-200',
+                                ]"
                             >
                                 <span
                                     class="block text-xs font-semibold text-slate-500"
@@ -342,6 +359,7 @@ onMounted(async () => {
                                 >
                                 <select
                                     v-model="fromProvinceCode"
+                                    :aria-invalid="missingOrigin"
                                     class="mt-1 w-full cursor-pointer bg-transparent text-base font-bold outline-none"
                                     @change="syncDistrict('from')"
                                 >
@@ -378,7 +396,12 @@ onMounted(async () => {
                                 </svg>
                             </button>
                             <label
-                                class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100"
+                                :class="[
+                                    'rounded-2xl border bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100',
+                                    missingOrigin
+                                        ? 'border-red-300'
+                                        : 'border-slate-200',
+                                ]"
                             >
                                 <span
                                     class="block text-xs font-semibold text-slate-500"
@@ -387,6 +410,7 @@ onMounted(async () => {
                                 <select
                                     v-model="fromDistrictCode"
                                     :disabled="!fromProvinceCode"
+                                    :aria-invalid="missingOrigin"
                                     class="mt-1 w-full cursor-pointer bg-transparent text-base font-bold outline-none"
                                 >
                                     <option value="" disabled>
@@ -402,7 +426,12 @@ onMounted(async () => {
                                 </select>
                             </label>
                             <label
-                                class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100"
+                                :class="[
+                                    'rounded-2xl border bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100',
+                                    missingDestination
+                                        ? 'border-red-300'
+                                        : 'border-slate-200',
+                                ]"
                             >
                                 <span
                                     class="block text-xs font-semibold text-slate-500"
@@ -410,6 +439,7 @@ onMounted(async () => {
                                 >
                                 <select
                                     v-model="toProvinceCode"
+                                    :aria-invalid="missingDestination"
                                     class="mt-1 w-full cursor-pointer bg-transparent text-base font-bold outline-none"
                                     @change="syncDistrict('to')"
                                 >
@@ -426,7 +456,12 @@ onMounted(async () => {
                                 </select>
                             </label>
                             <label
-                                class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100"
+                                :class="[
+                                    'rounded-2xl border bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100',
+                                    missingDestination
+                                        ? 'border-red-300'
+                                        : 'border-slate-200',
+                                ]"
                             >
                                 <span
                                     class="block text-xs font-semibold text-slate-500"
@@ -435,6 +470,7 @@ onMounted(async () => {
                                 <select
                                     v-model="toDistrictCode"
                                     :disabled="!toProvinceCode"
+                                    :aria-invalid="missingDestination"
                                     class="mt-1 w-full cursor-pointer bg-transparent text-base font-bold outline-none"
                                 >
                                     <option value="" disabled>
@@ -456,9 +492,21 @@ onMounted(async () => {
                             role="alert"
                             class="mt-2 flex items-center gap-1.5 text-sm font-medium text-red-600"
                         >
-                            <span aria-hidden="true">⚠</span> Điểm đến phải khác
-                            điểm đi.
+                            <span aria-hidden="true">⚠</span> Tỉnh/thành điểm
+                            đến phải khác điểm đi.
                         </p>
+                        <div
+                            v-if="missingOrigin || missingDestination"
+                            class="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm font-medium text-red-600"
+                            role="alert"
+                        >
+                            <span v-if="missingOrigin"
+                                >Vui lòng chọn đầy đủ điểm đi.</span
+                            >
+                            <span v-if="missingDestination"
+                                >Vui lòng chọn đầy đủ điểm đến.</span
+                            >
+                        </div>
 
                         <button
                             type="button"
@@ -520,7 +568,13 @@ onMounted(async () => {
 
                         <button
                             type="button"
-                            :disabled="sameLocation"
+                            :disabled="
+                                sameLocation ||
+                                !fromProvinceCode ||
+                                !fromDistrictCode ||
+                                !toProvinceCode ||
+                                !toDistrictCode
+                            "
                             class="mt-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 font-bold text-white shadow-lg transition-all duration-150 hover:bg-blue-700 hover:shadow-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none disabled:hover:bg-slate-300 disabled:active:scale-100"
                             @click="search"
                         >
