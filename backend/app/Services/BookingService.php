@@ -281,7 +281,7 @@ class BookingService
     /**
      * Tất toán vé khi chuyến HOÀN TẤT (Hướng 2 — thống nhất với markRanCompleted):
      *  - checked_in + confirmed → completed (ghi nhận doanh thu kể cả khi tài xế quên
-     *    quét QR). no_show CHỈ đặt khi tài xế CHỦ ĐỘNG đánh vắng (check-in/absent).
+     *    check-in cho khách). no_show CHỈ đặt khi tài xế CHỦ ĐỘNG đánh vắng (check-in/absent).
      *  - pending (chưa thanh toán, bỏ dở) → cancelled
      */
     public function finalizeOnTripComplete(Trip $trip): void
