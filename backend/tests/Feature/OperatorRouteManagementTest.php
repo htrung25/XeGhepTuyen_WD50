@@ -153,7 +153,12 @@ it('từ chối mã tỉnh huyện không hợp lệ và điểm đến trùng �
     $this->postJson('/api/operator/routes', routePayload([
         'dest_province_code' => HN_PROVINCE,
         'dest_district_code' => HN_DISTRICT,
-    ]))->assertStatus(422)->assertJsonValidationErrors('dest_district_code');
+    ]))->assertStatus(422)->assertJsonValidationErrors('dest_province_code');
+
+    $this->postJson('/api/operator/routes', routePayload([
+        'dest_province_code' => HN_PROVINCE,
+        'dest_district_code' => '002',
+    ]))->assertStatus(422)->assertJsonValidationErrors('dest_province_code');
 });
 
 it('chỉ liệt kê route thuộc operator đang đăng nhập', function () {

@@ -110,7 +110,8 @@ export const operatorApi = {
         apiClient.send(fareRatesSave(), { rates }),
 
     // Vehicles
-    getVehicles: () => apiClient.send(vehiclesIndex()),
+    getVehicles: (params?: Params) =>
+        apiClient.send(vehiclesIndex({ query: params as QueryParams })),
     getVehicle: (id: string) => apiClient.send(vehicleShow(id)),
     createVehicle: (data: FormData) => apiClient.sendForm(vehicleStore(), data),
     updateVehicle: (id: string, d: unknown) =>

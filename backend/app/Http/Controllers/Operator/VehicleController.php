@@ -13,11 +13,41 @@ use Illuminate\Support\Facades\Storage;
 
 class VehicleController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $operator = auth('operator')->user()->operator;
 
-        $vehicles = $operator->vehicles()->with('assignedDriver.user')->get();
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'vehicle_type' => ['nullable', 'in:sedan_4,mpv_7,van_9,minibus_16'],
+            'status' => ['nullable', 'in:active,inactive'],
+            'assignment' => ['nullable', 'in:assigned,unassigned'],
+        ]);
+
+        $vehicles = $operator->vehicles()
+            ->with('assignedDriver.user')
+            ->when($validated['search'] ?? null, function ($query, string $search): void {
+                $term = '%'.mb_strtolower(trim($search)).'%';
+                $query->where(function ($query) use ($term): void {
+                    $query->whereRaw('LOWER(plate_number) LIKE ?', [$term])
+                        ->orWhereRaw('LOWER(brand) LIKE ?', [$term])
+                        ->orWhereRaw('LOWER(model) LIKE ?', [$term])
+                        ->orWhereRaw('LOWER(color) LIKE ?', [$term]);
+                });
+            })
+            ->when($validated['vehicle_type'] ?? null, fn ($query, string $type) => $query->where('vehicle_type', $type))
+            ->when($validated['status'] ?? null, function ($query, string $status): void {
+                if ($status === 'active') {
+                    $query->where('status', VehicleStatusEnum::Active);
+                } else {
+                    // UI hiển thị mọi trạng thái không hoạt động (inactive/maintenance).
+                    $query->where('status', '!=', VehicleStatusEnum::Active);
+                }
+            })
+            ->when(($validated['assignment'] ?? null) === 'assigned', fn ($query) => $query->whereHas('assignedDriver'))
+            ->when(($validated['assignment'] ?? null) === 'unassigned', fn ($query) => $query->whereDoesntHave('assignedDriver'))
+            ->orderBy('plate_number')
+            ->get();
 
         return response()->json([
             'success' => true,

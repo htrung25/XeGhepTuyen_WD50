@@ -50,9 +50,8 @@ class StoreRouteRequest extends FormRequest
                 $validator->errors()->add('dest_district_code', 'Quận/huyện điểm đến không thuộc tỉnh đã chọn');
             }
 
-            if ($originProvince === $destProvince
-                && $this->input('origin_district_code') === $this->input('dest_district_code')) {
-                $validator->errors()->add('dest_district_code', 'Điểm đến phải khác điểm đi');
+            if ($originProvince === $destProvince) {
+                $validator->errors()->add('dest_province_code', 'Tỉnh điểm đến phải khác tỉnh điểm đi');
             }
         });
     }

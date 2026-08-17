@@ -142,11 +142,8 @@ const saveRoute = async () => {
         return;
     }
 
-    if (
-        form.value.origin_province_code === form.value.dest_province_code &&
-        form.value.origin_district_code === form.value.dest_district_code
-    ) {
-        saveError.value = 'Điểm đến phải khác điểm đi';
+    if (form.value.origin_province_code === form.value.dest_province_code) {
+        saveError.value = 'Tỉnh điểm đến phải khác tỉnh điểm đi';
         return;
     }
 
