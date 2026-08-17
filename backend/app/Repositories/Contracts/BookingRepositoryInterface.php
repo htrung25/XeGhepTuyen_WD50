@@ -11,8 +11,6 @@ interface BookingRepositoryInterface
 
     public function findByCode(string $code): ?Booking;
 
-    public function findByQrToken(string $token): ?Booking;
-
     public function findByUser(string $userId, array $filters = []): LengthAwarePaginator;
 
     public function findByTrip(string $tripId, array $filters = []): LengthAwarePaginator;
