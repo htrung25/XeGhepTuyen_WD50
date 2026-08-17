@@ -129,8 +129,10 @@ class BookingService
                 ...$this->geometryFactory->coordinateAttributes('pickup', $pickup),
                 ...$this->geometryFactory->coordinateAttributes('dropoff', $dropoff),
                 'passenger_count' => $data['passenger_count'],
-                'contact_name' => $data['contact_name'],
-                'contact_phone' => $data['contact_phone'],
+                // Thông tin liên hệ phải lấy từ tài khoản đã xác thực, không tin
+                // dữ liệu tự nhập từ client.
+                'contact_name' => $user->full_name,
+                'contact_phone' => $user->phone,
                 'note' => $data['note'] ?? null,
                 'subtotal' => $subtotal,
                 'discount_amount' => $discount,

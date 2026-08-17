@@ -11,6 +11,10 @@ const props = defineProps<{
     lng: number | null;
     error?: string;
     cityBias?: string; // 'Hà Nội' hoặc 'Hải Phòng'
+    boundary?: {
+        type: 'Polygon' | 'MultiPolygon';
+        coordinates: number[][][] | number[][][][];
+    } | null;
 }>();
 
 const emit = defineEmits<{
@@ -98,6 +102,11 @@ function selectSuggestion(item: any) {
     const address = item.place_name || item.text;
     const [lng, lat] = item.center;
 
+    if (!isInsideBoundary(lng, lat)) {
+        mapError.value = `Địa điểm phải nằm trong ${props.boundary?.type ? 'khu vực phục vụ của tuyến' : 'huyện đã chọn'}.`;
+        return;
+    }
+
     searchInput.value = address;
     suggestions.value = [];
     showSuggestions.value = false;
@@ -128,6 +137,56 @@ async function reverseGeocode(lng: number, lat: number) {
     }
 }
 
+function pointInRing(lng: number, lat: number, ring: number[][]): boolean {
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const [xi, yi] = ring[i];
+        const [xj, yj] = ring[j];
+        const intersects =
+            yi > lat !== yj > lat &&
+            lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi;
+        if (intersects) inside = !inside;
+    }
+    return inside;
+}
+
+function pointInPolygon(
+    lng: number,
+    lat: number,
+    polygon: number[][][],
+): boolean {
+    const [outer, ...holes] = polygon;
+    if (!outer || !pointInRing(lng, lat, outer)) return false;
+    return !holes.some((hole) => pointInRing(lng, lat, hole));
+}
+
+function isInsideBoundary(lng: number, lat: number): boolean {
+    const geometry = props.boundary;
+    if (!geometry) return true;
+    if (geometry.type === 'Polygon') {
+        return pointInPolygon(lng, lat, geometry.coordinates as number[][][]);
+    }
+    return (geometry.coordinates as number[][][][]).some((polygon) =>
+        pointInPolygon(lng, lat, polygon),
+    );
+}
+
+function boundaryCenter(): [number, number] | null {
+    const geometry = props.boundary;
+    if (!geometry) return null;
+    const ring = (
+        geometry.type === 'Polygon'
+            ? geometry.coordinates[0]
+            : geometry.coordinates[0]?.[0]
+    ) as number[][] | undefined;
+    if (!ring?.length) return null;
+    const [lng, lat] = ring.reduce(
+        (sum, point) => [sum[0] + point[0], sum[1] + point[1]],
+        [0, 0],
+    );
+    return [lng / ring.length, lat / ring.length];
+}
+
 // Initialize Map
 function openMapModal() {
     isMapModalOpen.value = true;
@@ -141,6 +200,8 @@ function openMapModal() {
 
     if (props.lng && props.lat) {
         initialCoords = [props.lng, props.lat];
+    } else if (boundaryCenter()) {
+        initialCoords = boundaryCenter()!;
     } else if (props.cityBias && CITY_COORDS[props.cityBias]) {
         initialCoords = CITY_COORDS[props.cityBias];
     }
@@ -188,7 +249,13 @@ function openMapModal() {
             if (!mapInstance) return;
             const center = mapInstance.getCenter();
             currentMapCoords.value = [center.lng, center.lat];
-            reverseGeocode(center.lng, center.lat);
+            if (isInsideBoundary(center.lng, center.lat)) {
+                mapError.value = '';
+                reverseGeocode(center.lng, center.lat);
+            } else {
+                mapError.value =
+                    'Vui lòng chọn điểm nằm trong huyện phục vụ của tuyến.';
+            }
         });
     });
 }
@@ -202,12 +269,19 @@ function closeMapModal() {
 }
 
 function confirmMapSelection() {
-    if (currentMapCoords.value && currentMapAddress.value) {
+    if (
+        currentMapCoords.value &&
+        currentMapAddress.value &&
+        isInsideBoundary(currentMapCoords.value[0], currentMapCoords.value[1])
+    ) {
         const [lng, lat] = currentMapCoords.value;
         searchInput.value = currentMapAddress.value;
         emit('update:modelValue', currentMapAddress.value);
         emit('update:lat', lat);
         emit('update:lng', lng);
+    } else if (currentMapCoords.value) {
+        mapError.value =
+            'Vui lòng chọn một vị trí nằm trong huyện phục vụ của tuyến.';
     }
     closeMapModal();
 }

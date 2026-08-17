@@ -3,10 +3,12 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { customerApi } from '@/api/customer.api';
 import LocationInput from '@/components/customer/LocationInput.vue';
+import { useCustomerAuthStore } from '@/stores/customer.auth.store';
 import { useCustomerStore } from '@/stores/customer.store';
 
 const router = useRouter();
 const store = useCustomerStore();
+const auth = useCustomerAuthStore();
 const draft = store.bookingDraft;
 
 const tripData = ref<any>(null);
@@ -119,6 +121,17 @@ onMounted(async () => {
         router.replace('/home');
         return;
     }
+    if (auth.user) {
+        draft.passenger_name = auth.user.full_name;
+        draft.passenger_phone = auth.user.phone;
+    } else {
+        const { data } = await customerApi.me();
+        if (data) {
+            auth.setAuth(auth.token!, data as any);
+            draft.passenger_name = (data as any).full_name;
+            draft.passenger_phone = (data as any).phone;
+        }
+    }
     isLoading.value = true;
     const { data } = await customerApi.getPublicTrip(draft.trip_id);
     isLoading.value = false;
@@ -216,7 +229,8 @@ onUnmounted(() => {
                                 Họ và tên <span class="text-red-500">*</span>
                             </label>
                             <input
-                                v-model="draft.passenger_name"
+                                :value="draft.passenger_name"
+                                readonly
                                 type="text"
                                 placeholder="Nguyễn Văn A"
                                 :class="[
@@ -241,7 +255,8 @@ onUnmounted(() => {
                                 <span class="text-red-500">*</span>
                             </label>
                             <input
-                                v-model="draft.passenger_phone"
+                                :value="draft.passenger_phone"
+                                readonly
                                 type="tel"
                                 placeholder="0901234567"
                                 :class="[
@@ -282,6 +297,10 @@ onUnmounted(() => {
                                 v-model:lng="draft.pickup_lng"
                                 :error="errors.pickup_address"
                                 :city-bias="tripData?.route?.origin_city"
+                                :boundary="
+                                    tripData?.route?.pickup_service_area
+                                        ?.boundary
+                                "
                             />
 
                             <!-- Điểm trả tự do -->
@@ -293,6 +312,10 @@ onUnmounted(() => {
                                 v-model:lng="draft.dropoff_lng"
                                 :error="errors.dropoff_address"
                                 :city-bias="tripData?.route?.dest_city"
+                                :boundary="
+                                    tripData?.route?.dropoff_service_area
+                                        ?.boundary
+                                "
                             />
                         </div>
 

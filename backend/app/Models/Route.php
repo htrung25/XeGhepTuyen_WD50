@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Observers\RouteObserver;
 use App\Services\CityCodeResolver;
+use App\Services\VietnamAdministrative;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -111,8 +112,7 @@ class Route extends Model
         $dirty = false;
 
         if ($this->pickup_service_area_source !== 'manual') {
-            $code = CityCodeResolver::resolve((string) $this->origin_city);
-            $areaId = $code ? ServiceArea::findByCityCode($code)?->id : null;
+            $areaId = $this->serviceAreaIdForLocation($this->origin_city, $this->origin_district);
 
             if ($this->pickup_service_area_id !== $areaId) {
                 $this->pickup_service_area_id = $areaId;
@@ -121,8 +121,7 @@ class Route extends Model
         }
 
         if ($this->dropoff_service_area_source !== 'manual') {
-            $code = CityCodeResolver::resolve((string) $this->dest_city);
-            $areaId = $code ? ServiceArea::findByCityCode($code)?->id : null;
+            $areaId = $this->serviceAreaIdForLocation($this->dest_city, $this->dest_district);
 
             if ($this->dropoff_service_area_id !== $areaId) {
                 $this->dropoff_service_area_id = $areaId;
@@ -131,5 +130,21 @@ class Route extends Model
         }
 
         return $dirty;
+    }
+
+    private function serviceAreaIdForLocation(?string $city, ?string $district): ?string
+    {
+        $provinceCode = CityCodeResolver::resolve((string) $city);
+        if ($provinceCode === null) {
+            return null;
+        }
+
+        $districtRecord = VietnamAdministrative::findDistrictByName($city, $district);
+        $areaCode = $districtRecord
+            ? "{$provinceCode}-{$districtRecord['code']}"
+            : $provinceCode;
+
+        return ServiceArea::query()->active()->where('code', $areaCode)->value('id')
+            ?? ServiceArea::query()->active()->where('code', $provinceCode)->value('id');
     }
 }

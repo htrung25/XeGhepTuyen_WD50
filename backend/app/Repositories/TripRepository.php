@@ -15,6 +15,8 @@ class TripRepository implements TripRepositoryInterface
     {
         return Trip::with([
             'route.stops',
+            'route.pickupServiceArea',
+            'route.dropoffServiceArea',
             'route.operator:id,company_name',
             'vehicle.operator:id,user_id,company_name',
             'vehicle.operator.user:id,phone',
@@ -37,7 +39,7 @@ class TripRepository implements TripRepositoryInterface
 
     public function findByTrackingCode(string $code): ?Trip
     {
-        return Trip::with(['route', 'driver.user:id,full_name,phone', 'vehicle:id,plate_number'])
+        return Trip::with(['route.pickupServiceArea', 'route.dropoffServiceArea', 'driver.user:id,full_name,phone', 'vehicle:id,plate_number'])
             ->where('tracking_code', $code)
             ->first();
     }
@@ -46,6 +48,8 @@ class TripRepository implements TripRepositoryInterface
     {
         $query = Trip::with([
             'route',
+            'route.pickupServiceArea',
+            'route.dropoffServiceArea',
             'vehicle:id,plate_number,vehicle_type,amenities,seat_count',
             'driver:id,user_id,rating_avg',
             'driver.user:id,full_name,avatar_url',
@@ -53,11 +57,17 @@ class TripRepository implements TripRepositoryInterface
             ->available($filters['passengers'] ?? 1);
 
         if (! empty($filters['from_city'])) {
-            $query->whereHas('route', fn ($q) => $q->where('origin_city', $filters['from_city']));
+            $query->whereHas('route', function ($q) use ($filters) {
+                $q->where('origin_city', $filters['from_city'])
+                    ->when($filters['from_district'] ?? null, fn ($q, $district) => $q->where('origin_district', $district));
+            });
         }
 
         if (! empty($filters['to_city'])) {
-            $query->whereHas('route', fn ($q) => $q->where('dest_city', $filters['to_city']));
+            $query->whereHas('route', function ($q) use ($filters) {
+                $q->where('dest_city', $filters['to_city'])
+                    ->when($filters['to_district'] ?? null, fn ($q, $district) => $q->where('dest_district', $district));
+            });
         }
 
         if (! empty($filters['date'])) {
@@ -83,6 +93,8 @@ class TripRepository implements TripRepositoryInterface
     {
         return Trip::with([
             'route.stops',
+            'route.pickupServiceArea',
+            'route.dropoffServiceArea',
             'route.operator:id,company_name',
             'vehicle:id,plate_number,vehicle_type,amenities,seat_count',
             'driver:id,user_id,rating_avg,total_trips',

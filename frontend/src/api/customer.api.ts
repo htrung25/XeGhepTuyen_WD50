@@ -50,6 +50,7 @@ import {
     topup as walletTopup,
 } from '@/actions/App/Http/Controllers/Customer/WalletController';
 import { store as partnerAppStore } from '@/actions/App/Http/Controllers/Public/PartnerApplicationController';
+import { index as publicVouchers } from '@/actions/App/Http/Controllers/Public/VoucherController';
 import { apiClient } from './client';
 
 export const customerApi = {
@@ -79,8 +80,12 @@ export const customerApi = {
 
     // ─── Public trip search ────────────────────────────────────────────────
     searchTrips: (params: {
-        from_city: string;
-        to_city: string;
+        from_province_code?: string;
+        from_district_code?: string;
+        to_province_code?: string;
+        to_district_code?: string;
+        from_city?: string;
+        to_city?: string;
         date: string;
         passengers?: number;
     }) => apiClient.send(tripSearch['/api/public/trips']({ query: params })),
@@ -138,6 +143,7 @@ export const customerApi = {
         apiClient.send(paymentInitiate(), data),
     applyVoucher: (data: { code: string; trip_id: string; amount: number }) =>
         apiClient.send(voucherApply(), data),
+    getPublicVouchers: () => apiClient.send(publicVouchers()),
 
     // ─── Reviews ───────────────────────────────────────────────────────────
     submitReview: (data: {

@@ -96,7 +96,8 @@ export const operatorApi = {
     getOnboardingFleet: () => apiClient.send(fleet()),
 
     // Routes
-    getRoutes: () => apiClient.send(routesIndex()),
+    getRoutes: (params?: Params) =>
+        apiClient.send(routesIndex({ query: params as QueryParams })),
     getRoute: (id: string) => apiClient.send(routeShow(id)),
     createRoute: (data: OperatorRoutePayload) =>
         apiClient.send(routeStore(), data),
@@ -110,7 +111,8 @@ export const operatorApi = {
         apiClient.send(fareRatesSave(), { rates }),
 
     // Vehicles
-    getVehicles: () => apiClient.send(vehiclesIndex()),
+    getVehicles: (params?: Params) =>
+        apiClient.send(vehiclesIndex({ query: params as QueryParams })),
     getVehicle: (id: string) => apiClient.send(vehicleShow(id)),
     createVehicle: (data: FormData) => apiClient.sendForm(vehicleStore(), data),
     updateVehicle: (id: string, d: unknown) =>

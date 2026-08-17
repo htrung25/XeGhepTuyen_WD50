@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { operatorApi } from '@/api/operator.api';
 
 interface Vehicle {
@@ -49,6 +49,11 @@ const vehicles = ref<Vehicle[]>([]);
 const drivers = ref<Driver[]>([]);
 const loading = ref(true);
 const error = ref('');
+const vehicleSearch = ref('');
+const vehicleTypeFilter = ref('');
+const vehicleStatusFilter = ref('');
+const vehicleAssignmentFilter = ref('');
+let vehicleSearchTimer: ReturnType<typeof setTimeout> | undefined;
 
 const assignModal = ref(false);
 const assignDriver = ref<Driver | null>(null);
@@ -69,21 +74,59 @@ function openDriverDetail(d: Driver) {
     detailDriverModal.value = true;
 }
 
+async function fetchVehicles(showLoading = true) {
+    if (showLoading) loading.value = true;
+    error.value = '';
+    const { data, error: err } = await operatorApi.getVehicles({
+        search: vehicleSearch.value.trim() || undefined,
+        vehicle_type: vehicleTypeFilter.value || undefined,
+        status: vehicleStatusFilter.value || undefined,
+        assignment: vehicleAssignmentFilter.value || undefined,
+    });
+    loading.value = false;
+    if (err) {
+        error.value = err;
+        return;
+    }
+    vehicles.value = (data as any)?.data ?? data ?? [];
+}
+
+async function fetchDrivers() {
+    const { data, error: err } = await operatorApi.getDrivers();
+    if (err) {
+        error.value = err;
+        return;
+    }
+    drivers.value = (data as any)?.data ?? data ?? [];
+}
+
 async function fetchData() {
     loading.value = true;
     error.value = '';
-    const [vRes, dRes] = await Promise.all([
-        operatorApi.getVehicles(),
-        operatorApi.getDrivers(),
-    ]);
+    await Promise.all([fetchVehicles(false), fetchDrivers()]);
     loading.value = false;
-    if (vRes.error || dRes.error) {
-        error.value = vRes.error ?? dRes.error ?? '';
-        return;
-    }
-    vehicles.value = (vRes.data as any)?.data ?? vRes.data ?? [];
-    drivers.value = (dRes.data as any)?.data ?? dRes.data ?? [];
 }
+
+function resetVehicleFilters() {
+    vehicleSearch.value = '';
+    vehicleTypeFilter.value = '';
+    vehicleStatusFilter.value = '';
+    vehicleAssignmentFilter.value = '';
+}
+
+watch(
+    [
+        vehicleSearch,
+        vehicleTypeFilter,
+        vehicleStatusFilter,
+        vehicleAssignmentFilter,
+    ],
+    () => {
+        if (tab.value !== 'vehicles') return;
+        if (vehicleSearchTimer) clearTimeout(vehicleSearchTimer);
+        vehicleSearchTimer = setTimeout(() => fetchVehicles(), 300);
+    },
+);
 
 function openAssign(driver: Driver) {
     assignDriver.value = driver;
@@ -440,10 +483,76 @@ onMounted(fetchData);
             v-else-if="tab === 'vehicles'"
             class="overflow-hidden rounded-xl border border-gray-200 bg-white"
         >
-            <div
-                class="flex items-center justify-between border-b border-gray-100 px-5 py-4"
-            >
-                <h2 class="font-semibold text-gray-800">Danh sách xe</h2>
+            <div class="border-b border-gray-100 px-5 py-4">
+                <div class="mb-4 flex items-center justify-between gap-3">
+                    <h2 class="font-semibold text-gray-800">Danh sách xe</h2>
+                    <span class="text-xs text-gray-500"
+                        >{{ vehicles.length }} kết quả</span
+                    >
+                </div>
+                <div class="grid gap-3 md:grid-cols-4">
+                    <label class="relative md:col-span-2">
+                        <span class="sr-only">Tìm kiếm xe</span>
+                        <svg
+                            class="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            viewBox="0 0 24 24"
+                        >
+                            <circle cx="11" cy="11" r="7" />
+                            <path d="m20 20-4-4" />
+                        </svg>
+                        <input
+                            v-model="vehicleSearch"
+                            type="search"
+                            placeholder="Tìm biển số, hãng, mẫu xe, màu..."
+                            class="w-full rounded-lg border border-gray-200 py-2 pr-3 pl-9 text-sm transition outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                        />
+                    </label>
+                    <select
+                        v-model="vehicleTypeFilter"
+                        class="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                    >
+                        <option value="">Tất cả loại xe</option>
+                        <option
+                            v-for="t in vehicleTypes"
+                            :key="t.value"
+                            :value="t.value"
+                        >
+                            {{ t.label }}
+                        </option>
+                    </select>
+                    <select
+                        v-model="vehicleStatusFilter"
+                        class="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                    >
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="active">Đang hoạt động</option>
+                        <option value="inactive">Ngừng hoạt động</option>
+                    </select>
+                    <select
+                        v-model="vehicleAssignmentFilter"
+                        class="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                    >
+                        <option value="">Tất cả phân công</option>
+                        <option value="assigned">Đã gán tài xế</option>
+                        <option value="unassigned">Chưa gán tài xế</option>
+                    </select>
+                    <button
+                        v-if="
+                            vehicleSearch ||
+                            vehicleTypeFilter ||
+                            vehicleStatusFilter ||
+                            vehicleAssignmentFilter
+                        "
+                        type="button"
+                        class="rounded-lg px-3 py-2 text-left text-sm font-medium text-gray-500 transition hover:bg-gray-50 hover:text-gray-800 md:col-span-3 md:text-right"
+                        @click="resetVehicleFilters"
+                    >
+                        Xóa bộ lọc
+                    </button>
+                </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">

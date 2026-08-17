@@ -27,8 +27,11 @@ class StoreBookingRequest extends FormRequest
             'dropoff_lat' => ['required', 'numeric', 'between:-90,90'],
             'dropoff_lng' => ['required', 'numeric', 'between:-180,180'],
             'passenger_count' => ['required', 'integer', 'min:1', 'max:4'],
-            'contact_name' => ['required', 'string', 'min:2', 'max:100'],
-            'contact_phone' => ['required', 'regex:'.VietnamesePhoneRule::PATTERN],
+            // Thông tin liên hệ được lấy từ customer đã xác thực trong
+            // BookingService; giữ nullable để client không cần gửi dữ liệu có
+            // thể bị giả mạo.
+            'contact_name' => ['nullable', 'string', 'min:2', 'max:100'],
+            'contact_phone' => ['nullable', 'regex:'.VietnamesePhoneRule::PATTERN],
             'note' => ['nullable', 'string', 'max:500'],
             'payment_method' => ['required', 'in:momo,vnpay,wallet,cash'],
             'voucher_code' => ['nullable', 'string', 'max:20'],

@@ -88,6 +88,25 @@ it('tạo route từ mã tỉnh huyện, không cần điểm dừng, chưa có 
     $this->assertDatabaseCount('route_stops', 0);
 });
 
+it('ưu tiên service area cấp huyện khi ranh giới huyện đã được import', function () {
+    ServiceArea::create([
+        'code' => 'HN-001', 'name' => 'Quận Ba Đình, Hà Nội',
+        'boundary' => 'MULTIPOLYGON(((0 0, 1 0, 1 1, 0 1, 0 0)))', 'is_active' => true,
+    ]);
+    ServiceArea::create([
+        'code' => 'HP-303', 'name' => 'Quận Hồng Bàng, Hải Phòng',
+        'boundary' => 'MULTIPOLYGON(((0 0, 1 0, 1 1, 0 1, 0 0)))', 'is_active' => true,
+    ]);
+
+    $operator = makeRouteOperator('district');
+    actingAsRouteOperator($operator);
+
+    $this->postJson('/api/operator/routes', routePayload())
+        ->assertCreated()
+        ->assertJsonPath('data.pickup_service_area.code', 'HN-001')
+        ->assertJsonPath('data.dropoff_service_area.code', 'HP-303');
+});
+
 it('gán đơn giá cho tuyến thì tuyến lấy lại giá theo km', function () {
     $operator = makeRouteOperator('A');
     actingAsRouteOperator($operator);
@@ -134,7 +153,12 @@ it('từ chối mã tỉnh huyện không hợp lệ và điểm đến trùng �
     $this->postJson('/api/operator/routes', routePayload([
         'dest_province_code' => HN_PROVINCE,
         'dest_district_code' => HN_DISTRICT,
-    ]))->assertStatus(422)->assertJsonValidationErrors('dest_district_code');
+    ]))->assertStatus(422)->assertJsonValidationErrors('dest_province_code');
+
+    $this->postJson('/api/operator/routes', routePayload([
+        'dest_province_code' => HN_PROVINCE,
+        'dest_district_code' => '002',
+    ]))->assertStatus(422)->assertJsonValidationErrors('dest_province_code');
 });
 
 it('chỉ liệt kê route thuộc operator đang đăng nhập', function () {
@@ -146,12 +170,53 @@ it('chỉ liệt kê route thuộc operator đang đăng nhập', function () {
     Route::create([
         'operator_id' => $other->id, 'name' => 'Tuyến B', 'base_price' => 100000,
     ]);
+    Route::create([
+        'operator_id' => $operator->id, 'name' => 'Tuyến đã tắt', 'base_price' => 100000,
+        'is_active' => false,
+    ]);
     actingAsRouteOperator($operator);
 
     $this->getJson('/api/operator/routes')
         ->assertOk()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.id', $ownRoute->id);
+});
+
+it('hỗ trợ tìm kiếm và lọc trạng thái tuyến trong phạm vi operator', function () {
+    $operator = makeRouteOperator('A');
+    $active = Route::create([
+        'operator_id' => $operator->id,
+        'name' => 'Hà Nội → Hải Phòng',
+        'origin_city' => 'Hà Nội',
+        'origin_district' => 'Quận Ba Đình',
+        'dest_city' => 'Hải Phòng',
+        'dest_district' => 'Quận Hồng Bàng',
+        'base_price' => 100000,
+        'is_active' => true,
+    ]);
+    $inactive = Route::create([
+        'operator_id' => $operator->id,
+        'name' => 'Hải Phòng → Hà Nội',
+        'origin_city' => 'Hải Phòng',
+        'origin_district' => 'Quận Hồng Bàng',
+        'dest_city' => 'Hà Nội',
+        'dest_district' => 'Quận Ba Đình',
+        'base_price' => 100000,
+        'is_active' => false,
+    ]);
+    actingAsRouteOperator($operator);
+
+    $this->getJson('/api/operator/routes?search=Ba%20%C4%90%C3%ACnh&status=all')
+        ->assertOk()
+        ->assertJsonCount(2, 'data');
+    $this->getJson('/api/operator/routes?status=inactive')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $inactive->id);
+    $this->getJson('/api/operator/routes?search=H%C3%A0%20N%E1%BB%99i&status=active')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $active->id);
 });
 
 it('ẩn route của operator khác trên show update và destroy', function () {

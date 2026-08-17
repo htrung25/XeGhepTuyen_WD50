@@ -2,17 +2,53 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
+import { customerApi } from '@/api/customer.api';
+import { geoApi } from '@/api/geo.api';
+import type { Province } from '@/api/geo.api';
 import { useCustomerStore } from '@/stores/customer.store';
 
 const router = useRouter();
 const store = useCustomerStore();
 
 const tripType = ref<'one_way' | 'round_trip'>('one_way');
-const fromCity = ref('Hà Nội');
-const toCity = ref('Hải Phòng');
+const provinces = ref<Province[]>([]);
+const fromProvinceCode = ref('');
+const fromDistrictCode = ref('');
+const toProvinceCode = ref('');
+const toDistrictCode = ref('');
 const passengers = ref(1);
 const travelDate = ref(store.getLocalDateString());
 const loadingPopular = ref(true);
+const searchAttempted = ref(false);
+const vouchers = ref<Voucher[]>([]);
+const loadingVouchers = ref(true);
+
+interface Voucher {
+    id: string;
+    code: string;
+    discount_type: 'percent' | 'fixed';
+    discount_value: number | string;
+    min_order: number;
+    max_discount: number | null;
+    valid_until: string;
+}
+
+const fromProvince = computed(() =>
+    provinces.value.find((p) => p.code === fromProvinceCode.value),
+);
+const toProvince = computed(() =>
+    provinces.value.find((p) => p.code === toProvinceCode.value),
+);
+const fromDistricts = computed(() => fromProvince.value?.districts ?? []);
+const toDistricts = computed(() => toProvince.value?.districts ?? []);
+const fromCity = computed(() => fromProvince.value?.name ?? '');
+const toCity = computed(() => toProvince.value?.name ?? '');
+const fromDistrict = computed(() =>
+    fromDistricts.value.find((d) => d.code === fromDistrictCode.value),
+);
+const toDistrict = computed(() =>
+    toDistricts.value.find((d) => d.code === toDistrictCode.value),
+);
 
 const popularRoutes = ref([
     {
@@ -63,10 +99,46 @@ const minDate = computed(() => store.getLocalDateString());
 
 // Điểm đi trùng điểm đến là input phi lý — chặn ở FE cho UX rõ ràng
 // (BE vẫn là nguồn sự thật: trả 422 nếu lọt qua).
-const sameCity = computed(() => fromCity.value === toCity.value);
+const sameLocation = computed(
+    () =>
+        Boolean(fromProvinceCode.value && toProvinceCode.value) &&
+        fromProvinceCode.value === toProvinceCode.value,
+);
+const missingOrigin = computed(
+    () =>
+        searchAttempted.value &&
+        (!fromProvinceCode.value || !fromDistrictCode.value),
+);
+const missingDestination = computed(
+    () =>
+        searchAttempted.value &&
+        (!toProvinceCode.value || !toDistrictCode.value),
+);
+
+function syncDistrict(code: 'from' | 'to') {
+    if (
+        code === 'from' &&
+        !fromDistricts.value.some((d) => d.code === fromDistrictCode.value)
+    ) {
+        fromDistrictCode.value = '';
+    }
+    if (
+        code === 'to' &&
+        !toDistricts.value.some((d) => d.code === toDistrictCode.value)
+    ) {
+        toDistrictCode.value = '';
+    }
+}
 
 function swapCities() {
-    [fromCity.value, toCity.value] = [toCity.value, fromCity.value];
+    [fromProvinceCode.value, toProvinceCode.value] = [
+        toProvinceCode.value,
+        fromProvinceCode.value,
+    ];
+    [fromDistrictCode.value, toDistrictCode.value] = [
+        toDistrictCode.value,
+        fromDistrictCode.value,
+    ];
 }
 
 function adjustPassengers(delta: number) {
@@ -75,14 +147,32 @@ function adjustPassengers(delta: number) {
 }
 
 function search() {
-    if (!fromCity.value || !toCity.value || !travelDate.value) return;
-    if (sameCity.value) {
+    searchAttempted.value = true;
+    if (
+        !fromProvinceCode.value ||
+        !fromDistrictCode.value ||
+        !toProvinceCode.value ||
+        !toDistrictCode.value
+    ) {
+        toast.error(
+            'Vui lòng chọn đầy đủ tỉnh/thành và quận/huyện điểm đi, điểm đến.',
+        );
+        return;
+    }
+    if (!fromDistrict.value || !toDistrict.value || !travelDate.value) return;
+    if (sameLocation.value) {
         toast.error('Điểm đến phải khác điểm đi.');
         return;
     }
     store.searchParams = {
         from_city: fromCity.value,
+        from_district: fromDistrict.value.name,
+        from_province_code: fromProvinceCode.value,
+        from_district_code: fromDistrictCode.value,
         to_city: toCity.value,
+        to_district: toDistrict.value.name,
+        to_province_code: toProvinceCode.value,
+        to_district_code: toDistrictCode.value,
         date: travelDate.value,
         passengers: passengers.value,
         trip_type: tripType.value,
@@ -91,8 +181,10 @@ function search() {
 }
 
 function searchPopular(from: string, to: string) {
-    fromCity.value = from;
-    toCity.value = to;
+    fromProvinceCode.value = from === 'Hà Nội' ? '01' : '31';
+    toProvinceCode.value = to === 'Hà Nội' ? '01' : '31';
+    fromDistrictCode.value = from === 'Hà Nội' ? '005' : '303';
+    toDistrictCode.value = to === 'Hà Nội' ? '005' : '303';
     search();
 }
 
@@ -100,39 +192,87 @@ function fmt(value: number) {
     return new Intl.NumberFormat('vi-VN').format(value) + 'đ';
 }
 
-onMounted(() => {
+function voucherDiscount(voucher: Voucher) {
+    return voucher.discount_type === 'percent'
+        ? `Giảm ${Number(voucher.discount_value)}%`
+        : `Giảm ${fmt(Number(voucher.discount_value))}`;
+}
+
+function voucherDescription(voucher: Voucher) {
+    const minimum = voucher.min_order
+        ? `Đơn từ ${fmt(voucher.min_order)}`
+        : 'Áp dụng cho mọi chuyến đi';
+    const cap = voucher.max_discount
+        ? ` · Tối đa ${fmt(voucher.max_discount)}`
+        : '';
+    return `${minimum}${cap}`;
+}
+
+function voucherExpiry(voucher: Voucher) {
+    return `Hết hạn ${new Date(voucher.valid_until).toLocaleDateString('vi-VN')}`;
+}
+
+async function copyVoucher(code: string) {
+    try {
+        await navigator.clipboard.writeText(code);
+        toast.success(`Đã sao chép mã ${code}`);
+    } catch {
+        toast.error('Không thể sao chép mã voucher');
+    }
+}
+
+onMounted(async () => {
+    const [provinceResult, voucherResult] = await Promise.all([
+        geoApi.getProvinces(),
+        customerApi.getPublicVouchers(),
+    ]);
+    provinces.value = provinceResult;
+    syncDistrict('from');
+    syncDistrict('to');
     loadingPopular.value = false;
+    vouchers.value = voucherResult.data ?? [];
+    loadingVouchers.value = false;
 });
 </script>
 
 <template>
     <div class="overflow-hidden bg-white text-slate-950">
-        <section class="relative border-b border-sky-100 bg-sky-50">
-            <div class="absolute inset-x-0 top-0 h-1 bg-blue-600" />
+        <section
+            class="relative overflow-hidden border-b border-sky-100 bg-slate-800 bg-cover bg-center"
+            style="
+                background-image: url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=2200&q=85');
+            "
+        >
+            <div class="absolute inset-0 bg-slate-950/60" />
             <div
-                class="mx-auto grid max-w-7xl items-center gap-12 px-5 py-14 sm:px-6 lg:grid-cols-[1.05fr_.95fr] lg:px-8 lg:py-20"
+                class="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-950/55 to-transparent"
+            />
+            <div
+                class="relative z-10 mx-auto flex max-w-7xl flex-col items-center gap-8 px-5 py-16 sm:px-6 lg:px-8 lg:py-24"
             >
-                <div class="relative z-10">
+                <div class="text-center text-white">
                     <div
                         class="mb-6 inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white px-3 py-1.5 text-sm font-semibold text-blue-700 shadow-sm"
                     >
                         <span class="size-2 rounded-full bg-emerald-500" />
-                        Tuyến Hà Nội – Hải Phòng mỗi ngày
+                        Đồng hành trên mọi tuyến đường
                     </div>
                     <h1
-                        class="max-w-3xl text-4xl leading-snug font-extrabold text-balance sm:text-5xl lg:text-6xl"
+                        class="max-w-3xl text-4xl leading-snug font-extrabold text-balance drop-shadow-lg sm:text-5xl lg:text-6xl"
                     >
-                        Đi chung tuyến,<br />
-                        <span class="text-blue-600">nhẹ mọi hành trình.</span>
+                        Đi chung xe liên tỉnh:<br />
+                        <span class="text-blue-200"
+                            >An toàn, Tiết kiệm, Tiện lợi.</span
+                        >
                     </h1>
                     <p
-                        class="mt-6 max-w-xl text-base leading-7 text-pretty text-slate-600 sm:text-lg"
+                        class="mx-auto mt-6 max-w-xl text-base leading-7 text-pretty text-slate-100 sm:text-lg"
                     >
-                        XeGhepTuyen-Fgroup đưa bạn đến đúng nơi, đúng giờ với
-                        trải nghiệm đặt chỗ minh bạch và tiện lợi hơn.
+                        Kết nối hành khách với những chuyến xe chất lượng, minh
+                        bạch và tiện lợi trên mọi hành trình.
                     </p>
                     <div
-                        class="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm font-medium text-slate-700"
+                        class="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm font-medium text-white"
                     >
                         <span class="flex items-center gap-2"
                             ><span
@@ -155,7 +295,7 @@ onMounted(() => {
                     </div>
                 </div>
 
-                <div class="relative mx-auto w-full max-w-xl lg:mx-0">
+                <div class="relative mx-auto w-full max-w-4xl">
                     <div
                         class="absolute -top-7 -right-5 hidden rounded-2xl bg-amber-300 px-5 py-3 font-bold text-slate-900 shadow-lg sm:block"
                     >
@@ -204,25 +344,132 @@ onMounted(() => {
                             </div>
                         </div>
 
-                        <div class="relative grid gap-3 sm:grid-cols-2">
-                            <label
-                                class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100"
-                            >
-                                <span
-                                    class="block text-xs font-semibold text-slate-500"
-                                    >Điểm đi</span
+                        <div
+                            class="relative grid gap-5 sm:grid-cols-2 sm:gap-6"
+                        >
+                            <div class="space-y-3">
+                                <p
+                                    class="text-center text-sm font-bold text-blue-600"
                                 >
-                                <select
-                                    v-model="fromCity"
-                                    class="mt-1 w-full cursor-pointer bg-transparent text-base font-bold outline-none"
+                                    Điểm đón
+                                </p>
+                                <label
+                                    :class="[
+                                        'block rounded-2xl border bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100',
+                                        missingOrigin
+                                            ? 'border-red-300'
+                                            : 'border-slate-200',
+                                    ]"
                                 >
-                                    <option>Hà Nội</option>
-                                    <option>Hải Phòng</option>
-                                </select>
-                            </label>
+                                    <select
+                                        v-model="fromProvinceCode"
+                                        :aria-invalid="missingOrigin"
+                                        class="w-full cursor-pointer bg-transparent text-base font-bold outline-none"
+                                        @change="syncDistrict('from')"
+                                    >
+                                        <option value="" disabled>
+                                            Chọn tỉnh/thành
+                                        </option>
+                                        <option
+                                            v-for="province in provinces"
+                                            :key="province.code"
+                                            :value="province.code"
+                                        >
+                                            {{ province.name }}
+                                        </option>
+                                    </select>
+                                </label>
+                                <label
+                                    :class="[
+                                        'block rounded-2xl border bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100',
+                                        missingOrigin
+                                            ? 'border-red-300'
+                                            : 'border-slate-200',
+                                    ]"
+                                >
+                                    <select
+                                        v-model="fromDistrictCode"
+                                        :disabled="!fromProvinceCode"
+                                        :aria-invalid="missingOrigin"
+                                        class="w-full cursor-pointer bg-transparent text-base font-bold outline-none"
+                                    >
+                                        <option value="" disabled>
+                                            Chọn quận/huyện
+                                        </option>
+                                        <option
+                                            v-for="district in fromDistricts"
+                                            :key="district.code"
+                                            :value="district.code"
+                                        >
+                                            {{ district.name }}
+                                        </option>
+                                    </select>
+                                </label>
+                            </div>
+
+                            <div class="space-y-3">
+                                <p
+                                    class="text-center text-sm font-bold text-blue-600"
+                                >
+                                    Điểm trả
+                                </p>
+                                <label
+                                    :class="[
+                                        'block rounded-2xl border bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100',
+                                        missingDestination
+                                            ? 'border-red-300'
+                                            : 'border-slate-200',
+                                    ]"
+                                >
+                                    <select
+                                        v-model="toProvinceCode"
+                                        :aria-invalid="missingDestination"
+                                        class="w-full cursor-pointer bg-transparent text-base font-bold outline-none"
+                                        @change="syncDistrict('to')"
+                                    >
+                                        <option value="" disabled>
+                                            Chọn tỉnh/thành
+                                        </option>
+                                        <option
+                                            v-for="province in provinces"
+                                            :key="province.code"
+                                            :value="province.code"
+                                        >
+                                            {{ province.name }}
+                                        </option>
+                                    </select>
+                                </label>
+                                <label
+                                    :class="[
+                                        'block rounded-2xl border bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100',
+                                        missingDestination
+                                            ? 'border-red-300'
+                                            : 'border-slate-200',
+                                    ]"
+                                >
+                                    <select
+                                        v-model="toDistrictCode"
+                                        :disabled="!toProvinceCode"
+                                        :aria-invalid="missingDestination"
+                                        class="w-full cursor-pointer bg-transparent text-base font-bold outline-none"
+                                    >
+                                        <option value="" disabled>
+                                            Chọn quận/huyện
+                                        </option>
+                                        <option
+                                            v-for="district in toDistricts"
+                                            :key="district.code"
+                                            :value="district.code"
+                                        >
+                                            {{ district.name }}
+                                        </option>
+                                    </select>
+                                </label>
+                            </div>
+
                             <button
                                 type="button"
-                                aria-label="Đổi điểm đi và điểm đến"
+                                aria-label="Đổi điểm đón và điểm trả"
                                 class="absolute top-1/2 left-1/2 z-10 hidden size-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-blue-200 bg-white text-blue-600 shadow-sm transition-transform duration-150 hover:scale-105 sm:flex"
                                 @click="swapCities"
                             >
@@ -240,31 +487,28 @@ onMounted(() => {
                                     />
                                 </svg>
                             </button>
-                            <label
-                                class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100"
-                            >
-                                <span
-                                    class="block text-xs font-semibold text-slate-500"
-                                    >Điểm đến</span
-                                >
-                                <select
-                                    v-model="toCity"
-                                    class="mt-1 w-full cursor-pointer bg-transparent text-base font-bold outline-none"
-                                >
-                                    <option>Hà Nội</option>
-                                    <option>Hải Phòng</option>
-                                </select>
-                            </label>
                         </div>
 
                         <p
-                            v-if="sameCity"
+                            v-if="sameLocation"
                             role="alert"
                             class="mt-2 flex items-center gap-1.5 text-sm font-medium text-red-600"
                         >
-                            <span aria-hidden="true">⚠</span> Điểm đến phải khác
-                            điểm đi.
+                            <span aria-hidden="true">⚠</span> Tỉnh/thành điểm
+                            đến phải khác điểm đi.
                         </p>
+                        <div
+                            v-if="missingOrigin || missingDestination"
+                            class="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm font-medium text-red-600"
+                            role="alert"
+                        >
+                            <span v-if="missingOrigin"
+                                >Vui lòng chọn đầy đủ điểm đi.</span
+                            >
+                            <span v-if="missingDestination"
+                                >Vui lòng chọn đầy đủ điểm đến.</span
+                            >
+                        </div>
 
                         <button
                             type="button"
@@ -326,7 +570,13 @@ onMounted(() => {
 
                         <button
                             type="button"
-                            :disabled="sameCity"
+                            :disabled="
+                                sameLocation ||
+                                !fromProvinceCode ||
+                                !fromDistrictCode ||
+                                !toProvinceCode ||
+                                !toDistrictCode
+                            "
                             class="mt-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 font-bold text-white shadow-lg transition-all duration-150 hover:bg-blue-700 hover:shadow-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none disabled:hover:bg-slate-300 disabled:active:scale-100"
                             @click="search"
                         >
@@ -347,6 +597,108 @@ onMounted(() => {
                         </button>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <section class="border-b border-slate-100 bg-white py-14 sm:py-16">
+            <div class="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+                <div class="mb-7 flex items-end justify-between gap-4">
+                    <div>
+                        <p class="text-sm font-bold text-blue-600">
+                            ƯU ĐÃI DÀNH RIÊNG CHO BẠN
+                        </p>
+                        <h2 class="mt-2 text-3xl font-extrabold text-slate-950">
+                            Voucher nổi bật
+                        </h2>
+                        <p class="mt-2 text-sm text-slate-500">
+                            Tiết kiệm hơn cho mỗi hành trình cùng XeGhepTuyen.
+                        </p>
+                    </div>
+                    <span
+                        v-if="vouchers.length"
+                        class="hidden text-sm font-semibold text-slate-400 sm:block"
+                    >
+                        {{ vouchers.length }} mã đang hoạt động
+                    </span>
+                </div>
+
+                <div v-if="loadingVouchers" class="grid gap-4 md:grid-cols-3">
+                    <div
+                        v-for="item in 3"
+                        :key="item"
+                        class="h-40 animate-pulse rounded-2xl border border-slate-200 bg-slate-50"
+                    />
+                </div>
+                <div
+                    v-else-if="vouchers.length"
+                    class="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+                >
+                    <article
+                        v-for="voucher in vouchers"
+                        :key="voucher.id"
+                        class="group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-5 transition-all duration-200 hover:-translate-y-1 hover:border-blue-200 hover:bg-white hover:shadow-lg"
+                    >
+                        <div
+                            class="absolute -top-8 -right-8 size-24 rounded-full bg-blue-100/70 transition-transform duration-200 group-hover:scale-125"
+                        />
+                        <div
+                            class="relative flex items-start justify-between gap-3"
+                        >
+                            <div
+                                class="flex size-10 items-center justify-center rounded-xl bg-blue-100 text-blue-700"
+                            >
+                                <svg
+                                    class="size-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="m15 5 4 4m-9.5 9.5L4 20l1.5-5.5L16.5 3.5a2.12 2.12 0 0 1 3 3L9.5 18.5Z"
+                                    />
+                                </svg>
+                            </div>
+                            <span
+                                class="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-500 shadow-sm"
+                            >
+                                {{ voucherExpiry(voucher) }}
+                            </span>
+                        </div>
+                        <h3
+                            class="relative mt-5 text-xl font-extrabold text-slate-950"
+                        >
+                            {{ voucherDiscount(voucher) }}
+                        </h3>
+                        <p class="relative mt-1 text-sm text-slate-500">
+                            {{ voucherDescription(voucher) }}
+                        </p>
+                        <div
+                            class="relative mt-5 flex items-center justify-between border-t border-slate-200 pt-3"
+                        >
+                            <code
+                                class="rounded-md bg-white px-2.5 py-1.5 text-xs font-bold tracking-wide text-slate-700"
+                            >
+                                {{ voucher.code }}
+                            </code>
+                            <button
+                                type="button"
+                                class="text-xs font-bold text-blue-600 transition-colors hover:text-blue-800"
+                                @click="copyVoucher(voucher.code)"
+                            >
+                                Sao chép mã
+                            </button>
+                        </div>
+                    </article>
+                </div>
+                <p
+                    v-else
+                    class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-500"
+                >
+                    Hiện chưa có voucher đang hoạt động.
+                </p>
             </div>
         </section>
 

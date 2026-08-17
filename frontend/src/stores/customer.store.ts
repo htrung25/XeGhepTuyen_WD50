@@ -3,7 +3,13 @@ import { ref } from 'vue';
 
 export interface SearchParams {
     from_city: string;
+    from_district: string;
+    from_province_code: string;
+    from_district_code: string;
     to_city: string;
+    to_district: string;
+    to_province_code: string;
+    to_district_code: string;
     date: string;
     passengers: number;
     trip_type: 'one_way' | 'round_trip';
@@ -18,7 +24,9 @@ export interface TripResult {
     available_seats: number;
     route: {
         origin_city: string;
+        origin_district: string | null;
         dest_city: string;
+        dest_district: string | null;
         distance_km: number;
         est_duration_min: number;
     };
@@ -110,7 +118,13 @@ export const useCustomerStore = defineStore('customer', () => {
     // ─── Search ────────────────────────────────────────────────────────────
     const searchParams = ref<SearchParams>({
         from_city: '',
+        from_district: '',
+        from_province_code: '',
+        from_district_code: '',
         to_city: '',
+        to_district: '',
+        to_province_code: '',
+        to_district_code: '',
         date: getLocalDateString(),
         passengers: 1,
         trip_type: 'one_way',
