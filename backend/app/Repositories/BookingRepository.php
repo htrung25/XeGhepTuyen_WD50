@@ -30,13 +30,6 @@ class BookingRepository implements BookingRepositoryInterface
         ])->where('booking_code', $code)->first();
     }
 
-    public function findByQrToken(string $token): ?Booking
-    {
-        return Booking::with(['trip', 'passengers'])
-            ->where('qr_token', $token)
-            ->first();
-    }
-
     public function findByUser(string $userId, array $filters = []): LengthAwarePaginator
     {
         $query = Booking::with([

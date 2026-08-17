@@ -468,7 +468,7 @@ class TripService
     /**
      * Nhà xe xác nhận chuyến QUÁ GIỜ thực tế ĐÃ CHẠY XONG (tài xế quên cập nhật app).
      *
-     * Khác completeTrip(): vé 'confirmed' (chưa quét QR check-in) được coi là ĐÃ ĐI
+     * Khác completeTrip(): vé 'confirmed' (tài xế chưa check-in) được coi là ĐÃ ĐI
      * → completed (ghi nhận doanh thu), KHÔNG đánh no_show / KHÔNG hoàn tiền oan.
      * Vé 'pending' (chưa thanh toán) → hủy, giải phóng ghế.
      */

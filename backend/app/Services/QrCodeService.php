@@ -49,9 +49,4 @@ class QrCodeService
             ErrorCorrectionLevel::H()
         );
     }
-
-    public function verify(string $token): ?Booking
-    {
-        return Booking::where('qr_token', $token)->first();
-    }
 }

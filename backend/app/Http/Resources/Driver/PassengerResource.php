@@ -42,7 +42,6 @@ class PassengerResource extends JsonResource
                 'seat_code' => $p->seatMap?->seat_code,
             ]),
             'checked_in' => $this->booking_status->value === 'checked_in',
-            'qr_token' => $this->qr_token,
         ];
     }
 }
