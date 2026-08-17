@@ -12,7 +12,13 @@ interface TripBlock {
     arrive_at?: string;
     status: string;
     base_price?: number;
-    route?: { id?: string; origin_city: string; dest_city: string };
+    route?: {
+        id?: string;
+        origin_city: string;
+        origin_district?: string | null;
+        dest_city: string;
+        dest_district?: string | null;
+    };
     vehicle?: { id?: string; plate: string; type?: string } | null;
     driver?: { id?: string; full_name: string; phone?: string } | null;
     booking_count?: number;
@@ -306,7 +312,7 @@ const load = async () => {
     trips.value = (tripsRes.data as TripBlock[]) ?? [];
     routes.value = ((routesRes.data as any[]) ?? []).map((r: any) => ({
         id: r.id,
-        label: `${r.origin_city} → ${r.dest_city}`,
+        label: `${r.origin_city}${r.origin_district ? `, ${r.origin_district}` : ''} → ${r.dest_city}${r.dest_district ? `, ${r.dest_district}` : ''}`,
         base_price: Number(r.base_price ?? 0),
     }));
     vehicles.value = ((vehiclesRes.data as any[]) ?? []).map((v: any) => ({

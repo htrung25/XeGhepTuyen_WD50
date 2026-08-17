@@ -19,7 +19,9 @@ class TripResource extends JsonResource
             'route' => [
                 'id' => $this->route->id,
                 'origin_city' => $this->route->origin_city,
+                'origin_district' => $this->route->origin_district,
                 'dest_city' => $this->route->dest_city,
+                'dest_district' => $this->route->dest_district,
             ],
             'vehicle' => [
                 'id' => $this->vehicle->id,

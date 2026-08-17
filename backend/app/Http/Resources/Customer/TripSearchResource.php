@@ -5,6 +5,7 @@ namespace App\Http\Resources\Customer;
 use App\Enums\SeatStatusEnum;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\DB;
 
 class TripSearchResource extends JsonResource
 {
@@ -18,8 +19,12 @@ class TripSearchResource extends JsonResource
             'price' => $this->price,
             'route' => [
                 'origin_city' => $this->route->origin_city,
+                'origin_district' => $this->route->origin_district,
                 'dest_city' => $this->route->dest_city,
+                'dest_district' => $this->route->dest_district,
                 'distance_km' => $this->route->distance_km,
+                'pickup_service_area' => $this->serviceAreaPayload($this->route->pickupServiceArea),
+                'dropoff_service_area' => $this->serviceAreaPayload($this->route->dropoffServiceArea),
             ],
             'operator' => [
                 'company_name' => $this->route->operator?->company_name,
@@ -46,6 +51,25 @@ class TripSearchResource extends JsonResource
                 'stop_name' => $s->stop_name,
                 'stop_order' => $s->stop_order,
             ]),
+        ];
+    }
+
+    private function serviceAreaPayload($area): ?array
+    {
+        if (! $area) {
+            return null;
+        }
+
+        $boundary = null;
+        if (DB::getDriverName() === 'mysql') {
+            $row = DB::selectOne('select ST_AsGeoJSON(boundary) as geojson from service_areas where id = ?', [$area->id]);
+            $boundary = $row?->geojson ? json_decode($row->geojson, true) : null;
+        }
+
+        return [
+            'code' => $area->code,
+            'name' => $area->name,
+            'boundary' => $boundary,
         ];
     }
 }

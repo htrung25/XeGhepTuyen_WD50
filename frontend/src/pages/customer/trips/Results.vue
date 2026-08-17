@@ -123,21 +123,31 @@ function isNextDay(departAtIso: string, searchDateStr: string) {
 
 onMounted(async () => {
     const p = store.searchParams;
-    if (!p.from_city || !p.to_city) {
+    if (
+        !p.from_province_code ||
+        !p.from_district_code ||
+        !p.to_province_code ||
+        !p.to_district_code
+    ) {
         router.replace('/home');
         return;
     }
     // Backstop: vào thẳng /search với params cũ (điểm đi == điểm đến) — không gọi
     // API mù, quay về Home báo lỗi. BE vẫn chặn bằng 422 nếu request lọt qua.
-    if (p.from_city === p.to_city) {
+    if (
+        p.from_province_code === p.to_province_code &&
+        p.from_district_code === p.to_district_code
+    ) {
         toast.error('Điểm đến phải khác điểm đi.');
         router.replace('/home');
         return;
     }
     isLoading.value = true;
     const { data, error } = await customerApi.searchTrips({
-        from_city: p.from_city,
-        to_city: p.to_city,
+        from_province_code: p.from_province_code,
+        from_district_code: p.from_district_code,
+        to_province_code: p.to_province_code,
+        to_district_code: p.to_district_code,
         date: p.date,
         passengers: p.passengers,
     });
@@ -160,8 +170,10 @@ onMounted(async () => {
                 <h1
                     class="text-xl font-bold text-balance text-gray-900 sm:text-2xl"
                 >
-                    {{ store.searchParams.from_city }} →
-                    {{ store.searchParams.to_city }}
+                    {{ store.searchParams.from_city }},
+                    {{ store.searchParams.from_district }} →
+                    {{ store.searchParams.to_city }},
+                    {{ store.searchParams.to_district }}
                 </h1>
                 <p class="mt-1 text-sm text-pretty text-gray-500">
                     {{

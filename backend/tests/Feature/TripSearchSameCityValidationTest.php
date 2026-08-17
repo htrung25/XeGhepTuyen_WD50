@@ -95,3 +95,28 @@ it('still returns trips when pickup and dropoff cities differ', function () {
 
     Carbon::setTestNow();
 });
+
+it('lọc chuyến theo cả mã tỉnh và mã huyện', function () {
+    Carbon::setTestNow(Carbon::parse('2026-07-19 09:00:00'));
+    setupSameCitySearchContext();
+    $route = Route::query()->firstOrFail();
+    $route->update([
+        'origin_district' => 'Quận Ba Đình',
+        'dest_district' => 'Quận Hồng Bàng',
+    ]);
+
+    $response = $this->getJson('/api/public/trips?'.http_build_query([
+        'from_province_code' => '01',
+        'from_district_code' => '001',
+        'to_province_code' => '31',
+        'to_district_code' => '303',
+        'date' => '2026-07-20',
+        'passengers' => 1,
+    ]));
+
+    $response->assertOk()
+        ->assertJsonPath('data.0.route.origin_district', 'Quận Ba Đình')
+        ->assertJsonPath('data.0.route.dest_district', 'Quận Hồng Bàng');
+
+    Carbon::setTestNow();
+});

@@ -2,17 +2,39 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
+import { geoApi } from '@/api/geo.api';
+import type { Province } from '@/api/geo.api';
 import { useCustomerStore } from '@/stores/customer.store';
 
 const router = useRouter();
 const store = useCustomerStore();
 
 const tripType = ref<'one_way' | 'round_trip'>('one_way');
-const fromCity = ref('Hà Nội');
-const toCity = ref('Hải Phòng');
+const provinces = ref<Province[]>([]);
+const fromProvinceCode = ref('');
+const fromDistrictCode = ref('');
+const toProvinceCode = ref('');
+const toDistrictCode = ref('');
 const passengers = ref(1);
 const travelDate = ref(store.getLocalDateString());
 const loadingPopular = ref(true);
+
+const fromProvince = computed(() =>
+    provinces.value.find((p) => p.code === fromProvinceCode.value),
+);
+const toProvince = computed(() =>
+    provinces.value.find((p) => p.code === toProvinceCode.value),
+);
+const fromDistricts = computed(() => fromProvince.value?.districts ?? []);
+const toDistricts = computed(() => toProvince.value?.districts ?? []);
+const fromCity = computed(() => fromProvince.value?.name ?? '');
+const toCity = computed(() => toProvince.value?.name ?? '');
+const fromDistrict = computed(() =>
+    fromDistricts.value.find((d) => d.code === fromDistrictCode.value),
+);
+const toDistrict = computed(() =>
+    toDistricts.value.find((d) => d.code === toDistrictCode.value),
+);
 
 const popularRoutes = ref([
     {
@@ -63,10 +85,36 @@ const minDate = computed(() => store.getLocalDateString());
 
 // Điểm đi trùng điểm đến là input phi lý — chặn ở FE cho UX rõ ràng
 // (BE vẫn là nguồn sự thật: trả 422 nếu lọt qua).
-const sameCity = computed(() => fromCity.value === toCity.value);
+const sameLocation = computed(
+    () =>
+        fromProvinceCode.value === toProvinceCode.value &&
+        fromDistrictCode.value === toDistrictCode.value,
+);
+
+function syncDistrict(code: 'from' | 'to') {
+    if (
+        code === 'from' &&
+        !fromDistricts.value.some((d) => d.code === fromDistrictCode.value)
+    ) {
+        fromDistrictCode.value = '';
+    }
+    if (
+        code === 'to' &&
+        !toDistricts.value.some((d) => d.code === toDistrictCode.value)
+    ) {
+        toDistrictCode.value = '';
+    }
+}
 
 function swapCities() {
-    [fromCity.value, toCity.value] = [toCity.value, fromCity.value];
+    [fromProvinceCode.value, toProvinceCode.value] = [
+        toProvinceCode.value,
+        fromProvinceCode.value,
+    ];
+    [fromDistrictCode.value, toDistrictCode.value] = [
+        toDistrictCode.value,
+        fromDistrictCode.value,
+    ];
 }
 
 function adjustPassengers(delta: number) {
@@ -75,14 +123,31 @@ function adjustPassengers(delta: number) {
 }
 
 function search() {
-    if (!fromCity.value || !toCity.value || !travelDate.value) return;
-    if (sameCity.value) {
+    if (
+        !fromProvinceCode.value ||
+        !fromDistrictCode.value ||
+        !toProvinceCode.value ||
+        !toDistrictCode.value
+    ) {
+        toast.error(
+            'Vui lòng chọn đầy đủ tỉnh/thành và quận/huyện điểm đi, điểm đến.',
+        );
+        return;
+    }
+    if (!fromDistrict.value || !toDistrict.value || !travelDate.value) return;
+    if (sameLocation.value) {
         toast.error('Điểm đến phải khác điểm đi.');
         return;
     }
     store.searchParams = {
         from_city: fromCity.value,
+        from_district: fromDistrict.value.name,
+        from_province_code: fromProvinceCode.value,
+        from_district_code: fromDistrictCode.value,
         to_city: toCity.value,
+        to_district: toDistrict.value.name,
+        to_province_code: toProvinceCode.value,
+        to_district_code: toDistrictCode.value,
         date: travelDate.value,
         passengers: passengers.value,
         trip_type: tripType.value,
@@ -91,8 +156,10 @@ function search() {
 }
 
 function searchPopular(from: string, to: string) {
-    fromCity.value = from;
-    toCity.value = to;
+    fromProvinceCode.value = from === 'Hà Nội' ? '01' : '31';
+    toProvinceCode.value = to === 'Hà Nội' ? '01' : '31';
+    fromDistrictCode.value = from === 'Hà Nội' ? '005' : '303';
+    toDistrictCode.value = to === 'Hà Nội' ? '005' : '303';
     search();
 }
 
@@ -101,7 +168,12 @@ function fmt(value: number) {
 }
 
 onMounted(() => {
-    loadingPopular.value = false;
+    void geoApi.getProvinces().then((items) => {
+        provinces.value = items;
+        syncDistrict('from');
+        syncDistrict('to');
+        loadingPopular.value = false;
+    });
 });
 </script>
 
@@ -210,14 +282,23 @@ onMounted(() => {
                             >
                                 <span
                                     class="block text-xs font-semibold text-slate-500"
-                                    >Điểm đi</span
+                                    >Tỉnh/thành điểm đi</span
                                 >
                                 <select
-                                    v-model="fromCity"
+                                    v-model="fromProvinceCode"
                                     class="mt-1 w-full cursor-pointer bg-transparent text-base font-bold outline-none"
+                                    @change="syncDistrict('from')"
                                 >
-                                    <option>Hà Nội</option>
-                                    <option>Hải Phòng</option>
+                                    <option value="" disabled>
+                                        Chọn tỉnh/thành
+                                    </option>
+                                    <option
+                                        v-for="province in provinces"
+                                        :key="province.code"
+                                        :value="province.code"
+                                    >
+                                        {{ province.name }}
+                                    </option>
                                 </select>
                             </label>
                             <button
@@ -245,20 +326,77 @@ onMounted(() => {
                             >
                                 <span
                                     class="block text-xs font-semibold text-slate-500"
-                                    >Điểm đến</span
+                                    >Huyện/quận điểm đi</span
                                 >
                                 <select
-                                    v-model="toCity"
+                                    v-model="fromDistrictCode"
+                                    :disabled="!fromProvinceCode"
                                     class="mt-1 w-full cursor-pointer bg-transparent text-base font-bold outline-none"
                                 >
-                                    <option>Hà Nội</option>
-                                    <option>Hải Phòng</option>
+                                    <option value="" disabled>
+                                        Chọn quận/huyện
+                                    </option>
+                                    <option
+                                        v-for="district in fromDistricts"
+                                        :key="district.code"
+                                        :value="district.code"
+                                    >
+                                        {{ district.name }}
+                                    </option>
+                                </select>
+                            </label>
+                            <label
+                                class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100"
+                            >
+                                <span
+                                    class="block text-xs font-semibold text-slate-500"
+                                    >Tỉnh/thành điểm đến</span
+                                >
+                                <select
+                                    v-model="toProvinceCode"
+                                    class="mt-1 w-full cursor-pointer bg-transparent text-base font-bold outline-none"
+                                    @change="syncDistrict('to')"
+                                >
+                                    <option value="" disabled>
+                                        Chọn tỉnh/thành
+                                    </option>
+                                    <option
+                                        v-for="province in provinces"
+                                        :key="province.code"
+                                        :value="province.code"
+                                    >
+                                        {{ province.name }}
+                                    </option>
+                                </select>
+                            </label>
+                            <label
+                                class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100"
+                            >
+                                <span
+                                    class="block text-xs font-semibold text-slate-500"
+                                    >Huyện/quận điểm đến</span
+                                >
+                                <select
+                                    v-model="toDistrictCode"
+                                    :disabled="!toProvinceCode"
+                                    class="mt-1 w-full cursor-pointer bg-transparent text-base font-bold outline-none"
+                                >
+                                    <option value="" disabled>
+                                        Chọn quận/huyện
+                                    </option>
+                                    <option
+                                        v-for="district in toDistricts"
+                                        :key="district.code"
+                                        :value="district.code"
+                                    >
+                                        {{ district.name }}
+                                    </option>
                                 </select>
                             </label>
                         </div>
 
                         <p
-                            v-if="sameCity"
+                            v-if="sameLocation"
                             role="alert"
                             class="mt-2 flex items-center gap-1.5 text-sm font-medium text-red-600"
                         >
@@ -326,7 +464,7 @@ onMounted(() => {
 
                         <button
                             type="button"
-                            :disabled="sameCity"
+                            :disabled="sameLocation"
                             class="mt-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 font-bold text-white shadow-lg transition-all duration-150 hover:bg-blue-700 hover:shadow-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none disabled:hover:bg-slate-300 disabled:active:scale-100"
                             @click="search"
                         >

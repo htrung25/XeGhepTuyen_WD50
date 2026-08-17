@@ -43,6 +43,40 @@ final class VietnamAdministrative
         return null;
     }
 
+    /** @return array{code: string, name: string, districts: array}|null */
+    public static function findProvinceByName(?string $name): ?array
+    {
+        if ($name === null || trim($name) === '') {
+            return null;
+        }
+
+        foreach (self::provinces() as $province) {
+            if ($province['name'] === trim($name)) {
+                return $province;
+            }
+        }
+
+        return null;
+    }
+
+    /** @return array{code: string, name: string}|null */
+    public static function findDistrictByName(?string $provinceName, ?string $districtName): ?array
+    {
+        $province = self::findProvinceByName($provinceName);
+
+        if (! $province || $districtName === null || trim($districtName) === '') {
+            return null;
+        }
+
+        foreach ($province['districts'] as $district) {
+            if ($district['name'] === trim($districtName)) {
+                return $district;
+            }
+        }
+
+        return null;
+    }
+
     /** @return array{code: string, name: string}|null */
     public static function findDistrict(?string $provinceCode, ?string $districtCode): ?array
     {

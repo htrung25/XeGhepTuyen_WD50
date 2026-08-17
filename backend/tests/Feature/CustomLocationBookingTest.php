@@ -102,6 +102,8 @@ it('allows customer to book a trip using custom pickup and dropoff coordinates',
     expect($booking->dropoff_address)->toBe('Số 20 Lạch Tray, Ngô Quyền, Hải Phòng');
     expect((float) $booking->dropoff_lat)->toBe(20.854123);
     expect((float) $booking->dropoff_lng)->toBe(106.698765);
+    expect($booking->contact_name)->toBe($customer->full_name);
+    expect($booking->contact_phone)->toBe($customer->phone);
 
     // Verify detail API resource mapping falls back correctly
     $detailResponse = $this->getJson("/api/customer/bookings/{$bookingId}");

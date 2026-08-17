@@ -79,8 +79,12 @@ export const customerApi = {
 
     // ─── Public trip search ────────────────────────────────────────────────
     searchTrips: (params: {
-        from_city: string;
-        to_city: string;
+        from_province_code?: string;
+        from_district_code?: string;
+        to_province_code?: string;
+        to_district_code?: string;
+        from_city?: string;
+        to_city?: string;
         date: string;
         passengers?: number;
     }) => apiClient.send(tripSearch['/api/public/trips']({ query: params })),

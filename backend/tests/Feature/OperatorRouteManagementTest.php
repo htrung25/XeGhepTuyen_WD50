@@ -88,6 +88,25 @@ it('tạo route từ mã tỉnh huyện, không cần điểm dừng, chưa có 
     $this->assertDatabaseCount('route_stops', 0);
 });
 
+it('ưu tiên service area cấp huyện khi ranh giới huyện đã được import', function () {
+    ServiceArea::create([
+        'code' => 'HN-001', 'name' => 'Quận Ba Đình, Hà Nội',
+        'boundary' => 'MULTIPOLYGON(((0 0, 1 0, 1 1, 0 1, 0 0)))', 'is_active' => true,
+    ]);
+    ServiceArea::create([
+        'code' => 'HP-303', 'name' => 'Quận Hồng Bàng, Hải Phòng',
+        'boundary' => 'MULTIPOLYGON(((0 0, 1 0, 1 1, 0 1, 0 0)))', 'is_active' => true,
+    ]);
+
+    $operator = makeRouteOperator('district');
+    actingAsRouteOperator($operator);
+
+    $this->postJson('/api/operator/routes', routePayload())
+        ->assertCreated()
+        ->assertJsonPath('data.pickup_service_area.code', 'HN-001')
+        ->assertJsonPath('data.dropoff_service_area.code', 'HP-303');
+});
+
 it('gán đơn giá cho tuyến thì tuyến lấy lại giá theo km', function () {
     $operator = makeRouteOperator('A');
     actingAsRouteOperator($operator);
