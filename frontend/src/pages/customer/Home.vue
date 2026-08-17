@@ -344,6 +344,19 @@ onMounted(async () => {
                             </div>
                         </div>
 
+                        <div class="mb-2 grid grid-cols-2 gap-3 px-1 sm:gap-5">
+                            <span
+                                class="text-center text-lg font-semibold text-red-500 sm:text-xl"
+                            >
+                                Điểm đón
+                            </span>
+                            <span
+                                class="text-center text-lg font-semibold text-red-500 sm:text-xl"
+                            >
+                                Điểm trả
+                            </span>
+                        </div>
+
                         <div class="relative grid gap-3 sm:grid-cols-2">
                             <label
                                 :class="[
@@ -353,14 +366,10 @@ onMounted(async () => {
                                         : 'border-slate-200',
                                 ]"
                             >
-                                <span
-                                    class="block text-xs font-semibold text-slate-500"
-                                    >Tỉnh/thành điểm đi</span
-                                >
                                 <select
                                     v-model="fromProvinceCode"
                                     :aria-invalid="missingOrigin"
-                                    class="mt-1 w-full cursor-pointer bg-transparent text-base font-bold outline-none"
+                                    class="w-full cursor-pointer bg-transparent text-base font-bold outline-none"
                                     @change="syncDistrict('from')"
                                 >
                                     <option value="" disabled>
@@ -403,15 +412,11 @@ onMounted(async () => {
                                         : 'border-slate-200',
                                 ]"
                             >
-                                <span
-                                    class="block text-xs font-semibold text-slate-500"
-                                    >Huyện/quận điểm đi</span
-                                >
                                 <select
                                     v-model="fromDistrictCode"
                                     :disabled="!fromProvinceCode"
                                     :aria-invalid="missingOrigin"
-                                    class="mt-1 w-full cursor-pointer bg-transparent text-base font-bold outline-none"
+                                    class="w-full cursor-pointer bg-transparent text-base font-bold outline-none"
                                 >
                                     <option value="" disabled>
                                         Chọn quận/huyện
@@ -433,14 +438,10 @@ onMounted(async () => {
                                         : 'border-slate-200',
                                 ]"
                             >
-                                <span
-                                    class="block text-xs font-semibold text-slate-500"
-                                    >Tỉnh/thành điểm đến</span
-                                >
                                 <select
                                     v-model="toProvinceCode"
                                     :aria-invalid="missingDestination"
-                                    class="mt-1 w-full cursor-pointer bg-transparent text-base font-bold outline-none"
+                                    class="w-full cursor-pointer bg-transparent text-base font-bold outline-none"
                                     @change="syncDistrict('to')"
                                 >
                                     <option value="" disabled>
@@ -463,15 +464,11 @@ onMounted(async () => {
                                         : 'border-slate-200',
                                 ]"
                             >
-                                <span
-                                    class="block text-xs font-semibold text-slate-500"
-                                    >Huyện/quận điểm đến</span
-                                >
                                 <select
                                     v-model="toDistrictCode"
                                     :disabled="!toProvinceCode"
                                     :aria-invalid="missingDestination"
-                                    class="mt-1 w-full cursor-pointer bg-transparent text-base font-bold outline-none"
+                                    class="w-full cursor-pointer bg-transparent text-base font-bold outline-none"
                                 >
                                     <option value="" disabled>
                                         Chọn quận/huyện
