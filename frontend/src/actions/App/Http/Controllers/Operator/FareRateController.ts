@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\Operator\FareRateController::index
-* @see app/Http/Controllers/Operator/FareRateController.php:15
+* @see app/Http/Controllers/Operator/FareRateController.php:20
 * @route '/api/operator/fare-rates'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\Operator\FareRateController::index
-* @see app/Http/Controllers/Operator/FareRateController.php:15
+* @see app/Http/Controllers/Operator/FareRateController.php:20
 * @route '/api/operator/fare-rates'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Operator\FareRateController::index
-* @see app/Http/Controllers/Operator/FareRateController.php:15
+* @see app/Http/Controllers/Operator/FareRateController.php:20
 * @route '/api/operator/fare-rates'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\FareRateController::index
-* @see app/Http/Controllers/Operator/FareRateController.php:15
+* @see app/Http/Controllers/Operator/FareRateController.php:20
 * @route '/api/operator/fare-rates'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\FareRateController::index
-* @see app/Http/Controllers/Operator/FareRateController.php:15
+* @see app/Http/Controllers/Operator/FareRateController.php:20
 * @route '/api/operator/fare-rates'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\Operator\FareRateController::index
-* @see app/Http/Controllers/Operator/FareRateController.php:15
+* @see app/Http/Controllers/Operator/FareRateController.php:20
 * @route '/api/operator/fare-rates'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\FareRateController::index
-* @see app/Http/Controllers/Operator/FareRateController.php:15
+* @see app/Http/Controllers/Operator/FareRateController.php:20
 * @route '/api/operator/fare-rates'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\Operator\FareRateController::save
-* @see app/Http/Controllers/Operator/FareRateController.php:33
+* @see app/Http/Controllers/Operator/FareRateController.php:51
 * @route '/api/operator/fare-rates'
 */
 export const save = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -97,7 +97,7 @@ save.definition = {
 
 /**
 * @see \App\Http\Controllers\Operator\FareRateController::save
-* @see app/Http/Controllers/Operator/FareRateController.php:33
+* @see app/Http/Controllers/Operator/FareRateController.php:51
 * @route '/api/operator/fare-rates'
 */
 save.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ save.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Operator\FareRateController::save
-* @see app/Http/Controllers/Operator/FareRateController.php:33
+* @see app/Http/Controllers/Operator/FareRateController.php:51
 * @route '/api/operator/fare-rates'
 */
 save.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -116,7 +116,7 @@ save.put = (options?: RouteQueryOptions): RouteDefinition<'put'> => ({
 
 /**
 * @see \App\Http\Controllers\Operator\FareRateController::save
-* @see app/Http/Controllers/Operator/FareRateController.php:33
+* @see app/Http/Controllers/Operator/FareRateController.php:51
 * @route '/api/operator/fare-rates'
 */
 const saveForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -131,7 +131,7 @@ const saveForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => (
 
 /**
 * @see \App\Http\Controllers\Operator\FareRateController::save
-* @see app/Http/Controllers/Operator/FareRateController.php:33
+* @see app/Http/Controllers/Operator/FareRateController.php:51
 * @route '/api/operator/fare-rates'
 */
 saveForm.put = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
