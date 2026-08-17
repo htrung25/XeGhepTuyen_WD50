@@ -344,49 +344,132 @@ onMounted(async () => {
                             </div>
                         </div>
 
-                        <div class="mb-3 grid grid-cols-2 gap-3 px-1 sm:gap-5">
-                            <span
-                                class="text-center text-sm font-bold text-blue-600"
-                            >
-                                Điểm đón
-                            </span>
-                            <span
-                                class="text-center text-sm font-bold text-blue-600"
-                            >
-                                Điểm trả
-                            </span>
-                        </div>
-
-                        <div class="relative grid gap-3 sm:grid-cols-2">
-                            <label
-                                :class="[
-                                    'rounded-2xl border bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100',
-                                    missingOrigin
-                                        ? 'border-red-300'
-                                        : 'border-slate-200',
-                                ]"
-                            >
-                                <select
-                                    v-model="fromProvinceCode"
-                                    :aria-invalid="missingOrigin"
-                                    class="w-full cursor-pointer bg-transparent text-base font-bold outline-none"
-                                    @change="syncDistrict('from')"
+                        <div
+                            class="relative grid gap-5 sm:grid-cols-2 sm:gap-6"
+                        >
+                            <div class="space-y-3">
+                                <p
+                                    class="text-center text-sm font-bold text-blue-600"
                                 >
-                                    <option value="" disabled>
-                                        Chọn tỉnh/thành
-                                    </option>
-                                    <option
-                                        v-for="province in provinces"
-                                        :key="province.code"
-                                        :value="province.code"
+                                    Điểm đón
+                                </p>
+                                <label
+                                    :class="[
+                                        'block rounded-2xl border bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100',
+                                        missingOrigin
+                                            ? 'border-red-300'
+                                            : 'border-slate-200',
+                                    ]"
+                                >
+                                    <select
+                                        v-model="fromProvinceCode"
+                                        :aria-invalid="missingOrigin"
+                                        class="w-full cursor-pointer bg-transparent text-base font-bold outline-none"
+                                        @change="syncDistrict('from')"
                                     >
-                                        {{ province.name }}
-                                    </option>
-                                </select>
-                            </label>
+                                        <option value="" disabled>
+                                            Chọn tỉnh/thành
+                                        </option>
+                                        <option
+                                            v-for="province in provinces"
+                                            :key="province.code"
+                                            :value="province.code"
+                                        >
+                                            {{ province.name }}
+                                        </option>
+                                    </select>
+                                </label>
+                                <label
+                                    :class="[
+                                        'block rounded-2xl border bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100',
+                                        missingOrigin
+                                            ? 'border-red-300'
+                                            : 'border-slate-200',
+                                    ]"
+                                >
+                                    <select
+                                        v-model="fromDistrictCode"
+                                        :disabled="!fromProvinceCode"
+                                        :aria-invalid="missingOrigin"
+                                        class="w-full cursor-pointer bg-transparent text-base font-bold outline-none"
+                                    >
+                                        <option value="" disabled>
+                                            Chọn quận/huyện
+                                        </option>
+                                        <option
+                                            v-for="district in fromDistricts"
+                                            :key="district.code"
+                                            :value="district.code"
+                                        >
+                                            {{ district.name }}
+                                        </option>
+                                    </select>
+                                </label>
+                            </div>
+
+                            <div class="space-y-3">
+                                <p
+                                    class="text-center text-sm font-bold text-blue-600"
+                                >
+                                    Điểm trả
+                                </p>
+                                <label
+                                    :class="[
+                                        'block rounded-2xl border bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100',
+                                        missingDestination
+                                            ? 'border-red-300'
+                                            : 'border-slate-200',
+                                    ]"
+                                >
+                                    <select
+                                        v-model="toProvinceCode"
+                                        :aria-invalid="missingDestination"
+                                        class="w-full cursor-pointer bg-transparent text-base font-bold outline-none"
+                                        @change="syncDistrict('to')"
+                                    >
+                                        <option value="" disabled>
+                                            Chọn tỉnh/thành
+                                        </option>
+                                        <option
+                                            v-for="province in provinces"
+                                            :key="province.code"
+                                            :value="province.code"
+                                        >
+                                            {{ province.name }}
+                                        </option>
+                                    </select>
+                                </label>
+                                <label
+                                    :class="[
+                                        'block rounded-2xl border bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100',
+                                        missingDestination
+                                            ? 'border-red-300'
+                                            : 'border-slate-200',
+                                    ]"
+                                >
+                                    <select
+                                        v-model="toDistrictCode"
+                                        :disabled="!toProvinceCode"
+                                        :aria-invalid="missingDestination"
+                                        class="w-full cursor-pointer bg-transparent text-base font-bold outline-none"
+                                    >
+                                        <option value="" disabled>
+                                            Chọn quận/huyện
+                                        </option>
+                                        <option
+                                            v-for="district in toDistricts"
+                                            :key="district.code"
+                                            :value="district.code"
+                                        >
+                                            {{ district.name }}
+                                        </option>
+                                    </select>
+                                </label>
+                            </div>
+
                             <button
                                 type="button"
-                                aria-label="Đổi điểm đi và điểm đến"
+                                aria-label="Đổi điểm đón và điểm trả"
                                 class="absolute top-1/2 left-1/2 z-10 hidden size-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-blue-200 bg-white text-blue-600 shadow-sm transition-transform duration-150 hover:scale-105 sm:flex"
                                 @click="swapCities"
                             >
@@ -404,84 +487,6 @@ onMounted(async () => {
                                     />
                                 </svg>
                             </button>
-                            <label
-                                :class="[
-                                    'rounded-2xl border bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100',
-                                    missingOrigin
-                                        ? 'border-red-300'
-                                        : 'border-slate-200',
-                                ]"
-                            >
-                                <select
-                                    v-model="fromDistrictCode"
-                                    :disabled="!fromProvinceCode"
-                                    :aria-invalid="missingOrigin"
-                                    class="w-full cursor-pointer bg-transparent text-base font-bold outline-none"
-                                >
-                                    <option value="" disabled>
-                                        Chọn quận/huyện
-                                    </option>
-                                    <option
-                                        v-for="district in fromDistricts"
-                                        :key="district.code"
-                                        :value="district.code"
-                                    >
-                                        {{ district.name }}
-                                    </option>
-                                </select>
-                            </label>
-                            <label
-                                :class="[
-                                    'rounded-2xl border bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100',
-                                    missingDestination
-                                        ? 'border-red-300'
-                                        : 'border-slate-200',
-                                ]"
-                            >
-                                <select
-                                    v-model="toProvinceCode"
-                                    :aria-invalid="missingDestination"
-                                    class="w-full cursor-pointer bg-transparent text-base font-bold outline-none"
-                                    @change="syncDistrict('to')"
-                                >
-                                    <option value="" disabled>
-                                        Chọn tỉnh/thành
-                                    </option>
-                                    <option
-                                        v-for="province in provinces"
-                                        :key="province.code"
-                                        :value="province.code"
-                                    >
-                                        {{ province.name }}
-                                    </option>
-                                </select>
-                            </label>
-                            <label
-                                :class="[
-                                    'rounded-2xl border bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100',
-                                    missingDestination
-                                        ? 'border-red-300'
-                                        : 'border-slate-200',
-                                ]"
-                            >
-                                <select
-                                    v-model="toDistrictCode"
-                                    :disabled="!toProvinceCode"
-                                    :aria-invalid="missingDestination"
-                                    class="w-full cursor-pointer bg-transparent text-base font-bold outline-none"
-                                >
-                                    <option value="" disabled>
-                                        Chọn quận/huyện
-                                    </option>
-                                    <option
-                                        v-for="district in toDistricts"
-                                        :key="district.code"
-                                        :value="district.code"
-                                    >
-                                        {{ district.name }}
-                                    </option>
-                                </select>
-                            </label>
                         </div>
 
                         <p
