@@ -344,14 +344,14 @@ onMounted(async () => {
                             </div>
                         </div>
 
-                        <div class="mb-2 grid grid-cols-2 gap-3 px-1 sm:gap-5">
+                        <div class="mb-3 grid grid-cols-2 gap-3 px-1 sm:gap-5">
                             <span
-                                class="text-center text-lg font-semibold text-red-500 sm:text-xl"
+                                class="text-center text-sm font-bold text-blue-600"
                             >
                                 Điểm đón
                             </span>
                             <span
-                                class="text-center text-lg font-semibold text-red-500 sm:text-xl"
+                                class="text-center text-sm font-bold text-blue-600"
                             >
                                 Điểm trả
                             </span>
