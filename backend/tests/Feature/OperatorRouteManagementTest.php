@@ -182,6 +182,43 @@ it('chỉ liệt kê route thuộc operator đang đăng nhập', function () {
         ->assertJsonPath('data.0.id', $ownRoute->id);
 });
 
+it('hỗ trợ tìm kiếm và lọc trạng thái tuyến trong phạm vi operator', function () {
+    $operator = makeRouteOperator('A');
+    $active = Route::create([
+        'operator_id' => $operator->id,
+        'name' => 'Hà Nội → Hải Phòng',
+        'origin_city' => 'Hà Nội',
+        'origin_district' => 'Quận Ba Đình',
+        'dest_city' => 'Hải Phòng',
+        'dest_district' => 'Quận Hồng Bàng',
+        'base_price' => 100000,
+        'is_active' => true,
+    ]);
+    $inactive = Route::create([
+        'operator_id' => $operator->id,
+        'name' => 'Hải Phòng → Hà Nội',
+        'origin_city' => 'Hải Phòng',
+        'origin_district' => 'Quận Hồng Bàng',
+        'dest_city' => 'Hà Nội',
+        'dest_district' => 'Quận Ba Đình',
+        'base_price' => 100000,
+        'is_active' => false,
+    ]);
+    actingAsRouteOperator($operator);
+
+    $this->getJson('/api/operator/routes?search=Ba%20%C4%90%C3%ACnh&status=all')
+        ->assertOk()
+        ->assertJsonCount(2, 'data');
+    $this->getJson('/api/operator/routes?status=inactive')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $inactive->id);
+    $this->getJson('/api/operator/routes?search=H%C3%A0%20N%E1%BB%99i&status=active')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $active->id);
+});
+
 it('ẩn route của operator khác trên show update và destroy', function () {
     $operator = makeRouteOperator('A');
     $other = makeRouteOperator('B');

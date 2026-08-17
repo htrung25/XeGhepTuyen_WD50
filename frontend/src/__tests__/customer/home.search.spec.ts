@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Home from '@/pages/customer/Home.vue';
 
@@ -16,6 +16,29 @@ vi.mock('vue-router', () => ({
 // Toast giả — tránh side effect UI, cho phép assert đã báo lỗi.
 vi.mock('vue-sonner', () => ({
     toast: { error: toastError },
+}));
+
+vi.mock('@/api/geo.api', () => ({
+    geoApi: {
+        getProvinces: vi.fn().mockResolvedValue([
+            {
+                code: '01',
+                name: 'Hà Nội',
+                districts: [{ code: '005', name: 'Cầu Giấy' }],
+            },
+            {
+                code: '31',
+                name: 'Hải Phòng',
+                districts: [{ code: '303', name: 'Hồng Bàng' }],
+            },
+        ]),
+    },
+}));
+
+vi.mock('@/api/customer.api', () => ({
+    customerApi: {
+        getPublicVouchers: vi.fn().mockResolvedValue({ data: [] }),
+    },
 }));
 
 // Store giả tối thiểu theo những gì Home.vue dùng.
@@ -40,15 +63,12 @@ describe('Home search guard — điểm đi phải khác điểm đến', () => 
 
     it('không điều hướng và báo lỗi khi điểm đi trùng điểm đến', async () => {
         const wrapper = mountHome();
-        const vm = wrapper.vm as unknown as {
-            fromCity: string;
-            toCity: string;
-            search: () => void;
-        };
-
-        vm.fromCity = 'Hà Nội';
-        vm.toCity = 'Hà Nội';
-        vm.search();
+        await flushPromises();
+        (
+            wrapper.vm as unknown as {
+                searchPopular: (from: string, to: string) => void;
+            }
+        ).searchPopular('Hà Nội', 'Hà Nội');
 
         expect(push).not.toHaveBeenCalled();
         expect(toastError).toHaveBeenCalled();
@@ -56,15 +76,12 @@ describe('Home search guard — điểm đi phải khác điểm đến', () => 
 
     it('điều hướng sang /search khi điểm đi khác điểm đến', async () => {
         const wrapper = mountHome();
-        const vm = wrapper.vm as unknown as {
-            fromCity: string;
-            toCity: string;
-            search: () => void;
-        };
-
-        vm.fromCity = 'Hà Nội';
-        vm.toCity = 'Hải Phòng';
-        vm.search();
+        await flushPromises();
+        (
+            wrapper.vm as unknown as {
+                searchPopular: (from: string, to: string) => void;
+            }
+        ).searchPopular('Hà Nội', 'Hải Phòng');
 
         expect(push).toHaveBeenCalledWith('/search');
         expect(toastError).not.toHaveBeenCalled();

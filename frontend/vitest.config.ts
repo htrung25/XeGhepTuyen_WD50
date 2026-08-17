@@ -11,6 +11,12 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    environmentOptions: {
+      jsdom: {
+        // A concrete origin enables jsdom localStorage (about:blank is opaque).
+        url: 'http://localhost',
+      },
+    },
     setupFiles: ['./src/__tests__/setup.ts'],
     include: ['src/**/*.spec.ts'],
     clearMocks: true,

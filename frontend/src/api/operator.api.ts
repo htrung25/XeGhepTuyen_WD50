@@ -96,7 +96,8 @@ export const operatorApi = {
     getOnboardingFleet: () => apiClient.send(fleet()),
 
     // Routes
-    getRoutes: () => apiClient.send(routesIndex()),
+    getRoutes: (params?: Params) =>
+        apiClient.send(routesIndex({ query: params as QueryParams })),
     getRoute: (id: string) => apiClient.send(routeShow(id)),
     createRoute: (data: OperatorRoutePayload) =>
         apiClient.send(routeStore(), data),

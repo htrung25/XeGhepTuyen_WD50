@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { geoApi } from '@/api/geo.api';
 import { operatorApi } from '@/api/operator.api';
 import type { OperatorRoutePayload } from '@/api/operator.api';
@@ -23,6 +23,9 @@ interface RouteRow {
 const routes = ref<RouteRow[]>([]);
 const isLoading = ref(true);
 const errorMsg = ref('');
+const routeSearch = ref('');
+const routeStatusFilter = ref('all');
+let routeSearchTimer: ReturnType<typeof setTimeout> | undefined;
 
 // Modal state
 const showModal = ref(false);
@@ -50,7 +53,10 @@ const fmtMoney = (n: number) => new Intl.NumberFormat('vi-VN').format(n) + 'đ';
 const loadRoutes = async () => {
     isLoading.value = true;
     errorMsg.value = '';
-    const { data, error } = await operatorApi.getRoutes();
+    const { data, error } = await operatorApi.getRoutes({
+        search: routeSearch.value.trim() || undefined,
+        status: routeStatusFilter.value,
+    });
     isLoading.value = false;
     if (error) {
         errorMsg.value = 'Không thể tải danh sách tuyến đường';
@@ -58,6 +64,16 @@ const loadRoutes = async () => {
     }
     routes.value = data ?? [];
 };
+
+const resetRouteFilters = () => {
+    routeSearch.value = '';
+    routeStatusFilter.value = 'all';
+};
+
+watch([routeSearch, routeStatusFilter], () => {
+    if (routeSearchTimer) clearTimeout(routeSearchTimer);
+    routeSearchTimer = setTimeout(() => loadRoutes(), 300);
+});
 
 // Backend tính lại giá vé của các tuyến khi bảng giá đổi ⇒ nạp lại danh sách.
 const onFareRatesSaved = () => loadRoutes();
@@ -287,6 +303,52 @@ onMounted(async () => {
         </div>
 
         <template v-else>
+            <!-- Search & filters -->
+            <div
+                class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+            >
+                <div class="grid gap-3 md:grid-cols-4">
+                    <label class="relative md:col-span-2">
+                        <span class="sr-only">Tìm kiếm tuyến đường</span>
+                        <svg
+                            class="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            viewBox="0 0 24 24"
+                        >
+                            <circle cx="11" cy="11" r="7" />
+                            <path d="m20 20-4-4" />
+                        </svg>
+                        <input
+                            v-model="routeSearch"
+                            type="search"
+                            placeholder="Tìm tên tuyến, tỉnh hoặc huyện..."
+                            class="w-full rounded-lg border border-slate-200 py-2 pr-3 pl-9 text-sm transition outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                        />
+                    </label>
+                    <select
+                        v-model="routeStatusFilter"
+                        class="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                    >
+                        <option value="all">Tất cả trạng thái</option>
+                        <option value="active">Đang hoạt động</option>
+                        <option value="inactive">Tạm ngừng</option>
+                    </select>
+                    <button
+                        v-if="routeSearch || routeStatusFilter !== 'all'"
+                        type="button"
+                        class="rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-500 transition hover:bg-slate-50 hover:text-slate-800 md:text-right"
+                        @click="resetRouteFilters"
+                    >
+                        Xóa bộ lọc
+                    </button>
+                </div>
+                <p class="mt-2 text-xs text-slate-400">
+                    {{ routes.length }} tuyến phù hợp
+                </p>
+            </div>
+
             <!-- Empty -->
             <div
                 v-if="routes.length === 0"
@@ -305,8 +367,15 @@ onMounted(async () => {
                         d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
                     />
                 </svg>
-                <p class="font-medium">Chưa có tuyến đường nào</p>
+                <p class="font-medium">
+                    {{
+                        routeSearch || routeStatusFilter !== 'all'
+                            ? 'Không tìm thấy tuyến phù hợp'
+                            : 'Chưa có tuyến đường nào'
+                    }}
+                </p>
                 <button
+                    v-if="!routeSearch && routeStatusFilter === 'all'"
                     class="mt-3 rounded-lg bg-amber-500 px-4 py-2 text-sm text-white transition-colors hover:bg-amber-600"
                     @click="openCreate"
                 >

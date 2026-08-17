@@ -11,6 +11,7 @@ use App\Services\FarePricingService;
 use App\Services\RouteUniquenessService;
 use App\Services\VietnamAdministrative;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -21,13 +22,34 @@ class RouteController extends Controller
         private readonly RouteUniquenessService $uniqueness,
     ) {}
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $operator = auth('operator')->user()->operator;
 
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'status' => ['nullable', 'in:active,inactive,all'],
+        ]);
+
         $routes = $operator->routes()
-            ->active()
+            // Các màn hình nghiệp vụ mặc định chỉ dùng tuyến đang hoạt động.
+            // Trang quản lý truyền status=all để có thể tìm và khôi phục tuyến tạm ngừng.
+            ->when(($validated['status'] ?? 'active') === 'active', fn ($query) => $query->active())
+            ->when(($validated['status'] ?? null) === 'inactive', fn ($query) => $query->where('is_active', false))
+            ->when($validated['search'] ?? null, function ($query, string $search): void {
+                // LIKE dùng collation của DB (case-insensitive ở production);
+                // giữ nguyên Unicode để không làm hỏng chữ Việt khi chạy SQLite.
+                $term = '%'.trim($search).'%';
+                $query->where(function ($query) use ($term): void {
+                    $query->where('name', 'like', $term)
+                        ->orWhere('origin_city', 'like', $term)
+                        ->orWhere('origin_district', 'like', $term)
+                        ->orWhere('dest_city', 'like', $term)
+                        ->orWhere('dest_district', 'like', $term);
+                });
+            })
             ->with(['pickupServiceArea', 'dropoffServiceArea'])
+            ->orderBy('name')
             ->get();
 
         return response()->json(['success' => true, 'data' => $routes]);
