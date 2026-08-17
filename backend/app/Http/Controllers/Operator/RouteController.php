@@ -26,6 +26,7 @@ class RouteController extends Controller
         $operator = auth('operator')->user()->operator;
 
         $routes = $operator->routes()
+            ->active()
             ->with(['pickupServiceArea', 'dropoffServiceArea'])
             ->get();
 

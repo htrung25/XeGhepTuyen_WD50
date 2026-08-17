@@ -165,6 +165,10 @@ it('chỉ liệt kê route thuộc operator đang đăng nhập', function () {
     Route::create([
         'operator_id' => $other->id, 'name' => 'Tuyến B', 'base_price' => 100000,
     ]);
+    Route::create([
+        'operator_id' => $operator->id, 'name' => 'Tuyến đã tắt', 'base_price' => 100000,
+        'is_active' => false,
+    ]);
     actingAsRouteOperator($operator);
 
     $this->getJson('/api/operator/routes')

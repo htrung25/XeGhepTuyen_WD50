@@ -44,16 +44,6 @@ interface RouteOption {
     base_price: number;
 }
 
-function routePlaceLabel(
-    city: string,
-    district?: string | null,
-    serviceArea?: { name?: string | null } | null,
-) {
-    const resolvedDistrict = district || serviceArea?.name;
-    return resolvedDistrict && resolvedDistrict !== city
-        ? `${resolvedDistrict} - ${city}`
-        : city;
-}
 interface VehicleOption {
     id: string;
     label: string;
@@ -323,14 +313,7 @@ const load = async () => {
     trips.value = (tripsRes.data as TripBlock[]) ?? [];
     routes.value = ((routesRes.data as any[]) ?? []).map((r: any) => ({
         id: r.id,
-        label: (() => {
-            const locationLabel = `${routePlaceLabel(r.origin_city, r.origin_district, r.pickup_service_area)} → ${routePlaceLabel(r.dest_city, r.dest_district, r.dropoff_service_area)}`;
-            const configuredName = r.name?.trim();
-
-            return configuredName && configuredName !== locationLabel
-                ? `${locationLabel} · ${configuredName}`
-                : locationLabel;
-        })(),
+        label: r.name?.trim() ?? '',
         base_price: Number(r.base_price ?? 0),
     }));
     vehicles.value = ((vehiclesRes.data as any[]) ?? []).map((v: any) => ({
