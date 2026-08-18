@@ -213,6 +213,7 @@ const vehicleTypeLabels: Record<string, string> = {
     sedan_4: 'Sedan 4 chỗ',
     mpv_7: 'SUV/MPV 7 chỗ',
     van_9: 'Limousine 9 chỗ',
+    limousine_12: 'Limousine 12 chỗ',
     minibus_16: 'Xe khách 16 chỗ',
 };
 

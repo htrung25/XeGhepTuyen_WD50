@@ -51,7 +51,7 @@ export interface SeatInfo {
     seat_code: string;
     seat_type: string;
     price: number;
-    status: 'available' | 'booked' | 'locked' | 'driver';
+    status: 'available' | 'booked' | 'locked' | 'disabled' | 'driver';
 }
 
 export interface BookingDraft {

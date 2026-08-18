@@ -2,6 +2,7 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { adminApi } from '@/api/admin.api';
 import { useCan } from '@/composables/useCan';
+import { formatVehicleType } from '@/lib/vehicle-type';
 const { can } = useCan();
 
 interface OperatorDoc {
@@ -1420,7 +1421,13 @@ onMounted(() => {
                                             <p
                                                 class="mt-0.5 text-xs font-medium text-gray-500"
                                             >
-                                                Loại: {{ v.vehicle_type }} ·
+                                                Loại:
+                                                {{
+                                                    formatVehicleType(
+                                                        v.vehicle_type,
+                                                    )
+                                                }}
+                                                ·
                                                 {{ v.seat_count }} chỗ · Năm SX:
                                                 {{ v.manufacture_year || '—' }}
                                             </p>

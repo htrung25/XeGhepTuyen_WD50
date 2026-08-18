@@ -39,7 +39,9 @@ function toggleSeat(s: SeatInfo) {
 // ứng với ĐÚNG MỘT hàng ghế vật lý, sắp theo thứ tự số trong hàng để khớp
 // đúng slot của layout bên dưới.
 const seatGrid = computed(() => {
-    const seatList = seats.value.filter((s) => s.status !== 'driver');
+    const seatList = seats.value.filter(
+        (s) => s.status !== 'driver' && s.status !== 'disabled',
+    );
     const rowsByPrefix = new Map<string, SeatInfo[]>();
     for (const seat of seatList) {
         const rowKey = seat.seat_code.replace(/\d+$/, '');
@@ -104,6 +106,21 @@ const VEHICLE_LAYOUTS: Record<string, VehicleLayout> = {
             [0, 2],
             [0, 2],
             [0, 1, 2],
+        ],
+    },
+    // Limousine 12 chỗ: 2 ghế đầu cạnh tài xế và 5 hàng ghế thương gia đôi,
+    // mỗi hàng chừa lối đi ở giữa.
+    limousine_12: {
+        colWidths: [SEAT_W, SEAT_W, SEAT_W],
+        driverCol: 0,
+        partition: true,
+        rows: [
+            [1, 2],
+            [0, 2],
+            [0, 2],
+            [0, 2],
+            [0, 2],
+            [0, 2],
         ],
     },
     // Minibus 16 chỗ: tài xế + 1 khách hàng đầu; 4 hàng ghế 1+2 với lối đi hẹp

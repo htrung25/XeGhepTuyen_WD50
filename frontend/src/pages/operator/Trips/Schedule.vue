@@ -3,6 +3,7 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { operatorApi } from '@/api/operator.api';
 import { formatRouteLabel } from '@/lib/route-label';
+import { formatVehicleType } from '@/lib/vehicle-type';
 
 const currentRoute = useRoute();
 
@@ -321,7 +322,7 @@ const load = async () => {
     }));
     vehicles.value = ((vehiclesRes.data as any[]) ?? []).map((v: any) => ({
         id: v.id,
-        label: `${v.plate_number} — ${v.vehicle_type}`,
+        label: `${v.plate_number} — ${formatVehicleType(v.vehicle_type)}`,
         driver_id: v.current_driver_id ?? null,
     }));
     // Chỉ tài xế đã được admin duyệt (verified) mới được xếp vào chuyến

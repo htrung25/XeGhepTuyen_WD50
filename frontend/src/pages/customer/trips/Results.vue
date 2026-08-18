@@ -12,6 +12,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { formatPlaceLabel } from '@/lib/route-label';
+import { formatVehicleType } from '@/lib/vehicle-type';
 import { useCustomerStore } from '@/stores/customer.store';
 import type { TripResult } from '@/stores/customer.store';
 
@@ -42,6 +43,7 @@ const timeOptions = [
 const typeOptions = [
     { key: 'mpv_7', label: '7 chỗ' },
     { key: 'van_9', label: '9 chỗ' },
+    { key: 'limousine_12', label: 'Limousine 12 chỗ' },
     { key: 'minibus_16', label: '16 chỗ' },
 ];
 
@@ -62,11 +64,7 @@ const filtered = computed(() => {
 
     if (filterType.value.length) {
         list = list.filter((t) =>
-            filterType.value.some((f) =>
-                t.vehicle?.vehicle_type
-                    ?.toLowerCase()
-                    .includes(f.split('_')[0]),
-            ),
+            filterType.value.includes(t.vehicle?.vehicle_type ?? ''),
         );
     }
 
@@ -94,13 +92,6 @@ function fmtDuration(min: number) {
     const h = Math.floor(min / 60);
     const m = min % 60;
     return m ? `${h}h${m}p` : `${h}h`;
-}
-
-function vehicleLabel(type: string) {
-    if (!type) return '7 chỗ';
-    if (type.includes('16')) return '16 chỗ';
-    if (type.includes('9')) return '9 chỗ';
-    return '7 chỗ';
 }
 
 function selectTrip(trip: TripResult) {
@@ -442,7 +433,7 @@ onMounted(async () => {
                                         class="inline-flex rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600"
                                     >
                                         {{
-                                            vehicleLabel(
+                                            formatVehicleType(
                                                 trip.vehicle?.vehicle_type,
                                             )
                                         }}

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import { operatorApi } from '@/api/operator.api';
+import { formatVehicleType, VEHICLE_TYPE_OPTIONS } from '@/lib/vehicle-type';
 
 interface Vehicle {
     id: string;
@@ -153,12 +154,7 @@ async function confirmAssign() {
 }
 
 // ─── Thêm xe ──────────────────────────────────────────────────────────────
-const vehicleTypes = [
-    { value: 'sedan_4', label: 'Sedan (4 chỗ)', seats: 4 },
-    { value: 'mpv_7', label: 'MPV (7 chỗ)', seats: 7 },
-    { value: 'van_9', label: 'Van (9 chỗ)', seats: 9 },
-    { value: 'minibus_16', label: 'Minibus (16 chỗ)', seats: 16 },
-];
+const vehicleTypes = VEHICLE_TYPE_OPTIONS;
 const amenityOptions = ['wifi', 'ac', 'usb', 'water', 'tv'];
 
 const emptyVehicle = () => ({
@@ -633,7 +629,7 @@ onMounted(fetchData);
                                 </div>
                             </td>
                             <td class="px-5 py-3 text-gray-700">
-                                {{ v.vehicle_type }}
+                                {{ formatVehicleType(v.vehicle_type) }}
                             </td>
                             <td
                                 class="px-5 py-3 text-center font-medium text-gray-800"
@@ -769,7 +765,9 @@ onMounted(fetchData);
                                     <span
                                         class="ml-1 font-sans text-xs text-gray-400"
                                         >{{
-                                            d.current_vehicle.vehicle_type
+                                            formatVehicleType(
+                                                d.current_vehicle.vehicle_type,
+                                            )
                                         }}</span
                                     >
                                 </span>
@@ -882,10 +880,8 @@ onMounted(fetchData);
                                 :key="v.id"
                                 :value="v.id"
                             >
-                                {{ v.plate_number }} — {{ v.vehicle_type }} ({{
-                                    v.seat_count
-                                }}
-                                chỗ)
+                                {{ v.plate_number }} —
+                                {{ formatVehicleType(v.vehicle_type) }}
                             </option>
                         </select>
                     </div>
@@ -996,10 +992,12 @@ onMounted(fetchData);
                             <input
                                 v-model.number="newVehicle.seat_count"
                                 type="number"
-                                min="4"
-                                max="50"
-                                class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                                readonly
+                                class="w-full cursor-not-allowed rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600"
                             />
+                            <p class="mt-1 text-xs text-gray-400">
+                                Tự động theo loại xe đã chọn
+                            </p>
                         </div>
                         <div>
                             <label
@@ -1599,12 +1597,9 @@ onMounted(fetchData);
                                     >
                                     <span class="font-semibold text-slate-800">
                                         {{
-                                            vehicleTypes.find(
-                                                (t) =>
-                                                    t.value ===
-                                                    selectedVehicle?.vehicle_type,
-                                            )?.label ??
-                                            selectedVehicle?.vehicle_type
+                                            formatVehicleType(
+                                                selectedVehicle?.vehicle_type,
+                                            )
                                         }}
                                     </span>
                                 </div>
@@ -1916,15 +1911,11 @@ onMounted(fetchData);
                                         </p>
                                         <p class="text-[10px] text-slate-500">
                                             {{
-                                                vehicleTypes.find(
-                                                    (t) =>
-                                                        t.value ===
-                                                        selectedDriver
-                                                            ?.current_vehicle
-                                                            ?.vehicle_type,
-                                                )?.label ??
-                                                selectedDriver?.current_vehicle
-                                                    ?.vehicle_type
+                                                formatVehicleType(
+                                                    selectedDriver
+                                                        ?.current_vehicle
+                                                        ?.vehicle_type,
+                                                )
                                             }}
                                         </p>
                                     </div>

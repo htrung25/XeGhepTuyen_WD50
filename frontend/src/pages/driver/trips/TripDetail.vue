@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { driverApi } from '@/api/driver.api';
 import { formatRouteLabel } from '@/lib/route-label';
+import { formatVehicleType } from '@/lib/vehicle-type';
 import { useDriverStore } from '@/stores/driver.store';
 import type { Passenger } from '@/stores/driver.store';
 
@@ -284,7 +285,11 @@ onMounted(async () => {
                         <div>
                             <p class="text-xs text-gray-400">Loại xe</p>
                             <p class="mt-0.5 font-semibold text-gray-900">
-                                {{ trip.vehicle?.vehicle_type }}
+                                {{
+                                    formatVehicleType(
+                                        trip.vehicle?.vehicle_type,
+                                    )
+                                }}
                             </p>
                         </div>
                         <div>
