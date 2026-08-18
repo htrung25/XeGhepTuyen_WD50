@@ -618,27 +618,26 @@ class TripService
     }
 
     /**
-     * Sơ đồ ghế theo MẶT CẮT NGANG THẬT của từng loại xe (mỗi chữ cái = đúng
-     * một hàng ghế vật lý, theo thứ tự từ đầu xe xuống đuôi xe):
+     * Sơ đồ ghế theo MẶT CẮT NGANG THẬT của từng loại xe. Thứ tự mã trong
+     * template đi từ đầu xe xuống đuôi xe và khớp ma trận riêng ở frontend:
      *  - sedan_4:   đầu xe (tài xế + A1) → hàng ghế sau 3 chỗ (B1-B3)
      *  - mpv_7:     đầu xe (tài xế + A1) → 2 hàng ghế sau, mỗi hàng 3 chỗ
      *  - van_9:     đầu xe (tài xế + A1,A2) → 2 hàng ghế đơn có lối đi giữa
-     *               (B1|B2, C1|C2) → hàng ghế cuối 3 chỗ (D1-D3) — đúng bố
-     *               trí limousine 9 chỗ thực tế
+     *               (B1|B2, B3|B4) → hàng ghế cuối 3 chỗ (C1-C3)
      *  - limousine_12: đầu xe (tài xế + A1,A2) → 5 hàng ghế thương gia đôi
      *                  có lối đi giữa (B-F, mỗi hàng 2 chỗ)
      *  - minibus_16: đầu xe (tài xế + A1) → 4 hàng ghế đơn+đôi có lối đi giữa
      *               (B-E, mỗi hàng 3 chỗ) → hàng ghế cuối 3 chỗ (F1-F3)
      * Dùng chung cho cả TripService (sinh ghế lúc tạo chuyến) lẫn seeder demo,
-     * tránh lệch bố trí giữa 2 nơi như trước đây (frontend suy hàng theo tiền
-     * tố chữ cái nên một chữ cái PHẢI ứng với đúng một hàng ghế vật lý).
+     * tránh lệch bố trí giữa 2 nơi như trước đây. Frontend dùng ma trận mã ghế
+     * riêng theo vehicle_type nên một nhóm chữ có thể trải trên nhiều hàng vật lý.
      */
     public static function getSeatTemplate(Vehicle $vehicle): array
     {
         return match ($vehicle->vehicle_type->value) {
             'sedan_4' => ['A1', 'B1', 'B2', 'B3'],
             'mpv_7' => ['A1', 'B1', 'B2', 'B3', 'C1', 'C2', 'C3'],
-            'van_9' => ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'D1', 'D2', 'D3'],
+            'van_9' => ['A1', 'A2', 'B1', 'B2', 'B3', 'B4', 'C1', 'C2', 'C3'],
             'limousine_12' => array_merge(
                 ['A1', 'A2'],
                 ...array_map(fn ($r) => ["{$r}1", "{$r}2"], ['B', 'C', 'D', 'E', 'F'])

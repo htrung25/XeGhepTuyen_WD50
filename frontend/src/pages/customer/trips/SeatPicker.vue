@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { customerApi } from '@/api/customer.api';
 import { formatRouteLabel } from '@/lib/route-label';
+import { VEHICLE_SEAT_ROWS } from '@/lib/vehicle-seat-layout';
 import { useCustomerAuthStore } from '@/stores/customer.auth.store';
 import { useCustomerStore } from '@/stores/customer.store';
 import type { SeatInfo } from '@/stores/customer.store';
@@ -34,14 +35,7 @@ function toggleSeat(s: SeatInfo) {
     }
 }
 
-// Nhóm ghế theo tiền tố chữ cái của seat_code (A1,A2 -> hàng "A"), đúng cấu
-// trúc hàng thật do backend sinh (TripService::getSeatTemplate) — mỗi chữ cái
-// ứng với ĐÚNG MỘT hàng ghế vật lý, sắp theo thứ tự số trong hàng để khớp
-// đúng slot của layout bên dưới.
-const seatGrid = computed(() => {
-    const seatList = seats.value.filter(
-        (s) => s.status !== 'driver' && s.status !== 'disabled',
-    );
+function groupSeatsByPrefix(seatList: SeatInfo[]): SeatInfo[][] {
     const rowsByPrefix = new Map<string, SeatInfo[]>();
     for (const seat of seatList) {
         const rowKey = seat.seat_code.replace(/\d+$/, '');
@@ -54,6 +48,40 @@ const seatGrid = computed(() => {
         row.sort((a, b) => seatNumber(a.seat_code) - seatNumber(b.seat_code));
     }
     return Array.from(rowsByPrefix.values());
+}
+
+// Dùng đúng ma trận mã ghế của từng vehicle_type. Nếu là chuyến cũ có bộ mã
+// khác quy ước hiện tại, giữ fallback theo tiền tố để không làm ẩn ghế đang bán.
+const seatGrid = computed(() => {
+    const seatList = seats.value.filter(
+        (s) => s.status !== 'driver' && s.status !== 'disabled',
+    );
+    const vehicleType = tripInfo.value?.vehicle?.vehicle_type ?? '';
+    const expectedRows = VEHICLE_SEAT_ROWS[vehicleType];
+
+    if (expectedRows) {
+        const seatsByCode = new Map(
+            seatList.map((seat) => [seat.seat_code, seat]),
+        );
+        const mappedRows = expectedRows.map((codes) =>
+            codes
+                .map((code) => seatsByCode.get(code))
+                .filter((seat): seat is SeatInfo => Boolean(seat)),
+        );
+        const mappedSeatCount = mappedRows.reduce(
+            (total, row) => total + row.length,
+            0,
+        );
+
+        if (
+            mappedSeatCount === seatList.length &&
+            mappedRows.every((row) => row.length > 0)
+        ) {
+            return mappedRows;
+        }
+    }
+
+    return groupSeatsByPrefix(seatList);
 });
 
 // ─── Sơ đồ ghế theo MẶT CẮT NGANG THẬT của từng loại xe ─────────────────────
@@ -94,9 +122,8 @@ const VEHICLE_LAYOUTS: Record<string, VehicleLayout> = {
         partition: false,
         rows: [[2], [0, 1, 2], [0, 1, 2]],
     },
-    // Limousine van 9 chỗ (Solati/H350): tài xế + 2 khách hàng đầu ngồi hết bề
-    // rộng đầu xe; 2 hàng ghế thương gia mỗi hàng 2 ghế sát 2 bên thành xe với
-    // LỐI ĐI Ở GIỮA (cột giữa bỏ trống); băng ghế cuối 3 chỗ trải hết bề rộng.
+    // Van 9 chỗ theo ảnh nghiệp vụ: A1-A2 cạnh tài xế; B1-B2 và B3-B4 là hai
+    // hàng đôi có lối đi giữa; C1-C3 là hàng cuối trải hết bề rộng.
     van_9: {
         colWidths: [SEAT_W, SEAT_W, SEAT_W],
         driverCol: 0,
