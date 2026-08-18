@@ -8,14 +8,21 @@ use App\Models\Vehicle;
 use App\Services\TripService;
 use Laravel\Sanctum\Sanctum;
 
-it('quy định đúng số ghế và sơ đồ ghế cho limousine 12 và minibus 16', function (): void {
+it('quy định đúng số ghế và sơ đồ ghế riêng cho từng loại xe', function (): void {
+    $van = new Vehicle(['vehicle_type' => VehicleTypeEnum::Van9]);
     $limousine = new Vehicle(['vehicle_type' => VehicleTypeEnum::Limousine12]);
     $minibus = new Vehicle(['vehicle_type' => VehicleTypeEnum::Minibus16]);
 
+    $vanSeats = TripService::getSeatTemplate($van);
     $limousineSeats = TripService::getSeatTemplate($limousine);
     $minibusSeats = TripService::getSeatTemplate($minibus);
 
-    expect(VehicleTypeEnum::Limousine12->seatCount())->toBe(12)
+    expect($vanSeats)->toBe([
+        'A1', 'A2',
+        'B1', 'B2',
+        'B3', 'B4',
+        'C1', 'C2', 'C3',
+    ])->and(VehicleTypeEnum::Limousine12->seatCount())->toBe(12)
         ->and($limousineSeats)->toHaveCount(12)
         ->and(array_unique($limousineSeats))->toHaveCount(12)
         ->and(VehicleTypeEnum::Minibus16->seatCount())->toBe(16)

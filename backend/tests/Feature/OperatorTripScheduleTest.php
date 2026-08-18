@@ -94,6 +94,12 @@ it('allows creating first trip when no preceding/succeeding schedules exist', fu
 
     expect($trip)->toBeInstanceOf(Trip::class);
     expect($trip->depart_at->toDateTimeString())->toBe($departAt->startOfSecond()->toDateTimeString());
+    expect($trip->seatMaps()->orderBy('seat_code')->pluck('seat_code')->all())->toBe([
+        'A1', 'A2',
+        'B1', 'B2',
+        'B3', 'B4',
+        'C1', 'C2', 'C3',
+    ]);
 });
 
 it('rejects creating a trip with a route owned by another operator', function () {
