@@ -178,4 +178,5 @@ export const operatorApi = {
     // Lịch sử vận hành của nhà xe
     getHistory: (params?: Params) =>
         apiClient.get('/operator/history', { params }),
+    getDashboardMap: () => apiClient.get('/operator/dashboard/map'),
 };

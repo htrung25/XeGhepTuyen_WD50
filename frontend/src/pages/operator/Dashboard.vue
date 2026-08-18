@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { operatorApi } from '@/api/operator.api';
-import OperatorHistoryPanel from '@/components/operator/OperatorHistoryPanel.vue';
+import OperatorFleetMap from '@/components/operator/OperatorFleetMap.vue';
+import OperatorRecentHistory from '@/components/operator/OperatorRecentHistory.vue';
 import { formatRouteLabel } from '@/lib/route-label';
 
 interface KpiData {
@@ -581,7 +582,10 @@ onMounted(() => {
                 </div>
             </div>
 
-            <OperatorHistoryPanel />
+            <div class="grid gap-6 xl:grid-cols-2">
+                <OperatorRecentHistory />
+                <OperatorFleetMap />
+            </div>
         </template>
     </div>
 </template>

@@ -280,6 +280,35 @@ it('API lịch sử chỉ trả dữ liệu của nhà xe đang đăng nhập v�
         ->assertJsonMissing(['title' => 'Không được lộ']);
 });
 
+it('API bản đồ operator chỉ trả xe đang chạy thuộc nhà xe đăng nhập', function () {
+    $first = unavailCtx();
+    $second = unavailCtx();
+    $first['driver']->update([
+        'current_lat' => 20.8449,
+        'current_lng' => 106.6881,
+        'location_updated_at' => now(),
+    ]);
+    $second['driver']->update([
+        'current_lat' => 21.0285,
+        'current_lng' => 105.8542,
+        'location_updated_at' => now(),
+    ]);
+    $visible = mkTrip($first, ['status' => TripStatusEnum::InProgress]);
+    mkTrip($second, ['status' => TripStatusEnum::InProgress]);
+    mkTrip($first, ['status' => TripStatusEnum::Scheduled]);
+
+    Sanctum::actingAs($first['opUser'], ['*'], 'sanctum');
+    Sanctum::actingAs($first['opUser'], ['*'], 'operator');
+
+    $this->getJson('/api/operator/dashboard/map')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $visible->id)
+        ->assertJsonPath('data.0.vehicle_plate', $first['vehicle']->plate_number)
+        ->assertJsonPath('data.0.lat', 20.8449)
+        ->assertJsonMissing(['vehicle_plate' => $second['vehicle']->plate_number]);
+});
+
 it('xác nhận đặt chỗ được đưa vào lịch sử nhà xe đúng một lần', function () {
     $c = unavailCtx();
     $trip = mkTrip($c);

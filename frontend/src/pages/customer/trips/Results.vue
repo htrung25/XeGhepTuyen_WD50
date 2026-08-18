@@ -3,7 +3,6 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
 import { customerApi } from '@/api/customer.api';
-import { formatPlaceLabel } from '@/lib/route-label';
 import {
     Dialog,
     DialogContent,
@@ -12,6 +11,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { formatPlaceLabel } from '@/lib/route-label';
 import { useCustomerStore } from '@/stores/customer.store';
 import type { TripResult } from '@/stores/customer.store';
 

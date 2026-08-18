@@ -25,6 +25,11 @@ describe('operatorApi → Wayfinder route contract', () => {
         });
     });
 
+    it('getDashboardMap requests live trips scoped to the operator', () => {
+        operatorApi.getDashboardMap();
+        expect(apiClient.get).toHaveBeenCalledWith('/operator/dashboard/map');
+    });
+
     it('login resolves to POST /api/operator/auth/login', () => {
         operatorApi.login({ phone: '0912345678', password: 'secret' });
         expect(apiClient.send).toHaveBeenCalledWith(
