@@ -17,6 +17,7 @@ const fleet = reactive<Record<string, number | ''>>({
     sedan_4: '',
     mpv_7: '',
     van_9: '',
+    limousine_12: '',
     minibus_16: '',
 });
 
@@ -27,6 +28,11 @@ const fleetTypes = [
         key: 'van_9',
         label: 'Xe 9 chỗ – Limousine',
         hint: 'Van / Limousine 9 chỗ',
+    },
+    {
+        key: 'limousine_12',
+        label: 'Xe 12 chỗ – Limousine',
+        hint: 'Limousine cao cấp 12 chỗ',
     },
     { key: 'minibus_16', label: 'Xe 16 chỗ', hint: 'Minibus 16 chỗ' },
 ];

@@ -79,6 +79,7 @@ class PartnerApplication extends Model
         'sedan_4' => 'xe 4 chỗ',
         'mpv_7' => 'xe 7 chỗ',
         'van_9' => 'xe 9 chỗ (limousine)',
+        'limousine_12' => 'xe limousine 12 chỗ',
         'minibus_16' => 'xe 16 chỗ',
     ];
 

@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { adminApi } from '@/api/admin.api';
 import MapboxMap from '@/components/MapboxMap.vue';
 import type { MapMarker } from '@/components/MapboxMap.vue';
+import { formatVehicleType } from '@/lib/vehicle-type';
 
 interface LiveTrip {
     id: string;
@@ -405,7 +406,14 @@ onUnmounted(() => {
                                         class="mt-1.5 flex items-center gap-3 text-xs text-gray-600"
                                     >
                                         <span>👤 {{ t.driver_name }}</span>
-                                        <span>🚌 {{ t.vehicle_type }}</span>
+                                        <span
+                                            >🚌
+                                            {{
+                                                formatVehicleType(
+                                                    t.vehicle_type,
+                                                )
+                                            }}</span
+                                        >
                                     </div>
                                     <div
                                         class="mt-1 flex items-center gap-3 text-xs text-gray-500"

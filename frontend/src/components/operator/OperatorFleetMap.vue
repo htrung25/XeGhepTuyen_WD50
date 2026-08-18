@@ -65,30 +65,33 @@ onUnmounted(() => {
         <MapboxMap :markers="markers" :zoom="8" @select="selectTrip" />
 
         <div
-            class="pointer-events-none absolute top-5 left-5 z-10 min-w-52 rounded-xl border border-white/70 bg-white/95 p-4 shadow-lg backdrop-blur"
+            aria-label="Trạng thái định vị trực tuyến"
+            class="pointer-events-none absolute top-3 left-3 z-10 max-w-[calc(100%-1.5rem)] min-w-40 rounded-lg border border-white/70 bg-white/95 p-2.5 shadow-md backdrop-blur"
         >
-            <div class="flex items-center gap-2">
-                <span class="relative flex h-2.5 w-2.5">
+            <div class="flex items-center gap-1.5">
+                <span class="relative flex h-2 w-2">
                     <span
                         v-if="trips.length > 0"
                         class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60"
                     />
                     <span
-                        class="relative inline-flex h-2.5 w-2.5 rounded-full"
+                        class="relative inline-flex h-2 w-2 rounded-full"
                         :class="
                             trips.length > 0 ? 'bg-emerald-500' : 'bg-slate-300'
                         "
                     />
                 </span>
-                <h2 class="font-semibold text-slate-800">Định vị trực tuyến</h2>
+                <h2 class="text-sm font-semibold text-slate-800">
+                    Định vị trực tuyến
+                </h2>
             </div>
-            <p v-if="loading" class="mt-2 text-sm text-slate-500">
+            <p v-if="loading" class="mt-1 text-xs text-slate-500">
                 Đang tải vị trí xe...
             </p>
-            <p v-else-if="error" class="mt-2 text-sm text-red-600">
+            <p v-else-if="error" class="mt-1 text-xs text-red-600">
                 Không thể tải vị trí xe
             </p>
-            <p v-else class="mt-2 text-lg font-semibold text-slate-700">
+            <p v-else class="mt-1 text-sm font-semibold text-slate-700">
                 {{ trips.length }} xe đang trên đường
             </p>
             <p

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Operator;
 
 use App\Enums\VehicleStatusEnum;
+use App\Enums\VehicleTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Operator\VehicleResource;
 use App\Models\Vehicle;
@@ -11,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class VehicleController extends Controller
 {
@@ -22,7 +24,7 @@ class VehicleController extends Controller
 
         $validated = $request->validate([
             'search' => ['nullable', 'string', 'max:100'],
-            'vehicle_type' => ['nullable', 'in:sedan_4,mpv_7,van_9,minibus_16'],
+            'vehicle_type' => ['nullable', Rule::enum(VehicleTypeEnum::class)],
             'status' => ['nullable', 'in:active,inactive'],
             'assignment' => ['nullable', 'in:assigned,unassigned'],
         ]);
@@ -62,29 +64,29 @@ class VehicleController extends Controller
     {
         $request->validate([
             'plate_number' => ['required', 'string', 'unique:vehicles,plate_number'],
-            'vehicle_type' => ['required', 'in:sedan_4,mpv_7,van_9,minibus_16'],
+            'vehicle_type' => ['required', Rule::enum(VehicleTypeEnum::class)],
             'brand' => ['required', 'string', 'max:50'],
             'model' => ['required', 'string', 'max:50'],
             'year' => ['required', 'integer', 'min:2000', 'max:2030'],
             'color' => ['required', 'string', 'max:30'],
-            'seat_count' => ['required', 'integer', 'min:4', 'max:50'],
+            'seat_count' => ['nullable', 'integer'],
             'registration_expiry' => ['required', 'date', 'after:today'],
             'amenities' => ['nullable', 'array'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:10240'],
         ], [
             'plate_number.required' => 'Vui lòng nhập biển số xe',
             'plate_number.unique' => 'Biển số xe đã tồn tại',
-            'vehicle_type.in' => 'Loại xe không hợp lệ',
+            'vehicle_type.enum' => 'Loại xe không hợp lệ',
             'brand.required' => 'Vui lòng nhập hãng xe',
             'model.required' => 'Vui lòng nhập dòng xe',
             'year.required' => 'Vui lòng nhập năm sản xuất',
             'color.required' => 'Vui lòng nhập màu xe',
-            'seat_count.required' => 'Vui lòng nhập số chỗ',
             'registration_expiry.required' => 'Vui lòng nhập hạn đăng kiểm',
             'registration_expiry.after' => 'Hạn đăng kiểm phải sau hôm nay',
         ]);
 
         $operator = auth('operator')->user()->operator;
+        $vehicleType = VehicleTypeEnum::from($request->string('vehicle_type')->toString());
 
         try {
             $imageUrl = null;
@@ -100,7 +102,8 @@ class VehicleController extends Controller
                 'model' => $request->model,
                 'year' => $request->year,
                 'color' => $request->color,
-                'seat_count' => $request->seat_count,
+                // Không tin seat_count từ client: mã loại xe là nguồn sự thật.
+                'seat_count' => $vehicleType->seatCount(),
                 'registration_expiry' => $request->registration_expiry,
                 'amenities' => $request->amenities ?? [],
                 'image_url' => $imageUrl,

@@ -7,6 +7,7 @@ enum VehicleTypeEnum: string
     case Sedan4 = 'sedan_4';
     case Mpv7 = 'mpv_7';
     case Van9 = 'van_9';
+    case Limousine12 = 'limousine_12';
     case Minibus16 = 'minibus_16';
 
     public function label(): string
@@ -15,6 +16,7 @@ enum VehicleTypeEnum: string
             self::Sedan4 => 'Sedan 4 chỗ',
             self::Mpv7 => 'MPV 7 chỗ',
             self::Van9 => 'Van 9 chỗ',
+            self::Limousine12 => 'Limousine 12 chỗ',
             self::Minibus16 => 'Minibus 16 chỗ',
         };
     }
@@ -25,6 +27,7 @@ enum VehicleTypeEnum: string
             self::Sedan4 => 4,
             self::Mpv7 => 7,
             self::Van9 => 9,
+            self::Limousine12 => 12,
             self::Minibus16 => 16,
         };
     }

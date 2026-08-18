@@ -22,6 +22,7 @@ const loadingPopular = ref(true);
 const searchAttempted = ref(false);
 const vouchers = ref<Voucher[]>([]);
 const loadingVouchers = ref(true);
+const voucherError = ref('');
 
 interface Voucher {
     id: string;
@@ -31,6 +32,7 @@ interface Voucher {
     min_order: number;
     max_discount: number | null;
     valid_until: string;
+    operator: { id: string; company_name: string } | null;
 }
 
 const fromProvince = computed(() =>
@@ -58,6 +60,7 @@ const popularRoutes = ref([
         duration: '2 giờ 30 phút',
         trips: 48,
         tag: 'Phổ biến',
+        image: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1000&q=80',
     },
     {
         from: 'Hải Phòng',
@@ -66,6 +69,7 @@ const popularRoutes = ref([
         duration: '2 giờ 30 phút',
         trips: 45,
         tag: 'Linh hoạt',
+        image: 'https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1000&q=80',
     },
     {
         from: 'Hà Nội',
@@ -74,6 +78,7 @@ const popularRoutes = ref([
         duration: '2 giờ',
         trips: 12,
         tag: 'VIP 7 chỗ',
+        image: 'https://images.unsplash.com/photo-1494783367193-149034c05e8f?auto=format&fit=crop&w=1000&q=80',
     },
 ]);
 
@@ -230,7 +235,12 @@ onMounted(async () => {
     syncDistrict('from');
     syncDistrict('to');
     loadingPopular.value = false;
-    vouchers.value = voucherResult.data ?? [];
+    if (voucherResult.error) {
+        voucherError.value = voucherResult.error;
+        vouchers.value = [];
+    } else {
+        vouchers.value = voucherResult.data ?? [];
+    }
     loadingVouchers.value = false;
 });
 </script>
@@ -345,7 +355,7 @@ onMounted(async () => {
                         </div>
 
                         <div
-                            class="relative grid gap-5 sm:grid-cols-2 sm:gap-6"
+                            class="relative grid gap-5 sm:grid-cols-[minmax(0,1fr)_2.75rem_minmax(0,1fr)] sm:gap-3"
                         >
                             <div class="space-y-3">
                                 <p
@@ -407,7 +417,9 @@ onMounted(async () => {
                                 </label>
                             </div>
 
-                            <div class="space-y-3">
+                            <div
+                                class="space-y-3 sm:col-start-3 sm:row-start-1"
+                            >
                                 <p
                                     class="text-center text-sm font-bold text-blue-600"
                                 >
@@ -470,7 +482,7 @@ onMounted(async () => {
                             <button
                                 type="button"
                                 aria-label="Đổi điểm đón và điểm trả"
-                                class="absolute top-1/2 left-1/2 z-10 hidden size-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-blue-200 bg-white text-blue-600 shadow-sm transition-transform duration-150 hover:scale-105 sm:flex"
+                                class="z-10 hidden size-9 items-center justify-center self-center justify-self-center rounded-full border border-blue-200 bg-white text-blue-600 shadow-sm transition-transform duration-150 hover:scale-105 sm:col-start-2 sm:row-start-1 sm:flex"
                                 @click="swapCities"
                             >
                                 <svg
@@ -519,7 +531,9 @@ onMounted(async () => {
                             ⇅
                         </button>
 
-                        <div class="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr]">
+                        <div
+                            class="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_2.75rem_minmax(0,1fr)]"
+                        >
                             <label
                                 class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100"
                             >
@@ -535,7 +549,7 @@ onMounted(async () => {
                                 />
                             </label>
                             <div
-                                class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+                                class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 sm:col-start-3"
                             >
                                 <div>
                                     <span
@@ -675,6 +689,15 @@ onMounted(async () => {
                         <p class="relative mt-1 text-sm text-slate-500">
                             {{ voucherDescription(voucher) }}
                         </p>
+                        <p
+                            class="relative mt-2 text-xs font-semibold text-slate-400"
+                        >
+                            Áp dụng:
+                            {{
+                                voucher.operator?.company_name ??
+                                'Toàn hệ thống'
+                            }}
+                        </p>
                         <div
                             class="relative mt-5 flex items-center justify-between border-t border-slate-200 pt-3"
                         >
@@ -694,11 +717,105 @@ onMounted(async () => {
                     </article>
                 </div>
                 <p
+                    v-else-if="voucherError"
+                    class="rounded-2xl border border-red-200 bg-red-50 p-8 text-center text-sm text-red-600"
+                >
+                    Không thể tải voucher từ hệ thống. Vui lòng thử lại sau.
+                </p>
+                <p
                     v-else
                     class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-500"
                 >
                     Hiện chưa có voucher đang hoạt động.
                 </p>
+            </div>
+        </section>
+
+        <section class="bg-slate-50 py-16 sm:py-20">
+            <div class="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+                <div class="mb-9 flex items-end justify-between gap-4">
+                    <div>
+                        <p class="text-sm font-bold text-blue-600">
+                            LỊCH TRÌNH NỔI BẬT
+                        </p>
+                        <h2
+                            class="mt-2 text-3xl leading-snug font-extrabold text-balance"
+                        >
+                            Chọn chuyến, lên đường
+                        </h2>
+                    </div>
+                    <router-link
+                        to="/search"
+                        class="hidden text-sm font-bold text-blue-600 hover:underline sm:block"
+                        >Xem tất cả chuyến →</router-link
+                    >
+                </div>
+                <div v-if="loadingPopular" class="grid gap-5 md:grid-cols-3">
+                    <div
+                        v-for="item in 3"
+                        :key="item"
+                        class="h-80 animate-pulse rounded-3xl border border-slate-200 bg-white"
+                    />
+                </div>
+                <div v-else class="grid gap-5 md:grid-cols-3">
+                    <button
+                        v-for="routeItem in popularRoutes"
+                        :key="routeItem.from + routeItem.to + routeItem.tag"
+                        type="button"
+                        class="group overflow-hidden rounded-3xl border border-slate-200 bg-white text-left shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-blue-300 hover:shadow-lg"
+                        @click="searchPopular(routeItem.from, routeItem.to)"
+                    >
+                        <div class="relative h-40 overflow-hidden">
+                            <img
+                                :src="routeItem.image"
+                                :alt="`Hành trình ${routeItem.from} đến ${routeItem.to}`"
+                                class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                loading="lazy"
+                            />
+                            <div
+                                class="absolute inset-0 bg-gradient-to-t from-slate-950/55 via-slate-950/5 to-transparent"
+                            />
+                            <span
+                                class="absolute top-4 left-4 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800 shadow-sm"
+                                >{{ routeItem.tag }}</span
+                            >
+                            <span
+                                class="absolute top-4 right-4 rounded-full bg-white/95 px-3 py-1 text-sm font-bold text-blue-600 shadow-sm"
+                                >Từ {{ fmt(routeItem.price) }}</span
+                            >
+                        </div>
+                        <div class="p-6">
+                            <div
+                                class="flex items-center gap-3 text-lg font-extrabold"
+                            >
+                                <span>{{ routeItem.from }}</span
+                                ><span
+                                    class="h-px flex-1 border-t border-dashed border-slate-300"
+                                /><svg
+                                    class="size-5 shrink-0 text-blue-600"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M5 12h14m-4-4 4 4-4 4"
+                                    /></svg
+                                ><span>{{ routeItem.to }}</span>
+                            </div>
+                            <div
+                                class="mt-6 flex items-center justify-between border-t border-slate-100 pt-4 text-sm text-slate-500"
+                            >
+                                <span>{{ routeItem.duration }}</span
+                                ><span class="tabular-nums"
+                                    >{{ routeItem.trips }} chuyến/ngày</span
+                                >
+                            </div>
+                        </div>
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -778,85 +895,6 @@ onMounted(async () => {
                             {{ feature.desc }}
                         </p>
                     </article>
-                </div>
-            </div>
-        </section>
-
-        <section class="bg-slate-50 py-16 sm:py-20">
-            <div class="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
-                <div class="mb-9 flex items-end justify-between gap-4">
-                    <div>
-                        <p class="text-sm font-bold text-blue-600">
-                            LỊCH TRÌNH NỔI BẬT
-                        </p>
-                        <h2
-                            class="mt-2 text-3xl leading-snug font-extrabold text-balance"
-                        >
-                            Chọn chuyến, lên đường
-                        </h2>
-                    </div>
-                    <router-link
-                        to="/search"
-                        class="hidden text-sm font-bold text-blue-600 hover:underline sm:block"
-                        >Xem tất cả chuyến →</router-link
-                    >
-                </div>
-                <div v-if="loadingPopular" class="grid gap-5 md:grid-cols-3">
-                    <div
-                        v-for="item in 3"
-                        :key="item"
-                        class="h-56 animate-pulse rounded-3xl border border-slate-200 bg-white p-6"
-                    >
-                        <div class="h-5 w-24 rounded bg-slate-200" />
-                        <div class="mt-7 h-7 w-full rounded bg-slate-100" />
-                        <div class="mt-4 h-12 w-full rounded bg-slate-100" />
-                    </div>
-                </div>
-                <div v-else class="grid gap-5 md:grid-cols-3">
-                    <button
-                        v-for="routeItem in popularRoutes"
-                        :key="routeItem.from + routeItem.to + routeItem.tag"
-                        type="button"
-                        class="group rounded-3xl border border-slate-200 bg-white p-6 text-left shadow-sm transition-transform duration-150 hover:-translate-y-1 hover:border-blue-300 hover:shadow-md"
-                        @click="searchPopular(routeItem.from, routeItem.to)"
-                    >
-                        <div class="flex items-center justify-between">
-                            <span
-                                class="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800"
-                                >{{ routeItem.tag }}</span
-                            ><span class="text-sm font-bold text-blue-600"
-                                >Từ {{ fmt(routeItem.price) }}</span
-                            >
-                        </div>
-                        <div
-                            class="mt-7 flex items-center gap-3 text-lg font-extrabold"
-                        >
-                            <span>{{ routeItem.from }}</span
-                            ><span
-                                class="h-px flex-1 border-t border-dashed border-slate-300"
-                            /><svg
-                                class="size-5 shrink-0 text-blue-600"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M5 12h14m-4-4 4 4-4 4"
-                                /></svg
-                            ><span>{{ routeItem.to }}</span>
-                        </div>
-                        <div
-                            class="mt-7 flex items-center justify-between border-t border-slate-100 pt-4 text-sm text-slate-500"
-                        >
-                            <span>{{ routeItem.duration }}</span
-                            ><span class="tabular-nums"
-                                >{{ routeItem.trips }} chuyến/ngày</span
-                            >
-                        </div>
-                    </button>
                 </div>
             </div>
         </section>

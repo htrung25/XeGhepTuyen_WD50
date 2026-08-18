@@ -24,6 +24,7 @@ class StorePartnerApplicationRequest extends FormRequest
             'fleet_breakdown.sedan_4' => ['nullable', 'integer', 'min:0', 'max:1000'],
             'fleet_breakdown.mpv_7' => ['nullable', 'integer', 'min:0', 'max:1000'],
             'fleet_breakdown.van_9' => ['nullable', 'integer', 'min:0', 'max:1000'],
+            'fleet_breakdown.limousine_12' => ['nullable', 'integer', 'min:0', 'max:1000'],
             'fleet_breakdown.minibus_16' => ['nullable', 'integer', 'min:0', 'max:1000'],
             'representative_name' => ['required', 'string', 'min:2', 'max:100'],
             'phone' => ['required', 'regex:'.VietnamesePhoneRule::PATTERN],
@@ -38,7 +39,7 @@ class StorePartnerApplicationRequest extends FormRequest
     {
         $validator->after(function (Validator $validator) {
             $total = collect($this->input('fleet_breakdown', []))
-                ->only(['sedan_4', 'mpv_7', 'van_9', 'minibus_16'])
+                ->only(['sedan_4', 'mpv_7', 'van_9', 'limousine_12', 'minibus_16'])
                 ->sum(fn ($v) => (int) $v);
 
             if ($total < 1) {

@@ -32,9 +32,9 @@ class PartnerApplicationService
      */
     public function submit(array $data, ?UploadedFile $license = null, array $fleetImages = []): PartnerApplication
     {
-        // Chuẩn hóa cơ cấu đội xe về 4 loại + tính tổng (không tin số tổng từ FE)
+        // Chuẩn hóa cơ cấu đội xe theo danh sách hỗ trợ + tính tổng (không tin số tổng từ FE)
         $breakdown = collect($data['fleet_breakdown'] ?? [])
-            ->only(['sedan_4', 'mpv_7', 'van_9', 'minibus_16'])
+            ->only(['sedan_4', 'mpv_7', 'van_9', 'limousine_12', 'minibus_16'])
             ->map(fn ($v) => (int) $v)
             ->all();
 
