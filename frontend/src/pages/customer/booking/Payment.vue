@@ -411,11 +411,14 @@ onUnmounted(() => {
                                 >{{ bookingData.booking_code }}</span
                             >
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-500">Tuyến</span>
-                            <span class="font-medium text-gray-900">{{
-                                bookingData?.trip?.route ?? '—'
-                            }}</span>
+                        <!-- Tên tuyến kèm quận/huyện rất dài và phải xuống dòng —
+                        thiếu gap + shrink-0 thì nhãn bị dính vào giá trị. -->
+                        <div class="flex items-start justify-between gap-4">
+                            <span class="shrink-0 text-gray-500">Tuyến</span>
+                            <span
+                                class="text-right font-medium break-words text-gray-900"
+                                >{{ bookingData?.trip?.route ?? '—' }}</span
+                            >
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-500">Ghế</span>

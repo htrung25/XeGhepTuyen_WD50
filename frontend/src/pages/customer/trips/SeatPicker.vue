@@ -613,9 +613,16 @@ onMounted(async () => {
                         v-if="tripInfo"
                         class="mb-4 space-y-3 border-b border-gray-100 pb-4"
                     >
-                        <div class="flex items-center justify-between text-sm">
-                            <span class="text-gray-500">Tuyến</span>
-                            <span class="font-medium text-gray-900">
+                        <!-- Tên tuyến nay kèm quận/huyện nên rất dài và phải xuống
+                        dòng — cần gap + shrink-0 cho nhãn, nếu không nhãn bị bóp
+                        dính vào giá trị. -->
+                        <div
+                            class="flex items-start justify-between gap-4 text-sm"
+                        >
+                            <span class="shrink-0 text-gray-500">Tuyến</span>
+                            <span
+                                class="text-right font-medium break-words text-gray-900"
+                            >
                                 {{ formatRouteLabel(tripInfo.route) }}
                             </span>
                         </div>
