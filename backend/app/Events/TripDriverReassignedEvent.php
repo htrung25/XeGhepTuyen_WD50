@@ -22,6 +22,7 @@ class TripDriverReassignedEvent
         public readonly string $oldDriverId,
         public readonly string $newDriverId,
         ?string $eventId = null,
+        public readonly ?string $actorUserId = null,
     ) {
         $this->eventId = $eventId ?? (string) Str::uuid();
     }

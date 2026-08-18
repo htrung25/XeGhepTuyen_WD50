@@ -58,13 +58,20 @@ describe('driverApi → Wayfinder route contract', () => {
     });
 
     it('reportUnavailable sends the reason to the driver trip endpoint', () => {
-        driverApi.reportUnavailable('trip-1', 'Không đảm bảo sức khỏe');
+        driverApi.reportUnavailable(
+            'trip-1',
+            'Không đảm bảo sức khỏe',
+            'driver',
+        );
         expect(apiClient.send).toHaveBeenCalledWith(
             {
                 url: '/api/driver/trips/trip-1/report-unavailable',
                 method: 'post',
             },
-            { reason: 'Không đảm bảo sức khỏe' },
+            {
+                reason: 'Không đảm bảo sức khỏe',
+                issue_type: 'driver',
+            },
         );
     });
 

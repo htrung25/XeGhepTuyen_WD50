@@ -21,6 +21,14 @@ const showConfirm = ref<'start' | 'complete' | 'unavailable' | null>(null);
 const successMsg = ref('');
 const absentLoading = ref<string | null>(null);
 const unavailableReason = ref('');
+const unavailableIssueType = ref<'driver' | 'vehicle'>('driver');
+const unavailableIssueOptions: Array<{
+    value: 'driver' | 'vehicle';
+    label: string;
+}> = [
+    { value: 'driver', label: 'Tài xế' },
+    { value: 'vehicle', label: 'Xe' },
+];
 const checkinLoading = ref<string | null>(null);
 const cashConfirmFor = ref<Passenger | null>(null);
 
@@ -122,6 +130,7 @@ async function reportUnavailable() {
     const { error, message } = await driverApi.reportUnavailable(
         tripId,
         reason,
+        unavailableIssueType.value,
     );
     actionLoading.value = false;
 
@@ -132,6 +141,7 @@ async function reportUnavailable() {
 
     trip.value.is_awaiting_reassignment = true;
     unavailableReason.value = '';
+    unavailableIssueType.value = 'driver';
     showConfirm.value = null;
     successMsg.value =
         message ?? 'Đã báo nhà xe sắp xếp tài xế thay thế cho chuyến.';
@@ -815,6 +825,27 @@ onMounted(async () => {
                                 Nhà xe sẽ nhận thông báo để sắp xếp tài xế thay
                                 thế. Chỉ có thể báo trước thời hạn quy định.
                             </p>
+                        </div>
+                        <label
+                            class="mb-1.5 block text-sm font-medium text-gray-700"
+                        >
+                            Loại sự cố
+                        </label>
+                        <div class="mb-4 grid grid-cols-2 gap-2">
+                            <button
+                                v-for="option in unavailableIssueOptions"
+                                :key="option.value"
+                                type="button"
+                                class="rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors"
+                                :class="
+                                    unavailableIssueType === option.value
+                                        ? 'border-red-500 bg-red-50 text-red-700'
+                                        : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                                "
+                                @click="unavailableIssueType = option.value"
+                            >
+                                {{ option.label }} gặp vấn đề
+                            </button>
                         </div>
                         <label
                             for="unavailable-reason"

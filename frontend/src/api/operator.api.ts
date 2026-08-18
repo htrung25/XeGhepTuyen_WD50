@@ -174,4 +174,8 @@ export const operatorApi = {
         apiClient.put(`/operator/notifications/${id}/read`),
     markAllNotificationsRead: () =>
         apiClient.put('/operator/notifications/read-all'),
+
+    // Lịch sử vận hành của nhà xe
+    getHistory: (params?: Params) =>
+        apiClient.get('/operator/history', { params }),
 };

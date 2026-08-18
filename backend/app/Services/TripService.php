@@ -241,11 +241,11 @@ class TripService
      *
      * @throws TripActionException 404 (không phải chuyến của mình) | 422 (R2 trạng thái, R3 cutoff)
      */
-    public function reportDriverUnavailable(string $tripId, string $driverId, string $reason): void
+    public function reportDriverUnavailable(string $tripId, string $driverId, string $reason, string $issueType = 'driver'): void
     {
         $cutoff = (int) config('booking.driver_report_cutoff_minutes', 15);
 
-        $event = DB::transaction(function () use ($tripId, $driverId, $reason, $cutoff) {
+        $event = DB::transaction(function () use ($tripId, $driverId, $reason, $issueType, $cutoff) {
             $trip = Trip::whereKey($tripId)->lockForUpdate()->firstOrFail();
 
             // R1 — ownership (404, không tiết lộ chuyến người khác).
@@ -281,7 +281,7 @@ class TripService
                 'status' => TripDriverIncident::STATUS_OPEN,
             ]);
 
-            return new TripDriverUnavailableEvent($trip->id, $reason, $driverId, $incident->id);
+            return new TripDriverUnavailableEvent($trip->id, $reason, $driverId, $incident->id, $issueType);
         });
 
         if ($event === null) {
@@ -386,7 +386,12 @@ class TripService
                 'resolved_at' => now(),
             ]);
 
-            return [$trip, new TripDriverReassignedEvent($trip->id, $oldDriverId, $newDriverId)];
+            return [$trip, new TripDriverReassignedEvent(
+                $trip->id,
+                $oldDriverId,
+                $newDriverId,
+                actorUserId: $actorUserId,
+            )];
         }, attempts: 3);
 
         // Chuyến có thể xuất hiện lại trong tìm kiếm (cờ đã gỡ) → làm mới cache.

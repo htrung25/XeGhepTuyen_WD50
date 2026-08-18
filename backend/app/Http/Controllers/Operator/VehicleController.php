@@ -6,6 +6,7 @@ use App\Enums\VehicleStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Operator\VehicleResource;
 use App\Models\Vehicle;
+use App\Services\OperatorHistoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -13,6 +14,8 @@ use Illuminate\Support\Facades\Storage;
 
 class VehicleController extends Controller
 {
+    public function __construct(private readonly OperatorHistoryService $history) {}
+
     public function index(Request $request): JsonResponse
     {
         $operator = auth('operator')->user()->operator;
@@ -133,7 +136,22 @@ class VehicleController extends Controller
             return response()->json(['success' => false, 'message' => 'Xe không tồn tại'], 404);
         }
 
+        $oldStatus = $vehicle->status->value;
         $vehicle->update($request->only(['brand', 'model', 'color', 'registration_expiry', 'amenities', 'status']));
+
+        if ($oldStatus !== $vehicle->status->value && $vehicle->status === VehicleStatusEnum::Maintenance) {
+            $this->history->record(
+                operatorId: $operator->id,
+                category: 'vehicle',
+                action: 'vehicle_maintenance_reported',
+                title: 'Xe được chuyển sang bảo dưỡng',
+                description: "Xe {$vehicle->plate_number} được báo cần bảo dưỡng hoặc xử lý sự cố.",
+                severity: 'warning',
+                subject: $vehicle,
+                actorUserId: auth('operator')->id(),
+                metadata: ['plate_number' => $vehicle->plate_number, 'old_status' => $oldStatus, 'new_status' => $vehicle->status->value],
+            );
+        }
 
         return response()->json(['success' => true, 'message' => 'Cập nhật xe thành công', 'data' => $vehicle]);
     }

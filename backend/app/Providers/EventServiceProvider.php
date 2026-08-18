@@ -11,6 +11,7 @@ use App\Events\TripDriverUnavailableEvent;
 use App\Events\TripStartedEvent;
 use App\Listeners\BroadcastDriverLocationListener;
 use App\Listeners\NotifyPassengersOnTripStartListener;
+use App\Listeners\RecordOperatorHistoryListener;
 use App\Listeners\SendBookingCancellationNotificationListener;
 use App\Listeners\SendBookingConfirmationNotificationListener;
 use App\Listeners\SendTripDriverReassignedNotificationListener;
@@ -23,26 +24,32 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         BookingConfirmedEvent::class => [
             SendBookingConfirmationNotificationListener::class,
+            RecordOperatorHistoryListener::class,
         ],
 
         BookingCancelledEvent::class => [
             SendBookingCancellationNotificationListener::class,
+            RecordOperatorHistoryListener::class,
         ],
 
         TripStartedEvent::class => [
             NotifyPassengersOnTripStartListener::class,
+            RecordOperatorHistoryListener::class,
         ],
 
         TripCompletedEvent::class => [
             UpdateDriverRatingOnTripCompleteListener::class,
+            RecordOperatorHistoryListener::class,
         ],
 
         TripDriverUnavailableEvent::class => [
             SendTripDriverUnavailableNotificationListener::class,
+            RecordOperatorHistoryListener::class,
         ],
 
         TripDriverReassignedEvent::class => [
             SendTripDriverReassignedNotificationListener::class,
+            RecordOperatorHistoryListener::class,
         ],
 
         DriverLocationUpdatedEvent::class => [

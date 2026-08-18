@@ -24,6 +24,7 @@ class TripDriverUnavailableEvent
         public readonly string $reason,
         public readonly string $reportedDriverId,
         public readonly ?string $incidentId = null,
+        public readonly string $issueType = 'driver',
         ?string $eventId = null,
     ) {
         $this->eventId = $eventId ?? (string) Str::uuid();

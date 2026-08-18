@@ -4,6 +4,7 @@ use App\Http\Controllers\Operator\AuthController;
 use App\Http\Controllers\Operator\BookingController;
 use App\Http\Controllers\Operator\DriverController;
 use App\Http\Controllers\Operator\FareRateController;
+use App\Http\Controllers\Operator\HistoryController;
 use App\Http\Controllers\Operator\NotificationController;
 use App\Http\Controllers\Operator\OnboardingController;
 use App\Http\Controllers\Operator\RevenueController;
@@ -33,6 +34,9 @@ Route::middleware(['auth:sanctum', 'role:operator'])->group(function () {
     Route::get('pending-counts', [NotificationController::class, 'pendingCounts']);
     Route::put('notifications/read-all', [NotificationController::class, 'markAllRead']);
     Route::put('notifications/{id}/read', [NotificationController::class, 'markRead']);
+
+    // Lịch sử vận hành của riêng nhà xe
+    Route::get('history', [HistoryController::class, 'index']);
 
     // Onboarding — tiến độ thêm xe so với cơ cấu đã khai lúc đăng ký
     Route::get('onboarding/fleet', [OnboardingController::class, 'fleet']);

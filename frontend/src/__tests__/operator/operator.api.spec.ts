@@ -18,6 +18,13 @@ import { apiClient } from '@/api/client';
 import { operatorApi } from '@/api/operator.api';
 
 describe('operatorApi → Wayfinder route contract', () => {
+    it('getHistory requests the operator-scoped history endpoint with filters', () => {
+        operatorApi.getHistory({ category: 'vehicle', page: 2 });
+        expect(apiClient.get).toHaveBeenCalledWith('/operator/history', {
+            params: { category: 'vehicle', page: 2 },
+        });
+    });
+
     it('login resolves to POST /api/operator/auth/login', () => {
         operatorApi.login({ phone: '0912345678', password: 'secret' });
         expect(apiClient.send).toHaveBeenCalledWith(

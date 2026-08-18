@@ -14,6 +14,7 @@ class ReportDriverUnavailableRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'issue_type' => ['sometimes', 'in:driver,vehicle'],
             'reason' => ['required', 'string', 'min:1', 'max:255'],
         ];
     }
@@ -21,6 +22,7 @@ class ReportDriverUnavailableRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'issue_type.in' => 'Loại sự cố không hợp lệ',
             'reason.required' => 'Vui lòng nhập lý do không chạy được chuyến',
             'reason.max' => 'Lý do tối đa 255 ký tự',
         ];

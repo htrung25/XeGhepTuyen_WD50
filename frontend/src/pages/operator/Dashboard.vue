@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { operatorApi } from '@/api/operator.api';
+import OperatorHistoryPanel from '@/components/operator/OperatorHistoryPanel.vue';
 import { formatRouteLabel } from '@/lib/route-label';
 
 interface KpiData {
@@ -579,6 +580,8 @@ onMounted(() => {
                     </table>
                 </div>
             </div>
+
+            <OperatorHistoryPanel />
         </template>
     </div>
 </template>

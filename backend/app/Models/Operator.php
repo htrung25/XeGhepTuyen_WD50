@@ -74,6 +74,11 @@ class Operator extends Model
         return $this->hasMany(OperatorFareRate::class);
     }
 
+    public function history(): HasMany
+    {
+        return $this->hasMany(OperatorHistory::class);
+    }
+
     /**
      * Đơn đăng ký đối tác đã được duyệt để tạo ra nhà xe này (nếu có).
      */

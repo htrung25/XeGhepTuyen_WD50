@@ -443,7 +443,7 @@ onMounted(load);
                 @click.self="selectedTrip = null"
             >
                 <div
-                    class="h-full w-full max-w-sm overflow-y-auto bg-white p-6 shadow-2xl"
+                    class="h-full w-full max-w-sm overflow-y-auto bg-white p-6 font-sans shadow-2xl"
                 >
                     <div class="mb-5 flex items-center justify-between">
                         <h3 class="text-lg font-bold text-gray-900">
@@ -472,7 +472,7 @@ onMounted(load);
 
                     <div class="space-y-4 text-sm">
                         <div class="rounded-xl bg-green-50 p-4">
-                            <p class="text-xl font-black text-gray-900">
+                            <p class="text-xl font-bold text-gray-900">
                                 {{ formatRouteLabel(selectedTrip.route) }}
                             </p>
                             <p class="mt-1 font-semibold text-green-700">
@@ -483,9 +483,7 @@ onMounted(load);
                         <div class="grid grid-cols-2 gap-3">
                             <div class="rounded-xl bg-gray-50 p-3">
                                 <p class="text-xs text-gray-400">Biển số xe</p>
-                                <p
-                                    class="mt-0.5 font-mono font-bold text-gray-900"
-                                >
+                                <p class="mt-0.5 font-bold text-gray-900">
                                     {{ selectedTrip.vehicle?.plate_number }}
                                 </p>
                             </div>

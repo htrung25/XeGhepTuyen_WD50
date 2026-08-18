@@ -78,8 +78,15 @@ export const driverApi = {
     getPassengers: (tripId: string) => apiClient.send(passengers(tripId)),
     startTrip: (tripId: string) => apiClient.send(start(tripId)),
     completeTrip: (tripId: string) => apiClient.send(complete(tripId)),
-    reportUnavailable: (tripId: string, reason: string) =>
-        apiClient.send(reportUnavailable(tripId), { reason }),
+    reportUnavailable: (
+        tripId: string,
+        reason: string,
+        issueType: 'driver' | 'vehicle',
+    ) =>
+        apiClient.send(reportUnavailable(tripId), {
+            reason,
+            issue_type: issueType,
+        }),
     getTripHistory: (params?: { page?: number }) =>
         apiClient.send(history({ query: params })),
 

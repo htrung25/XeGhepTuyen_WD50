@@ -6,12 +6,14 @@ use App\Enums\NotificationTypeEnum;
 use App\Enums\PaymentMethodEnum;
 use App\Enums\TripStatusEnum;
 use App\Enums\UserRoleEnum;
+use App\Events\BookingConfirmedEvent;
 use App\Events\PaymentProcessedEvent;
 use App\Exceptions\TripActionException;
 use App\Models\Booking;
 use App\Models\Driver;
 use App\Models\Notification;
 use App\Models\Operator;
+use App\Models\OperatorHistory;
 use App\Models\Payment;
 use App\Models\Route;
 use App\Models\RouteStop;
@@ -20,6 +22,7 @@ use App\Models\TripDriverIncident;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Services\NotificationService;
+use App\Services\OperatorHistoryService;
 use App\Services\PaymentService;
 use App\Services\TripService;
 use Illuminate\Database\QueryException;
@@ -216,6 +219,81 @@ it('cutoff biên: depart = now+15 bị chặn, +15m1s được báo, +14m59s b�
     expect($t3->fresh()->isAwaitingReassignment())->toBeTrue();
 
     Carbon::setTestNow();
+});
+
+it('lịch sử operator phân loại đúng báo cáo sự cố xe', function () {
+    $c = unavailCtx();
+    $trip = mkTrip($c);
+
+    app(TripService::class)->reportDriverUnavailable(
+        $trip->id,
+        $c['driver']->id,
+        'Nổ lốp trước khi xuất bến',
+        'vehicle',
+    );
+
+    $history = OperatorHistory::where('operator_id', $c['operator']->id)->sole();
+    expect($history->category)->toBe('vehicle')
+        ->and($history->action)->toBe('vehicle_issue_reported')
+        ->and($history->severity)->toBe('danger')
+        ->and($history->metadata['issue_type'])->toBe('vehicle')
+        ->and($history->metadata['plate_number'])->toBe($c['vehicle']->plate_number);
+});
+
+it('lịch sử ghi xe xuất bến trễ và đến trễ theo thời gian thực tế', function () {
+    Carbon::setTestNow('2026-08-18 10:15:00');
+    $c = unavailCtx();
+    $trip = mkTrip($c, [
+        'depart_at' => Carbon::parse('2026-08-18 10:00:00'),
+        'arrive_at' => Carbon::parse('2026-08-18 12:00:00'),
+    ]);
+
+    app(TripService::class)->startTrip($trip->id, $c['driver']->id);
+    expect(OperatorHistory::where('operator_id', $c['operator']->id)->where('action', 'trip_departure_delayed')->sole()->metadata['delay_minutes'])
+        ->toBe(15);
+
+    Carbon::setTestNow('2026-08-18 12:20:00');
+    app(TripService::class)->completeTrip($trip->id, $c['driver']->id);
+    expect(OperatorHistory::where('operator_id', $c['operator']->id)->where('action', 'trip_arrival_delayed')->sole()->metadata['delay_minutes'])
+        ->toBe(20);
+
+    Carbon::setTestNow();
+});
+
+it('API lịch sử chỉ trả dữ liệu của nhà xe đang đăng nhập và hỗ trợ bộ lọc', function () {
+    $first = unavailCtx();
+    $second = unavailCtx();
+    $history = app(OperatorHistoryService::class);
+
+    $history->record($first['operator']->id, 'booking', 'booking_confirmed', 'Khách vừa đặt chỗ');
+    $history->record($first['operator']->id, 'vehicle', 'vehicle_issue_reported', 'Xe gặp vấn đề');
+    $history->record($second['operator']->id, 'vehicle', 'vehicle_issue_reported', 'Không được lộ');
+
+    Sanctum::actingAs($first['opUser'], ['*'], 'sanctum');
+    Sanctum::actingAs($first['opUser'], ['*'], 'operator');
+
+    $this->getJson('/api/operator/history?category=vehicle&per_page=10')
+        ->assertOk()
+        ->assertJsonPath('meta.total', 1)
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.title', 'Xe gặp vấn đề')
+        ->assertJsonMissing(['title' => 'Không được lộ']);
+});
+
+it('xác nhận đặt chỗ được đưa vào lịch sử nhà xe đúng một lần', function () {
+    $c = unavailCtx();
+    $trip = mkTrip($c);
+    $booking = mkConfirmedBooking($trip, $c);
+
+    event(new BookingConfirmedEvent($booking));
+    event(new BookingConfirmedEvent($booking));
+
+    $history = OperatorHistory::where('operator_id', $c['operator']->id)
+        ->where('action', 'booking_confirmed')
+        ->sole();
+
+    expect($history->metadata['booking_code'])->toBe($booking->booking_code)
+        ->and($history->metadata['passenger_count'])->toBe(1);
 });
 
 // ─────────────────────────── Operator reassign ─────────────────────────────

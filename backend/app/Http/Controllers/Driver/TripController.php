@@ -153,7 +153,12 @@ class TripController extends Controller
         $driver = auth('driver')->user()->driver;
 
         try {
-            $this->tripService->reportDriverUnavailable($id, $driver->id, $request->validated('reason'));
+            $this->tripService->reportDriverUnavailable(
+                $id,
+                $driver->id,
+                $request->validated('reason'),
+                $request->validated('issue_type', 'driver'),
+            );
 
             return response()->json(['success' => true, 'message' => 'Đã báo nghỉ chuyến. Nhà xe sẽ sắp xếp lại.']);
         } catch (TripActionException $e) {
