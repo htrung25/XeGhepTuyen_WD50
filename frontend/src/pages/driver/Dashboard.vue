@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { driverApi } from '@/api/driver.api';
+import { formatRouteLabel } from '@/lib/route-label';
 import { useDriverAuthStore } from '@/stores/driver.auth.store';
 import { useDriverStore } from '@/stores/driver.store';
 import type { DriverTrip } from '@/stores/driver.store';
@@ -248,8 +249,7 @@ onMounted(load);
                                 <td
                                     class="px-5 py-4 font-semibold text-gray-900"
                                 >
-                                    {{ trip.route?.origin_city }} →
-                                    {{ trip.route?.dest_city }}
+                                    {{ formatRouteLabel(trip.route) }}
                                 </td>
                                 <td class="px-5 py-4">
                                     <div class="flex items-center gap-1.5">

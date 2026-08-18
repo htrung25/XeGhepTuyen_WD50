@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
 import { customerApi } from '@/api/customer.api';
+import { formatPlaceLabel } from '@/lib/route-label';
 import {
     Dialog,
     DialogContent,
@@ -507,12 +508,23 @@ onMounted(async () => {
                                         class="flex items-center justify-between text-xs text-gray-500"
                                     >
                                         <span>{{
-                                            trip.route?.origin_city ??
-                                            store.searchParams.from_city
+                                            formatPlaceLabel(
+                                                trip.route?.origin_city ??
+                                                    store.searchParams
+                                                        .from_city,
+                                                trip.route?.origin_district ??
+                                                    store.searchParams
+                                                        .from_district,
+                                            )
                                         }}</span>
                                         <span>{{
-                                            trip.route?.dest_city ??
-                                            store.searchParams.to_city
+                                            formatPlaceLabel(
+                                                trip.route?.dest_city ??
+                                                    store.searchParams.to_city,
+                                                trip.route?.dest_district ??
+                                                    store.searchParams
+                                                        .to_district,
+                                            )
                                         }}</span>
                                     </div>
 

@@ -46,7 +46,8 @@ class DashboardController extends Controller
                 'code' => $b->booking_code,
                 'customer' => $b->contact_name ?? $b->user?->full_name,
                 'route' => $b->trip?->route
-                    ? $b->trip->route->origin_city.' → '.$b->trip->route->dest_city
+                    ? collect([$b->trip->route->origin_district, $b->trip->route->origin_city])->filter()->implode(', ')
+                        .' → '.collect([$b->trip->route->dest_district, $b->trip->route->dest_city])->filter()->implode(', ')
                     : '—',
                 'amount' => (int) $b->final_amount,
                 'status' => $b->booking_status->value,

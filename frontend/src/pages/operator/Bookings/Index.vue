@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { operatorApi } from '@/api/operator.api';
+import { formatRouteLabel } from '@/lib/route-label';
 
 interface Booking {
     id: string;
@@ -11,7 +12,12 @@ interface Booking {
     trip: {
         tracking_code: string;
         depart_at: string;
-        route: { origin_city: string; dest_city: string };
+        route: {
+            origin_city: string;
+            origin_district: string | null;
+            dest_city: string;
+            dest_district: string | null;
+        };
     };
     seat_codes: string[];
     pickup_stop: { stop_name: string };
@@ -268,8 +274,7 @@ onMounted(fetchBookings);
                             <!-- Trip -->
                             <td class="px-4 py-3">
                                 <p class="font-medium text-gray-800">
-                                    {{ b.trip?.route?.origin_city }} →
-                                    {{ b.trip?.route?.dest_city }}
+                                    {{ formatRouteLabel(b.trip?.route) }}
                                 </p>
                                 <p class="text-xs text-gray-400">
                                     {{
@@ -420,10 +425,9 @@ onMounted(fetchBookings);
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-500">Tuyến</span>
-                            <span
-                                >{{ detailItem.trip?.route?.origin_city }} →
-                                {{ detailItem.trip?.route?.dest_city }}</span
-                            >
+                            <span>{{
+                                formatRouteLabel(detailItem.trip?.route)
+                            }}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-500">Giờ khởi hành</span>

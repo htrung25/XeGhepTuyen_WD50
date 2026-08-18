@@ -65,7 +65,7 @@ class EarningController extends Controller
 
         $trips = $driver->trips()
             ->where('status', 'completed')
-            ->with('route:id,origin_city,dest_city')
+            ->with('route:id,origin_city,origin_district,dest_city,dest_district')
             ->withCount(['bookings as passenger_count' => fn ($q) => $q->where('booking_status', 'completed')])
             ->withSum(['bookings as amount' => fn ($q) => $q->where('booking_status', 'completed')], 'final_amount')
             ->orderByDesc('completed_at')
@@ -73,7 +73,10 @@ class EarningController extends Controller
 
         $data = collect($trips->items())->map(fn ($t) => [
             'id' => $t->id,
-            'route' => $t->route ? "{$t->route->origin_city} → {$t->route->dest_city}" : 'Chuyến đi',
+            'route' => $t->route
+                ? collect([$t->route->origin_district, $t->route->origin_city])->filter()->implode(', ')
+                    .' → '.collect([$t->route->dest_district, $t->route->dest_city])->filter()->implode(', ')
+                : 'Chuyến đi',
             'date' => optional($t->completed_at)->toIso8601String(),
             'passenger_count' => (int) $t->passenger_count,
             'amount' => (int) ($t->amount ?? 0),

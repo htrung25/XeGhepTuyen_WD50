@@ -26,7 +26,9 @@ class BookingResource extends JsonResource
                 'depart_at' => $this->trip->depart_at->format('Y-m-d H:i:s'),
                 'route' => [
                     'origin_city' => $this->trip->route->origin_city,
+                    'origin_district' => $this->trip->route->origin_district,
                     'dest_city' => $this->trip->route->dest_city,
+                    'dest_district' => $this->trip->route->dest_district,
                 ],
             ],
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),

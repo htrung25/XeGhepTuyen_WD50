@@ -123,7 +123,8 @@ class TrackingController extends Controller
                 'trip_status' => $trip->status->value,
                 'depart_at' => $trip->depart_at->format('Y-m-d H:i:s'),
                 'arrive_at' => $trip->arrive_at?->format('Y-m-d H:i:s'),
-                'route' => "{$trip->route->origin_city} → {$trip->route->dest_city}",
+                'route' => collect([$trip->route->origin_district, $trip->route->origin_city])->filter()->implode(', ')
+                    .' → '.collect([$trip->route->dest_district, $trip->route->dest_city])->filter()->implode(', '),
                 'driver_location' => $location,
             ],
         ]);

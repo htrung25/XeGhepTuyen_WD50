@@ -119,7 +119,7 @@ class BookingRepository implements BookingRepositoryInterface
         $query = Booking::with([
             'user:id,full_name,phone',
             'trip:id,depart_at,route_id',
-            'trip.route:id,origin_city,dest_city',
+            'trip.route:id,origin_city,origin_district,dest_city,dest_district',
         ]);
 
         if (! empty($filters['status'])) {

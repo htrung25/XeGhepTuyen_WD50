@@ -234,7 +234,8 @@ class TripController extends Controller
             'success' => true,
             'data' => [
                 'trip' => [
-                    'route' => "{$trip->route->origin_city} → {$trip->route->dest_city}",
+                    'route' => collect([$trip->route->origin_district, $trip->route->origin_city])->filter()->implode(', ')
+                        .' → '.collect([$trip->route->dest_district, $trip->route->dest_city])->filter()->implode(', '),
                     'depart_at' => $trip->depart_at->format('Y-m-d H:i:s'),
                     'driver_name' => $trip->driver?->user?->full_name,
                     'vehicle_plate' => $trip->vehicle->plate_number,

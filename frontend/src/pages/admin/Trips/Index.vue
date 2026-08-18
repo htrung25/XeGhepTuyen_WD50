@@ -4,6 +4,7 @@ import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { adminApi } from '@/api/admin.api';
 import { useCan } from '@/composables/useCan';
+import { formatRouteLabel } from '@/lib/route-label';
 const { can } = useCan();
 
 interface Trip {
@@ -12,7 +13,12 @@ interface Trip {
     status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
     depart_at: string;
     arrive_at: string;
-    route: { origin_city: string; dest_city: string };
+    route: {
+        origin_city: string;
+        origin_district: string | null;
+        dest_city: string;
+        dest_district: string | null;
+    };
     vehicle: { plate_number: string; vehicle_type: string };
     driver: { full_name: string; phone: string } | null;
     operator: { company_name: string };
@@ -119,7 +125,9 @@ interface TripDetail {
         id: string;
         name: string;
         origin_city: string;
+        origin_district: string | null;
         dest_city: string;
+        dest_district: string | null;
         stops?: Stop[];
     };
     vehicle: {
@@ -452,8 +460,7 @@ onMounted(fetchTrips);
                                     {{ trip.tracking_code }}
                                 </p>
                                 <p class="mt-0.5 font-medium text-gray-900">
-                                    {{ trip.route.origin_city }} →
-                                    {{ trip.route.dest_city }}
+                                    {{ formatRouteLabel(trip.route) }}
                                 </p>
                             </td>
                             <!-- Time -->
@@ -592,9 +599,8 @@ onMounted(fetchTrips);
                     <p class="mb-4 text-sm text-gray-500">
                         Huỷ chuyến
                         <strong>{{ cancelTarget?.tracking_code }}</strong> ({{
-                            cancelTarget?.route?.origin_city
-                        }}
-                        → {{ cancelTarget?.route?.dest_city }})?
+                            formatRouteLabel(cancelTarget?.route)
+                        }})?
                     </p>
                     <div class="mb-4">
                         <label
@@ -775,8 +781,7 @@ onMounted(fetchTrips);
                                     <h2
                                         class="font-sans text-xl font-bold text-gray-900"
                                     >
-                                        {{ detailTrip.route.origin_city }} ↔
-                                        {{ detailTrip.route.dest_city }}
+                                        {{ formatRouteLabel(detailTrip.route) }}
                                     </h2>
                                     <p class="font-sans text-xs text-gray-400">
                                         Khởi hành:
@@ -837,8 +842,9 @@ onMounted(fetchTrips);
                                                     class="mt-0.5 font-sans text-sm font-semibold text-gray-800"
                                                 >
                                                     {{
-                                                        detailTrip.route.name ||
-                                                        `${detailTrip.route.origin_city} → ${detailTrip.route.dest_city}`
+                                                        formatRouteLabel(
+                                                            detailTrip.route,
+                                                        )
                                                     }}
                                                 </p>
                                             </div>

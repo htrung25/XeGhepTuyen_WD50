@@ -14,7 +14,8 @@ class EarningResource extends JsonResource
             'tracking_code' => $this->tracking_code,
             'depart_at' => $this->depart_at->format('Y-m-d H:i:s'),
             'completed_at' => $this->completed_at?->format('Y-m-d H:i:s'),
-            'route' => "{$this->route->origin_city} → {$this->route->dest_city}",
+            'route' => collect([$this->route->origin_district, $this->route->origin_city])->filter()->implode(', ')
+                .' → '.collect([$this->route->dest_district, $this->route->dest_city])->filter()->implode(', '),
             'passenger_count' => $this->bookings()->where('booking_status', 'completed')->sum('passenger_count'),
             'revenue' => $this->bookings()->where('booking_status', 'completed')->sum('final_amount'),
         ];

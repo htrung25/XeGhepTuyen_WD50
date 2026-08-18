@@ -9,7 +9,13 @@ export interface DriverTrip {
     status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
     price: number;
     available_seats: number;
-    route: { origin_city: string; dest_city: string; est_duration_min: number };
+    route: {
+        origin_city: string;
+        origin_district?: string | null;
+        dest_city: string;
+        dest_district?: string | null;
+        est_duration_min: number;
+    };
     vehicle: { plate_number: string; vehicle_type: string; seat_count: number };
     passengers_count: number;
     checked_in_count: number;

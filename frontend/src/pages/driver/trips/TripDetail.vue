@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { driverApi } from '@/api/driver.api';
+import { formatRouteLabel } from '@/lib/route-label';
 import { useDriverStore } from '@/stores/driver.store';
 import type { Passenger } from '@/stores/driver.store';
 
@@ -246,8 +247,7 @@ onMounted(async () => {
                     >
                         <div class="flex items-center justify-between">
                             <h1 class="text-lg font-bold">
-                                {{ trip.route?.origin_city }} →
-                                {{ trip.route?.dest_city }}
+                                {{ formatRouteLabel(trip.route) }}
                             </h1>
                             <span
                                 class="rounded-full bg-white/20 px-3 py-1 text-sm font-medium"
@@ -736,8 +736,7 @@ onMounted(async () => {
                             </h3>
                             <p class="mt-1 text-sm text-gray-500">
                                 Xác nhận bắt đầu chuyến
-                                {{ trip?.route?.origin_city }} →
-                                {{ trip?.route?.dest_city }}
+                                {{ formatRouteLabel(trip?.route) }}
                             </p>
                         </div>
                         <div class="flex gap-3">

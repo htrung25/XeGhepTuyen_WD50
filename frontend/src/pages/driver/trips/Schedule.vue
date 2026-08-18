@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { driverApi } from '@/api/driver.api';
+import { formatRouteLabel } from '@/lib/route-label';
 import type { DriverTrip } from '@/stores/driver.store';
 
 const trips = ref<DriverTrip[]>([]);
@@ -378,8 +379,7 @@ onMounted(load);
                                 <td
                                     class="px-5 py-4 font-semibold text-gray-900"
                                 >
-                                    {{ trip.route?.origin_city }} →
-                                    {{ trip.route?.dest_city }}
+                                    {{ formatRouteLabel(trip.route) }}
                                 </td>
                                 <td class="px-5 py-4">
                                     <span
@@ -473,8 +473,7 @@ onMounted(load);
                     <div class="space-y-4 text-sm">
                         <div class="rounded-xl bg-green-50 p-4">
                             <p class="text-xl font-black text-gray-900">
-                                {{ selectedTrip.route?.origin_city }} →
-                                {{ selectedTrip.route?.dest_city }}
+                                {{ formatRouteLabel(selectedTrip.route) }}
                             </p>
                             <p class="mt-1 font-semibold text-green-700">
                                 {{ fmtTime(selectedTrip.depart_at) }} →

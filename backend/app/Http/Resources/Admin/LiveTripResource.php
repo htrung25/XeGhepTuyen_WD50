@@ -20,7 +20,8 @@ class LiveTripResource extends JsonResource
         return [
             'id' => $this->id,
             'trip_code' => $this->tracking_code,
-            'route_name' => trim(($this->route?->origin_city ?? '').' → '.($this->route?->dest_city ?? '')),
+            'route_name' => collect([$this->route?->origin_district, $this->route?->origin_city])->filter()->implode(', ')
+                .' → '.collect([$this->route?->dest_district, $this->route?->dest_city])->filter()->implode(', '),
             'driver_name' => $this->driver?->user?->full_name ?? '—',
             'driver_rating' => (float) ($this->driver?->rating_avg ?? 0),
             'vehicle_type' => $this->vehicle?->vehicle_type?->label() ?? '—',

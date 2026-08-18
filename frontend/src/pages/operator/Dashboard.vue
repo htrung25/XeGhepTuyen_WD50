@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { operatorApi } from '@/api/operator.api';
+import { formatRouteLabel } from '@/lib/route-label';
 
 interface KpiData {
     gross_revenue: number;
@@ -14,7 +15,12 @@ interface KpiData {
 interface TripRow {
     id: string;
     depart_at: string;
-    route: { origin_city: string; dest_city: string };
+    route: {
+        origin_city: string;
+        origin_district: string | null;
+        dest_city: string;
+        dest_district: string | null;
+    };
     driver: { full_name: string } | null;
     vehicle: { plate: string } | null;
     booking_count: number;
@@ -521,8 +527,7 @@ onMounted(() => {
                                     }}
                                 </td>
                                 <td class="px-6 py-4 text-sm text-slate-700">
-                                    {{ trip.route?.origin_city }} →
-                                    {{ trip.route?.dest_city }}
+                                    {{ formatRouteLabel(trip.route) }}
                                 </td>
                                 <td class="px-6 py-4 text-sm text-slate-700">
                                     {{ trip.driver?.full_name ?? '—' }}

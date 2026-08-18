@@ -135,9 +135,7 @@ async function loadBookings() {
     myBookings.value = rows.map((booking) => ({
         id: booking.id,
         booking_code: booking.booking_code,
-        route: booking.trip?.route
-            ? `${booking.trip.route.origin_city} → ${booking.trip.route.dest_city}`
-            : 'Chuyến xe',
+        route: booking.trip?.route ?? 'Chuyến xe',
         date: booking.trip?.depart_at
             ? new Date(booking.trip.depart_at).toLocaleDateString('vi-VN')
             : 'Chưa xác định',

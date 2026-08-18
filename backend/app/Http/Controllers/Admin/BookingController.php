@@ -30,7 +30,8 @@ class BookingController extends Controller
                 'customer' => $b->contact_name ?? $b->user?->full_name,
                 'phone' => $b->contact_phone ?? $b->user?->phone,
                 'route' => $b->trip?->route
-                    ? $b->trip->route->origin_city.' → '.$b->trip->route->dest_city
+                    ? collect([$b->trip->route->origin_district, $b->trip->route->origin_city])->filter()->implode(', ')
+                        .' → '.collect([$b->trip->route->dest_district, $b->trip->route->dest_city])->filter()->implode(', ')
                     : '—',
                 'depart_at' => $b->trip?->depart_at?->format('Y-m-d H:i'),
                 'passenger_count' => (int) $b->passenger_count,

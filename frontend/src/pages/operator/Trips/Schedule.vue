@@ -2,6 +2,7 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { operatorApi } from '@/api/operator.api';
+import { formatRouteLabel } from '@/lib/route-label';
 
 const currentRoute = useRoute();
 
@@ -230,10 +231,7 @@ const confirmCompleteTrip = async () => {
 
 const fmtMoney = (v?: number) =>
     v != null ? new Intl.NumberFormat('vi-VN').format(v) + 'đ' : '—';
-const routeLabel = (route?: TripBlock['route']) =>
-    route?.name?.trim() ||
-    [route?.origin_city, route?.dest_city].filter(Boolean).join(' → ') ||
-    '—';
+const routeLabel = (route?: TripBlock['route']) => formatRouteLabel(route);
 const fmtDateTime = (s?: string) =>
     s
         ? new Date(s).toLocaleString('vi-VN', {
@@ -463,9 +461,7 @@ onMounted(async () => {
                             class="rounded-lg border border-orange-300 bg-white px-3 py-1.5 text-xs font-semibold text-orange-800 hover:bg-orange-100"
                         >
                             {{ fmtDateTime(trip.depart_at) }} ·
-                            {{ trip.route?.origin_city }}→{{
-                                trip.route?.dest_city
-                            }}
+                            {{ formatRouteLabel(trip.route) }}
                         </button>
                     </div>
                 </div>
@@ -511,7 +507,7 @@ onMounted(async () => {
                             class="rounded-lg border border-red-200 bg-white px-2.5 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-100"
                         >
                             {{ fmtDateTime(t.depart_at) }} ·
-                            {{ t.route?.origin_city }}→{{ t.route?.dest_city }}
+                            {{ formatRouteLabel(t.route) }}
                         </button>
                     </div>
                 </div>
@@ -1101,8 +1097,7 @@ onMounted(async () => {
                             </h3>
                             <p class="mt-0.5 text-xs text-slate-500">
                                 {{ selectedTrip?.tracking_code }} ·
-                                {{ selectedTrip?.route?.origin_city }} →
-                                {{ selectedTrip?.route?.dest_city }} ·
+                                {{ formatRouteLabel(selectedTrip?.route) }} ·
                                 {{ passengers.length }} khách
                             </p>
                         </div>

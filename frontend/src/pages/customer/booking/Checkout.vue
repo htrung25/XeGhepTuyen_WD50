@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { customerApi } from '@/api/customer.api';
 import LocationInput from '@/components/customer/LocationInput.vue';
+import { formatRouteLabel } from '@/lib/route-label';
 import { useCustomerAuthStore } from '@/stores/customer.auth.store';
 import { useCustomerStore } from '@/stores/customer.store';
 
@@ -424,10 +425,9 @@ onUnmounted(() => {
                     >
                         <div class="flex justify-between">
                             <span class="text-gray-500">Tuyến</span>
-                            <span class="font-medium text-gray-900"
-                                >{{ tripData.route?.origin_city ?? 'HN' }} →
-                                {{ tripData.route?.dest_city ?? 'HP' }}</span
-                            >
+                            <span class="font-medium text-gray-900">{{
+                                formatRouteLabel(tripData.route)
+                            }}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-500">Giờ đi</span>

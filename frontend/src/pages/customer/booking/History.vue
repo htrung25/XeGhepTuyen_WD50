@@ -21,7 +21,7 @@ interface Booking {
     payment_method: string;
     trip: {
         depart_at: string;
-        route?: { origin_city: string; dest_city: string };
+        route?: string;
     };
     passengers: any[];
     final_amount: number;
@@ -302,8 +302,7 @@ onMounted(() => loadBookings('upcoming'));
                                 />
                             </svg>
                             <span class="font-bold text-gray-900">
-                                {{ b.trip?.route?.origin_city ?? 'Hà Nội' }} →
-                                {{ b.trip?.route?.dest_city ?? 'Hải Phòng' }}
+                                {{ b.trip?.route ?? '—' }}
                             </span>
                         </div>
                         <p class="mb-2 text-sm text-gray-500">

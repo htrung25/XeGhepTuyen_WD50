@@ -33,7 +33,8 @@ class BookingResource extends JsonResource
                 'depart_at' => $this->trip->depart_at->format('Y-m-d H:i:s'),
                 'arrive_at' => $this->trip->arrive_at?->format('Y-m-d H:i:s'),
                 'status' => $this->trip->status->value,
-                'route' => "{$this->trip->route->origin_city} → {$this->trip->route->dest_city}",
+                'route' => collect([$this->trip->route->origin_district, $this->trip->route->origin_city])->filter()->implode(', ')
+                    .' → '.collect([$this->trip->route->dest_district, $this->trip->route->dest_city])->filter()->implode(', '),
                 'vehicle' => ['plate' => $this->trip->vehicle->plate_number, 'type' => $this->trip->vehicle->vehicle_type?->value],
                 'driver_name' => $this->trip->driver?->user?->full_name,
                 'driver_phone' => $this->trip->driver?->user?->phone,

@@ -23,9 +23,12 @@ class TripResource extends JsonResource
             'cancelled_at' => $this->cancelled_at?->format('Y-m-d H:i:s'),
             'route' => [
                 'id' => $this->route->id,
-                'name' => $this->route->name ?? ($this->route->origin_city.' → '.$this->route->dest_city),
+                'name' => $this->route->name ?? (collect([$this->route->origin_district, $this->route->origin_city])->filter()->implode(', ')
+                    .' → '.collect([$this->route->dest_district, $this->route->dest_city])->filter()->implode(', ')),
                 'origin_city' => $this->route->origin_city,
+                'origin_district' => $this->route->origin_district,
                 'dest_city' => $this->route->dest_city,
+                'dest_district' => $this->route->dest_district,
                 'stops' => $this->whenLoaded('route', function () {
                     return $this->route->relationLoaded('stops')
                         ? $this->route->stops->map(fn ($s) => [

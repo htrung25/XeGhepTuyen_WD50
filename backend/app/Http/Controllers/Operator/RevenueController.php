@@ -164,7 +164,7 @@ class RevenueController extends Controller
             ->where('status', 'completed')
             ->whereHas('bookings', fn ($q) => $q->completed()->paid())
             ->with([
-                'route:id,origin_city,dest_city',
+                'route:id,origin_city,origin_district,dest_city,dest_district',
                 'driver.user:id,full_name',
                 'vehicle:id,seat_count',
                 'bookings' => fn ($q) => $q->completed()->paid()
@@ -189,7 +189,8 @@ class RevenueController extends Controller
             return [
                 'id' => $trip->id,
                 'date' => $date,
-                'route' => "{$trip->route->origin_city} → {$trip->route->dest_city}",
+                'route' => collect([$trip->route->origin_district, $trip->route->origin_city])->filter()->implode(', ')
+                    .' → '.collect([$trip->route->dest_district, $trip->route->dest_city])->filter()->implode(', '),
                 'driver' => $trip->driver?->user?->full_name ?? 'Chưa phân công',
                 'passengers' => (int) $trip->bookings->sum('passenger_count'),
                 'daily_passengers' => (int) $dailyPassengers->get($date, 0),
@@ -227,7 +228,8 @@ class RevenueController extends Controller
                 $route = $g->first()->trip->route;
 
                 return [
-                    'name' => "{$route->origin_city} → {$route->dest_city}",
+                    'name' => collect([$route->origin_district, $route->origin_city])->filter()->implode(', ')
+                        .' → '.collect([$route->dest_district, $route->dest_city])->filter()->implode(', '),
                     'total_bookings' => $g->count(),
                     'revenue' => (int) $g->sum('final_amount'),
                 ];

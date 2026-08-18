@@ -19,7 +19,9 @@ class TripResource extends JsonResource
             'available_seats' => $this->available_seats,
             'route' => [
                 'origin_city' => $this->route->origin_city,
+                'origin_district' => $this->route->origin_district,
                 'dest_city' => $this->route->dest_city,
+                'dest_district' => $this->route->dest_district,
                 'distance_km' => $this->route->distance_km,
                 'duration_min' => $this->route->est_duration_min,
             ],

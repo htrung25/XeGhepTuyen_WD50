@@ -138,8 +138,7 @@ onMounted(async () => {
                 </div>
                 <div>
                     <p class="font-semibold text-gray-900">
-                        {{ booking.trip?.route?.origin_city ?? 'Hà Nội' }} →
-                        {{ booking.trip?.route?.dest_city ?? 'Hải Phòng' }}
+                        {{ booking.trip?.route ?? '—' }}
                     </p>
                     <p class="text-sm text-gray-500">
                         {{ booking.trip?.driver?.user?.full_name ?? 'Tài xế' }}

@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { customerApi } from '@/api/customer.api';
+import { formatRouteLabel } from '@/lib/route-label';
 import { useCustomerAuthStore } from '@/stores/customer.auth.store';
 import { useCustomerStore } from '@/stores/customer.store';
 import type { SeatInfo } from '@/stores/customer.store';
@@ -571,8 +572,7 @@ onMounted(async () => {
                         <div class="flex items-center justify-between text-sm">
                             <span class="text-gray-500">Tuyến</span>
                             <span class="font-medium text-gray-900">
-                                {{ tripInfo.route?.origin_city ?? 'Hà Nội' }} →
-                                {{ tripInfo.route?.dest_city ?? 'Hải Phòng' }}
+                                {{ formatRouteLabel(tripInfo.route) }}
                             </span>
                         </div>
                         <div class="flex items-center justify-between text-sm">
