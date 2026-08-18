@@ -2,6 +2,7 @@
 
 use App\Enums\DriverStatusEnum;
 use App\Enums\UserRoleEnum;
+use App\Http\Resources\Operator\TripResource;
 use App\Models\Driver;
 use App\Models\Operator;
 use App\Models\Route;
@@ -10,6 +11,7 @@ use App\Models\Trip;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Services\TripService;
+use Illuminate\Http\Request;
 
 function setupTripTestEntities(): array
 {
@@ -285,4 +287,21 @@ it('giá vé chuyến lấy từ tuyến, bỏ qua giá client gửi lên', func
     ]);
 
     expect((int) $trip->price)->toBe(175000);
+});
+
+it('trả về tên tuyến trong dữ liệu chi tiết chuyến của nhà xe', function () {
+    $entities = setupTripTestEntities();
+    $entities['routeHnHp']->update(['name' => 'Mỹ Đình → Bến xe Cầu Rào']);
+
+    $trip = app(TripService::class)->create([
+        'route_id' => $entities['routeHnHp']->id,
+        'vehicle_id' => $entities['vehicle']->id,
+        'driver_id' => $entities['driver']->id,
+        'depart_at' => now()->addHours(2)->toDateTimeString(),
+        'operator_id' => $entities['operator']->id,
+    ])->load(['route', 'vehicle', 'driver.user']);
+
+    $data = (new TripResource($trip))->toArray(Request::create('/api/operator/trips/'.$trip->id));
+
+    expect($data['route']['name'])->toBe('Mỹ Đình → Bến xe Cầu Rào');
 });

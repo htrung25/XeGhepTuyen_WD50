@@ -14,6 +14,7 @@ interface TripBlock {
     base_price?: number;
     route?: {
         id?: string;
+        name: string;
         origin_city: string;
         origin_district?: string | null;
         dest_city: string;
@@ -229,6 +230,10 @@ const confirmCompleteTrip = async () => {
 
 const fmtMoney = (v?: number) =>
     v != null ? new Intl.NumberFormat('vi-VN').format(v) + 'đ' : '—';
+const routeLabel = (route?: TripBlock['route']) =>
+    route?.name?.trim() ||
+    [route?.origin_city, route?.dest_city].filter(Boolean).join(' → ') ||
+    '—';
 const fmtDateTime = (s?: string) =>
     s
         ? new Date(s).toLocaleString('vi-VN', {
@@ -872,10 +877,9 @@ onMounted(async () => {
                     <div class="space-y-3 px-6 py-4 text-sm">
                         <div class="flex justify-between">
                             <span class="text-slate-500">Tuyến</span>
-                            <span class="font-medium text-slate-800"
-                                >{{ selectedTrip.route?.origin_city }} →
-                                {{ selectedTrip.route?.dest_city }}</span
-                            >
+                            <span class="font-medium text-slate-800">{{
+                                routeLabel(selectedTrip.route)
+                            }}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-slate-500">Khởi hành → Đến</span>
