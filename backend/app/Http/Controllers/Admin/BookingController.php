@@ -20,6 +20,10 @@ class BookingController extends Controller
             'search' => $request->search,
             'date_from' => $request->from_date,
             'date_to' => $request->to_date,
+            // per_page trước đây KHÔNG được truyền xuống repo nên luôn rơi về mặc
+            // định 20 dù client gửi khác — màn quản lý vé chỉ thấy 20 vé đầu.
+            // Chặn trên 100 để không cho client kéo cả bảng trong một request.
+            'per_page' => min(100, max(10, (int) $request->integer('per_page', 20))),
         ]);
 
         return response()->json([
