@@ -28,6 +28,10 @@ export const driverRoutes: RouteRecordRaw[] = [
                 component: () => import('@/pages/driver/trips/Schedule.vue'),
             },
             {
+                path: 'active',
+                component: () => import('@/pages/driver/trips/ActiveTrip.vue'),
+            },
+            {
                 path: 'trips/:id',
                 component: () => import('@/pages/driver/trips/TripDetail.vue'),
                 meta: { hideNav: true },
