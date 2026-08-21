@@ -23,6 +23,8 @@ interface Booking {
     created_at: string;
 }
 
+const PER_PAGE = 20;
+
 const bookings = ref<Booking[]>([]);
 const loading = ref(true);
 const error = ref('');
@@ -31,6 +33,8 @@ const statusTab = ref('all');
 const dateFrom = ref('');
 const dateTo = ref('');
 const totalCount = ref(0);
+const page = ref(1);
+const lastPage = ref(1);
 
 const statusConfig: Record<string, { label: string; cls: string }> = {
     pending: { label: 'Chờ thanh toán', cls: 'bg-amber-50 text-amber-700' },
@@ -51,35 +55,53 @@ const paymentConfig: Record<string, { label: string; cls: string }> = {
     },
 };
 
+// Mọi trạng thái vé đều có tab riêng — trước đây thiếu 'no_show' nên vé khách
+// bỏ chuyến (tài xế đánh vắng) chỉ xem được ở tab "Tất cả", không lọc ra được.
 const tabs = [
     { v: 'all', l: 'Tất cả' },
     { v: 'pending', l: 'Chờ thanh toán' },
     { v: 'confirmed', l: 'Đã xác nhận' },
     { v: 'checked_in', l: 'Đã lên xe' },
     { v: 'completed', l: 'Hoàn thành' },
+    { v: 'no_show', l: 'Không lên xe' },
     { v: 'cancelled', l: 'Đã huỷ' },
 ];
 
 async function fetchBookings() {
     loading.value = true;
     error.value = '';
-    const params: Record<string, unknown> = { per_page: 100 };
+    const params: Record<string, unknown> = {
+        per_page: PER_PAGE,
+        page: page.value,
+    };
     if (search.value.trim()) params.search = search.value.trim();
     if (statusTab.value !== 'all') params.status = statusTab.value;
     if (dateFrom.value) params.from_date = dateFrom.value;
     if (dateTo.value) params.to_date = dateTo.value;
 
-    const { data, error: err } = await adminApi.getBookings(params);
+    const { data, meta, error: err } = await adminApi.getBookings(params);
     loading.value = false;
     if (err) {
         error.value = err;
         return;
     }
     bookings.value = data ?? [];
-    totalCount.value = bookings.value.length;
+    // Tổng phải lấy từ meta.total của server — dùng length của mảng chỉ ra số vé
+    // CỦA TRANG HIỆN TẠI, hiển thị sai tổng ngay khi có nhiều hơn một trang.
+    totalCount.value = meta?.total ?? bookings.value.length;
+    lastPage.value = meta?.last_page ?? 1;
 }
 
+// Đổi bộ lọc thì luôn về trang 1, nếu không sẽ rơi vào trang trống khi kết quả
+// mới ít trang hơn trang đang đứng.
 function onFilter() {
+    page.value = 1;
+    fetchBookings();
+}
+
+function goToPage(p: number) {
+    if (p < 1 || p > lastPage.value || p === page.value) return;
+    page.value = p;
     fetchBookings();
 }
 
@@ -310,6 +332,32 @@ onMounted(fetchBookings);
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Phân trang: trước đây không có, nên chỉ xem được trang đầu -->
+            <div
+                v-if="!loading && lastPage > 1"
+                class="flex items-center justify-between border-t border-gray-100 px-4 py-3"
+            >
+                <p class="text-xs text-gray-500">
+                    Trang {{ page }} / {{ lastPage }}
+                </p>
+                <div class="flex gap-2">
+                    <button
+                        @click="goToPage(page - 1)"
+                        :disabled="page <= 1"
+                        class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        ← Trước
+                    </button>
+                    <button
+                        @click="goToPage(page + 1)"
+                        :disabled="page >= lastPage"
+                        class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        Sau →
+                    </button>
+                </div>
             </div>
         </div>
     </div>
