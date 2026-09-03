@@ -16,24 +16,13 @@ const walletBalance = ref(store.walletBalance);
 const bookingData = ref<any>(null);
 const loadingBooking = ref(true);
 
-// QR chuyển khoản thủ công (VietQR/SePay tự động xác nhận qua webhook, MoMo cần
-// admin duyệt tay — dùng chung 1 modal, khác label theo qrMethod).
-interface TransferInfo {
-    channelLabel: string | null;
-    channelValue: string;
-    accLabel: string;
-    accValue: string;
-    accName: string | null;
-    amount: number;
-    code: string;
-}
-const showTransferModal = ref(false);
+// SePay variables
+const showSepayModal = ref(false);
 const showPaymentSuccessModal = ref(false);
-const qrMethod = ref<'vnpay' | 'momo'>('vnpay');
-const transferQrUrl = ref('');
-const transferInfo = ref<TransferInfo | null>(null);
+const sepayQrUrl = ref('');
+const sepayBankInfo = ref<any>(null);
 const isCopied = ref(false);
-let transferPollingInterval: ReturnType<typeof setInterval> | null = null;
+let sepayPollingInterval: ReturnType<typeof setInterval> | null = null;
 
 const paySeconds = ref(900);
 let countdown: ReturnType<typeof setInterval> | null = null;
@@ -124,16 +113,16 @@ function copyText(text: string) {
     }, 2000);
 }
 
-function stopTransferPolling() {
-    if (transferPollingInterval) {
-        clearInterval(transferPollingInterval);
-        transferPollingInterval = null;
+function stopSepayPolling() {
+    if (sepayPollingInterval) {
+        clearInterval(sepayPollingInterval);
+        sepayPollingInterval = null;
     }
 }
 
-function closeTransferModal() {
-    stopTransferPolling();
-    showTransferModal.value = false;
+function closeSepayModal() {
+    stopSepayPolling();
+    showSepayModal.value = false;
 }
 
 function goToConfirmation() {
@@ -143,18 +132,18 @@ function goToConfirmation() {
     }
 }
 
-async function checkTransferStatus(currentId?: string) {
+async function checkSepayStatus(currentId?: string) {
     const id = currentId || bookingId.value;
     if (!id) return;
     try {
         const { data } = await customerApi.getBooking(id);
         if (data?.payment_status === 'paid') {
-            stopTransferPolling();
+            stopSepayPolling();
             if (countdown) {
                 clearInterval(countdown);
                 countdown = null;
             }
-            showTransferModal.value = false;
+            showSepayModal.value = false;
             showPaymentSuccessModal.value = true;
             bookingData.value = data;
         }
@@ -163,11 +152,11 @@ async function checkTransferStatus(currentId?: string) {
     }
 }
 
-function startTransferPolling(currentId: string) {
-    stopTransferPolling();
-    checkTransferStatus(currentId);
-    transferPollingInterval = setInterval(() => {
-        checkTransferStatus(currentId);
+function startSepayPolling(currentId: string) {
+    stopSepayPolling();
+    checkSepayStatus(currentId);
+    sepayPollingInterval = setInterval(() => {
+        checkSepayStatus(currentId);
     }, 2500);
 }
 
@@ -195,27 +184,15 @@ async function pay() {
         return;
     }
 
-    if (selectedMethod.value === 'vnpay' || selectedMethod.value === 'momo') {
-        // MoMo giờ dùng chung QR ngân hàng động của VietQR (BE: buildBankTransferQr) —
-        // app MoMo quét được QR này, xác nhận tự động qua cùng webhook SePay.
-        const info = data?.bank_info;
-        if (data?.payment_url && info) {
-            qrMethod.value = selectedMethod.value;
-            transferQrUrl.value = data.payment_url;
-            transferInfo.value = {
-                channelLabel: 'Ngân hàng',
-                channelValue: info.bank_name,
-                accLabel: 'Số tài khoản',
-                accValue: info.bank_acc,
-                accName: info.acc_name,
-                amount: info.amount,
-                code: info.code,
-            };
-            showTransferModal.value = true;
-            startTransferPolling(currentBookingId);
+    if (selectedMethod.value === 'vnpay') {
+        if (data?.payment_url && data?.bank_info) {
+            sepayQrUrl.value = data.payment_url;
+            sepayBankInfo.value = data.bank_info;
+            showSepayModal.value = true;
+            startSepayPolling(currentBookingId);
         } else {
             errorMsg.value =
-                'Không thể khởi tạo mã QR thanh toán. Vui lòng thử lại.';
+                'Không thể khởi tạo mã QR chuyển khoản. Vui lòng thử lại.';
         }
         return;
     }
@@ -271,7 +248,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
     if (countdown) clearInterval(countdown);
-    stopTransferPolling();
+    stopSepayPolling();
 });
 </script>
 
@@ -517,9 +494,9 @@ onUnmounted(() => {
             </div>
         </div>
 
-        <!-- QR CHUYỂN KHOẢN MODAL (VietQR tự động / MoMo admin duyệt tay) -->
+        <!-- SEPAY VIETQR MODAL -->
         <div
-            v-if="showTransferModal"
+            v-if="showSepayModal"
             class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
         >
             <div
@@ -533,23 +510,17 @@ onUnmounted(() => {
                         <h3
                             class="flex items-center gap-2 text-base font-bold text-slate-900"
                         >
-                            <span>{{ qrMethod === 'momo' ? '💜' : '🏦' }}</span>
-                            {{
-                                qrMethod === 'momo'
-                                    ? 'Thanh toán qua MoMo'
-                                    : 'Thanh toán chuyển khoản VietQR'
-                            }}
+                            <span>🏦</span> Thanh toán chuyển khoản VietQR
                         </h3>
                         <p class="mt-0.5 text-xs text-slate-500">
-                            Hệ thống ghi nhận giao dịch tự động trong 10-30
-                            giây
+                            Hệ thống ghi nhận giao dịch tự động trong 10-30 giây
                         </p>
                     </div>
                     <button
                         type="button"
                         aria-label="Đóng"
                         class="p-1 text-slate-400 transition hover:text-slate-600"
-                        @click="closeTransferModal"
+                        @click="closeSepayModal"
                     >
                         <svg
                             class="h-6 w-6"
@@ -576,53 +547,43 @@ onUnmounted(() => {
                         class="flex flex-col items-center justify-center rounded-xl border border-slate-100 bg-white p-4 shadow-sm"
                     >
                         <img
-                            :src="transferQrUrl"
-                            :alt="qrMethod === 'momo' ? 'QR MoMo' : 'VietQR SePay'"
+                            :src="sepayQrUrl"
+                            alt="VietQR SePay"
                             class="h-56 w-56 rounded-lg border border-slate-100 object-contain p-1"
                         />
                         <p
                             class="mt-3 text-center text-[11px] leading-relaxed text-slate-500"
                         >
-                            {{
-                                qrMethod === 'momo'
-                                    ? 'Mở app MoMo hoặc app Ngân hàng bất kỳ, quét mã QR để điền nhanh mọi thông tin chuyển khoản'
-                                    : 'Mở App Ngân hàng quét mã QR để điền nhanh mọi thông tin chuyển khoản'
-                            }}
+                            Mở App Ngân hàng quét mã QR để điền nhanh mọi thông
+                            tin chuyển khoản
                         </p>
                     </div>
 
-                    <!-- Right: Transfer info details -->
+                    <!-- Right: Bank Info details -->
                     <div class="space-y-4">
                         <div
                             class="space-y-3 rounded-xl border border-slate-100 bg-white p-4 shadow-sm"
                         >
                             <div
-                                v-if="transferInfo?.channelLabel"
                                 class="flex items-center justify-between border-b border-slate-100 pb-2 text-sm"
                             >
-                                <span class="text-slate-500">{{
-                                    transferInfo.channelLabel
-                                }}</span>
+                                <span class="text-slate-500">Ngân hàng</span>
                                 <span class="font-bold text-slate-800">{{
-                                    transferInfo.channelValue
+                                    sepayBankInfo?.bank_name
                                 }}</span>
                             </div>
 
                             <div
                                 class="flex items-center justify-between border-b border-slate-100 pb-2 text-sm"
                             >
-                                <span class="text-slate-500">{{
-                                    transferInfo?.accLabel
-                                }}</span>
+                                <span class="text-slate-500">Số tài khoản</span>
                                 <div
                                     class="flex items-center gap-1.5 font-bold text-slate-800"
                                 >
-                                    <span>{{ transferInfo?.accValue }}</span>
+                                    <span>{{ sepayBankInfo?.bank_acc }}</span>
                                     <button
                                         @click="
-                                            copyText(
-                                                transferInfo?.accValue ?? '',
-                                            )
+                                            copyText(sepayBankInfo?.bank_acc)
                                         "
                                         class="text-xs font-semibold text-green-600 hover:text-green-700"
                                     >
@@ -632,7 +593,6 @@ onUnmounted(() => {
                             </div>
 
                             <div
-                                v-if="transferInfo?.accName"
                                 class="flex items-center justify-between border-b border-slate-100 pb-2 text-sm"
                             >
                                 <span class="text-slate-500"
@@ -640,7 +600,7 @@ onUnmounted(() => {
                                 >
                                 <span
                                     class="font-bold text-slate-800 uppercase"
-                                    >{{ transferInfo.accName }}</span
+                                    >{{ sepayBankInfo?.acc_name }}</span
                                 >
                             </div>
 
@@ -652,7 +612,7 @@ onUnmounted(() => {
                                 >
                                 <span
                                     class="text-base font-bold text-green-600"
-                                    >{{ fmt(transferInfo?.amount ?? 0) }}</span
+                                    >{{ fmt(sepayBankInfo?.amount) }}</span
                                 >
                             </div>
 
@@ -667,12 +627,10 @@ onUnmounted(() => {
                                 >
                                     <span
                                         class="rounded border border-red-200 bg-red-50 px-2 py-0.5 font-mono text-xs font-bold text-red-600"
-                                        >{{ transferInfo?.code }}</span
+                                        >{{ sepayBankInfo?.code }}</span
                                     >
                                     <button
-                                        @click="
-                                            copyText(transferInfo?.code ?? '')
-                                        "
+                                        @click="copyText(sepayBankInfo?.code)"
                                         class="text-xs font-semibold text-green-600 hover:text-green-700"
                                     >
                                         Sao chép
@@ -686,9 +644,8 @@ onUnmounted(() => {
                             class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-800"
                         >
                             <strong>⚠️ Chú ý:</strong> Bạn cần nhập
-                            <strong>chính xác</strong> số tiền và nội dung
-                            chuyển khoản ở trên để hệ thống tự động xác thực
-                            vé.
+                            <strong>chính xác</strong> nội dung chuyển khoản ở
+                            trên để hệ thống tự động xác thực vé.
                         </div>
                     </div>
                 </div>
@@ -710,14 +667,14 @@ onUnmounted(() => {
                         <button
                             type="button"
                             class="flex-1 rounded-xl bg-green-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-green-700"
-                            @click="checkTransferStatus()"
+                            @click="checkSepayStatus()"
                         >
                             Tôi đã chuyển khoản xong
                         </button>
                         <button
                             type="button"
                             class="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
-                            @click="closeTransferModal"
+                            @click="closeSepayModal"
                         >
                             Hủy & Chọn cách khác
                         </button>
@@ -757,7 +714,7 @@ onUnmounted(() => {
                     Thanh toán thành công
                 </h3>
                 <p class="mt-2 text-sm leading-relaxed text-slate-500">
-                    Giao dịch của bạn đã được xác nhận. Vé
+                    SePay đã xác nhận giao dịch. Vé
                     <strong class="text-slate-700">{{
                         bookingData?.booking_code
                     }}</strong>
