@@ -2,11 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { customerApi } from '@/api/customer.api';
-import momoQrStatic from '@/assets/momo-qr-static.jpg';
 import { useCustomerStore } from '@/stores/customer.store';
-// Ảnh QR VietQR/napas 247 THẬT xuất từ app MoMo Business — QR ví MoMo không có
-// chuẩn công khai để tự dựng link/QR động, nên dùng ảnh tĩnh bundle sẵn thay vì
-// gọi dịch vụ tạo QR từ 1 URL tự chế (đã xác nhận không quét được trong app MoMo).
 
 const router = useRouter();
 const route = useRoute();
@@ -200,38 +196,21 @@ async function pay() {
     }
 
     if (selectedMethod.value === 'vnpay' || selectedMethod.value === 'momo') {
-        const info = data?.bank_info ?? data?.momo_info;
-        // VietQR: ảnh QR động dựng ở BE theo đúng số tiền/nội dung mỗi lần initiate.
-        // MoMo: ảnh QR tĩnh thật xuất từ app MoMo Business, bundle sẵn ở FE (BE
-        // không trả payment_url cho momo — xem PaymentService::initiateMomo()).
-        const qrReady =
-            selectedMethod.value === 'vnpay' ? !!data?.payment_url : true;
-        if (qrReady && info) {
+        // MoMo giờ dùng chung QR ngân hàng động của VietQR (BE: buildBankTransferQr) —
+        // app MoMo quét được QR này, xác nhận tự động qua cùng webhook SePay.
+        const info = data?.bank_info;
+        if (data?.payment_url && info) {
             qrMethod.value = selectedMethod.value;
-            transferQrUrl.value =
-                selectedMethod.value === 'vnpay'
-                    ? (data.payment_url as string)
-                    : momoQrStatic;
-            transferInfo.value =
-                selectedMethod.value === 'vnpay'
-                    ? {
-                          channelLabel: 'Ngân hàng',
-                          channelValue: info.bank_name,
-                          accLabel: 'Số tài khoản',
-                          accValue: info.bank_acc,
-                          accName: info.acc_name,
-                          amount: info.amount,
-                          code: info.code,
-                      }
-                    : {
-                          channelLabel: null,
-                          channelValue: '',
-                          accLabel: 'Số điện thoại MoMo',
-                          accValue: info.phone,
-                          accName: info.acc_name,
-                          amount: info.amount,
-                          code: info.code,
-                      };
+            transferQrUrl.value = data.payment_url;
+            transferInfo.value = {
+                channelLabel: 'Ngân hàng',
+                channelValue: info.bank_name,
+                accLabel: 'Số tài khoản',
+                accValue: info.bank_acc,
+                accName: info.acc_name,
+                amount: info.amount,
+                code: info.code,
+            };
             showTransferModal.value = true;
             startTransferPolling(currentBookingId);
         } else {
@@ -562,11 +541,8 @@ onUnmounted(() => {
                             }}
                         </h3>
                         <p class="mt-0.5 text-xs text-slate-500">
-                            {{
-                                qrMethod === 'momo'
-                                    ? 'Sau khi chuyển khoản, đội ngũ hỗ trợ xác nhận thủ công trong ít phút'
-                                    : 'Hệ thống ghi nhận giao dịch tự động trong 10-30 giây'
-                            }}
+                            Hệ thống ghi nhận giao dịch tự động trong 10-30
+                            giây
                         </p>
                     </div>
                     <button
@@ -609,7 +585,7 @@ onUnmounted(() => {
                         >
                             {{
                                 qrMethod === 'momo'
-                                    ? 'Mở app MoMo, chọn Quét mã QR — mã KHÔNG tự điền số tiền, bạn cần tự nhập số tiền và nội dung như bên cạnh'
+                                    ? 'Mở app MoMo hoặc app Ngân hàng bất kỳ, quét mã QR để điền nhanh mọi thông tin chuyển khoản'
                                     : 'Mở App Ngân hàng quét mã QR để điền nhanh mọi thông tin chuyển khoản'
                             }}
                         </p>
@@ -711,12 +687,8 @@ onUnmounted(() => {
                         >
                             <strong>⚠️ Chú ý:</strong> Bạn cần nhập
                             <strong>chính xác</strong> số tiền và nội dung
-                            chuyển khoản ở trên
-                            {{
-                                qrMethod === 'momo'
-                                    ? 'để đội ngũ hỗ trợ đối soát đúng vé của bạn.'
-                                    : 'để hệ thống tự động xác thực vé.'
-                            }}
+                            chuyển khoản ở trên để hệ thống tự động xác thực
+                            vé.
                         </div>
                     </div>
                 </div>
@@ -731,11 +703,7 @@ onUnmounted(() => {
                         <div
                             class="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-green-600 border-t-transparent"
                         />
-                        <span>{{
-                            qrMethod === 'momo'
-                                ? 'Đang chờ xác nhận...'
-                                : 'Đang chờ chuyển khoản...'
-                        }}</span>
+                        <span>Đang chờ chuyển khoản...</span>
                     </div>
 
                     <div class="flex w-full flex-col gap-2 pt-1 sm:flex-row">

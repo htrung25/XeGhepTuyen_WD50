@@ -147,6 +147,66 @@ it('initiates SePay VietQR payment info and processes callback webhook successfu
     expect($booking->booking_status->value)->toBe('confirmed');
 });
 
+it('confirms a MoMo-selected payment via the same SePay webhook (shared bank QR)', function () {
+    // initiateMomo() giờ dùng chung QR ngân hàng động của initiateSepay() — khách
+    // chọn "Ví MoMo" nhưng thực chất chuyển khoản ngân hàng, webhook SePay phải
+    // xác nhận được payment có method=momo (không chỉ vnpay).
+    [$trip, $seat, $customer] = setupSepayTestContext();
+    Sanctum::actingAs($customer, ['*'], 'sanctum');
+    Sanctum::actingAs($customer, ['*'], 'customer');
+
+    $booking = Booking::create([
+        'booking_code' => 'XGBOOK'.rand(1000, 9999),
+        'user_id' => $customer->id,
+        'trip_id' => $trip->id,
+        'pickup_address' => 'Mỹ Đình, Hà Nội',
+        'pickup_lat' => 21.0285,
+        'pickup_lng' => 105.8544,
+        'dropoff_address' => 'Lạch Tray, Hải Phòng',
+        'dropoff_lat' => 20.8449,
+        'dropoff_lng' => 106.6881,
+        'passenger_count' => 1,
+        'contact_name' => 'Nguyễn Văn MoMo',
+        'contact_phone' => '0988888899',
+        'subtotal' => 150000,
+        'final_amount' => 150000,
+        'payment_method' => 'momo',
+        'payment_status' => 'unpaid',
+        'booking_status' => 'pending',
+        'qr_token' => Str::random(32),
+    ]);
+
+    $initResponse = $this->postJson('/api/customer/payments/initiate', [
+        'booking_id' => $booking->id,
+        'method' => 'momo',
+    ])->assertOk();
+
+    expect($initResponse->json('data.payment_url'))->toContain('https://qr.sepay.vn/img?');
+    $paymentReference = $initResponse->json('data.payment_reference');
+    $amount = $initResponse->json('data.bank_info.amount');
+
+    $webhookApiKey = config('services.sepay.webhook_api_key');
+    $webhookResponse = $this->withHeaders([
+        'Authorization' => "Apikey {$webhookApiKey}",
+    ])->postJson('/api/customer/payments/sepay/webhook', [
+        'id' => 555555,
+        'gateway' => 'MBBank',
+        'transactionDate' => '2026-07-08 15:00:00',
+        'accountNumber' => '0935555555',
+        'transferType' => 'in',
+        'transferAmount' => $amount,
+        'content' => "Chuyen khoan thanh toan ve {$paymentReference}",
+        'code' => 'SEPAYTX5555',
+    ]);
+
+    $webhookResponse->assertStatus(200);
+    $webhookResponse->assertJsonPath('success', true);
+
+    $booking->refresh();
+    expect($booking->payment_status->value)->toBe('paid');
+    expect($booking->booking_status->value)->toBe('confirmed');
+});
+
 it('rejects SePay webhook with invalid webhook token', function () {
     $webhookResponse = $this->withHeaders([
         'Authorization' => 'Apikey invalid_token_here',

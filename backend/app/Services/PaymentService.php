@@ -361,33 +361,24 @@ class PaymentService
     /**
      * Tài khoản merchant MoMo hiện chưa được MoMo duyệt cho API captureWallet
      * (resultCode 13 — "Cấu hình doanh nghiệp không chính xác hoặc tài khoản
-     * không hoạt động"). Trong lúc chờ duyệt, dùng ảnh QR VietQR/napas 247 THẬT
-     * xuất từ app MoMo Business (ảnh tĩnh, bundle sẵn ở FE — momo-qr-static.jpg,
-     * không tự dựng link/QR vì MoMo không công khai chuẩn mã QR ví). Khách tự
-     * nhập số tiền/nội dung sau khi quét, admin xác nhận đã nhận tiền qua
-     * FinanceController::confirmPayment() (PaymentService::confirmManualPayment()).
+     * không hoạt động"), và MoMo không công khai chuẩn QR ví để tự dựng link/QR
+     * đúng (đã thử link nhantien.momo.vn — app MoMo không quét ra). Dùng LẠI
+     * đúng QR VietQR/napas 247 động của initiateSepay(): app MoMo (và mọi app
+     * ngân hàng khác) quét được QR này để chuyển khoản, xác nhận tự động qua
+     * cùng webhook SePay (xem handleSepayWebhook() — đã nới điều kiện lọc method
+     * để nhận cả Momo lẫn Vnpay).
      */
     private function initiateMomo(Payment $payment, Booking $booking): array
     {
-        $phone = config('services.momo.phone');
-        $accName = config('services.momo.account_name');
-        // Đồng bộ định dạng nội dung chuyển khoản với initiateSepay() để khách quen
-        // cùng một quy tắc dù chọn phương thức nào.
-        $description = strtoupper(str_replace('-', '', (string) $booking->id));
-
-        return [
-            'order_id' => $payment->gateway_order_id,
-            'payment_reference' => $description,
-            'momo_info' => [
-                'phone' => $phone,
-                'acc_name' => $accName,
-                'amount' => $payment->amount,
-                'code' => $description,
-            ],
-        ];
+        return $this->buildBankTransferQr($payment, $booking);
     }
 
     private function initiateSepay(Payment $payment, Booking $booking): array
+    {
+        return $this->buildBankTransferQr($payment, $booking);
+    }
+
+    private function buildBankTransferQr(Payment $payment, Booking $booking): array
     {
         $bankAcc = config('services.sepay.bank_acc');
         $bankName = config('services.sepay.bank_name');
@@ -462,7 +453,9 @@ class PaymentService
             'gateway_txn_id' => $gatewayTxnId,
         ]);
 
-        if ($payment->method !== PaymentMethodEnum::Vnpay || $gatewayTxnId === null || $gatewayTxnId === '') {
+        // Chấp nhận cả Vnpay (VietQR) lẫn Momo — từ initiateMomo(), khách chọn "Ví MoMo"
+        // nhưng thực chất quét cùng QR ngân hàng động của initiateSepay() (xem đó).
+        if (! in_array($payment->method, [PaymentMethodEnum::Vnpay, PaymentMethodEnum::Momo], true) || $gatewayTxnId === null || $gatewayTxnId === '') {
             throw new PaymentVerificationException('Thông tin giao dịch SePay không hợp lệ');
         }
 
@@ -493,7 +486,7 @@ class PaymentService
         if (preg_match_all('/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i', $content, $uuidMatches)) {
             foreach ($uuidMatches[0] as $uuid) {
                 $payment = Payment::where('booking_id', strtolower($uuid))
-                    ->where('method', PaymentMethodEnum::Vnpay)
+                    ->whereIn('method', [PaymentMethodEnum::Vnpay, PaymentMethodEnum::Momo])
                     ->latest()
                     ->first();
 
@@ -514,7 +507,7 @@ class PaymentService
                     substr($compactId, 20)
                 );
                 $payment = Payment::where('booking_id', $bookingId)
-                    ->where('method', PaymentMethodEnum::Vnpay)
+                    ->whereIn('method', [PaymentMethodEnum::Vnpay, PaymentMethodEnum::Momo])
                     ->latest()
                     ->first();
 
@@ -535,7 +528,7 @@ class PaymentService
             foreach ($pendingBookings as $b) {
                 if (! empty($b->booking_code) && str_contains($cleanContent, strtoupper($b->booking_code))) {
                     $payment = Payment::where('booking_id', $b->id)
-                        ->where('method', PaymentMethodEnum::Vnpay)
+                        ->whereIn('method', [PaymentMethodEnum::Vnpay, PaymentMethodEnum::Momo])
                         ->latest()
                         ->first();
 
@@ -549,7 +542,7 @@ class PaymentService
         // 4. Fallback mã XEGHEP cũ
         if (preg_match('/XEGHEP-[A-Z0-9]+/i', $content, $legacyMatch)) {
             return Payment::where('gateway_order_id', strtoupper($legacyMatch[0]))
-                ->where('method', PaymentMethodEnum::Vnpay)
+                ->whereIn('method', [PaymentMethodEnum::Vnpay, PaymentMethodEnum::Momo])
                 ->first();
         }
 
