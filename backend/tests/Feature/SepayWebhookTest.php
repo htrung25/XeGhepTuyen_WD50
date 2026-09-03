@@ -309,4 +309,3 @@ it('accepts SePay webhook with direct API key and matches by booking_code or hyp
     $resp->assertJsonPath('success', true);
     expect($booking->fresh()->payment_status->value)->toBe('paid');
 });
-
