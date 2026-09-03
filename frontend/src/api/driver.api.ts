@@ -112,8 +112,10 @@ export const driverApi = {
     // ─── Earnings (bảng kê chỉ-xem) ────────────────────────────────────────
     getEarnings: (params?: { period?: 'today' | 'week' | 'month' }) =>
         apiClient.send(earningsIndex({ query: params })),
-    getTransactions: (params?: { page?: number }) =>
-        apiClient.send(earningsTransactions({ query: params })),
+    getTransactions: (params?: {
+        page?: number;
+        period?: 'today' | 'week' | 'month';
+    }) => apiClient.send(earningsTransactions({ query: params })),
 
     // ─── Notifications ─────────────────────────────────────────────────────
     getNotifications: (params?: { page?: number; unread_only?: boolean }) =>
