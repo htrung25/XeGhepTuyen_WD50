@@ -231,6 +231,34 @@ it('retry khởi tạo thanh toán dùng lại payment pending thay vì tạo or
     expect(Payment::where('booking_id', $booking->id)->count())->toBe(1);
 });
 
+it('cho phép đổi phương thức thanh toán, đánh Failed giao dịch pending cũ thay vì chặn cứng', function () {
+    Http::fake(['*' => Http::response(['resultCode' => 0, 'payUrl' => 'https://momo.test/pay'])]);
+    $existing = makePendingMomoPayment();
+    $booking = $existing->booking;
+    $existing->delete();
+    Sanctum::actingAs($booking->user, ['*'], 'sanctum');
+    Sanctum::actingAs($booking->user, ['*'], 'customer');
+
+    // Khách chọn VietQR (SePay) trước — không cần Http::fake vì initiateSepay chỉ dựng
+    // URL QR nội bộ, không gọi cổng ngoài.
+    $this->postJson('/api/customer/payments/initiate', [
+        'booking_id' => $booking->id, 'method' => 'vnpay',
+    ])->assertOk();
+    $vnpayPayment = Payment::where('booking_id', $booking->id)->where('method', 'vnpay')->sole();
+    expect($vnpayPayment->status->value)->toBe('pending');
+
+    // Huỷ QR, đổi sang MoMo — trước đây bị chặn 422 "Vé đang có một giao dịch
+    // thanh toán khác chờ xử lý", phải đợi vé hết hạn mới đổi được.
+    $this->postJson('/api/customer/payments/initiate', [
+        'booking_id' => $booking->id, 'method' => 'momo',
+    ])->assertOk()->assertJsonPath('data.payment_url', 'https://momo.test/pay');
+
+    expect($vnpayPayment->fresh()->status->value)->toBe('failed');
+    $momoPayment = Payment::where('booking_id', $booking->id)->where('method', 'momo')->sole();
+    expect($momoPayment->status->value)->toBe('pending');
+    expect(Payment::where('booking_id', $booking->id)->count())->toBe(2);
+});
+
 it('không nhận ZaloPay khi chưa có tích hợp gateway', function () {
     $payment = makePendingMomoPayment();
     $booking = $payment->booking;
