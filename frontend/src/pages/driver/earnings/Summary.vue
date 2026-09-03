@@ -22,6 +22,10 @@ const periods: { key: Period; label: string }[] = [
     { key: 'month', label: 'Tháng này' },
 ];
 
+const periodLabel = computed(
+    () => periods.find((p) => p.key === period.value)?.label ?? '',
+);
+
 function fmt(v: number) {
     return new Intl.NumberFormat('vi-VN').format(v) + 'đ';
 }
@@ -96,19 +100,29 @@ onMounted(load);
             {{ errorMsg }}
         </div>
 
-        <!-- Tổng thu nhập tích lũy (chỉ xem — nhà xe quyết toán trực tiếp) -->
+        <!-- Thu nhập theo kỳ đang chọn (chỉ xem — nhà xe quyết toán trực tiếp).
+        Trước đây card này CỐ ĐỊNH hiển thị tổng tích lũy toàn thời gian, không
+        đổi theo tab Hôm nay/Tuần này/Tháng này bên dưới — bấm đổi tab mà số to
+        không nhúc nhích trông như app lỗi. Giờ card này bám đúng kỳ đang chọn,
+        tổng tích lũy chuyển xuống thành dòng phụ nhỏ hơn. -->
         <div
             class="mb-6 rounded-xl bg-gradient-to-r from-green-700 to-green-600 p-6 text-white shadow-lg"
         >
             <p class="mb-1 text-sm font-medium text-green-200">
-                Tổng thu nhập tích lũy
+                Thu nhập {{ periodLabel.toLowerCase() }}
             </p>
             <p
                 v-if="isLoading"
                 class="h-10 w-48 animate-pulse rounded-xl bg-white/20"
             />
             <p v-else class="text-4xl font-black">
-                {{ fmt(earnings?.total_earned ?? 0) }}
+                {{ fmt(earnings?.total ?? 0) }}
+            </p>
+            <p v-if="!isLoading" class="mt-2 text-sm text-green-100">
+                Tổng tích lũy từ trước đến nay:
+                <span class="font-semibold text-white">{{
+                    fmt(earnings?.total_earned ?? 0)
+                }}</span>
             </p>
             <div
                 class="mt-3 flex items-start gap-2 rounded-lg bg-white/10 px-3 py-2 text-xs text-green-100"
@@ -198,25 +212,14 @@ onMounted(load);
                 </div>
             </div>
 
-            <!-- Total earnings -->
+            <!-- Biểu đồ thu nhập theo ngày (số tổng đã hiển thị ở card phía trên,
+            không lặp lại ở đây tránh 2 nơi cùng in cùng một con số) -->
             <div
                 class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
             >
-                <div class="mb-4 flex items-center justify-between">
-                    <h3 class="font-semibold text-gray-900">
-                        Thu nhập
-                        {{
-                            period === 'today'
-                                ? 'hôm nay'
-                                : period === 'week'
-                                  ? 'tuần này'
-                                  : 'tháng này'
-                        }}
-                    </h3>
-                    <p class="text-2xl font-black text-green-600">
-                        {{ fmt(earnings?.total ?? 0) }}
-                    </p>
-                </div>
+                <h3 class="mb-4 font-semibold text-gray-900">
+                    Biểu đồ 7 ngày gần nhất
+                </h3>
 
                 <!-- Bar chart -->
                 <div v-if="earnings?.daily_amounts?.length">
