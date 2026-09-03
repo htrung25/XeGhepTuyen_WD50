@@ -323,6 +323,55 @@ statusForm.head = (args: { bookingId: string | number } | [bookingId: string | n
 status.form = statusForm
 
 /**
+* @see \App\Http\Controllers\Customer\PaymentController::statusByOrder
+* @route '/api/customer/payments/by-order/{orderId}'
+*/
+export const statusByOrder = (args: { orderId: string | number } | [orderId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: statusByOrder.url(args, options),
+    method: 'get',
+})
+
+statusByOrder.definition = {
+    methods: ["get","head"],
+    url: '/api/customer/payments/by-order/{orderId}',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Customer\PaymentController::statusByOrder
+* @route '/api/customer/payments/by-order/{orderId}'
+*/
+statusByOrder.url = (args: { orderId: string | number } | [orderId: string | number ] | string | number, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { orderId: args }
+    }
+
+    if (Array.isArray(args)) {
+        args = {
+                    orderId: args[0],
+                }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+                        orderId: args.orderId,
+                }
+
+    return statusByOrder.definition.url
+            .replace('{orderId}', parsedArgs.orderId.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Customer\PaymentController::statusByOrder
+* @route '/api/customer/payments/by-order/{orderId}'
+*/
+statusByOrder.get = (args: { orderId: string | number } | [orderId: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: statusByOrder.url(args, options),
+    method: 'get',
+})
+
+/**
 * @see \App\Http\Controllers\Customer\PaymentController::wallet
 * @see app/Http/Controllers/Customer/PaymentController.php:149
 * @route '/api/customer/wallet'
@@ -403,6 +452,6 @@ walletForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 wallet.form = walletForm
 
-const PaymentController = { momoCallback, vnpayCallback, sepayWebhook, initiate, status, wallet }
+const PaymentController = { momoCallback, vnpayCallback, sepayWebhook, initiate, status, statusByOrder, wallet }
 
 export default PaymentController
