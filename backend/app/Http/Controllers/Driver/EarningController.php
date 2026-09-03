@@ -20,13 +20,7 @@ class EarningController extends Controller
         $driver = auth('driver')->user()->driver;
 
         $period = $request->get('period', 'week');
-
-        [$from, $to] = match ($period) {
-            'today' => [today(), today()->endOfDay()],
-            'week' => [now()->startOfWeek(), now()->endOfWeek()],
-            'month' => [now()->startOfMonth(), now()->endOfMonth()],
-            default => [now()->startOfWeek(), now()->endOfWeek()],
-        };
+        [$from, $to] = $this->periodRange($period);
 
         // ── Thống kê theo kỳ (chuyến đã hoàn thành trong kỳ) ──────────────────
         $periodTrips = $driver->trips()
@@ -63,8 +57,14 @@ class EarningController extends Controller
     {
         $driver = auth('driver')->user()->driver;
 
+        // Lịch sử thu nhập phải theo ĐÚNG kỳ đang chọn ở bộ lọc — trước đây
+        // endpoint bỏ qua period nên đổi Hôm nay/Tuần này/Tháng này thì danh
+        // sách vẫn y nguyên (luôn là toàn bộ chuyến đã chạy).
+        [$from, $to] = $this->periodRange($request->get('period', 'week'));
+
         $trips = $driver->trips()
             ->where('status', 'completed')
+            ->whereBetween('completed_at', [$from, $to])
             ->with('route:id,origin_city,origin_district,dest_city,dest_district')
             ->withCount(['bookings as passenger_count' => fn ($q) => $q->where('booking_status', 'completed')])
             ->withSum(['bookings as amount' => fn ($q) => $q->where('booking_status', 'completed')], 'final_amount')
@@ -86,8 +86,25 @@ class EarningController extends Controller
         return response()->json([
             'success' => true,
             'data' => $data,
-            'meta' => ['current_page' => $trips->currentPage(), 'total' => $trips->total()],
+            'meta' => [
+                'current_page' => $trips->currentPage(),
+                'per_page' => $trips->perPage(),
+                'total' => $trips->total(),
+                // Thiếu last_page nên client phải đoán "còn trang sau" bằng cách
+                // xem trang hiện tại có đầy 10 mục không — đoán sai ở trang cuối.
+                'last_page' => $trips->lastPage(),
+            ],
         ]);
+    }
+
+    /** Khoảng thời gian của kỳ lọc — dùng chung cho cả tổng quan lẫn lịch sử */
+    private function periodRange(string $period): array
+    {
+        return match ($period) {
+            'today' => [today(), today()->endOfDay()],
+            'month' => [now()->startOfMonth(), now()->endOfMonth()],
+            default => [now()->startOfWeek(), now()->endOfWeek()],
+        };
     }
 
     /** Query vé thực nhận trên tập chuyến */
