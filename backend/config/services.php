@@ -81,10 +81,10 @@ return [
 
     // SePay
     'sepay' => [
-        'webhook_api_key' => env('SEPAY_WEBHOOK_API_KEY', env('SEPAY_WEBHOOK_TOKEN')),
-        'bank_acc' => env('SEPAY_BANK_ACC', '0935555555'),
-        'bank_name' => env('SEPAY_BANK_NAME', 'MBBank'),
-        'acc_name' => env('SEPAY_ACC_NAME', 'NGUYEN VAN AD'),
+        'webhook_api_key' => env('SEPAY_WEBHOOK_API_KEY', env('SEPAY_WEBHOOK_TOKEN', 'DATN-WD50')),
+        'bank_acc' => env('SEPAY_BANK_ACC', '8845296516'),
+        'bank_name' => env('SEPAY_BANK_NAME', 'BIDV'),
+        'acc_name' => env('SEPAY_ACC_NAME', 'TRAN HUU TRUNG'),
     ],
 
     // Google Maps — ETA calculation

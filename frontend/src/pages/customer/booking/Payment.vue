@@ -132,25 +132,32 @@ function goToConfirmation() {
     }
 }
 
-function startSepayPolling(bookingId: string) {
-    stopSepayPolling();
-    sepayPollingInterval = setInterval(async () => {
-        try {
-            const { data } = await customerApi.getBooking(bookingId);
-            if (data?.payment_status === 'paid') {
-                stopSepayPolling();
-                if (countdown) {
-                    clearInterval(countdown);
-                    countdown = null;
-                }
-                showSepayModal.value = false;
-                showPaymentSuccessModal.value = true;
-                bookingData.value = data;
+async function checkSepayStatus(currentId?: string) {
+    const id = currentId || bookingId.value;
+    if (!id) return;
+    try {
+        const { data } = await customerApi.getBooking(id);
+        if (data?.payment_status === 'paid') {
+            stopSepayPolling();
+            if (countdown) {
+                clearInterval(countdown);
+                countdown = null;
             }
-        } catch {
-            // Lỗi mạng tạm thời: giữ QR và thử lại ở chu kỳ tiếp theo.
+            showSepayModal.value = false;
+            showPaymentSuccessModal.value = true;
+            bookingData.value = data;
         }
-    }, 3000);
+    } catch {
+        // Lỗi mạng tạm thời: giữ QR và thử lại ở chu kỳ tiếp theo.
+    }
+}
+
+function startSepayPolling(currentId: string) {
+    stopSepayPolling();
+    checkSepayStatus(currentId);
+    sepayPollingInterval = setInterval(() => {
+        checkSepayStatus(currentId);
+    }, 2500);
 }
 
 async function pay() {
@@ -656,13 +663,22 @@ onUnmounted(() => {
                         <span>Đang chờ chuyển khoản...</span>
                     </div>
 
-                    <button
-                        type="button"
-                        class="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
-                        @click="closeSepayModal"
-                    >
-                        Hủy & Chọn phương thức khác
-                    </button>
+                    <div class="flex w-full flex-col gap-2 pt-1 sm:flex-row">
+                        <button
+                            type="button"
+                            class="flex-1 rounded-xl bg-green-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-green-700"
+                            @click="checkSepayStatus()"
+                        >
+                            Tôi đã chuyển khoản xong
+                        </button>
+                        <button
+                            type="button"
+                            class="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+                            @click="closeSepayModal"
+                        >
+                            Hủy & Chọn cách khác
+                        </button>
+                    </div>
                 </div>
             </div>
 

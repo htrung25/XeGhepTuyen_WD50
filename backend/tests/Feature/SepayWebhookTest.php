@@ -118,7 +118,7 @@ it('initiates SePay VietQR payment info and processes callback webhook successfu
 
     expect($paymentReference)->toBe(strtoupper(str_replace('-', '', $booking->id)));
     expect($initResponse->json('data.bank_info.code'))->toBe($paymentReference);
-    expect($initResponse->json('data.payment_url'))->toContain('https://vietqr.app/img?');
+    expect($initResponse->json('data.payment_url'))->toContain('https://qr.sepay.vn/img?');
     expect($initResponse->json('data.payment_url'))->toContain('amount=150000');
     expect($initResponse->json('data.payment_url'))->toContain('des='.$paymentReference);
 
@@ -272,4 +272,40 @@ it('rejects SePay webhook sent to a different beneficiary account', function () 
     ])->assertStatus(400);
 
     expect($booking->fresh()->payment_status->value)->toBe('unpaid');
+});
+
+it('accepts SePay webhook with direct API key and matches by booking_code or hyphenated UUID', function () {
+    [$trip, $seat, $customer] = setupSepayTestContext();
+    Sanctum::actingAs($customer, ['*'], 'sanctum');
+    Sanctum::actingAs($customer, ['*'], 'customer');
+
+    $booking = Booking::create([
+        'booking_code' => 'XGBOOK9876', 'user_id' => $customer->id,
+        'trip_id' => $trip->id, 'pickup_address' => 'Mỹ Đình', 'pickup_lat' => 21,
+        'pickup_lng' => 105, 'dropoff_address' => 'Lạch Tray', 'dropoff_lat' => 20,
+        'dropoff_lng' => 106, 'passenger_count' => 1, 'contact_name' => 'Khách',
+        'contact_phone' => '0988888888', 'subtotal' => 150000, 'final_amount' => 150000,
+        'payment_method' => 'vnpay', 'payment_status' => 'unpaid',
+        'booking_status' => 'pending', 'qr_token' => Str::random(32),
+    ]);
+
+    $this->postJson('/api/customer/payments/initiate', [
+        'booking_id' => $booking->id, 'method' => 'vnpay',
+    ])->assertOk();
+
+    // Test with direct Authorization: test-sepay-api-key (without 'Apikey ' prefix) and content has booking_code
+    $resp = $this->withHeaders([
+        'Authorization' => config('services.sepay.webhook_api_key'),
+    ])->postJson('/api/customer/payments/sepay/webhook', [
+        'id' => 777777,
+        'gateway' => config('services.sepay.bank_name'),
+        'accountNumber' => config('services.sepay.bank_acc'),
+        'transferType' => 'in',
+        'transferAmount' => 150000,
+        'content' => 'ND chuyen tien ve XGBOOK9876 BIDV',
+    ]);
+
+    $resp->assertOk();
+    $resp->assertJsonPath('success', true);
+    expect($booking->fresh()->payment_status->value)->toBe('paid');
 });
