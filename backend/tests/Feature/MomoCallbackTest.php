@@ -190,11 +190,12 @@ it('từ chối callback MoMo của partner hoặc request khác', function (str
     ['requestId', 'wrong-request'],
 ]);
 
-it('khởi tạo MoMo dựng QR chuyển khoản thủ công theo số điện thoại cấu hình, không gọi API MoMo', function () {
+it('khởi tạo MoMo trả về thông tin chuyển khoản theo số điện thoại cấu hình, không gọi API MoMo', function () {
     // Tài khoản merchant MoMo hiện chưa được duyệt (resultCode 13) — initiateMomo()
-    // không còn gọi captureWallet, chỉ dựng QR trỏ tới nhantien.momo.vn/{phone} như
-    // initiateSepay() dựng QR ngân hàng. Http::fake() không stub gì → request lọt ra
-    // ngoài sẽ tự fail, đủ để khẳng định không có HTTP call nào được gửi đi.
+    // không còn gọi captureWallet. QR hiển thị là ảnh tĩnh thật bundle sẵn ở FE
+    // (MoMo không có chuẩn công khai để BE tự dựng QR động), BE chỉ cần trả đúng
+    // info chuyển khoản. Http::fake() không stub gì → request lọt ra ngoài sẽ tự
+    // fail, đủ để khẳng định không có HTTP call nào được gửi đi.
     Http::fake();
 
     $existing = makePendingMomoPayment();
@@ -208,7 +209,6 @@ it('khởi tạo MoMo dựng QR chuyển khoản thủ công theo số điện t
         'method' => 'momo',
     ])->assertOk();
 
-    expect($response->json('data.payment_url'))->toContain('api.qrserver.com');
     expect($response->json('data.momo_info.phone'))->toBe('0900000000');
     expect($response->json('data.momo_info.amount'))->toBe(150000);
     Http::assertNothingSent();
@@ -252,7 +252,7 @@ it('cho phép đổi phương thức thanh toán, đánh Failed giao dịch pend
     $response = $this->postJson('/api/customer/payments/initiate', [
         'booking_id' => $booking->id, 'method' => 'momo',
     ])->assertOk();
-    expect($response->json('data.payment_url'))->toContain('api.qrserver.com');
+    expect($response->json('data.momo_info.phone'))->toBe('0900000000');
 
     expect($vnpayPayment->fresh()->status->value)->toBe('failed');
     $momoPayment = Payment::where('booking_id', $booking->id)->where('method', 'momo')->sole();

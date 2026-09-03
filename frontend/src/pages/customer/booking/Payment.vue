@@ -2,7 +2,11 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { customerApi } from '@/api/customer.api';
+import momoQrStatic from '@/assets/momo-qr-static.jpg';
 import { useCustomerStore } from '@/stores/customer.store';
+// Ảnh QR VietQR/napas 247 THẬT xuất từ app MoMo Business — QR ví MoMo không có
+// chuẩn công khai để tự dựng link/QR động, nên dùng ảnh tĩnh bundle sẵn thay vì
+// gọi dịch vụ tạo QR từ 1 URL tự chế (đã xác nhận không quét được trong app MoMo).
 
 const router = useRouter();
 const route = useRoute();
@@ -197,9 +201,17 @@ async function pay() {
 
     if (selectedMethod.value === 'vnpay' || selectedMethod.value === 'momo') {
         const info = data?.bank_info ?? data?.momo_info;
-        if (data?.payment_url && info) {
+        // VietQR: ảnh QR động dựng ở BE theo đúng số tiền/nội dung mỗi lần initiate.
+        // MoMo: ảnh QR tĩnh thật xuất từ app MoMo Business, bundle sẵn ở FE (BE
+        // không trả payment_url cho momo — xem PaymentService::initiateMomo()).
+        const qrReady =
+            selectedMethod.value === 'vnpay' ? !!data?.payment_url : true;
+        if (qrReady && info) {
             qrMethod.value = selectedMethod.value;
-            transferQrUrl.value = data.payment_url;
+            transferQrUrl.value =
+                selectedMethod.value === 'vnpay'
+                    ? (data.payment_url as string)
+                    : momoQrStatic;
             transferInfo.value =
                 selectedMethod.value === 'vnpay'
                     ? {
@@ -587,22 +599,9 @@ onUnmounted(() => {
                     <div
                         class="flex flex-col items-center justify-center rounded-xl border border-slate-100 bg-white p-4 shadow-sm"
                     >
-                        <a
-                            v-if="qrMethod === 'momo'"
-                            :href="`https://nhantien.momo.vn/${transferInfo?.accValue}`"
-                            target="_blank"
-                            rel="noopener"
-                        >
-                            <img
-                                :src="transferQrUrl"
-                                alt="QR MoMo"
-                                class="h-56 w-56 rounded-lg border border-slate-100 object-contain p-1"
-                            />
-                        </a>
                         <img
-                            v-else
                             :src="transferQrUrl"
-                            alt="VietQR SePay"
+                            :alt="qrMethod === 'momo' ? 'QR MoMo' : 'VietQR SePay'"
                             class="h-56 w-56 rounded-lg border border-slate-100 object-contain p-1"
                         />
                         <p
@@ -610,7 +609,7 @@ onUnmounted(() => {
                         >
                             {{
                                 qrMethod === 'momo'
-                                    ? 'Quét mã hoặc bấm vào QR để mở nhanh màn hình chuyển tiền trong app MoMo'
+                                    ? 'Mở app MoMo, chọn Quét mã QR — mã KHÔNG tự điền số tiền, bạn cần tự nhập số tiền và nội dung như bên cạnh'
                                     : 'Mở App Ngân hàng quét mã QR để điền nhanh mọi thông tin chuyển khoản'
                             }}
                         </p>
