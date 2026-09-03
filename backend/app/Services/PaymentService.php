@@ -74,14 +74,25 @@ class PaymentService
             }
 
             // Một booking chỉ có một giao dịch pending tại một thời điểm. Request retry
-            // dùng lại order/request id để cổng thanh toán xử lý idempotent.
+            // (cùng phương thức) dùng lại order/request id để cổng thanh toán xử lý idempotent.
             $payment = Payment::where('booking_id', $booking->id)
                 ->where('status', PaymentStatusEnum::Pending)
                 ->latest()
                 ->first();
 
+            // Khách ĐỔI phương thức (huỷ QR/redirect trước đó rồi chọn cách khác) — coi
+            // giao dịch cũ là bỏ dở, đánh Failed để dọn đường thay vì chặn cứng. Trước đây
+            // throw ở đây khiến khách kẹt cứng, phải đợi ExpireUnpaidBookingsCommand dọn vé
+            // hết hạn (tối đa 15 phút) mới đổi được phương thức khác.
+            // An toàn trước webhook đến muộn của giao dịch cũ (khách lỡ đã chuyển khoản):
+            // processCallback tự chặn ở bước kiểm tra booking_status khi booking đã được
+            // xác nhận bởi giao dịch mới — không confirm/ghi đè lần 2.
             if ($payment && $payment->method !== $method) {
-                throw new \InvalidArgumentException('Vé đang có một giao dịch thanh toán khác chờ xử lý');
+                $payment->update([
+                    'status' => PaymentStatusEnum::Failed,
+                    'gateway_response' => ['note' => 'Khách đổi sang phương thức khác trước khi hoàn tất'],
+                ]);
+                $payment = null;
             }
 
             $payment ??= Payment::create([
