@@ -361,9 +361,10 @@ class PaymentService
     /**
      * Tài khoản merchant MoMo hiện chưa được MoMo duyệt cho API captureWallet
      * (resultCode 13 — "Cấu hình doanh nghiệp không chính xác hoặc tài khoản
-     * không hoạt động"). Trong lúc chờ duyệt, dựng QR chuyển tiền thủ công tới
-     * số MoMo cấu hình sẵn — giống hệt cơ chế initiateSepay(): không gọi API
-     * ngoài, khách tự nhập số tiền/nội dung, admin xác nhận đã nhận tiền qua
+     * không hoạt động"). Trong lúc chờ duyệt, dùng ảnh QR VietQR/napas 247 THẬT
+     * xuất từ app MoMo Business (ảnh tĩnh, bundle sẵn ở FE — momo-qr-static.jpg,
+     * không tự dựng link/QR vì MoMo không công khai chuẩn mã QR ví). Khách tự
+     * nhập số tiền/nội dung sau khi quét, admin xác nhận đã nhận tiền qua
      * FinanceController::confirmPayment() (PaymentService::confirmManualPayment()).
      */
     private function initiateMomo(Payment $payment, Booking $booking): array
@@ -374,16 +375,7 @@ class PaymentService
         // cùng một quy tắc dù chọn phương thức nào.
         $description = strtoupper(str_replace('-', '', (string) $booking->id));
 
-        // Link nhận tiền cá nhân/doanh nghiệp công khai của MoMo — mở thẳng màn
-        // hình chuyển tiền tới đúng số, KHÔNG điền sẵn số tiền (không có API).
-        $momoLink = "https://nhantien.momo.vn/{$phone}";
-        $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?'.http_build_query([
-            'size' => '300x300',
-            'data' => $momoLink,
-        ], '', '&', PHP_QUERY_RFC3986);
-
         return [
-            'payment_url' => $qrUrl,
             'order_id' => $payment->gateway_order_id,
             'payment_reference' => $description,
             'momo_info' => [
