@@ -67,11 +67,6 @@ return [
             ?: rtrim((string) (env('FRONTEND_URL') ?: env('APP_URL')), '/').'/payment/momo/return',
         'notify_url' => env('MOMO_NOTIFY_URL')
             ?: rtrim((string) env('APP_URL'), '/').'/api/customer/payments/momo/callback',
-        // Số MoMo nhận tiền thủ công — dùng khi tài khoản merchant chưa được MoMo
-        // duyệt để gọi API captureWallet (khách quét/mở link chuyển tiền, admin
-        // xác nhận thủ công sau khi nhận được, xem PaymentService::initiateMomo()).
-        'phone' => env('MOMO_PHONE'),
-        'account_name' => env('MOMO_ACCOUNT_NAME'),
     ],
 
     // VNPay

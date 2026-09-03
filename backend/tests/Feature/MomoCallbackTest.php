@@ -30,8 +30,10 @@ beforeEach(function () {
         'services.momo.create_url' => 'https://test-payment.momo.vn/v2/gateway/api/create',
         'services.momo.redirect_url' => 'https://frontend.test/payment/momo/return',
         'services.momo.notify_url' => 'https://api.test/api/customer/payments/momo/callback',
-        'services.momo.phone' => '0900000000',
-        'services.momo.account_name' => 'TEST ACCOUNT',
+        // initiateMomo() giờ dùng chung QR ngân hàng động của initiateSepay().
+        'services.sepay.bank_acc' => '1234567890',
+        'services.sepay.bank_name' => 'MBBank',
+        'services.sepay.acc_name' => 'TEST ACCOUNT',
     ]);
 });
 
@@ -190,11 +192,12 @@ it('từ chối callback MoMo của partner hoặc request khác', function (str
     ['requestId', 'wrong-request'],
 ]);
 
-it('khởi tạo MoMo trả về thông tin chuyển khoản theo số điện thoại cấu hình, không gọi API MoMo', function () {
+it('khởi tạo MoMo dùng chung QR ngân hàng động của SePay, không gọi API MoMo', function () {
     // Tài khoản merchant MoMo hiện chưa được duyệt (resultCode 13) — initiateMomo()
-    // không còn gọi captureWallet. QR hiển thị là ảnh tĩnh thật bundle sẵn ở FE
-    // (MoMo không có chuẩn công khai để BE tự dựng QR động), BE chỉ cần trả đúng
-    // info chuyển khoản. Http::fake() không stub gì → request lọt ra ngoài sẽ tự
+    // không còn gọi captureWallet. MoMo không công khai chuẩn QR ví để BE tự dựng
+    // đúng (đã thử link nhantien.momo.vn — quét không ra), nên dùng LẠI QR ngân
+    // hàng động của initiateSepay(): app MoMo quét được, xác nhận tự động qua
+    // cùng webhook SePay. Http::fake() không stub gì → request lọt ra ngoài sẽ tự
     // fail, đủ để khẳng định không có HTTP call nào được gửi đi.
     Http::fake();
 
@@ -209,8 +212,9 @@ it('khởi tạo MoMo trả về thông tin chuyển khoản theo số điện t
         'method' => 'momo',
     ])->assertOk();
 
-    expect($response->json('data.momo_info.phone'))->toBe('0900000000');
-    expect($response->json('data.momo_info.amount'))->toBe(150000);
+    expect($response->json('data.payment_url'))->toContain('https://qr.sepay.vn/img?');
+    expect($response->json('data.bank_info.bank_acc'))->toBe('1234567890');
+    expect($response->json('data.bank_info.amount'))->toBe(150000);
     Http::assertNothingSent();
 });
 
@@ -252,7 +256,7 @@ it('cho phép đổi phương thức thanh toán, đánh Failed giao dịch pend
     $response = $this->postJson('/api/customer/payments/initiate', [
         'booking_id' => $booking->id, 'method' => 'momo',
     ])->assertOk();
-    expect($response->json('data.momo_info.phone'))->toBe('0900000000');
+    expect($response->json('data.payment_url'))->toContain('https://qr.sepay.vn/img?');
 
     expect($vnpayPayment->fresh()->status->value)->toBe('failed');
     $momoPayment = Payment::where('booking_id', $booking->id)->where('method', 'momo')->sole();
