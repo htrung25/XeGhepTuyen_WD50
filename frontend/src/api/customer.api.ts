@@ -28,6 +28,7 @@ import {
 } from '@/actions/App/Http/Controllers/Customer/NotificationController';
 import {
     initiate as paymentInitiate,
+    statusByOrder as paymentStatusByOrder,
     wallet as walletGet,
 } from '@/actions/App/Http/Controllers/Customer/PaymentController';
 import { store as reviewStore } from '@/actions/App/Http/Controllers/Customer/ReviewController';
@@ -141,6 +142,10 @@ export const customerApi = {
     // ─── Payment ───────────────────────────────────────────────────────────
     initiatePayment: (data: { booking_id: string; method: string }) =>
         apiClient.send(paymentInitiate(), data),
+    // Tra cứu vé theo mã giao dịch của cổng — dùng ở trang kết quả sau redirect,
+    // lúc state phía client đã mất.
+    getPaymentByOrder: (orderId: string) =>
+        apiClient.send(paymentStatusByOrder(orderId)),
     applyVoucher: (data: { code: string; trip_id: string; amount: number }) =>
         apiClient.send(voucherApply(), data),
     getPublicVouchers: () => apiClient.send(publicVouchers()),

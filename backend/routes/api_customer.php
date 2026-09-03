@@ -62,6 +62,8 @@ Route::middleware(['auth:sanctum', 'role:customer'])->group(function () {
     // Payments
     Route::post('payments/initiate', [PaymentController::class, 'initiate']);
     Route::get('payments/{bookingId}/status', [PaymentController::class, 'status']);
+    // Trang kết quả sau khi cổng chuyển hướng về chỉ còn orderId để tra cứu.
+    Route::get('payments/by-order/{orderId}', [PaymentController::class, 'statusByOrder']);
     Route::get('wallet', [PaymentController::class, 'wallet']);
 
     // Wallet

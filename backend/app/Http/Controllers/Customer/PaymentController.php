@@ -10,6 +10,7 @@ use App\Exceptions\TripActionException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\InitiatePaymentRequest;
 use App\Models\Booking;
+use App\Models\Payment;
 use App\Services\PaymentService;
 use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
@@ -142,6 +143,38 @@ class PaymentController extends Controller
                 'booking_status' => $booking->booking_status->value,
                 'payment_status' => $booking->payment_status->value,
                 'expires_at' => $booking->expires_at?->toIso8601String(),
+            ],
+        ]);
+    }
+
+    /**
+     * Tra cứu vé theo mã giao dịch cổng thanh toán (orderId).
+     *
+     * Khách bị cổng chuyển hướng ra ngoài rồi quay lại nên toàn bộ state phía
+     * client đã mất — trang kết quả chỉ còn orderId trên query string. KHÔNG tin
+     * tham số redirect để kết luận đã trả tiền (client sửa được); trạng thái
+     * thật lấy từ DB, do IPN server-to-server cập nhật.
+     */
+    public function statusByOrder(string $orderId): JsonResponse
+    {
+        $payment = Payment::with('booking')->where('gateway_order_id', $orderId)->first();
+
+        if (! $payment || ! $payment->booking) {
+            return response()->json(['success' => false, 'message' => 'Không tìm thấy giao dịch'], 404);
+        }
+
+        if ($payment->booking->user_id !== auth('customer')->id()) {
+            return response()->json(['success' => false, 'message' => 'Không có quyền truy cập'], 403);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'booking_id' => $payment->booking->id,
+                'booking_code' => $payment->booking->booking_code,
+                'booking_status' => $payment->booking->booking_status->value,
+                'payment_status' => $payment->booking->payment_status->value,
+                'amount' => (int) $payment->amount,
             ],
         ]);
     }
