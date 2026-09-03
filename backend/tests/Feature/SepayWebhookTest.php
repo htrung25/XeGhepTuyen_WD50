@@ -15,7 +15,7 @@ use Laravel\Sanctum\Sanctum;
 
 beforeEach(function () {
     config([
-        'services.sepay.webhook_token' => 'test-sepay-token',
+        'services.sepay.webhook_api_key' => 'test-sepay-api-key',
         'services.sepay.bank_acc' => '0935555555',
         'services.sepay.bank_name' => 'MBBank',
     ]);
@@ -102,6 +102,7 @@ it('initiates SePay VietQR payment info and processes callback webhook successfu
         'data' => [
             'payment_url',
             'order_id',
+            'payment_reference',
             'bank_info' => [
                 'bank_name',
                 'bank_acc',
@@ -112,14 +113,20 @@ it('initiates SePay VietQR payment info and processes callback webhook successfu
         ],
     ]);
 
-    $gatewayOrderId = $initResponse->json('data.order_id');
+    $paymentReference = $initResponse->json('data.payment_reference');
     $amount = $initResponse->json('data.bank_info.amount');
 
+    expect($paymentReference)->toBe(strtoupper(str_replace('-', '', $booking->id)));
+    expect($initResponse->json('data.bank_info.code'))->toBe($paymentReference);
+    expect($initResponse->json('data.payment_url'))->toContain('https://vietqr.app/img?');
+    expect($initResponse->json('data.payment_url'))->toContain('amount=150000');
+    expect($initResponse->json('data.payment_url'))->toContain('des='.$paymentReference);
+
     // 3. Simulate SePay webhook callback
-    $webhookToken = config('services.sepay.webhook_token');
+    $webhookApiKey = config('services.sepay.webhook_api_key');
 
     $webhookResponse = $this->withHeaders([
-        'Authorization' => "Bearer {$webhookToken}",
+        'Authorization' => "Apikey {$webhookApiKey}",
     ])->postJson('/api/customer/payments/sepay/webhook', [
         'id' => 999999,
         'gateway' => 'MBBank',
@@ -127,7 +134,7 @@ it('initiates SePay VietQR payment info and processes callback webhook successfu
         'accountNumber' => '0935555555',
         'transferType' => 'in',
         'transferAmount' => $amount,
-        'content' => "Chuyen khoan thanh toan don hang {$gatewayOrderId} tren XeGhep",
+        'content' => "Chuyen khoan thanh toan ve {$paymentReference}",
         'code' => 'SEPAYTX9999',
     ]);
 
@@ -142,7 +149,7 @@ it('initiates SePay VietQR payment info and processes callback webhook successfu
 
 it('rejects SePay webhook with invalid webhook token', function () {
     $webhookResponse = $this->withHeaders([
-        'Authorization' => 'Bearer invalid_token_here',
+        'Authorization' => 'Apikey invalid_token_here',
     ])->postJson('/api/customer/payments/sepay/webhook', [
         'id' => 999999,
         'transferAmount' => 150000,
@@ -184,17 +191,19 @@ it('fails SePay webhook if payment amount is mismatched', function () {
         'method' => 'vnpay',
     ]);
 
-    $gatewayOrderId = $initResponse->json('data.order_id');
+    $paymentReference = $initResponse->json('data.payment_reference');
 
     // Webhook with insufficient amount (e.g. 50,000 instead of 150,000)
-    $webhookToken = config('services.sepay.webhook_token');
+    $webhookApiKey = config('services.sepay.webhook_api_key');
 
     $webhookResponse = $this->withHeaders([
-        'Authorization' => "Bearer {$webhookToken}",
+        'Authorization' => "Apikey {$webhookApiKey}",
     ])->postJson('/api/customer/payments/sepay/webhook', [
         'id' => 888888,
+        'accountNumber' => config('services.sepay.bank_acc'),
+        'transferType' => 'in',
         'transferAmount' => 50000,
-        'content' => "Chuyen khoan thanh toan don hang {$gatewayOrderId}",
+        'content' => "Chuyen khoan thanh toan ve {$paymentReference}",
     ]);
 
     $webhookResponse->assertStatus(400); // PaymentVerificationException maps to 400
@@ -215,19 +224,19 @@ it('rejects SePay outgoing transfer even when content and amount match', functio
         'booking_status' => 'pending', 'qr_token' => Str::random(32),
     ]);
 
-    $orderId = $this->postJson('/api/customer/payments/initiate', [
+    $paymentReference = $this->postJson('/api/customer/payments/initiate', [
         'booking_id' => $booking->id, 'method' => 'vnpay',
-    ])->assertOk()->json('data.order_id');
+    ])->assertOk()->json('data.payment_reference');
 
     $this->withHeaders([
-        'Authorization' => 'Bearer '.config('services.sepay.webhook_token'),
+        'Authorization' => 'Apikey '.config('services.sepay.webhook_api_key'),
     ])->postJson('/api/customer/payments/sepay/webhook', [
         'id' => 777777,
         'gateway' => config('services.sepay.bank_name'),
         'accountNumber' => config('services.sepay.bank_acc'),
         'transferType' => 'out',
         'transferAmount' => 150000,
-        'content' => "Thanh toan {$orderId}",
+        'content' => "Thanh toan {$paymentReference}",
     ])->assertStatus(400);
 
     expect($booking->fresh()->payment_status->value)->toBe('unpaid');
@@ -247,19 +256,19 @@ it('rejects SePay webhook sent to a different beneficiary account', function () 
         'payment_method' => 'vnpay', 'payment_status' => 'unpaid',
         'booking_status' => 'pending', 'qr_token' => Str::random(32),
     ]);
-    $orderId = $this->postJson('/api/customer/payments/initiate', [
+    $paymentReference = $this->postJson('/api/customer/payments/initiate', [
         'booking_id' => $booking->id, 'method' => 'vnpay',
-    ])->assertOk()->json('data.order_id');
+    ])->assertOk()->json('data.payment_reference');
 
     $this->withHeaders([
-        'Authorization' => 'Bearer '.config('services.sepay.webhook_token'),
+        'Authorization' => 'Apikey '.config('services.sepay.webhook_api_key'),
     ])->postJson('/api/customer/payments/sepay/webhook', [
         'id' => 666666,
         'gateway' => config('services.sepay.bank_name'),
         'accountNumber' => '0000000000',
         'transferType' => 'in',
         'transferAmount' => 150000,
-        'content' => "Thanh toan {$orderId}",
+        'content' => "Thanh toan {$paymentReference}",
     ])->assertStatus(400);
 
     expect($booking->fresh()->payment_status->value)->toBe('unpaid');

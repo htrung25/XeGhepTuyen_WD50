@@ -99,8 +99,8 @@ class PaymentController extends Controller
     {
         try {
             $authHeader = (string) $request->header('Authorization');
-            $configuredToken = (string) config('services.sepay.webhook_token');
-            $expectedToken = 'Bearer '.$configuredToken;
+            $configuredToken = (string) config('services.sepay.webhook_api_key');
+            $expectedToken = 'Apikey '.$configuredToken;
 
             if ($configuredToken === '' || ! hash_equals($expectedToken, $authHeader)) {
                 Log::warning('SePay webhook unauthorized access attempt');
