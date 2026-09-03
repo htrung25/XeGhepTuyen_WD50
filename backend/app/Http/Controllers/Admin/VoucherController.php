@@ -115,11 +115,12 @@ class VoucherController extends Controller
             return response()->json(['success' => false, 'message' => 'Voucher không tồn tại'], 404);
         }
 
-        if ($voucher->usages()->exists()) {
-            return response()->json(['success' => false, 'message' => 'Không thể xoá voucher đã được sử dụng'], 422);
-        }
-
         $oldValues = $voucher->toArray();
+        $wasUsed = $voucher->usages()->exists();
+
+        // Xoá MỀM: voucher đã có người dùng vẫn xoá được, nhưng giữ lại lịch sử
+        // sử dụng (voucher_usages khai báo cascadeOnDelete nên xoá cứng sẽ xoá
+        // sạch lịch sử) và giữ tham chiếu bookings.voucher_id không bị treo.
         $voucher->delete();
 
         app(AuditLogService::class)->log(
@@ -129,6 +130,11 @@ class VoucherController extends Controller
             oldValues: $oldValues
         );
 
-        return response()->json(['success' => true, 'message' => 'Đã xoá voucher']);
+        return response()->json([
+            'success' => true,
+            'message' => $wasUsed
+                ? 'Đã xoá voucher. Lịch sử sử dụng vẫn được giữ lại để đối soát.'
+                : 'Đã xoá voucher',
+        ]);
     }
 }
