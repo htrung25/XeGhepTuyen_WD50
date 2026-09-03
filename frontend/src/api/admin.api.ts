@@ -43,6 +43,7 @@ import {
     revenue as financeRevenue,
     exportMethod as financeExport,
     refund as financeRefund,
+    confirmPayment as financeConfirmPayment,
 } from '@/actions/App/Http/Controllers/Admin/FinanceController';
 import {
     index as notificationsIndex,
@@ -208,6 +209,8 @@ export const adminApi = {
         bookingId: string,
         data: { amount: number; reason: string },
     ) => apiClient.send<{ amount: number }>(financeRefund(bookingId), data),
+    confirmMomoPayment: (paymentId: string) =>
+        apiClient.send(financeConfirmPayment(paymentId)),
 
     // Vouchers
     getVouchers: (params?: Params) =>

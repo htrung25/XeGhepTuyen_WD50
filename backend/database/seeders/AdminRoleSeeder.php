@@ -34,8 +34,10 @@ class AdminRoleSeeder extends Seeder
 
         $this->preset('ke-toan', 'Kế toán', 'Xem tài chính và thực hiện quyết toán nhà xe', [
             P::DashboardView,
-            P::FinanceView, P::FinancePayout,
+            P::FinanceView, P::FinancePayout, P::FinanceConfirmPayment,
             P::BookingsView,
+        ], requiredPermissions: [
+            P::FinanceConfirmPayment,
         ]);
 
         $this->preset('cskh', 'Chăm sóc khách hàng', 'Quản lý người dùng, đặt vé, chuyến đi và yêu cầu hỗ trợ', [

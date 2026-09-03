@@ -1,8 +1,8 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../../wayfinder'
 /**
-* @see \App\Http\Controllers\Public\ProvinceController::index
- * @see app/Http/Controllers/Public/ProvinceController.php:12
- * @route '/api/public/provinces'
+* @see \App\Http\Controllers\Operator\HistoryController::index
+ * @see app/Http/Controllers/Operator/HistoryController.php:14
+ * @route '/api/operator/history'
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: index.url(options),
@@ -11,31 +11,31 @@ export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 index.definition = {
     methods: ["get","head"],
-    url: '/api/public/provinces',
+    url: '/api/operator/history',
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see \App\Http\Controllers\Public\ProvinceController::index
- * @see app/Http/Controllers/Public/ProvinceController.php:12
- * @route '/api/public/provinces'
+* @see \App\Http\Controllers\Operator\HistoryController::index
+ * @see app/Http/Controllers/Operator/HistoryController.php:14
+ * @route '/api/operator/history'
  */
 index.url = (options?: RouteQueryOptions) => {
     return index.definition.url + queryParams(options)
 }
 
 /**
-* @see \App\Http\Controllers\Public\ProvinceController::index
- * @see app/Http/Controllers/Public/ProvinceController.php:12
- * @route '/api/public/provinces'
+* @see \App\Http\Controllers\Operator\HistoryController::index
+ * @see app/Http/Controllers/Operator/HistoryController.php:14
+ * @route '/api/operator/history'
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: index.url(options),
     method: 'get',
 })
 /**
-* @see \App\Http\Controllers\Public\ProvinceController::index
- * @see app/Http/Controllers/Public/ProvinceController.php:12
- * @route '/api/public/provinces'
+* @see \App\Http\Controllers\Operator\HistoryController::index
+ * @see app/Http/Controllers/Operator/HistoryController.php:14
+ * @route '/api/operator/history'
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: index.url(options),
@@ -43,9 +43,9 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
     /**
-* @see \App\Http\Controllers\Public\ProvinceController::index
- * @see app/Http/Controllers/Public/ProvinceController.php:12
- * @route '/api/public/provinces'
+* @see \App\Http\Controllers\Operator\HistoryController::index
+ * @see app/Http/Controllers/Operator/HistoryController.php:14
+ * @route '/api/operator/history'
  */
     const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
         action: index.url(options),
@@ -53,18 +53,18 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     })
 
             /**
-* @see \App\Http\Controllers\Public\ProvinceController::index
- * @see app/Http/Controllers/Public/ProvinceController.php:12
- * @route '/api/public/provinces'
+* @see \App\Http\Controllers\Operator\HistoryController::index
+ * @see app/Http/Controllers/Operator/HistoryController.php:14
+ * @route '/api/operator/history'
  */
         indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: index.url(options),
             method: 'get',
         })
             /**
-* @see \App\Http\Controllers\Public\ProvinceController::index
- * @see app/Http/Controllers/Public/ProvinceController.php:12
- * @route '/api/public/provinces'
+* @see \App\Http\Controllers\Operator\HistoryController::index
+ * @see app/Http/Controllers/Operator/HistoryController.php:14
+ * @route '/api/operator/history'
  */
         indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
             action: index.url({
@@ -77,6 +77,6 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
     
     index.form = indexForm
-const ProvinceController = { index }
+const HistoryController = { index }
 
-export default ProvinceController
+export default HistoryController
