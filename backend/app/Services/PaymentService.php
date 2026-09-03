@@ -389,7 +389,7 @@ class PaymentService
         // booking ID để SePay có thể đối chiếu trực tiếp giao dịch với đúng vé.
         $description = strtoupper(str_replace('-', '', (string) $booking->id));
 
-        $qrUrl = 'https://vietqr.app/img?'.http_build_query([
+        $qrUrl = 'https://qr.sepay.vn/img?'.http_build_query([
             'acc' => $bankAcc,
             'bank' => $bankName,
             'amount' => $payment->amount,
@@ -434,7 +434,8 @@ class PaymentService
 
         $expectedAccount = preg_replace('/\s+/', '', (string) config('services.sepay.bank_acc'));
         $actualAccount = preg_replace('/\s+/', '', (string) ($payload['accountNumber'] ?? ''));
-        if ($expectedAccount === '' || ! hash_equals($expectedAccount, $actualAccount)) {
+        $subAccount = preg_replace('/\s+/', '', (string) ($payload['subAccount'] ?? ''));
+        if ($expectedAccount === '' || (! hash_equals($expectedAccount, $actualAccount) && ! hash_equals($expectedAccount, $subAccount))) {
             throw new PaymentVerificationException('Tài khoản thụ hưởng SePay không khớp');
         }
 
@@ -476,14 +477,35 @@ class PaymentService
     }
 
     /**
-     * Tìm payment từ booking UUID trong nội dung chuyển khoản. Đồng thời giữ fallback
-     * mã XEGHEP cũ để các QR đã sinh trước khi deploy vẫn được xử lý.
+     * Tìm payment từ booking UUID trong nội dung chuyển khoản. Đồng thời hỗ trợ
+     * tìm theo UUID có dấu gạch ngang, UUID rút gọn 32 hex, booking_code và mã XEGHEP.
      */
     private function findSepayPaymentFromContent(string $content): ?Payment
     {
-        if (preg_match_all('/[0-9a-f]{12}7[0-9a-f]{3}[89ab][0-9a-f]{15}/i', $content, $matches)) {
-            foreach ($matches[0] as $compactId) {
-                $bookingId = strtolower(substr($compactId, 0, 8).'-'.substr($compactId, 8, 4).'-'.substr($compactId, 12, 4).'-'.substr($compactId, 16, 4).'-'.substr($compactId, 20));
+        // 1. Tìm UUID đầy đủ có dấu gạch ngang (e.g. 019349b1-7a20-7360-848e-8a034988e1bb)
+        if (preg_match_all('/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i', $content, $uuidMatches)) {
+            foreach ($uuidMatches[0] as $uuid) {
+                $payment = Payment::where('booking_id', strtolower($uuid))
+                    ->where('method', PaymentMethodEnum::Vnpay)
+                    ->latest()
+                    ->first();
+
+                if ($payment) {
+                    return $payment;
+                }
+            }
+        }
+
+        // 2. Tìm UUID dạng rút gọn 32 ký tự hex không dấu gạch
+        if (preg_match_all('/[0-9a-f]{32}/i', $content, $compactMatches)) {
+            foreach ($compactMatches[0] as $compactId) {
+                $bookingId = strtolower(
+                    substr($compactId, 0, 8).'-'.
+                    substr($compactId, 8, 4).'-'.
+                    substr($compactId, 12, 4).'-'.
+                    substr($compactId, 16, 4).'-'.
+                    substr($compactId, 20)
+                );
                 $payment = Payment::where('booking_id', $bookingId)
                     ->where('method', PaymentMethodEnum::Vnpay)
                     ->latest()
@@ -495,6 +517,29 @@ class PaymentService
             }
         }
 
+        // 3. Tìm theo booking_code (mã vé)
+        $cleanContent = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $content));
+        if ($cleanContent !== '') {
+            $pendingBookings = Booking::where('payment_status', '!=', 'paid')
+                ->latest()
+                ->limit(50)
+                ->get(['id', 'booking_code']);
+
+            foreach ($pendingBookings as $b) {
+                if (! empty($b->booking_code) && str_contains($cleanContent, strtoupper($b->booking_code))) {
+                    $payment = Payment::where('booking_id', $b->id)
+                        ->where('method', PaymentMethodEnum::Vnpay)
+                        ->latest()
+                        ->first();
+
+                    if ($payment) {
+                        return $payment;
+                    }
+                }
+            }
+        }
+
+        // 4. Fallback mã XEGHEP cũ
         if (preg_match('/XEGHEP-[A-Z0-9]+/i', $content, $legacyMatch)) {
             return Payment::where('gateway_order_id', strtoupper($legacyMatch[0]))
                 ->where('method', PaymentMethodEnum::Vnpay)
