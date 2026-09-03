@@ -55,13 +55,18 @@ return [
     ],
 
     // MoMo
+    // Dùng `?:` chứ KHÔNG dùng tham số default của env(): biến khai báo trong .env
+    // nhưng để trống trả về chuỗi rỗng (default không được áp), khiến redirect/ipn
+    // rỗng và MoMo từ chối khởi tạo giao dịch.
     'momo' => [
         'partner_code' => env('MOMO_PARTNER_CODE'),
         'access_key' => env('MOMO_ACCESS_KEY'),
         'secret_key' => env('MOMO_SECRET_KEY'),
-        'create_url' => env('MOMO_CREATE_URL', 'https://test-payment.momo.vn/v2/gateway/api/create'),
-        'redirect_url' => env('MOMO_REDIRECT_URL', env('FRONTEND_URL', env('APP_URL')).'/payment/momo/return'),
-        'notify_url' => env('MOMO_NOTIFY_URL', env('APP_URL').'/api/customer/payments/momo/callback'),
+        'create_url' => env('MOMO_CREATE_URL') ?: 'https://test-payment.momo.vn/v2/gateway/api/create',
+        'redirect_url' => env('MOMO_REDIRECT_URL')
+            ?: rtrim((string) (env('FRONTEND_URL') ?: env('APP_URL')), '/').'/payment/momo/return',
+        'notify_url' => env('MOMO_NOTIFY_URL')
+            ?: rtrim((string) env('APP_URL'), '/').'/api/customer/payments/momo/callback',
     ],
 
     // VNPay
