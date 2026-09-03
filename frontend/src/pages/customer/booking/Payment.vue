@@ -18,6 +18,7 @@ const loadingBooking = ref(true);
 
 // SePay variables
 const showSepayModal = ref(false);
+const showPaymentSuccessModal = ref(false);
 const sepayQrUrl = ref('');
 const sepayBankInfo = ref<any>(null);
 const isCopied = ref(false);
@@ -112,18 +113,42 @@ function copyText(text: string) {
     }, 2000);
 }
 
+function stopSepayPolling() {
+    if (sepayPollingInterval) {
+        clearInterval(sepayPollingInterval);
+        sepayPollingInterval = null;
+    }
+}
+
+function closeSepayModal() {
+    stopSepayPolling();
+    showSepayModal.value = false;
+}
+
+function goToConfirmation() {
+    const currentBookingId = bookingId.value;
+    if (currentBookingId) {
+        router.push(`/booking/${currentBookingId}/confirmation`);
+    }
+}
+
 function startSepayPolling(bookingId: string) {
-    if (sepayPollingInterval) clearInterval(sepayPollingInterval);
+    stopSepayPolling();
     sepayPollingInterval = setInterval(async () => {
-        const { data } = await customerApi.getBooking(bookingId);
-        if (
-            data &&
-            (data.payment_status === 'paid' ||
-                data.booking_status === 'confirmed')
-        ) {
-            if (sepayPollingInterval) clearInterval(sepayPollingInterval);
-            showSepayModal.value = false;
-            router.push(`/booking/${bookingId}/confirmation`);
+        try {
+            const { data } = await customerApi.getBooking(bookingId);
+            if (data?.payment_status === 'paid') {
+                stopSepayPolling();
+                if (countdown) {
+                    clearInterval(countdown);
+                    countdown = null;
+                }
+                showSepayModal.value = false;
+                showPaymentSuccessModal.value = true;
+                bookingData.value = data;
+            }
+        } catch {
+            // Lỗi mạng tạm thời: giữ QR và thử lại ở chu kỳ tiếp theo.
         }
     }, 3000);
 }
@@ -216,7 +241,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
     if (countdown) clearInterval(countdown);
-    if (sepayPollingInterval) clearInterval(sepayPollingInterval);
+    stopSepayPolling();
 });
 </script>
 
@@ -488,7 +513,7 @@ onUnmounted(() => {
                         type="button"
                         aria-label="Đóng"
                         class="p-1 text-slate-400 transition hover:text-slate-600"
-                        @click="showSepayModal = false"
+                        @click="closeSepayModal"
                     >
                         <svg
                             class="h-6 w-6"
@@ -634,7 +659,7 @@ onUnmounted(() => {
                     <button
                         type="button"
                         class="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
-                        @click="showSepayModal = false"
+                        @click="closeSepayModal"
                     >
                         Hủy & Chọn phương thức khác
                     </button>
@@ -647,6 +672,45 @@ onUnmounted(() => {
                 class="fixed bottom-10 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-lg"
             >
                 Đã sao chép vào bộ nhớ tạm!
+            </div>
+        </div>
+
+        <!-- PAYMENT SUCCESS MODAL -->
+        <div
+            v-if="showPaymentSuccessModal"
+            class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
+        >
+            <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="payment-success-title"
+                class="w-full max-w-md rounded-2xl bg-white p-7 text-center shadow-2xl"
+            >
+                <div
+                    class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-3xl"
+                >
+                    ✓
+                </div>
+                <h3
+                    id="payment-success-title"
+                    class="mt-4 text-xl font-bold text-slate-900"
+                >
+                    Thanh toán thành công
+                </h3>
+                <p class="mt-2 text-sm leading-relaxed text-slate-500">
+                    SePay đã xác nhận giao dịch. Vé
+                    <strong class="text-slate-700">{{
+                        bookingData?.booking_code
+                    }}</strong>
+                    đã được giữ chỗ thành công.
+                </p>
+                <button
+                    type="button"
+                    class="mt-6 w-full rounded-xl bg-green-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-green-700"
+                    @click="goToConfirmation"
+                >
+                    Xem vé của tôi
+                </button>
             </div>
         </div>
     </div>

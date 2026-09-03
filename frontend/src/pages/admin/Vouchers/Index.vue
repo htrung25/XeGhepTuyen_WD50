@@ -119,11 +119,13 @@ async function toggleVoucher(v: Voucher) {
 }
 
 async function deleteVoucher(v: Voucher) {
-    if (v.used_count > 0) {
-        alert('Không thể xóa voucher đã có lượt sử dụng');
-        return;
-    }
-    if (!confirm(`Xác nhận xóa voucher ${v.code}?`)) return;
+    // Voucher đã có lượt dùng vẫn xoá được: server xoá mềm nên lịch sử sử dụng
+    // và các đơn đã áp mã vẫn giữ nguyên để đối soát.
+    const warning =
+        v.used_count > 0
+            ? `\n\nVoucher này đã có ${v.used_count} lượt sử dụng. Lịch sử sử dụng vẫn được giữ lại để đối soát, nhưng mã sẽ không dùng được cho đơn mới.`
+            : '';
+    if (!confirm(`Xác nhận xóa voucher ${v.code}?${warning}`)) return;
     const { error } = await adminApi.deleteVoucher(v.id);
     if (error) {
         alert(error);

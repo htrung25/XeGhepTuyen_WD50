@@ -81,7 +81,7 @@ return [
 
     // SePay
     'sepay' => [
-        'webhook_token' => env('SEPAY_WEBHOOK_TOKEN'),
+        'webhook_api_key' => env('SEPAY_WEBHOOK_API_KEY', env('SEPAY_WEBHOOK_TOKEN')),
         'bank_acc' => env('SEPAY_BANK_ACC', '0935555555'),
         'bank_name' => env('SEPAY_BANK_NAME', 'MBBank'),
         'acc_name' => env('SEPAY_ACC_NAME', 'NGUYEN VAN AD'),
