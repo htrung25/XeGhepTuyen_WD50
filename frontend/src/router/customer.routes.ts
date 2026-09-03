@@ -57,6 +57,13 @@ export const customerRoutes: RouteRecordRaw[] = [
                 meta: { requiresAuth: true },
             },
             {
+                // MoMo chuyển khách về đây sau khi trả tiền (MOMO_REDIRECT_URL).
+                path: 'payment/momo/return',
+                component: () =>
+                    import('@/pages/customer/booking/MomoReturn.vue'),
+                meta: { requiresAuth: true },
+            },
+            {
                 path: 'bookings',
                 component: () => import('@/pages/customer/booking/History.vue'),
                 meta: { requiresAuth: true },
