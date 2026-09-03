@@ -1,6 +1,10 @@
 {
     "$schema": "https://openapi.vercel.sh/vercel.json",
     "rewrites": [
+        {
+            "source": "/hooks/se-pay",
+            "destination": "https://api-xegheptuyen-production-qdbif7.laravel.cloud/api/customer/payments/sepay/webhook"
+        },
         { "source": "/admin", "destination": "/admin.html" },
         { "source": "/admin/:path*", "destination": "/admin.html" },
         { "source": "/operator", "destination": "/operator.html" },
