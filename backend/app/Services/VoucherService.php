@@ -97,7 +97,10 @@ class VoucherService
             return;
         }
 
-        $voucher = Voucher::whereKey($booking->voucher_id)->lockForUpdate()->first();
+        // withTrashed: voucher có thể đã bị admin xoá (xoá mềm) sau khi khách
+        // giữ chỗ — vẫn phải trả lượt/dọn usage của vé chưa thanh toán, nếu
+        // không sẽ để lại usage rác chặn chính khách đó dùng voucher khác.
+        $voucher = Voucher::withTrashed()->whereKey($booking->voucher_id)->lockForUpdate()->first();
         if (! $voucher) {
             return;
         }

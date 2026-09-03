@@ -13,6 +13,8 @@ const transactions = ref<any[]>([]);
 const isLoading = ref(true);
 const errorMsg = ref('');
 const txPage = ref(1);
+const txLastPage = ref(1);
+const txTotal = ref(0);
 
 const periods: { key: Period; label: string }[] = [
     { key: 'today', label: 'Hôm nay' },
@@ -49,7 +51,8 @@ async function load() {
     errorMsg.value = '';
     const [earnRes, txRes] = await Promise.all([
         driverApi.getEarnings({ period: period.value }),
-        driverApi.getTransactions({ page: txPage.value }),
+        // Lịch sử phải lọc theo cùng kỳ với phần tổng quan phía trên.
+        driverApi.getTransactions({ page: txPage.value, period: period.value }),
     ]);
     isLoading.value = false;
     if (earnRes.error) {
@@ -58,6 +61,14 @@ async function load() {
     }
     earnings.value = earnRes.data;
     transactions.value = (txRes.data as any)?.data ?? txRes.data ?? [];
+    txTotal.value = txRes.meta?.total ?? transactions.value.length;
+    txLastPage.value = txRes.meta?.last_page ?? 1;
+}
+
+function goToTxPage(p: number) {
+    if (p < 1 || p > txLastPage.value || p === txPage.value) return;
+    txPage.value = p;
+    load();
 }
 
 watch(period, () => {
@@ -215,7 +226,7 @@ onMounted(load);
                             :key="i"
                             class="flex-1 rounded-t-lg transition-all"
                             :class="
-                                i === new Date().getDay()
+                                i === earnings.daily_amounts.length - 1
                                     ? 'bg-green-500'
                                     : 'bg-green-200'
                             "
@@ -257,7 +268,7 @@ onMounted(load);
                         Lịch sử thu nhập
                     </h3>
                     <span class="text-sm text-gray-400"
-                        >{{ transactions.length }} giao dịch</span
+                        >{{ txTotal }} giao dịch</span
                     >
                 </div>
 
@@ -316,30 +327,26 @@ onMounted(load);
                     </div>
                 </div>
 
-                <!-- Pagination -->
+                <!-- Phân trang: bám last_page của server. Trước đây chỉ hiện khi
+                trang đầy 10 mục (nên ở trang cuối là mất luôn nút, không quay
+                lại được) và nút "Tiếp" bật/tắt theo số mục của trang hiện tại. -->
                 <div
-                    v-if="transactions.length >= 10"
+                    v-if="txLastPage > 1"
                     class="flex justify-center gap-2 border-t border-gray-100 px-5 py-4"
                 >
                     <button
-                        @click="
-                            txPage--;
-                            load();
-                        "
+                        @click="goToTxPage(txPage - 1)"
                         :disabled="txPage <= 1"
                         class="rounded-lg border border-gray-200 px-4 py-2 text-sm transition-colors hover:bg-gray-50 disabled:opacity-40"
                     >
                         ‹ Trước
                     </button>
                     <span class="px-4 py-2 text-sm text-gray-600"
-                        >Trang {{ txPage }}</span
+                        >Trang {{ txPage }} / {{ txLastPage }}</span
                     >
                     <button
-                        @click="
-                            txPage++;
-                            load();
-                        "
-                        :disabled="transactions.length < 10"
+                        @click="goToTxPage(txPage + 1)"
+                        :disabled="txPage >= txLastPage"
                         class="rounded-lg border border-gray-200 px-4 py-2 text-sm transition-colors hover:bg-gray-50 disabled:opacity-40"
                     >
                         Tiếp ›
