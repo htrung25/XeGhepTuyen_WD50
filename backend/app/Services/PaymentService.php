@@ -18,6 +18,7 @@ use App\Models\Payment;
 use App\Models\PaymentRefund;
 use App\Models\Trip;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -358,27 +359,55 @@ class PaymentService
         );
     }
 
-    /**
-     * Tài khoản merchant MoMo hiện chưa được MoMo duyệt cho API captureWallet
-     * (resultCode 13 — "Cấu hình doanh nghiệp không chính xác hoặc tài khoản
-     * không hoạt động"), và MoMo không công khai chuẩn QR ví để tự dựng link/QR
-     * đúng (đã thử link nhantien.momo.vn — app MoMo không quét ra). Dùng LẠI
-     * đúng QR VietQR/napas 247 động của initiateSepay(): app MoMo (và mọi app
-     * ngân hàng khác) quét được QR này để chuyển khoản, xác nhận tự động qua
-     * cùng webhook SePay (xem handleSepayWebhook() — đã nới điều kiện lọc method
-     * để nhận cả Momo lẫn Vnpay).
-     */
     private function initiateMomo(Payment $payment, Booking $booking): array
     {
-        return $this->buildBankTransferQr($payment, $booking);
+        $createUrl = config('services.momo.create_url');
+        $partnerCode = config('services.momo.partner_code');
+        $accessKey = config('services.momo.access_key');
+        $secretKey = config('services.momo.secret_key');
+        // Trang kết quả thanh toán nằm ở frontend (Vercel), không phải API origin.
+        $redirectUrl = config('services.momo.redirect_url');
+        $ipnUrl = config('services.momo.notify_url');
+
+        $rawHash = "accessKey={$accessKey}&amount={$payment->amount}&extraData=&ipnUrl={$ipnUrl}&orderId={$payment->gateway_order_id}&orderInfo=Vé xe {$booking->booking_code}&partnerCode={$partnerCode}&redirectUrl={$redirectUrl}&requestId={$payment->id}&requestType=captureWallet";
+        $signature = hash_hmac('sha256', $rawHash, $secretKey);
+
+        try {
+            // Timeout tường minh: initiate chạy trong request đồng bộ của khách —
+            // MoMo chậm không được treo cả luồng đặt vé.
+            $response = Http::connectTimeout(5)
+                ->timeout(20)
+                ->post($createUrl, [
+                    'partnerCode' => $partnerCode,
+                    'requestId' => $payment->id,
+                    'amount' => $payment->amount,
+                    'orderId' => $payment->gateway_order_id,
+                    'orderInfo' => "Vé xe {$booking->booking_code}",
+                    'redirectUrl' => $redirectUrl,
+                    'ipnUrl' => $ipnUrl,
+                    'lang' => 'vi',
+                    'requestType' => 'captureWallet',
+                    'extraData' => '',
+                    'signature' => $signature,
+                ]);
+
+            $response->throw();
+            if ((int) $response->json('resultCode', -1) !== 0 || ! is_string($response->json('payUrl'))) {
+                throw new \RuntimeException('MoMo từ chối khởi tạo giao dịch: '.$response->json('message', 'không rõ lý do'));
+            }
+
+            return ['payment_url' => $response->json('payUrl'), 'order_id' => $payment->gateway_order_id];
+        } catch (\Exception $e) {
+            $payment->update([
+                'status' => PaymentStatusEnum::Failed,
+                'gateway_response' => ['initiate_error' => $e->getMessage()],
+            ]);
+            Log::error('MoMo initiate failed', ['error' => $e->getMessage()]);
+            throw new \RuntimeException('Không thể kết nối cổng thanh toán MoMo');
+        }
     }
 
     private function initiateSepay(Payment $payment, Booking $booking): array
-    {
-        return $this->buildBankTransferQr($payment, $booking);
-    }
-
-    private function buildBankTransferQr(Payment $payment, Booking $booking): array
     {
         $bankAcc = config('services.sepay.bank_acc');
         $bankName = config('services.sepay.bank_name');
@@ -453,9 +482,7 @@ class PaymentService
             'gateway_txn_id' => $gatewayTxnId,
         ]);
 
-        // Chấp nhận cả Vnpay (VietQR) lẫn Momo — từ initiateMomo(), khách chọn "Ví MoMo"
-        // nhưng thực chất quét cùng QR ngân hàng động của initiateSepay() (xem đó).
-        if (! in_array($payment->method, [PaymentMethodEnum::Vnpay, PaymentMethodEnum::Momo], true) || $gatewayTxnId === null || $gatewayTxnId === '') {
+        if ($payment->method !== PaymentMethodEnum::Vnpay || $gatewayTxnId === null || $gatewayTxnId === '') {
             throw new PaymentVerificationException('Thông tin giao dịch SePay không hợp lệ');
         }
 
@@ -486,7 +513,7 @@ class PaymentService
         if (preg_match_all('/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i', $content, $uuidMatches)) {
             foreach ($uuidMatches[0] as $uuid) {
                 $payment = Payment::where('booking_id', strtolower($uuid))
-                    ->whereIn('method', [PaymentMethodEnum::Vnpay, PaymentMethodEnum::Momo])
+                    ->where('method', PaymentMethodEnum::Vnpay)
                     ->latest()
                     ->first();
 
@@ -507,7 +534,7 @@ class PaymentService
                     substr($compactId, 20)
                 );
                 $payment = Payment::where('booking_id', $bookingId)
-                    ->whereIn('method', [PaymentMethodEnum::Vnpay, PaymentMethodEnum::Momo])
+                    ->where('method', PaymentMethodEnum::Vnpay)
                     ->latest()
                     ->first();
 
@@ -528,7 +555,7 @@ class PaymentService
             foreach ($pendingBookings as $b) {
                 if (! empty($b->booking_code) && str_contains($cleanContent, strtoupper($b->booking_code))) {
                     $payment = Payment::where('booking_id', $b->id)
-                        ->whereIn('method', [PaymentMethodEnum::Vnpay, PaymentMethodEnum::Momo])
+                        ->where('method', PaymentMethodEnum::Vnpay)
                         ->latest()
                         ->first();
 
@@ -542,7 +569,7 @@ class PaymentService
         // 4. Fallback mã XEGHEP cũ
         if (preg_match('/XEGHEP-[A-Z0-9]+/i', $content, $legacyMatch)) {
             return Payment::where('gateway_order_id', strtoupper($legacyMatch[0]))
-                ->whereIn('method', [PaymentMethodEnum::Vnpay, PaymentMethodEnum::Momo])
+                ->where('method', PaymentMethodEnum::Vnpay)
                 ->first();
         }
 

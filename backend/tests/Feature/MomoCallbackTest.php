@@ -30,10 +30,6 @@ beforeEach(function () {
         'services.momo.create_url' => 'https://test-payment.momo.vn/v2/gateway/api/create',
         'services.momo.redirect_url' => 'https://frontend.test/payment/momo/return',
         'services.momo.notify_url' => 'https://api.test/api/customer/payments/momo/callback',
-        // initiateMomo() giờ dùng chung QR ngân hàng động của initiateSepay().
-        'services.sepay.bank_acc' => '1234567890',
-        'services.sepay.bank_name' => 'MBBank',
-        'services.sepay.acc_name' => 'TEST ACCOUNT',
     ]);
 });
 
@@ -192,14 +188,13 @@ it('từ chối callback MoMo của partner hoặc request khác', function (str
     ['requestId', 'wrong-request'],
 ]);
 
-it('khởi tạo MoMo dùng chung QR ngân hàng động của SePay, không gọi API MoMo', function () {
-    // Tài khoản merchant MoMo hiện chưa được duyệt (resultCode 13) — initiateMomo()
-    // không còn gọi captureWallet. MoMo không công khai chuẩn QR ví để BE tự dựng
-    // đúng (đã thử link nhantien.momo.vn — quét không ra), nên dùng LẠI QR ngân
-    // hàng động của initiateSepay(): app MoMo quét được, xác nhận tự động qua
-    // cùng webhook SePay. Http::fake() không stub gì → request lọt ra ngoài sẽ tự
-    // fail, đủ để khẳng định không có HTTP call nào được gửi đi.
-    Http::fake();
+it('gọi đúng create URL và IPN URL cấu hình khi khởi tạo MoMo', function () {
+    Http::fake([
+        'https://test-payment.momo.vn/v2/gateway/api/create' => Http::response([
+            'resultCode' => 0,
+            'payUrl' => 'https://momo.test/pay',
+        ]),
+    ]);
 
     $existing = makePendingMomoPayment();
     $booking = $existing->booking;
@@ -207,18 +202,18 @@ it('khởi tạo MoMo dùng chung QR ngân hàng động của SePay, không g�
     Sanctum::actingAs($booking->user, ['*'], 'sanctum');
     Sanctum::actingAs($booking->user, ['*'], 'customer');
 
-    $response = $this->postJson('/api/customer/payments/initiate', [
+    $this->postJson('/api/customer/payments/initiate', [
         'booking_id' => $booking->id,
         'method' => 'momo',
-    ])->assertOk();
+    ])->assertOk()->assertJsonPath('data.payment_url', 'https://momo.test/pay');
 
-    expect($response->json('data.payment_url'))->toContain('https://qr.sepay.vn/img?');
-    expect($response->json('data.bank_info.bank_acc'))->toBe('1234567890');
-    expect($response->json('data.bank_info.amount'))->toBe(150000);
-    Http::assertNothingSent();
+    Http::assertSentCount(1);
+    Http::assertSent(fn ($request) => $request->url() === 'https://test-payment.momo.vn/v2/gateway/api/create'
+        && $request['ipnUrl'] === 'https://api.test/api/customer/payments/momo/callback');
 });
 
 it('retry khởi tạo thanh toán dùng lại payment pending thay vì tạo order mới', function () {
+    Http::fake(['*' => Http::response(['resultCode' => 0, 'payUrl' => 'https://momo.test/pay'])]);
     $existing = makePendingMomoPayment();
     $booking = $existing->booking;
     $existing->delete();
@@ -237,14 +232,15 @@ it('retry khởi tạo thanh toán dùng lại payment pending thay vì tạo or
 });
 
 it('cho phép đổi phương thức thanh toán, đánh Failed giao dịch pending cũ thay vì chặn cứng', function () {
+    Http::fake(['*' => Http::response(['resultCode' => 0, 'payUrl' => 'https://momo.test/pay'])]);
     $existing = makePendingMomoPayment();
     $booking = $existing->booking;
     $existing->delete();
     Sanctum::actingAs($booking->user, ['*'], 'sanctum');
     Sanctum::actingAs($booking->user, ['*'], 'customer');
 
-    // Khách chọn VietQR (SePay) trước — initiateSepay/initiateMomo đều chỉ dựng QR
-    // nội bộ, không gọi cổng ngoài nên không cần Http::fake.
+    // Khách chọn VietQR (SePay) trước — không cần Http::fake vì initiateSepay chỉ dựng
+    // URL QR nội bộ, không gọi cổng ngoài.
     $this->postJson('/api/customer/payments/initiate', [
         'booking_id' => $booking->id, 'method' => 'vnpay',
     ])->assertOk();
@@ -253,10 +249,9 @@ it('cho phép đổi phương thức thanh toán, đánh Failed giao dịch pend
 
     // Huỷ QR, đổi sang MoMo — trước đây bị chặn 422 "Vé đang có một giao dịch
     // thanh toán khác chờ xử lý", phải đợi vé hết hạn mới đổi được.
-    $response = $this->postJson('/api/customer/payments/initiate', [
+    $this->postJson('/api/customer/payments/initiate', [
         'booking_id' => $booking->id, 'method' => 'momo',
-    ])->assertOk();
-    expect($response->json('data.payment_url'))->toContain('https://qr.sepay.vn/img?');
+    ])->assertOk()->assertJsonPath('data.payment_url', 'https://momo.test/pay');
 
     expect($vnpayPayment->fresh()->status->value)->toBe('failed');
     $momoPayment = Payment::where('booking_id', $booking->id)->where('method', 'momo')->sole();
