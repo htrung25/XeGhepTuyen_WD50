@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\BookingPaymentStatusEnum;
+use App\Enums\PaymentMethodEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Exceptions\PaymentVerificationException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\RefundBookingRequest;
 use App\Jobs\Notification\SendSmsNotificationJob;
@@ -320,6 +323,46 @@ class FinanceController extends Controller
             'message' => 'Đã hoàn '.number_format($amount, 0, ',', '.').'đ cho vé '.$bookingModel->booking_code,
             'data' => ['amount' => $amount],
         ]);
+    }
+
+    /**
+     * Admin xác nhận thủ công đã nhận tiền cho 1 giao dịch MoMo đang Pending
+     * (luồng QR chuyển tay — MoMo không có webhook để tự confirm như SePay).
+     */
+    public function confirmPayment(string $payment): JsonResponse
+    {
+        $paymentModel = Payment::with('booking')->find($payment);
+
+        if (! $paymentModel) {
+            return response()->json(['success' => false, 'message' => 'Không tìm thấy giao dịch', 'code' => 'PAYMENT_NOT_FOUND'], 404);
+        }
+
+        if ($paymentModel->method !== PaymentMethodEnum::Momo) {
+            return response()->json(['success' => false, 'message' => 'Chỉ áp dụng cho giao dịch MoMo', 'code' => 'METHOD_NOT_SUPPORTED'], 422);
+        }
+
+        if ($paymentModel->status !== PaymentStatusEnum::Pending) {
+            return response()->json(['success' => false, 'message' => 'Giao dịch không còn ở trạng thái chờ xác nhận', 'code' => 'PAYMENT_NOT_PENDING'], 422);
+        }
+
+        try {
+            $confirmed = $this->paymentService->confirmManualPayment($paymentModel, auth('admin')->id());
+        } catch (PaymentVerificationException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage(), 'code' => 'PAYMENT_VERIFICATION_FAILED'], 422);
+        }
+
+        if (! $confirmed) {
+            return response()->json(['success' => false, 'message' => 'Giao dịch đã được xử lý trước đó', 'code' => 'PAYMENT_ALREADY_PROCESSED'], 422);
+        }
+
+        app(AuditLogService::class)->log(
+            action: 'confirm_manual_payment',
+            model: $paymentModel,
+            description: 'Xác nhận thủ công đã nhận tiền MoMo cho vé '.($paymentModel->booking?->booking_code ?? $paymentModel->id),
+            newValues: ['payment_id' => $paymentModel->id]
+        );
+
+        return response()->json(['success' => true, 'message' => 'Đã xác nhận thanh toán']);
     }
 
     /**

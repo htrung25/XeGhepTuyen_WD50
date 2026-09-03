@@ -18,7 +18,6 @@ use App\Models\Payment;
 use App\Models\PaymentRefund;
 use App\Models\Trip;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -157,6 +156,22 @@ class PaymentService
             $payload['vnp_TransactionNo'] ?? null,
             $payload,
             $success
+        );
+    }
+
+    /**
+     * Admin xác nhận thủ công đã nhận tiền cho payment đang Pending (dùng cho luồng
+     * QR MoMo thủ công ở initiateMomo() — MoMo không có webhook nên không tự confirm
+     * được như SePay). Tái dùng processCallback() để đi đúng 1 chokepoint xác nhận
+     * vé, giữ nguyên toàn bộ guard idempotency/booking-hết-hạn đã có.
+     */
+    public function confirmManualPayment(Payment $payment, ?string $adminId): bool
+    {
+        return $this->processCallback(
+            $payment->gateway_order_id,
+            'MANUAL-'.Str::ulid(),
+            ['note' => 'Xác nhận thủ công bởi admin', 'admin_id' => $adminId],
+            true,
         );
     }
 
@@ -343,52 +358,41 @@ class PaymentService
         );
     }
 
+    /**
+     * Tài khoản merchant MoMo hiện chưa được MoMo duyệt cho API captureWallet
+     * (resultCode 13 — "Cấu hình doanh nghiệp không chính xác hoặc tài khoản
+     * không hoạt động"). Trong lúc chờ duyệt, dựng QR chuyển tiền thủ công tới
+     * số MoMo cấu hình sẵn — giống hệt cơ chế initiateSepay(): không gọi API
+     * ngoài, khách tự nhập số tiền/nội dung, admin xác nhận đã nhận tiền qua
+     * FinanceController::confirmPayment() (PaymentService::confirmManualPayment()).
+     */
     private function initiateMomo(Payment $payment, Booking $booking): array
     {
-        $createUrl = config('services.momo.create_url');
-        $partnerCode = config('services.momo.partner_code');
-        $accessKey = config('services.momo.access_key');
-        $secretKey = config('services.momo.secret_key');
-        // Trang kết quả thanh toán nằm ở frontend (Vercel), không phải API origin.
-        $redirectUrl = config('services.momo.redirect_url');
-        $ipnUrl = config('services.momo.notify_url');
+        $phone = config('services.momo.phone');
+        $accName = config('services.momo.account_name');
+        // Đồng bộ định dạng nội dung chuyển khoản với initiateSepay() để khách quen
+        // cùng một quy tắc dù chọn phương thức nào.
+        $description = strtoupper(str_replace('-', '', (string) $booking->id));
 
-        $rawHash = "accessKey={$accessKey}&amount={$payment->amount}&extraData=&ipnUrl={$ipnUrl}&orderId={$payment->gateway_order_id}&orderInfo=Vé xe {$booking->booking_code}&partnerCode={$partnerCode}&redirectUrl={$redirectUrl}&requestId={$payment->id}&requestType=captureWallet";
-        $signature = hash_hmac('sha256', $rawHash, $secretKey);
+        // Link nhận tiền cá nhân/doanh nghiệp công khai của MoMo — mở thẳng màn
+        // hình chuyển tiền tới đúng số, KHÔNG điền sẵn số tiền (không có API).
+        $momoLink = "https://nhantien.momo.vn/{$phone}";
+        $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?'.http_build_query([
+            'size' => '300x300',
+            'data' => $momoLink,
+        ], '', '&', PHP_QUERY_RFC3986);
 
-        try {
-            // Timeout tường minh: initiate chạy trong request đồng bộ của khách —
-            // MoMo chậm không được treo cả luồng đặt vé.
-            $response = Http::connectTimeout(5)
-                ->timeout(20)
-                ->post($createUrl, [
-                    'partnerCode' => $partnerCode,
-                    'requestId' => $payment->id,
-                    'amount' => $payment->amount,
-                    'orderId' => $payment->gateway_order_id,
-                    'orderInfo' => "Vé xe {$booking->booking_code}",
-                    'redirectUrl' => $redirectUrl,
-                    'ipnUrl' => $ipnUrl,
-                    'lang' => 'vi',
-                    'requestType' => 'captureWallet',
-                    'extraData' => '',
-                    'signature' => $signature,
-                ]);
-
-            $response->throw();
-            if ((int) $response->json('resultCode', -1) !== 0 || ! is_string($response->json('payUrl'))) {
-                throw new \RuntimeException('MoMo từ chối khởi tạo giao dịch');
-            }
-
-            return ['payment_url' => $response->json('payUrl'), 'order_id' => $payment->gateway_order_id];
-        } catch (\Exception $e) {
-            $payment->update([
-                'status' => PaymentStatusEnum::Failed,
-                'gateway_response' => ['initiate_error' => $e->getMessage()],
-            ]);
-            Log::error('MoMo initiate failed', ['error' => $e->getMessage()]);
-            throw new \RuntimeException('Không thể kết nối cổng thanh toán MoMo');
-        }
+        return [
+            'payment_url' => $qrUrl,
+            'order_id' => $payment->gateway_order_id,
+            'payment_reference' => $description,
+            'momo_info' => [
+                'phone' => $phone,
+                'acc_name' => $accName,
+                'amount' => $payment->amount,
+                'code' => $description,
+            ],
+        ];
     }
 
     private function initiateSepay(Payment $payment, Booking $booking): array

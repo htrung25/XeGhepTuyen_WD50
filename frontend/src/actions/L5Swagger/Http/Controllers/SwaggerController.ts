@@ -1,9 +1,9 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition } from './../../../../wayfinder'
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::api
-* @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:92
-* @route '/api/docs'
-*/
+ * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:92
+ * @route '/api/docs'
+ */
 export const api = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: api.url(options),
     method: 'get',
@@ -16,75 +16,72 @@ api.definition = {
 
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::api
-* @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:92
-* @route '/api/docs'
-*/
+ * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:92
+ * @route '/api/docs'
+ */
 api.url = (options?: RouteQueryOptions) => {
     return api.definition.url + queryParams(options)
 }
 
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::api
-* @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:92
-* @route '/api/docs'
-*/
+ * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:92
+ * @route '/api/docs'
+ */
 api.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: api.url(options),
     method: 'get',
 })
-
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::api
-* @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:92
-* @route '/api/docs'
-*/
+ * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:92
+ * @route '/api/docs'
+ */
 api.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: api.url(options),
     method: 'head',
 })
 
-/**
+    /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::api
-* @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:92
-* @route '/api/docs'
-*/
-const apiForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-    action: api.url(options),
-    method: 'get',
-})
+ * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:92
+ * @route '/api/docs'
+ */
+    const apiForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: api.url(options),
+        method: 'get',
+    })
 
-/**
+            /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::api
-* @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:92
-* @route '/api/docs'
-*/
-apiForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-    action: api.url(options),
-    method: 'get',
-})
-
-/**
+ * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:92
+ * @route '/api/docs'
+ */
+        apiForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: api.url(options),
+            method: 'get',
+        })
+            /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::api
-* @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:92
-* @route '/api/docs'
-*/
-apiForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-    action: api.url({
-        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-            _method: 'HEAD',
-            ...(options?.query ?? options?.mergeQuery ?? {}),
-        }
-    }),
-    method: 'get',
-})
-
-api.form = apiForm
-
+ * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:92
+ * @route '/api/docs'
+ */
+        apiForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: api.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    api.form = apiForm
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::docs
-* @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
-* @route '/api/documentation'
-*/
+ * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
+ * @route '/api/documentation'
+ */
 export const docs = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: docs.url(options),
     method: 'get',
@@ -97,75 +94,72 @@ docs.definition = {
 
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::docs
-* @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
-* @route '/api/documentation'
-*/
+ * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
+ * @route '/api/documentation'
+ */
 docs.url = (options?: RouteQueryOptions) => {
     return docs.definition.url + queryParams(options)
 }
 
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::docs
-* @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
-* @route '/api/documentation'
-*/
+ * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
+ * @route '/api/documentation'
+ */
 docs.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: docs.url(options),
     method: 'get',
 })
-
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::docs
-* @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
-* @route '/api/documentation'
-*/
+ * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
+ * @route '/api/documentation'
+ */
 docs.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: docs.url(options),
     method: 'head',
 })
 
-/**
+    /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::docs
-* @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
-* @route '/api/documentation'
-*/
-const docsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-    action: docs.url(options),
-    method: 'get',
-})
+ * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
+ * @route '/api/documentation'
+ */
+    const docsForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: docs.url(options),
+        method: 'get',
+    })
 
-/**
+            /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::docs
-* @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
-* @route '/api/documentation'
-*/
-docsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-    action: docs.url(options),
-    method: 'get',
-})
-
-/**
+ * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
+ * @route '/api/documentation'
+ */
+        docsForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: docs.url(options),
+            method: 'get',
+        })
+            /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::docs
-* @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
-* @route '/api/documentation'
-*/
-docsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-    action: docs.url({
-        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-            _method: 'HEAD',
-            ...(options?.query ?? options?.mergeQuery ?? {}),
-        }
-    }),
-    method: 'get',
-})
-
-docs.form = docsForm
-
+ * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:34
+ * @route '/api/documentation'
+ */
+        docsForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: docs.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    docs.form = docsForm
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::oauth2Callback
-* @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:142
-* @route '/api/oauth2-callback'
-*/
+ * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:142
+ * @route '/api/oauth2-callback'
+ */
 export const oauth2Callback = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: oauth2Callback.url(options),
     method: 'get',
@@ -178,70 +172,67 @@ oauth2Callback.definition = {
 
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::oauth2Callback
-* @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:142
-* @route '/api/oauth2-callback'
-*/
+ * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:142
+ * @route '/api/oauth2-callback'
+ */
 oauth2Callback.url = (options?: RouteQueryOptions) => {
     return oauth2Callback.definition.url + queryParams(options)
 }
 
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::oauth2Callback
-* @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:142
-* @route '/api/oauth2-callback'
-*/
+ * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:142
+ * @route '/api/oauth2-callback'
+ */
 oauth2Callback.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
     url: oauth2Callback.url(options),
     method: 'get',
 })
-
 /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::oauth2Callback
-* @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:142
-* @route '/api/oauth2-callback'
-*/
+ * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:142
+ * @route '/api/oauth2-callback'
+ */
 oauth2Callback.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     url: oauth2Callback.url(options),
     method: 'head',
 })
 
-/**
+    /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::oauth2Callback
-* @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:142
-* @route '/api/oauth2-callback'
-*/
-const oauth2CallbackForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-    action: oauth2Callback.url(options),
-    method: 'get',
-})
+ * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:142
+ * @route '/api/oauth2-callback'
+ */
+    const oauth2CallbackForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: oauth2Callback.url(options),
+        method: 'get',
+    })
 
-/**
+            /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::oauth2Callback
-* @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:142
-* @route '/api/oauth2-callback'
-*/
-oauth2CallbackForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-    action: oauth2Callback.url(options),
-    method: 'get',
-})
-
-/**
+ * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:142
+ * @route '/api/oauth2-callback'
+ */
+        oauth2CallbackForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: oauth2Callback.url(options),
+            method: 'get',
+        })
+            /**
 * @see \L5Swagger\Http\Controllers\SwaggerController::oauth2Callback
-* @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:142
-* @route '/api/oauth2-callback'
-*/
-oauth2CallbackForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
-    action: oauth2Callback.url({
-        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
-            _method: 'HEAD',
-            ...(options?.query ?? options?.mergeQuery ?? {}),
-        }
-    }),
-    method: 'get',
-})
-
-oauth2Callback.form = oauth2CallbackForm
-
+ * @see vendor/darkaonline/l5-swagger/src/Http/Controllers/SwaggerController.php:142
+ * @route '/api/oauth2-callback'
+ */
+        oauth2CallbackForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: oauth2Callback.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    oauth2Callback.form = oauth2CallbackForm
 const SwaggerController = { api, docs, oauth2Callback }
 
 export default SwaggerController

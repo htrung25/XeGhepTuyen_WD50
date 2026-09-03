@@ -13,23 +13,22 @@ import AuditLogController from './AuditLogController'
 import RoleController from './RoleController'
 import AdminStaffController from './AdminStaffController'
 import SupportController from './SupportController'
-
 const Admin = {
     AuthController: Object.assign(AuthController, AuthController),
-    DashboardController: Object.assign(DashboardController, DashboardController),
-    NotificationController: Object.assign(NotificationController, NotificationController),
-    OperatorController: Object.assign(OperatorController, OperatorController),
-    PartnerApplicationController: Object.assign(PartnerApplicationController, PartnerApplicationController),
-    DriverController: Object.assign(DriverController, DriverController),
-    UserController: Object.assign(UserController, UserController),
-    BookingController: Object.assign(BookingController, BookingController),
-    TripController: Object.assign(TripController, TripController),
-    FinanceController: Object.assign(FinanceController, FinanceController),
-    VoucherController: Object.assign(VoucherController, VoucherController),
-    AuditLogController: Object.assign(AuditLogController, AuditLogController),
-    RoleController: Object.assign(RoleController, RoleController),
-    AdminStaffController: Object.assign(AdminStaffController, AdminStaffController),
-    SupportController: Object.assign(SupportController, SupportController),
+DashboardController: Object.assign(DashboardController, DashboardController),
+NotificationController: Object.assign(NotificationController, NotificationController),
+OperatorController: Object.assign(OperatorController, OperatorController),
+PartnerApplicationController: Object.assign(PartnerApplicationController, PartnerApplicationController),
+DriverController: Object.assign(DriverController, DriverController),
+UserController: Object.assign(UserController, UserController),
+BookingController: Object.assign(BookingController, BookingController),
+TripController: Object.assign(TripController, TripController),
+FinanceController: Object.assign(FinanceController, FinanceController),
+VoucherController: Object.assign(VoucherController, VoucherController),
+AuditLogController: Object.assign(AuditLogController, AuditLogController),
+RoleController: Object.assign(RoleController, RoleController),
+AdminStaffController: Object.assign(AdminStaffController, AdminStaffController),
+SupportController: Object.assign(SupportController, SupportController),
 }
 
 export default Admin

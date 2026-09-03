@@ -143,6 +143,11 @@ const selectedTxn = ref<Transaction | null>(null);
 const refundAmount = ref(0);
 const refundReason = ref('');
 const refundLoading = ref(false);
+// Xác nhận thủ công đã nhận tiền (QR MoMo — không có webhook để tự confirm)
+const confirmingPaymentId = ref<string | null>(null);
+const canManageTransactions = computed(
+    () => can('finance.refund') || can('finance.confirm_payment'),
+);
 // Số tiền còn lại có thể hoàn = tổng gốc - đã hoàn trước đó (nếu có).
 // Không dùng amount gốc làm max/prefill, tránh hoàn lần 2 bị BE từ chối
 // REFUND_EXCEEDS_TOTAL dù còn tiền hợp lệ để hoàn.
@@ -379,6 +384,24 @@ async function confirmRefund() {
         return;
     }
     showRefundModal.value = false;
+    await loadTransactions();
+    await loadData();
+}
+
+async function confirmMomoPayment(t: Transaction) {
+    if (
+        !confirm(
+            `Xác nhận đã nhận ${fmt(t.amount)} qua MoMo cho vé ${t.booking_code}?`,
+        )
+    )
+        return;
+    confirmingPaymentId.value = t.id;
+    const { error } = await adminApi.confirmMomoPayment(t.id);
+    confirmingPaymentId.value = null;
+    if (error) {
+        alert(error);
+        return;
+    }
     await loadTransactions();
     await loadData();
 }
@@ -894,7 +917,7 @@ onMounted(loadData);
                                         Thời gian
                                     </th>
                                     <th
-                                        v-if="can('finance.refund')"
+                                        v-if="canManageTransactions"
                                         class="px-4 py-3 text-center text-xs font-medium tracking-wide text-gray-500 uppercase"
                                     >
                                         Thao tác
@@ -904,9 +927,7 @@ onMounted(loadData);
                             <tbody class="divide-y divide-slate-100">
                                 <tr v-if="transactions.length === 0">
                                     <td
-                                        :colspan="
-                                            can('finance.refund') ? 10 : 9
-                                        "
+                                        :colspan="canManageTransactions ? 10 : 9"
                                         class="px-4 py-12 text-center text-gray-400"
                                     >
                                         Không có giao dịch nào
@@ -984,18 +1005,37 @@ onMounted(loadData);
                                         }}
                                     </td>
                                     <td
-                                        v-if="can('finance.refund')"
+                                        v-if="canManageTransactions"
                                         class="px-4 py-3 text-center"
                                     >
                                         <button
                                             v-if="
                                                 t.status === 'success' &&
-                                                t.booking_id
+                                                t.booking_id &&
+                                                can('finance.refund')
                                             "
                                             @click="openRefund(t)"
                                             class="rounded-lg border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-medium text-orange-700 transition-colors hover:bg-orange-100"
                                         >
                                             Hoàn tiền
+                                        </button>
+                                        <button
+                                            v-else-if="
+                                                t.status === 'pending' &&
+                                                t.method === 'momo' &&
+                                                can('finance.confirm_payment')
+                                            "
+                                            @click="confirmMomoPayment(t)"
+                                            :disabled="
+                                                confirmingPaymentId === t.id
+                                            "
+                                            class="rounded-lg border border-green-200 bg-green-50 px-3 py-1 text-xs font-medium text-green-700 transition-colors hover:bg-green-100 disabled:opacity-60"
+                                        >
+                                            {{
+                                                confirmingPaymentId === t.id
+                                                    ? 'Đang xử lý...'
+                                                    : 'Xác nhận đã nhận tiền'
+                                            }}
                                         </button>
                                         <span
                                             v-else

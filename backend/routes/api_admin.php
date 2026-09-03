@@ -97,6 +97,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('finance/export', [FinanceController::class, 'export'])->middleware('permission:finance.view');
     Route::post('finance/payouts', [FinanceController::class, 'payout'])->middleware('permission:finance.payout');
     Route::post('finance/refund/{booking}', [FinanceController::class, 'refund'])->middleware('permission:finance.refund');
+    Route::post('finance/payments/{payment}/confirm', [FinanceController::class, 'confirmPayment'])->middleware('permission:finance.confirm_payment');
 
     // Vouchers
     Route::get('vouchers', [VoucherController::class, 'index'])->middleware('permission:vouchers.view');
