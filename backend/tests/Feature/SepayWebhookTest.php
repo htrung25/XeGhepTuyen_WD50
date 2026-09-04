@@ -309,3 +309,82 @@ it('accepts SePay webhook with direct API key and matches by booking_code or hyp
     $resp->assertJsonPath('success', true);
     expect($booking->fresh()->payment_status->value)->toBe('paid');
 });
+
+it('accepts SePay webhook with DH prefix and confirms pending booking', function () {
+    [$trip, $seat, $customer] = setupSepayTestContext();
+    Sanctum::actingAs($customer, ['*'], 'sanctum');
+    Sanctum::actingAs($customer, ['*'], 'customer');
+
+    $booking = Booking::create([
+        'booking_code' => 'XGBOOK5555', 'user_id' => $customer->id,
+        'trip_id' => $trip->id, 'pickup_address' => 'Mỹ Đình', 'pickup_lat' => 21,
+        'pickup_lng' => 105, 'dropoff_address' => 'Lạch Tray', 'dropoff_lat' => 20,
+        'dropoff_lng' => 106, 'passenger_count' => 1, 'contact_name' => 'Khách',
+        'contact_phone' => '0988888888', 'subtotal' => 150000, 'final_amount' => 150000,
+        'payment_method' => 'vnpay', 'payment_status' => 'unpaid',
+        'booking_status' => 'pending', 'qr_token' => Str::random(32),
+    ]);
+
+    $this->postJson('/api/customer/payments/initiate', [
+        'booking_id' => $booking->id, 'method' => 'vnpay',
+    ])->assertOk();
+
+    $compactId = strtoupper(str_replace('-', '', (string) $booking->id));
+
+    // Transfer memo starts with DH followed by compact booking id: DH01...
+    $resp = $this->withHeaders([
+        'Authorization' => 'Apikey '.config('services.sepay.webhook_api_key'),
+    ])->postJson('/api/customer/payments/sepay/webhook', [
+        'id' => 888111,
+        'gateway' => config('services.sepay.bank_name'),
+        'accountNumber' => config('services.sepay.bank_acc'),
+        'transferType' => 'in',
+        'transferAmount' => 150000,
+        'content' => "DH{$compactId} thanh toan",
+    ]);
+
+    $resp->assertOk();
+    $resp->assertJsonPath('success', true);
+    expect($booking->fresh()->payment_status->value)->toBe('paid');
+});
+
+it('accepts SePay webhook within 30-minute grace period for pending booking with expired expires_at', function () {
+    [$trip, $seat, $customer] = setupSepayTestContext();
+    Sanctum::actingAs($customer, ['*'], 'sanctum');
+    Sanctum::actingAs($customer, ['*'], 'customer');
+
+    $booking = Booking::create([
+        'booking_code' => 'XGBOOK7777', 'user_id' => $customer->id,
+        'trip_id' => $trip->id, 'pickup_address' => 'Mỹ Đình', 'pickup_lat' => 21,
+        'pickup_lng' => 105, 'dropoff_address' => 'Lạch Tray', 'dropoff_lat' => 20,
+        'dropoff_lng' => 106, 'passenger_count' => 1, 'contact_name' => 'Khách',
+        'contact_phone' => '0988888888', 'subtotal' => 150000, 'final_amount' => 150000,
+        'payment_method' => 'vnpay', 'payment_status' => 'unpaid',
+        'booking_status' => 'pending', 'qr_token' => Str::random(32),
+        'expires_at' => now()->addMinutes(15),
+    ]);
+
+    $this->postJson('/api/customer/payments/initiate', [
+        'booking_id' => $booking->id, 'method' => 'vnpay',
+    ])->assertOk();
+
+    // Booking expires after QR was issued, but is still within 30m grace period and pending
+    $booking->update(['expires_at' => now()->subMinutes(10)]);
+
+    $compactId = strtoupper(str_replace('-', '', (string) $booking->id));
+
+    $resp = $this->withHeaders([
+        'Authorization' => 'Apikey '.config('services.sepay.webhook_api_key'),
+    ])->postJson('/api/customer/payments/sepay/webhook', [
+        'id' => 888222,
+        'gateway' => config('services.sepay.bank_name'),
+        'accountNumber' => config('services.sepay.bank_acc'),
+        'transferType' => 'in',
+        'transferAmount' => 150000,
+        'content' => "Chuyen khoan {$compactId}",
+    ]);
+
+    $resp->assertOk();
+    $resp->assertJsonPath('success', true);
+    expect($booking->fresh()->payment_status->value)->toBe('paid');
+});

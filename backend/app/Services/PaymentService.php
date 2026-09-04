@@ -275,7 +275,10 @@ class PaymentService
 
             // Callback đến sau khi booking hết hạn/đã bị hủy không được hồi sinh vé và
             // chiếm lại ghế đã trả cho người khác. Giao dịch đến muộn cần đối soát riêng.
-            if ($booking->booking_status !== BookingStatusEnum::Pending || $booking->isExpired()) {
+            // Cho phép ân hạn (grace period) 30 phút nếu booking vẫn đang Pending (chưa bị hủy / chưa giải phóng ghế)
+            // để bảo vệ khách hàng khi ngân hàng hoặc cổng thanh toán có độ trễ chuyển tiếp.
+            $isGracePeriodValid = $booking->expires_at && $booking->expires_at->addMinutes(30)->isFuture();
+            if ($booking->booking_status !== BookingStatusEnum::Pending || ($booking->isExpired() && ! $isGracePeriodValid)) {
                 throw new PaymentVerificationException('Booking đã hết hạn hoặc không còn chờ thanh toán');
             }
 
@@ -556,8 +559,8 @@ class PaymentService
             }
         }
 
-        // 3. Tìm chuỗi hex bị cắt ngắn bởi ngân hàng (16 đến 31 ký tự hex)
-        if (preg_match_all('/[0-9a-f]{16,31}/i', $content, $prefixMatches)) {
+        // 3. Tìm chuỗi hex bị cắt ngắn bởi ngân hàng (12 đến 31 ký tự hex)
+        if (preg_match_all('/[0-9a-f]{12,31}/i', $content, $prefixMatches)) {
             $pendingBookings = Booking::where('payment_status', '!=', BookingPaymentStatusEnum::Paid)
                 ->latest()
                 ->limit(50)
@@ -567,7 +570,7 @@ class PaymentService
                 $prefix = strtolower($prefix);
                 foreach ($pendingBookings as $b) {
                     $compact = strtolower(str_replace('-', '', (string) $b->id));
-                    if (str_starts_with($compact, $prefix) || str_starts_with($prefix, substr($compact, 0, 16))) {
+                    if (str_starts_with($compact, $prefix) || str_starts_with($prefix, substr($compact, 0, 12))) {
                         $payment = Payment::where('booking_id', $b->id)->latest()->first();
                         if ($payment) {
                             return $payment;
