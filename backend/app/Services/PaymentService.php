@@ -417,9 +417,12 @@ class PaymentService
         $bankAcc = config('services.sepay.bank_acc');
         $bankName = config('services.sepay.bank_name');
         $accName = config('services.sepay.acc_name');
-        // VietQR chỉ bảo đảm nội dung chữ và số. Bỏ dấu gạch UUID nhưng vẫn giữ nguyên
-        // booking ID để SePay có thể đối chiếu trực tiếp giao dịch với đúng vé.
-        $description = strtoupper(str_replace('-', '', (string) $booking->id));
+        // Mã tham chiếu phải LỌT trường 62-08 "Purpose of Transaction" của đặc tả
+        // VietQR/NAPAS — tối đa 25 ký tự. UUID rút gọn dài 32 ký tự nên bị app ngân
+        // hàng cắt cụt, webhook nhận về nội dung không còn khớp mã gốc ⇒ khách chuyển
+        // đúng nội dung mà vé vẫn không được xác nhận. Dùng booking_code (13 ký tự,
+        // unique, có index) làm mã đối soát chính thức.
+        $description = self::sepayReference($booking);
 
         $qrUrl = 'https://qr.sepay.vn/img?'.http_build_query([
             'acc' => $bankAcc,
@@ -520,28 +523,52 @@ class PaymentService
     }
 
     /**
-     * Tìm payment từ booking UUID trong nội dung chuyển khoản. Hỗ trợ UUID có dấu
-     * gạch ngang, UUID rút gọn 32 hex, chuỗi hex bị ngân hàng cắt ngắn (16-31 hex),
-     * mã vé booking_code và mã XEGHEP.
+     * Mã đối soát in trên QR: booking_code nếu có (ngắn, unique, hợp giới hạn 25 ký
+     * tự của VietQR), nếu không có thì lùi về UUID rút gọn.
+     */
+    private static function sepayReference(Booking $booking): string
+    {
+        $code = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) $booking->booking_code));
+
+        return $code !== '' ? $code : strtoupper(str_replace('-', '', (string) $booking->id));
+    }
+
+    /**
+     * Tìm payment tương ứng với nội dung chuyển khoản. Thứ tự ưu tiên đi từ bằng
+     * chứng chắc chắn nhất tới suy đoán:
+     *   1. booking_code khớp CHÍNH XÁC (mã đang in trên QR).
+     *   2. UUID đầy đủ có dấu gạch.
+     *   3. UUID rút gọn 32 hex (QR cũ).
+     *   4. Chuỗi hex bị ngân hàng cắt cụt — chỉ nhận khi CHỈ CÓ MỘT vé khớp.
+     *   5. Mã XEGHEP cũ.
+     *
+     * Nguyên tắc: thà không xác nhận còn hơn xác nhận NHẦM đơn hàng. Mọi bước suy
+     * đoán đều phải cho ra đúng một ứng viên, nếu mơ hồ thì trả null.
      */
     private function findSepayPaymentFromContent(string $content): ?Payment
     {
-        // 1. Tìm UUID đầy đủ có dấu gạch ngang (e.g. 019349b1-7a20-7360-848e-8a034988e1bb)
+        // 1. booking_code — mã đối soát chính thức đang in trên QR.
+        if ($booking = $this->matchBookingByCode($content)) {
+            return $this->resolvePaymentForBooking($booking->id);
+        }
+
+        // 2. UUID đầy đủ có dấu gạch (e.g. 019349b1-7a20-7360-848e-8a034988e1bb)
         if (preg_match_all('/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i', $content, $uuidMatches)) {
             foreach ($uuidMatches[0] as $uuid) {
-                $payment = Payment::where('booking_id', strtolower($uuid))
-                    ->latest()
-                    ->first();
-
-                if ($payment) {
+                if ($payment = $this->resolvePaymentForBooking(strtolower($uuid))) {
                     return $payment;
                 }
             }
         }
 
-        // 2. Tìm UUID dạng rút gọn 32 ký tự hex không dấu gạch
-        if (preg_match_all('/[0-9a-f]{32}/i', $content, $compactMatches)) {
-            foreach ($compactMatches[0] as $compactId) {
+        $hexRuns = preg_match_all('/[0-9a-f]{12,}/i', $content, $hexMatches) ? $hexMatches[0] : [];
+
+        // 3. UUID rút gọn 32 hex. Ngân hàng hay dán số tham chiếu của mình LIỀN trước
+        // nội dung khách nhập ⇒ chuỗi hex liền dài hơn 32; phải trượt cửa sổ 32 ký tự
+        // trên toàn bộ chuỗi thay vì chỉ lấy 32 ký tự đầu (regex greedy sẽ bắt trượt).
+        foreach ($hexRuns as $run) {
+            for ($offset = 0; $offset + 32 <= strlen($run); $offset++) {
+                $compactId = substr($run, $offset, 32);
                 $bookingId = strtolower(
                     substr($compactId, 0, 8).'-'.
                     substr($compactId, 8, 4).'-'.
@@ -549,56 +576,16 @@ class PaymentService
                     substr($compactId, 16, 4).'-'.
                     substr($compactId, 20)
                 );
-                $payment = Payment::where('booking_id', $bookingId)
-                    ->latest()
-                    ->first();
 
-                if ($payment) {
+                if ($payment = $this->resolvePaymentForBooking($bookingId)) {
                     return $payment;
                 }
             }
         }
 
-        // 3. Tìm chuỗi hex bị cắt ngắn bởi ngân hàng (12 đến 31 ký tự hex)
-        if (preg_match_all('/[0-9a-f]{12,31}/i', $content, $prefixMatches)) {
-            $pendingBookings = Booking::where('payment_status', '!=', BookingPaymentStatusEnum::Paid)
-                ->latest()
-                ->limit(50)
-                ->get();
-
-            foreach ($prefixMatches[0] as $prefix) {
-                $prefix = strtolower($prefix);
-                foreach ($pendingBookings as $b) {
-                    $compact = strtolower(str_replace('-', '', (string) $b->id));
-                    if (str_starts_with($compact, $prefix) || str_starts_with($prefix, substr($compact, 0, 12))) {
-                        $payment = Payment::where('booking_id', $b->id)->latest()->first();
-                        if ($payment) {
-                            return $payment;
-                        }
-                    }
-                }
-            }
-        }
-
-        // 4. Tìm theo booking_code (mã vé, e.g. HNHP260904003)
-        $cleanContent = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $content));
-        if ($cleanContent !== '') {
-            $pendingBookings = Booking::where('payment_status', '!=', BookingPaymentStatusEnum::Paid)
-                ->latest()
-                ->limit(50)
-                ->get(['id', 'booking_code']);
-
-            foreach ($pendingBookings as $b) {
-                if (! empty($b->booking_code) && str_contains($cleanContent, strtoupper($b->booking_code))) {
-                    $payment = Payment::where('booking_id', $b->id)
-                        ->latest()
-                        ->first();
-
-                    if ($payment) {
-                        return $payment;
-                    }
-                }
-            }
+        // 4. Chuỗi hex bị ngân hàng cắt cụt — suy đoán theo tiền tố.
+        if ($booking = $this->matchBookingByTruncatedId($hexRuns)) {
+            return $this->resolvePaymentForBooking($booking->id);
         }
 
         // 5. Fallback mã XEGHEP
@@ -608,7 +595,140 @@ class PaymentService
                 ->first();
         }
 
+        Log::warning('SePay Webhook: không tách được mã đối soát từ nội dung', [
+            'content' => $content,
+            'hex_runs' => $hexRuns,
+            'code_candidates' => $this->extractCodeCandidates($content),
+        ]);
+
         return null;
+    }
+
+    /**
+     * Đối chiếu booking_code bằng truy vấn CHÍNH XÁC trên cột unique có index —
+     * không quét "50 vé mới nhất" như trước (vé cần tìm có thể nằm ngoài cửa sổ đó).
+     */
+    private function matchBookingByCode(string $content): ?Booking
+    {
+        $candidates = $this->extractCodeCandidates($content);
+        if ($candidates === []) {
+            return null;
+        }
+
+        $bookings = Booking::whereIn('booking_code', $candidates)->get(['id', 'booking_code']);
+
+        // Nội dung chứa nhiều mã vé hợp lệ ⇒ không biết trả tiền cho vé nào, không đoán.
+        if ($bookings->count() !== 1) {
+            if ($bookings->count() > 1) {
+                Log::warning('SePay Webhook: nội dung chứa nhiều mã vé hợp lệ', [
+                    'codes' => $bookings->pluck('booking_code')->all(),
+                ]);
+            }
+
+            return null;
+        }
+
+        return $bookings->first();
+    }
+
+    /**
+     * Tách các chuỗi có thể là booking_code: token phân tách bằng ký tự không phải
+     * chữ/số, cộng thêm bản đã gỡ tiền tố ngân hàng/SePay dán liền (DH, SEVQR, CT…).
+     */
+    private function extractCodeCandidates(string $content): array
+    {
+        $tokens = preg_split('/[^A-Za-z0-9]+/', strtoupper($content), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        $candidates = [];
+        foreach ($tokens as $token) {
+            if (strlen($token) < 6 || strlen($token) > 20) {
+                continue;
+            }
+
+            $candidates[] = $token;
+
+            // Tiền tố dính liền: DHHNHP260904001 → HNHP260904001
+            for ($drop = 1; $drop <= 5 && strlen($token) - $drop >= 6; $drop++) {
+                $candidates[] = substr($token, $drop);
+            }
+        }
+
+        return array_values(array_unique($candidates));
+    }
+
+    /**
+     * Suy đoán vé từ chuỗi hex bị cắt cụt. Chỉ chấp nhận khi có ĐÚNG MỘT vé khớp:
+     * quy tắc cũ ("trùng 12 hex đầu") có thể xác nhận nhầm vé khác vì 12 hex đầu của
+     * UUIDv7 chỉ là mốc thời gian mili giây — mọi vé tạo cùng mili giây đều trùng.
+     */
+    private function matchBookingByTruncatedId(array $hexRuns): ?Booking
+    {
+        $prefixes = [];
+        foreach ($hexRuns as $run) {
+            $run = strtolower($run);
+            if (strlen($run) >= 16) {
+                $prefixes[] = $run;
+            }
+        }
+
+        if ($prefixes === []) {
+            return null;
+        }
+
+        // Ứng viên = vé có giao dịch SePay khởi tạo gần đây (QR chỉ sống 15 phút,
+        // webhook trễ nhất cũng trong ngày) — thay cho cửa sổ "50 vé mới nhất".
+        $candidateBookings = Booking::whereIn(
+            'id',
+            Payment::where('method', PaymentMethodEnum::Vnpay)
+                ->where('created_at', '>=', now()->subDay())
+                ->select('booking_id')
+        )->get(['id']);
+
+        $matches = [];
+        foreach ($prefixes as $prefix) {
+            foreach ($candidateBookings as $booking) {
+                $compact = strtolower(str_replace('-', '', (string) $booking->id));
+
+                // Cắt cụt thuần tuý: nội dung là tiền tố của UUID.
+                $isTruncated = str_starts_with($compact, $prefix);
+                // Ngân hàng dán thêm ký tự SAU phần bị cắt: đòi trùng 24 hex đầu
+                // (96 bit) để loại trừ đụng độ mốc thời gian của UUIDv7.
+                $isPaddedTruncation = strlen($prefix) >= 24 && str_starts_with($prefix, substr($compact, 0, 24));
+
+                if ($isTruncated || $isPaddedTruncation) {
+                    $matches[$booking->id] = $booking;
+                }
+            }
+        }
+
+        if (count($matches) !== 1) {
+            if (count($matches) > 1) {
+                Log::warning('SePay Webhook: tiền tố nội dung khớp nhiều vé, không tự xác nhận', [
+                    'prefixes' => $prefixes,
+                    'booking_ids' => array_keys($matches),
+                ]);
+            }
+
+            return null;
+        }
+
+        return reset($matches);
+    }
+
+    /**
+     * Lấy giao dịch đang chờ của vé (ưu tiên Pending — đúng giao dịch khách vừa khởi
+     * tạo QR); nếu không còn Pending thì lấy bản mới nhất để processCallback xử lý
+     * idempotent cho webhook gửi trùng.
+     */
+    private function resolvePaymentForBooking(string $bookingId): ?Payment
+    {
+        return Payment::where('booking_id', $bookingId)
+            ->where('status', PaymentStatusEnum::Pending)
+            ->latest()
+            ->first()
+            ?? Payment::where('booking_id', $bookingId)
+                ->latest()
+                ->first();
     }
 
     private function initiateWallet(Payment $payment, Booking $booking): array

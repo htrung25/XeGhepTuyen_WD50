@@ -116,7 +116,9 @@ it('initiates SePay VietQR payment info and processes callback webhook successfu
     $paymentReference = $initResponse->json('data.payment_reference');
     $amount = $initResponse->json('data.bank_info.amount');
 
-    expect($paymentReference)->toBe(strtoupper(str_replace('-', '', $booking->id)));
+    // Mã đối soát là booking_code (ngắn, lọt giới hạn 25 ký tự của VietQR),
+    // không còn là UUID rút gọn 32 ký tự vốn bị app ngân hàng cắt cụt.
+    expect($paymentReference)->toBe($booking->booking_code);
     expect($initResponse->json('data.bank_info.code'))->toBe($paymentReference);
     expect($initResponse->json('data.payment_url'))->toContain('https://qr.sepay.vn/img?');
     expect($initResponse->json('data.payment_url'))->toContain('amount=150000');
@@ -387,4 +389,126 @@ it('accepts SePay webhook within 30-minute grace period for pending booking with
     $resp->assertOk();
     $resp->assertJsonPath('success', true);
     expect($booking->fresh()->payment_status->value)->toBe('paid');
+});
+
+// ─── Ràng buộc thực tế của VietQR / nội dung ngân hàng ───────────────────────
+// Trường 62-08 "Purpose of Transaction" trong đặc tả VietQR (NAPAS) tối đa 25 ký
+// tự. Mã tham chiếu dài hơn sẽ bị app ngân hàng cắt cụt ⇒ webhook nhận về nội
+// dung KHÔNG còn khớp mã gốc. Các test dưới đây khoá hành vi đó.
+
+function makeSepayBooking(string $code, $trip, $customer, array $overrides = []): Booking
+{
+    return Booking::create(array_merge([
+        'booking_code' => $code, 'user_id' => $customer->id,
+        'trip_id' => $trip->id, 'pickup_address' => 'Mỹ Đình', 'pickup_lat' => 21,
+        'pickup_lng' => 105, 'dropoff_address' => 'Lạch Tray', 'dropoff_lat' => 20,
+        'dropoff_lng' => 106, 'passenger_count' => 1, 'contact_name' => 'Khách',
+        'contact_phone' => '0988888888', 'subtotal' => 150000, 'final_amount' => 150000,
+        'payment_method' => 'vnpay', 'payment_status' => 'unpaid',
+        'booking_status' => 'pending', 'qr_token' => Str::random(32),
+        'expires_at' => now()->addMinutes(15),
+    ], $overrides));
+}
+
+function postSepayWebhook($test, string $content, int $amount = 150000, int $txnId = 5551000)
+{
+    return $test->withHeaders([
+        'Authorization' => 'Apikey '.config('services.sepay.webhook_api_key'),
+    ])->postJson('/api/customer/payments/sepay/webhook', [
+        'id' => $txnId,
+        'gateway' => config('services.sepay.bank_name'),
+        'accountNumber' => config('services.sepay.bank_acc'),
+        'transferType' => 'in',
+        'transferAmount' => $amount,
+        'content' => $content,
+    ]);
+}
+
+it('issues a QR payment reference short enough to survive the 25-char VietQR memo limit', function () {
+    [$trip, $seat, $customer] = setupSepayTestContext();
+    Sanctum::actingAs($customer, ['*'], 'sanctum');
+    Sanctum::actingAs($customer, ['*'], 'customer');
+
+    $booking = makeSepayBooking('HNHP260904001', $trip, $customer);
+
+    $resp = $this->postJson('/api/customer/payments/initiate', [
+        'booking_id' => $booking->id, 'method' => 'vnpay',
+    ])->assertOk();
+
+    $reference = $resp->json('data.payment_reference');
+
+    expect(strlen($reference))->toBeLessThanOrEqual(25);
+    expect($resp->json('data.bank_info.code'))->toBe($reference);
+    expect($resp->json('data.payment_url'))->toContain('des='.$reference);
+});
+
+it('confirms the booking when the bank memo carries only the issued reference plus bank noise', function () {
+    [$trip, $seat, $customer] = setupSepayTestContext();
+    Sanctum::actingAs($customer, ['*'], 'sanctum');
+    Sanctum::actingAs($customer, ['*'], 'customer');
+
+    $booking = makeSepayBooking('HNHP260904002', $trip, $customer);
+
+    $reference = $this->postJson('/api/customer/payments/initiate', [
+        'booking_id' => $booking->id, 'method' => 'vnpay',
+    ])->assertOk()->json('data.payment_reference');
+
+    // BIDV thường chèn tiền tố/hậu tố của chính ngân hàng quanh nội dung khách nhập.
+    postSepayWebhook($this, "CT DEN:526123456789 {$reference} NGUYEN VAN A CHUYEN TIEN")
+        ->assertOk()
+        ->assertJsonPath('success', true);
+
+    expect($booking->fresh()->payment_status->value)->toBe('paid');
+});
+
+it('confirms the booking when the bank glues its own reference digits onto the compact uuid memo', function () {
+    [$trip, $seat, $customer] = setupSepayTestContext();
+    Sanctum::actingAs($customer, ['*'], 'sanctum');
+    Sanctum::actingAs($customer, ['*'], 'customer');
+
+    $booking = makeSepayBooking('HNHP260904003', $trip, $customer);
+
+    $this->postJson('/api/customer/payments/initiate', [
+        'booking_id' => $booking->id, 'method' => 'vnpay',
+    ])->assertOk();
+
+    // QR cũ (đã phát hành trước khi đổi sang booking_code) dùng UUID rút gọn 32 hex.
+    // Ngân hàng dán số tham chiếu của mình ngay trước nội dung, không có dấu phân cách
+    // ⇒ chuỗi hex liền dài hơn 32 ký tự.
+    $compactId = strtoupper(str_replace('-', '', (string) $booking->id));
+
+    postSepayWebhook($this, "FT25123456{$compactId}", 150000, 5551003)
+        ->assertOk()
+        ->assertJsonPath('success', true);
+
+    expect($booking->fresh()->payment_status->value)->toBe('paid');
+});
+
+it('refuses to confirm any booking when a truncated memo prefix is ambiguous', function () {
+    [$trip, $seat, $customer] = setupSepayTestContext();
+    Sanctum::actingAs($customer, ['*'], 'sanctum');
+    Sanctum::actingAs($customer, ['*'], 'customer');
+
+    // Hai vé có UUID trùng 12 hex đầu (UUIDv7 = 48 bit timestamp ⇒ cùng mili giây).
+    $paid = makeSepayBooking('HNHP260904004', $trip, $customer);
+    $paid->id = 'aaaaaaaa-bbbb-7ccc-8ddd-eeeeeeee0001';
+    $paid->save();
+
+    $other = makeSepayBooking('HNHP260904005', $trip, $customer);
+    $other->id = 'aaaaaaaa-bbbb-7ccc-8ddd-eeeeeeee0002';
+    $other->save();
+
+    foreach ([$paid, $other] as $b) {
+        $this->postJson('/api/customer/payments/initiate', [
+            'booking_id' => $b->id, 'method' => 'vnpay',
+        ])->assertOk();
+    }
+
+    // Nội dung chỉ còn 16 hex đầu — trùng tiền tố của CẢ HAI vé ⇒ không được đoán bừa.
+    postSepayWebhook($this, 'Chuyen khoan AAAAAAAABBBB7CCC', 150000, 5551004)
+        ->assertOk()
+        ->assertJsonPath('success', false);
+
+    expect($paid->fresh()->payment_status->value)->toBe('unpaid');
+    expect($other->fresh()->payment_status->value)->toBe('unpaid');
 });
