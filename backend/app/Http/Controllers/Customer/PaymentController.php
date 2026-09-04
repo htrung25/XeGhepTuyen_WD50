@@ -99,8 +99,23 @@ class PaymentController extends Controller
     public function sepayWebhook(Request $request): JsonResponse
     {
         try {
-            $authHeader = trim((string) ($request->header('Authorization') ?? ''));
+            $authHeader = trim((string) (
+                $request->header('Authorization')
+                ?? $request->header('x-api-key')
+                ?? $request->header('X-API-KEY')
+                ?? $request->header('apikey')
+                ?? $request->query('api_key')
+                ?? ''
+            ));
             $configuredToken = trim((string) config('services.sepay.webhook_api_key'));
+
+            Log::info('SePay Webhook incoming request', [
+                'headers' => [
+                    'authorization' => $authHeader !== '' ? substr($authHeader, 0, 15).'...' : 'none',
+                    'content_type' => $request->header('Content-Type'),
+                ],
+                'payload' => $request->all(),
+            ]);
 
             $isAuthorized = false;
             if ($configuredToken !== '') {

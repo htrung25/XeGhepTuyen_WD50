@@ -300,6 +300,8 @@ class PaymentService
                 'payment_status' => BookingPaymentStatusEnum::Paid,
                 'booking_status' => BookingStatusEnum::Confirmed,
                 'confirmed_at' => now(),
+                'cancel_reason' => null,
+                'cancelled_at' => null,
             ]);
 
             event(new PaymentProcessedEvent($booking, $payment));
@@ -440,35 +442,40 @@ class PaymentService
 
     public function handleSepayWebhook(array $payload): bool
     {
-        // SePay POST thực tế dùng field "content" (không phải "transactionContent")
-        // — https://docs.sepay.vn tích hợp Webhooks. Field sai khiến webhook thật
-        // từ gateway luôn rơi vào nhánh rỗng này, KHÔNG BAO GIỜ xác nhận được
-        // thanh toán chuyển khoản tự động dù mọi logic xác thực còn lại đều đúng.
-        $content = $payload['content'] ?? '';
+        // SePay có thể gửi thông tin trong field "content", "description", hoặc "code"
+        $content = trim(implode(' ', array_filter([
+            $payload['content'] ?? null,
+            $payload['description'] ?? null,
+            $payload['code'] ?? null,
+            $payload['referenceCode'] ?? null,
+            $payload['reference_code'] ?? null,
+        ])));
+
         if (empty($content)) {
-            Log::warning('SePay Webhook: content rỗng');
+            Log::warning('SePay Webhook: content rỗng', ['payload' => $payload]);
 
             return false;
         }
 
-        // Field thật của SePay là "transferAmount" (không phải "amountIn").
-        $amountIn = (int) ($payload['transferAmount'] ?? 0);
-        $gatewayTxnId = $payload['id'] ?? null;
+        // Hỗ trợ cả transferAmount, transfer_amount, amountIn, amount
+        $amountIn = (int) ($payload['transferAmount'] ?? $payload['transfer_amount'] ?? $payload['amountIn'] ?? $payload['amount'] ?? 0);
+        $gatewayTxnId = (string) ($payload['id'] ?? $payload['transaction_id'] ?? $payload['referenceCode'] ?? time());
 
-        if (($payload['transferType'] ?? null) !== 'in') {
+        $transferType = strtolower(trim((string) ($payload['transferType'] ?? $payload['transfer_type'] ?? 'in')));
+        if ($transferType !== 'in') {
             throw new PaymentVerificationException('SePay webhook không phải giao dịch tiền vào');
         }
 
         $expectedAccount = preg_replace('/\s+/', '', (string) config('services.sepay.bank_acc'));
-        $actualAccount = preg_replace('/\s+/', '', (string) ($payload['accountNumber'] ?? ''));
-        $subAccount = preg_replace('/\s+/', '', (string) ($payload['subAccount'] ?? ''));
-        if ($expectedAccount === '' || (! hash_equals($expectedAccount, $actualAccount) && ! hash_equals($expectedAccount, $subAccount))) {
-            throw new PaymentVerificationException('Tài khoản thụ hưởng SePay không khớp');
+        $actualAccount = preg_replace('/\s+/', '', (string) ($payload['accountNumber'] ?? $payload['account_number'] ?? ''));
+        $subAccount = preg_replace('/\s+/', '', (string) ($payload['subAccount'] ?? $payload['sub_account'] ?? ''));
+        if ($expectedAccount !== '' && $actualAccount !== '' && ! hash_equals($expectedAccount, $actualAccount) && ! hash_equals($expectedAccount, $subAccount)) {
+            throw new PaymentVerificationException('Tài khoản thụ hưởng SePay không khớp: nhận '.$actualAccount.' kỳ vọng '.$expectedAccount);
         }
 
         $payment = $this->findSepayPaymentFromContent($content);
         if (! $payment) {
-            Log::warning('SePay Webhook: không tìm thấy booking ID hoặc giao dịch tương ứng', ['content' => $content]);
+            Log::warning('SePay Webhook: không tìm thấy booking ID hoặc giao dịch tương ứng', ['content' => $content, 'payload' => $payload]);
 
             return false;
         }
@@ -482,11 +489,17 @@ class PaymentService
             'gateway_txn_id' => $gatewayTxnId,
         ]);
 
-        if ($payment->method !== PaymentMethodEnum::Vnpay || $gatewayTxnId === null || $gatewayTxnId === '') {
+        // Cập nhật method về vnpay nếu trước đó booking đang để momo/khác
+        if ($payment->method !== PaymentMethodEnum::Vnpay) {
+            $payment->update(['method' => PaymentMethodEnum::Vnpay]);
+            Booking::whereKey($payment->booking_id)->update(['payment_method' => PaymentMethodEnum::Vnpay]);
+        }
+
+        if ($gatewayTxnId === '') {
             throw new PaymentVerificationException('Thông tin giao dịch SePay không hợp lệ');
         }
 
-        if ($amountIn !== $payment->amount) {
+        if ($amountIn > 0 && $payment->amount > 0 && $amountIn !== $payment->amount) {
             Log::warning('SePay Webhook: số tiền chuyển khoản không khớp', [
                 'expected' => $payment->amount,
                 'actual' => $amountIn,
@@ -504,8 +517,9 @@ class PaymentService
     }
 
     /**
-     * Tìm payment từ booking UUID trong nội dung chuyển khoản. Đồng thời hỗ trợ
-     * tìm theo UUID có dấu gạch ngang, UUID rút gọn 32 hex, booking_code và mã XEGHEP.
+     * Tìm payment từ booking UUID trong nội dung chuyển khoản. Hỗ trợ UUID có dấu
+     * gạch ngang, UUID rút gọn 32 hex, chuỗi hex bị ngân hàng cắt ngắn (16-31 hex),
+     * mã vé booking_code và mã XEGHEP.
      */
     private function findSepayPaymentFromContent(string $content): ?Payment
     {
@@ -513,7 +527,6 @@ class PaymentService
         if (preg_match_all('/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i', $content, $uuidMatches)) {
             foreach ($uuidMatches[0] as $uuid) {
                 $payment = Payment::where('booking_id', strtolower($uuid))
-                    ->where('method', PaymentMethodEnum::Vnpay)
                     ->latest()
                     ->first();
 
@@ -534,7 +547,6 @@ class PaymentService
                     substr($compactId, 20)
                 );
                 $payment = Payment::where('booking_id', $bookingId)
-                    ->where('method', PaymentMethodEnum::Vnpay)
                     ->latest()
                     ->first();
 
@@ -544,10 +556,31 @@ class PaymentService
             }
         }
 
-        // 3. Tìm theo booking_code (mã vé)
+        // 3. Tìm chuỗi hex bị cắt ngắn bởi ngân hàng (16 đến 31 ký tự hex)
+        if (preg_match_all('/[0-9a-f]{16,31}/i', $content, $prefixMatches)) {
+            $pendingBookings = Booking::where('payment_status', '!=', BookingPaymentStatusEnum::Paid)
+                ->latest()
+                ->limit(50)
+                ->get();
+
+            foreach ($prefixMatches[0] as $prefix) {
+                $prefix = strtolower($prefix);
+                foreach ($pendingBookings as $b) {
+                    $compact = strtolower(str_replace('-', '', (string) $b->id));
+                    if (str_starts_with($compact, $prefix) || str_starts_with($prefix, substr($compact, 0, 16))) {
+                        $payment = Payment::where('booking_id', $b->id)->latest()->first();
+                        if ($payment) {
+                            return $payment;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 4. Tìm theo booking_code (mã vé, e.g. HNHP260904003)
         $cleanContent = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $content));
         if ($cleanContent !== '') {
-            $pendingBookings = Booking::where('payment_status', '!=', 'paid')
+            $pendingBookings = Booking::where('payment_status', '!=', BookingPaymentStatusEnum::Paid)
                 ->latest()
                 ->limit(50)
                 ->get(['id', 'booking_code']);
@@ -555,7 +588,6 @@ class PaymentService
             foreach ($pendingBookings as $b) {
                 if (! empty($b->booking_code) && str_contains($cleanContent, strtoupper($b->booking_code))) {
                     $payment = Payment::where('booking_id', $b->id)
-                        ->where('method', PaymentMethodEnum::Vnpay)
                         ->latest()
                         ->first();
 
@@ -566,10 +598,10 @@ class PaymentService
             }
         }
 
-        // 4. Fallback mã XEGHEP cũ
+        // 5. Fallback mã XEGHEP
         if (preg_match('/XEGHEP-[A-Z0-9]+/i', $content, $legacyMatch)) {
             return Payment::where('gateway_order_id', strtoupper($legacyMatch[0]))
-                ->where('method', PaymentMethodEnum::Vnpay)
+                ->latest()
                 ->first();
         }
 

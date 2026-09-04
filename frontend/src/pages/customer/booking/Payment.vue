@@ -146,6 +146,10 @@ async function checkSepayStatus(currentId?: string) {
             showSepayModal.value = false;
             showPaymentSuccessModal.value = true;
             bookingData.value = data;
+            // Tự động chuyển tiếp đến trang xem vé sau 2 giây
+            setTimeout(() => {
+                goToConfirmation();
+            }, 2000);
         }
     } catch {
         // Lỗi mạng tạm thời: giữ QR và thử lại ở chu kỳ tiếp theo.
